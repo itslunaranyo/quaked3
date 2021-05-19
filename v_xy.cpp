@@ -58,8 +58,8 @@ void XYZView::PositionView()
 	}
 	else
 	{
-		origin[nDim1] = g_qeglobals.d_camera.origin[nDim1];
-		origin[nDim2] = g_qeglobals.d_camera.origin[nDim2];
+		origin[nDim1] = g_qeglobals.d_vCamera.origin[nDim1];
+		origin[nDim2] = g_qeglobals.d_vCamera.origin[nDim2];
 	}
 }
 
@@ -71,7 +71,7 @@ XYZView::PositionAllViews
 void XYZView::PositionAllViews()
 {
 	for (int i = 0; i < 4; i++)
-		g_qeglobals.d_xyz[i].PositionView();
+		g_qeglobals.d_vXYZ[i].PositionView();
 }
 
 /*
@@ -402,9 +402,9 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		// Ctrl+MMB = move camera
 		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
 		{	
-//			g_qeglobals.d_camera.origin[0] = point[0];
-//			g_qeglobals.d_camera.origin[1] = point[1];
-			CopyVector(point, g_qeglobals.d_camera.origin);
+//			g_qeglobals.d_vCamera.origin[0] = point[0];
+//			g_qeglobals.d_vCamera.origin[1] = point[1];
+			CopyVector(point, g_qeglobals.d_vCamera.origin);
 
 			Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		}
@@ -423,7 +423,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 // <---sikk
 			else
 			{
-				point = point - g_qeglobals.d_camera.origin;
+				point = point - g_qeglobals.d_vCamera.origin;
 
 				n1 = (this->dViewType == XY) ? 1 : 2;
 				n2 = (this->dViewType == YZ) ? 1 : 0;
@@ -431,8 +431,8 @@ void XYZView::MouseDown (int x, int y, int buttons)
 
 				if (point[n1] || point[n2])
 				{
-					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					g_qeglobals.d_camera.BoundAngles();
+					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+					g_qeglobals.d_vCamera.BoundAngles();
 					Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 				}
 			}
@@ -442,7 +442,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		if (buttonstate == (MK_SHIFT | MK_MBUTTON))
 		{
 			SnapToPoint( x, y, point);
-			CopyVector(point, g_qeglobals.d_z.origin);
+			CopyVector(point, g_qeglobals.d_vZ.origin);
 			Sys_UpdateWindows(W_XY | W_Z);
 			return;
 		}
@@ -578,7 +578,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
 		{
 			SnapToPoint( x, y, point);
-			CopyVector(point, g_qeglobals.d_camera.origin);
+			CopyVector(point, g_qeglobals.d_vCamera.origin);
 
 			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 			return;
@@ -589,21 +589,21 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		{
 			SnapToPoint( x, y, point);
 
-			CopyVector(point, g_qeglobals.d_z.origin);
+			CopyVector(point, g_qeglobals.d_vZ.origin);
 /*			if (this->dViewType == XY)
 			{
-				g_qeglobals.d_z.origin[0] = point[0];
-				g_qeglobals.d_z.origin[1] = point[1];
+				g_qeglobals.d_vZ.origin[0] = point[0];
+				g_qeglobals.d_vZ.origin[1] = point[1];
 			}
 			else if (this->dViewType == YZ)
 			{
-				g_qeglobals.d_z.origin[0] = point[1];
-				g_qeglobals.d_z.origin[1] = point[2];
+				g_qeglobals.d_vZ.origin[0] = point[1];
+				g_qeglobals.d_vZ.origin[1] = point[2];
 			}
 			else
 			{
-				g_qeglobals.d_z.origin[0] = point[0];
-				g_qeglobals.d_z.origin[1] = point[2];
+				g_qeglobals.d_vZ.origin[0] = point[0];
+				g_qeglobals.d_vZ.origin[1] = point[2];
 			}*/
 			Sys_UpdateWindows(W_XY | W_Z);
 			return;
@@ -641,7 +641,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 			else
 			{
 				SnapToPoint( x, y, point);
-				point = point - g_qeglobals.d_camera.origin;
+				point = point - g_qeglobals.d_vCamera.origin;
 
 				n1 = (this->dViewType == XY) ? 1 : 2;
 				n2 = (this->dViewType == YZ) ? 1 : 0;
@@ -649,8 +649,8 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 				if (point[n1] || point[n2])
 				{
-					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					g_qeglobals.d_camera.BoundAngles();
+					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+					g_qeglobals.d_vCamera.BoundAngles();
 					Sys_UpdateWindows(W_XY | W_CAMERA);
 				}
 			}
@@ -702,16 +702,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 				Sys_SetCursorPos(cursorX, cursorY);
 
 				// sikk - this ensures that the windows are updated in realtime
-				InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-				InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-				InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
-				InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
-				InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndCamera);					
-				UpdateWindow(g_qeglobals.d_hwndXYZ[0]);					
-				UpdateWindow(g_qeglobals.d_hwndXYZ[2]);					
-				UpdateWindow(g_qeglobals.d_hwndXYZ[1]);					
-				UpdateWindow(g_qeglobals.d_hwndZ);					
+				Sys_ForceUpdateWindows(W_SCENE);
 
 				sprintf(szRotate, "Rotate: %d°", nRotate);
 				Sys_Status(szRotate, 0);
@@ -779,16 +770,8 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 //			cursorY = y;
 
 			// sikk - this ensures that the windows are updated in realtime
-			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndCamera);					
-			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);					
-			UpdateWindow(g_qeglobals.d_hwndXYZ[2]);					
-			UpdateWindow(g_qeglobals.d_hwndXYZ[1]);					
-			UpdateWindow(g_qeglobals.d_hwndZ);					
+			Sys_ForceUpdateWindows(W_SCENE);
+
 			return;
 		}
 // <---sikk
@@ -1242,21 +1225,21 @@ void XYZView::DrawCameraIcon ()
 
 	if (dViewType == XY)
 	{
-		x = g_qeglobals.d_camera.origin[0];
-		y = g_qeglobals.d_camera.origin[1];
-		a = g_qeglobals.d_camera.angles[YAW] / 180 * Q_PI;
+		x = g_qeglobals.d_vCamera.origin[0];
+		y = g_qeglobals.d_vCamera.origin[1];
+		a = g_qeglobals.d_vCamera.angles[YAW] / 180 * Q_PI;
 	}
 	else if (dViewType == YZ)
 	{
-		x = g_qeglobals.d_camera.origin[1];
-		y = g_qeglobals.d_camera.origin[2];
-		a = g_qeglobals.d_camera.angles[PITCH] / 180 * Q_PI;
+		x = g_qeglobals.d_vCamera.origin[1];
+		y = g_qeglobals.d_vCamera.origin[2];
+		a = g_qeglobals.d_vCamera.angles[PITCH] / 180 * Q_PI;
 	}
 	else
 	{
-		x = g_qeglobals.d_camera.origin[0];
-		y = g_qeglobals.d_camera.origin[2];
-		a = g_qeglobals.d_camera.angles[PITCH] / 180 * Q_PI;
+		x = g_qeglobals.d_vCamera.origin[0];
+		y = g_qeglobals.d_vCamera.origin[2];
+		a = g_qeglobals.d_vCamera.angles[PITCH] / 180 * Q_PI;
 	}
 
 	glColor3f(0.0, 0.0, 1.0);
@@ -1276,7 +1259,7 @@ void XYZView::DrawCameraIcon ()
 	glEnd();
 
 //	glRasterPos2f(x + 64, y + 64);
-//	sprintf(text, "angle: %f", g_qeglobals.d_camera.angles[YAW]);
+//	sprintf(text, "angle: %f", g_qeglobals.d_vCamera.angles[YAW]);
 //	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
 }
 
@@ -1291,8 +1274,8 @@ void XYZView::DrawZIcon ()
 
 	if (dViewType == XY)
 	{
-		x = g_qeglobals.d_z.origin[0];
-		y = g_qeglobals.d_z.origin[1];
+		x = g_qeglobals.d_vZ.origin[0];
+		y = g_qeglobals.d_vZ.origin[1];
 
 		glEnable(GL_BLEND);
 		glDisable(GL_TEXTURE_2D);
@@ -1802,7 +1785,6 @@ void XYZView::Draw ()
 		DrawZIcon();
 	DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
-	QE_CheckOpenGLForErrors();
 
 	if (timing)
 	{

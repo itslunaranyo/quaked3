@@ -70,7 +70,7 @@ void Textures::Flush()
 	groups.clear();
 	Textures::texMap.clear();
 
-	g_qeglobals.d_texturewin.stale = true;
+	g_qeglobals.d_vTexture.stale = true;
 
 	// if a map is loaded, we must force all brushes to refresh their texture assignments to 
 	// properly populate the unknown wad and redo texture projections for the 64x64 notexture
@@ -100,7 +100,7 @@ void Textures::FlushUnused()
 	if (!g_qeglobals.d_workTexDef.name[0])
 		SelectFirstTexture();
 
-	g_qeglobals.d_texturewin.stale = true;
+	g_qeglobals.d_vTexture.stale = true;
 	Sys_UpdateWindows(W_CAMERA);
 }
 
@@ -116,7 +116,7 @@ void Textures::ClearUsed()
 		(*tgIt)->ClearUsed();
 
 	// TODO: should "refresh used" instead, so used status contains no false negatives
-	g_qeglobals.d_texturewin.stale = true;
+	g_qeglobals.d_vTexture.stale = true;
 }
 
 /*
@@ -228,7 +228,7 @@ Texture *Textures::ForName(const char *name)
 
 	group_unknown.Add(tx);
 	texMap[label_t(name)] = tx;
-	g_qeglobals.d_texturewin.stale = true;
+	g_qeglobals.d_vTexture.stale = true;
 	return tx;
 }
 
@@ -270,8 +270,10 @@ Textures::LoadWad
 */
 void Textures::SelectFirstTexture()
 {
+	if (groups.empty())
+		return;
 	strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
-	g_qeglobals.d_texturewin.ChooseTexture(&g_qeglobals.d_workTexDef, false);
+	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef, false);
 }
 
 /*
@@ -301,7 +303,7 @@ void Textures::LoadWad(const char* wadfile)
 		*tgIt = wl.LoadTexturesFromWad(wadfile);
 		if (!wad)
 		{
-			InspWnd_SetMode(W_CONSOLE);	// show errors
+			QE_SetInspectorMode(W_CONSOLE);	// show errors
 			return;
 		}
 		Textures::AddToNameMap(*tgIt);
@@ -312,7 +314,7 @@ void Textures::LoadWad(const char* wadfile)
 		wad = wl.LoadTexturesFromWad(wadfile);
 		if (!wad)
 		{
-			InspWnd_SetMode(W_CONSOLE);
+			QE_SetInspectorMode(W_CONSOLE);
 			return;
 		}
 
@@ -321,10 +323,10 @@ void Textures::LoadWad(const char* wadfile)
 		std::sort(groups.begin(),groups.end(),TextureGroup::sortcmp);
 	}
 
-	g_qeglobals.d_texturewin.stale = true;
-	g_qeglobals.d_texturewin.origin[1] = 0;
+	g_qeglobals.d_vTexture.stale = true;
+	g_qeglobals.d_vTexture.origin[1] = 0;
 
-	InspWnd_SetMode(W_TEXTURE);
+	QE_SetInspectorMode(W_TEXTURE);
 	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
 
 	// select the first texture in the list
@@ -812,14 +814,14 @@ void Texture_SetMode (int iMenu)
 
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME)
 	{
-		g_qeglobals.d_camera.draw_mode = cd_wire;
+		g_qeglobals.d_vCamera.draw_mode = cd_wire;
 		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE)
 	{
-		g_qeglobals.d_camera.draw_mode = cd_solid;
+		g_qeglobals.d_vCamera.draw_mode = cd_solid;
 		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
@@ -836,9 +838,9 @@ void Texture_SetMode (int iMenu)
 
 	glFinish();
 
-	if (g_qeglobals.d_camera.draw_mode != cd_texture)
+	if (g_qeglobals.d_vCamera.draw_mode != cd_texture)
 	{
-		g_qeglobals.d_camera.draw_mode = cd_texture;
+		g_qeglobals.d_vCamera.draw_mode = cd_texture;
 		g_map.BuildBrushData();
 	}
 
@@ -910,6 +912,7 @@ void FillTextureMenu ()
 WTexWndProc
 ============
 */
+/*
 LONG WINAPI WTex_WndProc (
     HWND	hWnd,	// handle to window
     UINT	uMsg,	// message
@@ -952,7 +955,7 @@ LONG WINAPI WTex_WndProc (
 
             if (!wglMakeCurrent(s_hdcTexture, s_hglrcTexture))
 				Error("wglMakeCurrent: Failed.");
-			g_qeglobals.d_texturewin.Draw(rect.right-rect.left, rect.bottom-rect.top);
+			g_qeglobals.d_vTexture.Draw();
 			SwapBuffers(s_hdcTexture);
 
 		    EndPaint(hWnd, &ps);
@@ -970,7 +973,7 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		g_qeglobals.d_texturewin.MouseDown(xPos, yPos, wParam);
+		g_qeglobals.d_vTexture.MouseDown(xPos, yPos, wParam);
 		return 0;
 
 	case WM_MBUTTONUP:
@@ -979,7 +982,7 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		g_qeglobals.d_texturewin.MouseUp(xPos, yPos, wParam);
+		g_qeglobals.d_vTexture.MouseUp(xPos, yPos, wParam);
 		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return 0;
@@ -988,27 +991,28 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		g_qeglobals.d_texturewin.MouseMoved(xPos, yPos, wParam);
+		g_qeglobals.d_vTexture.MouseMoved(xPos, yPos, wParam);
 		return 0;
     }
 
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
-
+*/
 /*
 ==================
 TexWnd_Create
 
-We need to create a seperate window for the textures
-in the inspector window, because we can't share
-gl and gdi drawing in a single window
+We need to create a seperate window for the textures in the inspector window,
+because we can't share gl and gdi drawing in a single window
 ==================
 */
-HWND TexWnd_Create (HINSTANCE hInstance)
+/*
+HWND TexWnd_Create ()
 {
     WNDCLASS	wc;
+	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
-    /* Register the texture class */
+    // Register the texture class 
 	memset (&wc, 0, sizeof(wc));
 
     wc.style		 = 0;
@@ -1039,18 +1043,19 @@ HWND TexWnd_Create (HINSTANCE hInstance)
 		Error("Could not create Texture Window.");
 
 	return g_qeglobals.d_hwndTexture;
-}
+}*/
 
 /*
 ===============
 TexWnd_Resize
 ===============
 */
+/*
 void TexWnd_Resize(RECT rc)
 {
 	InspWnd_MoveRect(g_qeglobals.d_hwndTexture, rc);
-	g_qeglobals.d_texturewin.width = rc.right;
-	g_qeglobals.d_texturewin.height = rc.bottom;
+	g_qeglobals.d_vTexture.width = rc.right;
+	g_qeglobals.d_vTexture.height = rc.bottom;
 
-	g_qeglobals.d_texturewin.stale = true;
-}
+	g_qeglobals.d_vTexture.stale = true;
+}*/

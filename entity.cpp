@@ -532,10 +532,10 @@ void Entity::Write(std::ostream &out, bool use_region)
 		{
 			out << "{\n";
 			out << "\"classname\" \"info_player_start\"\n";
-			out << "\"origin\" \"" << (int)g_qeglobals.d_camera.origin[0] << " " << 
-									(int)g_qeglobals.d_camera.origin[1] << " " << 
-									(int)g_qeglobals.d_camera.origin[2] << "\"\n";
-			out << "\"angle\" \"" << (int)g_qeglobals.d_camera.angles[YAW] << "\"\n";
+			out << "\"origin\" \"" << (int)g_qeglobals.d_vCamera.origin[0] << " " << 
+									(int)g_qeglobals.d_vCamera.origin[1] << " " << 
+									(int)g_qeglobals.d_vCamera.origin[2] << "\"\n";
+			out << "\"angle\" \"" << (int)g_qeglobals.d_vCamera.angles[YAW] << "\"\n";
 			out << "}\n";
 			return;
 		}
@@ -585,10 +585,10 @@ void Entity::Write (FILE *f, bool use_region)
 		{
 			fprintf(f, "{\n");
 			fprintf(f, "\"classname\" \"info_player_start\"\n");
-			fprintf(f, "\"origin\" \"%d %d %d\"\n", (int)g_qeglobals.d_camera.origin[0], 
-													(int)g_qeglobals.d_camera.origin[1], 
-													(int)g_qeglobals.d_camera.origin[2]);
-			fprintf(f, "\"angle\" \"%d\"\n", (int)g_qeglobals.d_camera.angles[YAW]);
+			fprintf(f, "\"origin\" \"%d %d %d\"\n", (int)g_qeglobals.d_vCamera.origin[0], 
+													(int)g_qeglobals.d_vCamera.origin[1], 
+													(int)g_qeglobals.d_vCamera.origin[2]);
+			fprintf(f, "\"angle\" \"%d\"\n", (int)g_qeglobals.d_vCamera.angles[YAW]);
 			fprintf(f, "}\n");
 			return;
 		}

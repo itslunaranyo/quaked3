@@ -61,10 +61,10 @@ void Map::New()
 
 	world->eclass = EntClass::ForName("worldspawn", true, true);
 
-	g_qeglobals.d_camera.angles[YAW] = 0;
-	g_qeglobals.d_camera.origin = vec3(0);
-	g_qeglobals.d_camera.origin[2] = 48;
-	g_qeglobals.d_xyz[0].origin = vec3(0);
+	g_qeglobals.d_vCamera.angles[YAW] = 0;
+	g_qeglobals.d_vCamera.origin = vec3(0);
+	g_qeglobals.d_vCamera.origin[2] = 48;
+	g_qeglobals.d_vXYZ[0].origin = vec3(0);
 
 	LoadBetween(between);
 	BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
@@ -292,7 +292,7 @@ void Map::LoadFromFile(const char *filename)
 	}
 	// <---sikk
 
-	InspWnd_SetMode(W_CONSOLE);
+	QE_SetInspectorMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("CMD: Map::LoadFromFile: %s\n", temp);
@@ -342,19 +342,19 @@ void Map::LoadFromFile(const char *filename)
 		if (!ent)
 			ent = Map_FindClass("info_player_deathmatch");
 
-		g_qeglobals.d_camera.angles[PITCH] = 0;
+		g_qeglobals.d_vCamera.angles[PITCH] = 0;
 
 		if (ent)
 		{
-			g_qeglobals.d_camera.origin = ent->GetKeyValueVector("origin");
-			g_qeglobals.d_xyz[0].origin = ent->GetKeyValueVector("origin");
-			g_qeglobals.d_camera.angles[YAW] = ent->GetKeyValueFloat("angle");
+			g_qeglobals.d_vCamera.origin = ent->GetKeyValueVector("origin");
+			g_qeglobals.d_vXYZ[0].origin = ent->GetKeyValueVector("origin");
+			g_qeglobals.d_vCamera.angles[YAW] = ent->GetKeyValueFloat("angle");
 		}
 		else
 		{
-			g_qeglobals.d_camera.angles[YAW] = 0;
-			g_qeglobals.d_camera.origin = vec3(0);
-			g_qeglobals.d_xyz[0].origin = vec3(0);
+			g_qeglobals.d_vCamera.angles[YAW] = 0;
+			g_qeglobals.d_vCamera.origin = vec3(0);
+			g_qeglobals.d_vXYZ[0].origin = vec3(0);
 		}
 
 		//Texture_ShowInuse();
@@ -386,7 +386,7 @@ void Map::ImportFromFile(const char *filename)
 
 	Sys_BeginWait();
 
-	InspWnd_SetMode(W_CONSOLE);
+	QE_SetInspectorMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("CMD: Map::ImportFromFile: %s\n", temp);
@@ -824,37 +824,37 @@ void Map::RegionXY()
 
 	float w, h;
 
-	w = 0.5 * g_qeglobals.d_xyz[0].width / g_qeglobals.d_xyz[0].scale;
-	h = 0.5 * g_qeglobals.d_xyz[0].height / g_qeglobals.d_xyz[0].scale;
+	w = 0.5 * g_qeglobals.d_vXYZ[0].width / g_qeglobals.d_vXYZ[0].scale;
+	h = 0.5 * g_qeglobals.d_vXYZ[0].height / g_qeglobals.d_vXYZ[0].scale;
 
 	// sikk---> Proper Regioning for XZ & YZ Views
 
-	if (g_qeglobals.d_xyz[0].dViewType == XY)
+	if (g_qeglobals.d_vXYZ[0].dViewType == XY)
 	{
-		regionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
-		regionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
-		regionMins[1] = g_qeglobals.d_xyz[0].origin[1] - h;
-		regionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + h;
+		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
+		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
+		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - h;
+		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + h;
 		regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 	}
-	if (g_qeglobals.d_xyz[0].dViewType == XZ)
+	if (g_qeglobals.d_vXYZ[0].dViewType == XZ)
 	{
-		regionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
-		regionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
+		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
+		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
 		regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		regionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
-		regionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
+		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
+		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
 	}
-	if (g_qeglobals.d_xyz[0].dViewType == YZ)
+	if (g_qeglobals.d_vXYZ[0].dViewType == YZ)
 	{
 		regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		regionMins[1] = g_qeglobals.d_xyz[0].origin[1] - w;
-		regionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + w;
-		regionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
-		regionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
+		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - w;
+		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + w;
+		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
+		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
 	}
 	// <---sikk
 	RegionApply();
@@ -863,12 +863,12 @@ void Map::RegionXY()
 void Map::RegionXZ()
 {
 	RegionOff();
-	regionMins[0] = g_qeglobals.d_xyz[2].origin[0] - 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
-	regionMaxs[0] = g_qeglobals.d_xyz[2].origin[0] + 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
+	regionMins[0] = g_qeglobals.d_vXYZ[2].origin[0] - 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
+	regionMaxs[0] = g_qeglobals.d_vXYZ[2].origin[0] + 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
 	regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	regionMins[2] = g_qeglobals.d_xyz[2].origin[2] - 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
-	regionMaxs[2] = g_qeglobals.d_xyz[2].origin[2] + 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
+	regionMins[2] = g_qeglobals.d_vXYZ[2].origin[2] - 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
+	regionMaxs[2] = g_qeglobals.d_vXYZ[2].origin[2] + 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
 	RegionApply();
 }
 
@@ -877,10 +877,10 @@ void Map::RegionYZ()
 	RegionOff();
 	regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	regionMins[1] = g_qeglobals.d_xyz[1].origin[1] - 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
-	regionMaxs[1] = g_qeglobals.d_xyz[1].origin[1] + 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
-	regionMins[2] = g_qeglobals.d_xyz[1].origin[2] - 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
-	regionMaxs[2] = g_qeglobals.d_xyz[1].origin[2] + 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
+	regionMins[1] = g_qeglobals.d_vXYZ[1].origin[1] - 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
+	regionMaxs[1] = g_qeglobals.d_vXYZ[1].origin[1] + 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
+	regionMins[2] = g_qeglobals.d_vXYZ[1].origin[2] - 0.5 * g_qeglobals.d_vXYZ[1].height / g_qeglobals.d_vXYZ[1].scale;
+	regionMaxs[2] = g_qeglobals.d_vXYZ[1].origin[2] + 0.5 * g_qeglobals.d_vXYZ[1].height / g_qeglobals.d_vXYZ[1].scale;
 	RegionApply();
 }
 

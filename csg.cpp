@@ -169,7 +169,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 		for (bf = b->basis.faces; bf; bf = bf->fnext)
 			pointBufSize += bf->face_winding->numpoints;	// buffer size is very greedy
 	}
-	pointBuf = new vec3[pointBufSize]();// (vec3*)qmalloc(sizeof(vec3) * pointBufSize);
+	pointBuf = new vec3[pointBufSize]();
 
 	numPoints = 0;
 	nextPoint = pointBuf;
@@ -200,7 +200,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 
 	// find all planes defined by the outermost points
 	numPlanes = numPoints * 2 - 4;
-	planeBuf = new Plane[numPlanes]();// (Plane*)qmalloc(sizeof(Plane) * numPlanes);
+	planeBuf = new Plane[numPlanes]();
 	result = new Brush();
 
 	Plane	p;

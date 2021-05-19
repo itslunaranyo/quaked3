@@ -28,11 +28,13 @@
 #define IDB_CAMSPEEDMASK                159
 #define IDD_ENTITYINFO                  162
 #define IDD_PREFERENCES                 165
+#define IDD_ENTITY2                     166
 #define IDD_SCALE                       179
 #define IDD_CAMSPEED                    181
 #define IDR_CONTEXT                     182
 #define IDD_TEXTURESCALE                183
 #define IDD_FINDKEYVALUE                184
+#define IDD_CONSOLE                     185
 #define IDC_E_FLAG1                     1026
 #define IDC_E_FLAG2                     1027
 #define IDC_E_FLAG3                     1028
@@ -402,13 +404,17 @@
 #define ID_PRIMITIVES_CZGCYLINDER40439  40439
 #define ID_PRIMITIVES_CZGCYLINDER1      40440
 #define ID_PRIMITIVES_CZGCYLINDER2      40441
+#define ID_WINDOW_4REVERSEZCAMLEFT      40442
+#define ID_WINDOW_4REVERSEZCAMRIGHT     40443
+#define ID_WINDOW_4REVERSENOZCAMLEFT    40444
+#define ID_WINDOW_4REVERSENOZCAMRIGHT   40445
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        190
-#define _APS_NEXT_COMMAND_VALUE         40442
+#define _APS_NEXT_COMMAND_VALUE         40446
 #define _APS_NEXT_CONTROL_VALUE         1285
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

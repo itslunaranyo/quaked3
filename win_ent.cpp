@@ -12,6 +12,10 @@ BOOL CALLBACK EntityWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 LRESULT(CALLBACK* OldFieldWindowProc) (HWND, UINT, WPARAM, LPARAM);
 LRESULT(CALLBACK* OldEntityListWindowProc) (HWND, UINT, WPARAM, LPARAM);
 
+void	EntWnd_UpdateUI();
+void	EntWnd_FillClassList();
+void	EntWnd_SetKeyValue();
+void	EntWnd_SetKeyValue(const char* key, const char* value);
 
 /*
 ===============================================================
@@ -65,15 +69,11 @@ int g_nEntDlgIds[ENT_LAST] =
 	IDC_E_COLOR
 };
 
-HWND		g_hwndEnt[ENT_LAST];
+HWND	g_hwndEnt[ENT_LAST];
 
-// lunaran - entity window now interacts through a dummy entity that acts as the union of 
-// all selected entities (for displaying mixed selections)
-//bool		g_bMultipleEntities;
-//Entity   *g_peEditEntity;
-Entity	g_eEditEntity;
-char		g_nEditEntFlags[12];	// spawnflags in the entity inspector can be off/on/ambiguous
-char		g_szEditFlagNames[8][32];
+extern Entity g_eEditEntity;
+extern char	g_nEditEntFlags[12];	// spawnflags in the entity inspector can be off/on/ambiguous
+extern char	g_szEditFlagNames[8][32];
 
 /*
 =========================
@@ -127,18 +127,14 @@ BOOL CALLBACK FieldWndProc (
 			else
 			{
 				EntWnd_SetKeyValue();
-//				SetFocus(g_qeglobals.d_hwndCamera);
 				SetFocus(g_hwndEnt[ENT_PROPS]);	// sikk - Made sense to keep focus 
 			}
 		}
 		break;
 
-//	case WM_NCHITTEST:
-
 	case WM_LBUTTONDOWN:
 		// sikk---> LMB Bring to Top
-		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndInspector)
-			BringWindowToTop(g_qeglobals.d_hwndInspector);
+		BringWindowToTop(g_qeglobals.d_hwndInspector);
 		// <---sikk
 		SetFocus(hWnd);
 		break;
@@ -172,8 +168,7 @@ BOOL CALLBACK EntityListWndProc (
 
 // sikk---> LMB Bring to Top
 	case WM_LBUTTONDOWN:
-		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndInspector)
-			BringWindowToTop(g_qeglobals.d_hwndInspector);
+		BringWindowToTop(g_qeglobals.d_hwndInspector);
 		break;
 // <---sikk
 	}
@@ -185,37 +180,46 @@ BOOL CALLBACK EntityListWndProc (
 EntWnd_CreateControls
 ================
 */
-void EntWnd_CreateControls(HINSTANCE hInstance)
+void EntWnd_CreateControls()
 {
 	int i;
-	HWND h;
 
 	// kind of silly: create a dialog that contains all the controls, move the buttons and labels
 	// to the desired window, then destroy the dialog
 
-	h = CreateDialog(hInstance, (char *)IDD_ENTITY, g_qeglobals.d_hwndMain, (DLGPROC)NULL);
-	if (!h)
+	g_qeglobals.d_hwndEntity = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ENTITY), g_qeglobals.d_hwndInspector, (DLGPROC)EntityWndProc);
+	if (!g_qeglobals.d_hwndEntity)
 		Error("CreateDialog: Failed.");
+
+
+	RECT r_main;
+	GetWindowRect(g_qeglobals.d_hwndEntity, &r_main);
+	AdjustWindowRect(&r_main, QE3_CHILD_STYLE, TRUE);
+	SetWindowPos(g_qeglobals.d_hwndEntity, NULL, r_main.left, r_main.top, r_main.right - r_main.left, r_main.bottom - r_main.top, SWP_NOZORDER | SWP_NOMOVE);
+	ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOWNORMAL);
+	UpdateWindow(g_qeglobals.d_hwndEntity);
 
 	for (i = 0; i < ENT_LAST; i++)
 	{
-		if (i == ENT_CLASSLIST || i == ENT_PROPS || i == ENT_COMMENT)
-			continue;
-		if (i == ENT_KEYFIELD || i == ENT_VALUEFIELD)
-			continue;
-		g_hwndEnt[i] = GetDlgItem(h, g_nEntDlgIds[i]);
+		
+	//	if (i == ENT_CLASSLIST || i == ENT_PROPS || i == ENT_COMMENT)
+	//		continue;
+	//	if (i == ENT_KEYFIELD || i == ENT_VALUEFIELD)
+	//		continue;
+		
+		g_hwndEnt[i] = GetDlgItem(g_qeglobals.d_hwndEntity, g_nEntDlgIds[i]);
 		if (g_hwndEnt[i])
 		{
-			SetParent(g_hwndEnt[i], g_qeglobals.d_hwndEntity);
+			//SetParent(g_hwndEnt[i], g_qeglobals.d_hwndEntity);
 			SendMessage(g_hwndEnt[i], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 		}
 	}
-	DestroyWindow(h);
+	//DestroyWindow(h);
 
 	LoadLibraryA("RICHED32.DLL");	// sikk - For Enhanced Editing	
-
-	// SetParent apears to not modify some internal state
-	// on listboxes, so create it from scratch...
+	return;
+	
+	// SetParent appears to not modify some internal state on listboxes, so create it from scratch
 
 // sikk---> Misc aesthetic changes
 	g_hwndEnt[ENT_CLASSLIST] = CreateWindowEx(WS_EX_CLIENTEDGE,
@@ -309,11 +313,12 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 EntWnd_Create
 ==============
 */
-void EntWnd_Create (HINSTANCE hInstance)
+void EntWnd_Create ()
 {
+	/*
 	WNDCLASS	wc;
 
-	/* Register the texture class */
+	// Register the texture class
 	memset(&wc, 0, sizeof(wc));
 
 	wc.style = 0;
@@ -337,13 +342,13 @@ void EntWnd_Create (HINSTANCE hInstance)
 		20, 20, 64, 64,						// size and position of window
 		g_qeglobals.d_hwndInspector,		// parent or owner window
 		0,									// menu or child-window identifier
-		hInstance,							// application instance
+		g_qeglobals.d_hInstance,							// application instance
 		NULL);								// window-creation data
 
 	if (!g_qeglobals.d_hwndEntity)
 		Error("Could not create Entity Window.");
-
-	EntWnd_CreateControls(hInstance);
+	*/
+	EntWnd_CreateControls();
 
 	OldFieldWindowProc = (WNDPROC)GetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC);
 	SetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC, (long)FieldWndProc);
@@ -529,7 +534,7 @@ EntWnd_ApplyAngle
 Apply the angle keyvalue to all selected entities
 ==============
 */
-static void EntWnd_ApplyAngle(int ang)
+void EntWnd_ApplyAngle(int ang)
 {
 	char sz[8];
 	sprintf(sz, "%d", ang);
@@ -549,7 +554,7 @@ EntWnd_FlagChecked
 Handle one spawnflag checkbox being clicked
 ==============
 */
-static void EntWnd_FlagChecked(int flag)
+void EntWnd_FlagChecked(int flag)
 {
 	if (flag < 1 || flag > 12)
 		return;	// sanity check, no such flag
@@ -702,7 +707,7 @@ void EntWnd_CreateEntity ()
 
 	if (!Select_HasBrushes())
 	{
-		g_qeglobals.d_camera.GetAimPoint(g_brSelectedBrushes.basis.mins);	// FIXME: dum
+		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.basis.mins);	// FIXME: dum
 	}
 	else if (Select_OnlyPointEntities())
 	{

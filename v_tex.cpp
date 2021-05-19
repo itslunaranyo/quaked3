@@ -72,7 +72,7 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 		lscale = 4;
 
 	// sikk--->	Mouse Zoom Texture Window
-	//rbutton+control = zoom texture view
+	// rbutton+control = zoom texture view
 	if (buttons == (MK_CONTROL | MK_RBUTTON))
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
@@ -210,7 +210,7 @@ void TextureView::Layout()
 
 	if (layout)
 	{
-		free(layout);
+		delete layout;
 		layout = nullptr;
 	}
 
@@ -220,7 +220,7 @@ void TextureView::Layout()
 
 	if (!count) return;
 
-	layout = (texWndPlacement_t*)qmalloc(sizeof(texWndPlacement_t) * count);
+	layout = new texWndPlacement_t[count];
 
 	curIdx = 0;
 	count = 0;
@@ -233,6 +233,18 @@ void TextureView::Layout()
 	length = curY + height;
 
 	stale = false;
+}
+
+/*
+============
+TextureView::ResizeControls
+============
+*/
+void TextureView::Resize(int w, int h)
+{
+	width = w;
+	height = h;
+	stale = true;
 }
 
 
@@ -510,7 +522,7 @@ DRAWING
 TextureView::Draw
 ============
 */
-void TextureView::Draw(int dw, int dh)
+void TextureView::Draw()
 {
 	texWndPlacement_t* twp;
 	char	   *name;
@@ -521,12 +533,12 @@ void TextureView::Draw(int dw, int dh)
 		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][1],
 		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][2],
 		0);
-	glViewport(0, 0, dw, dh);
+	glViewport(0, 0, width, height);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, dw, origin[1] - dh, origin[1], -100, 100);
+	glOrtho(0, width, origin[1] - height, origin[1], -100, 100);
 	glEnable(GL_TEXTURE_2D);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -537,7 +549,7 @@ void TextureView::Draw(int dw, int dh)
 
 		// Is this texture visible?
 		if ((twp->y - twp->h - FONT_HEIGHT < origin[1]) &&
-			(twp->y > origin[1] - dh))	// sikk - Mouse Zoom Texture Window
+			(twp->y > origin[1] - height))	// sikk - Mouse Zoom Texture Window
 		{
 			// if in use, draw a background
 			if (twp->tex->used)

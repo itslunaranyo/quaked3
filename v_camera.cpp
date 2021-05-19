@@ -213,11 +213,11 @@ void CameraView::PositionRotate ()
 	SetCursor(NULL); // sikk - Remove Cursor
 	Sys_GetCursorPos(&x, &y);
 
-	if (x == g_qeglobals.d_camera.cursorX && y == g_qeglobals.d_camera.cursorY)
+	if (x == g_qeglobals.d_vCamera.cursorX && y == g_qeglobals.d_vCamera.cursorY)
 		return;
 
-	x -= g_qeglobals.d_camera.cursorX;
-	y -= g_qeglobals.d_camera.cursorY;
+	x -= g_qeglobals.d_vCamera.cursorX;
+	y -= g_qeglobals.d_vCamera.cursorY;
 
 	if (Select_HasBrushes())
 	{
@@ -256,14 +256,14 @@ void CameraView::PositionRotate ()
 	}
 	else
 	{
-		AngleVectors(g_qeglobals.d_camera.angles, forward, vec3(0), vec3(0));
+		AngleVectors(g_qeglobals.d_vCamera.angles, forward, vec3(0), vec3(0));
 		forward[2] = -forward[2];
-		sorigin = g_qeglobals.d_camera.origin + g_qeglobals.d_camera.viewdistance * forward;
+		sorigin = g_qeglobals.d_vCamera.origin + g_qeglobals.d_vCamera.viewdistance * forward;
 	}
 
 	for (i = 0; i < 3; i++)
 	{
-		vecdist[i] = fabs((g_qeglobals.d_camera.origin[i] - sorigin[i]));
+		vecdist[i] = fabs((g_qeglobals.d_vCamera.origin[i] - sorigin[i]));
 		vecdist[i] *= vecdist[i];
 	}
 
@@ -730,9 +730,6 @@ void CameraView::Draw ()
 	if (timing)
 		start = Sys_DoubleTime();
 
-	// clear
-	QE_CheckOpenGLForErrors();
-
 	glViewport(0, 0, width, height);
 	glScissor(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][0],
@@ -1010,7 +1007,6 @@ void CameraView::Draw ()
 	glBindTexture(GL_TEXTURE_2D, 0);
 
     glFinish();
-	QE_CheckOpenGLForErrors();
 //	Sys_EndWait();
 	if (timing)
 	{

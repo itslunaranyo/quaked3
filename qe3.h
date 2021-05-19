@@ -63,6 +63,14 @@
 
 #include "commands.h"
 
+#include "WndView.h"
+#include "WndCamera.h"
+#include "WndTexture.h"
+#include "WndGrid.h"
+#include "WndZChecker.h"
+#include "WndEntity.h"
+#include "WndConsole.h"
+
 //========================================================================
 
 typedef struct
@@ -153,20 +161,22 @@ typedef struct
 				d_hwndXYZ[4],			// lunaran - grid view reunification
 				d_hwndZ,
 				d_hwndStatus,
-				d_hwndToolbar1,
-				d_hwndToolbar2,
-				d_hwndToolbar3,
-				d_hwndToolbar4,
-				d_hwndToolbar5,
-				d_hwndToolbar6,
-				d_hwndToolbar7,
-				d_hwndToolbar8,
-				d_hwndToolbar9,
-				d_hwndToolbar10,
-				d_hwndToolbar11,
+				d_hwndToolbar[11],
 				d_hwndRebar,			// sikk - Rebar 
 				d_hwndSplash,			// sikk - Splash screen
 				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
+
+	WndCamera	*d_wndCamera;
+	WndGrid		*d_wndGrid[4];
+	WndZChecker	*d_wndZ;
+	WndTexture	*d_wndTexture;
+	WndEntity	*d_wndEntity;
+	WndConsole	*d_wndConsole;
+
+	CameraView	d_vCamera;				// sikk - moved camera object here
+	XYZView		d_vXYZ[4];				// lunaran - grid view reunification
+	ZView		d_vZ;
+	TextureView d_vTexture;
 
 	Entity		*d_entityProject;
 	int			d_nNumEntities;
@@ -179,13 +189,8 @@ typedef struct
 	vec3		*d_fMovePoints[1024];
 
 	Texture		*d_qtextures;
-	TextureView d_texturewin;
 
 	int			d_nPointfileDisplayList;
-
-	CameraView	d_camera;				// sikk - moved camera object here
-	XYZView		d_xyz[4];				// lunaran - grid view reunification
-	ZView         d_z;
 
 	int         d_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
 
@@ -244,20 +249,23 @@ void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
 void	QE_Init ();
 bool	QE_KeyDown (int key);
 bool	QE_LoadProject (char *projectfile);
+int		QE_BestViewAxis();
 bool	QE_SingleBrush ();
 void	QE_UpdateCommandUI ();
 char   *QE_ExpandRelativePath (char *p);
+void	QE_SetInspectorMode(int nType);
 
 // QE Win32 function declarations
 int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
 void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
 
-char   *CopyString (char *s);
+char	*CopyString (char *s);
 
 // system functions
 void    Sys_UpdateBrushStatusBar ();
 void	Sys_UpdateGridStatusBar ();
 void    Sys_UpdateWindows (int bits);
+void	Sys_ForceUpdateWindows(int bits);
 void    Sys_Beep ();
 void    Sys_ClearPrintf ();
 void    Sys_Printf (char *text, ...);
@@ -269,6 +277,7 @@ void    Sys_BeginWait ();
 void    Sys_EndWait ();
 void    Sys_Status (const char *psz, int part);
 void	Sys_LogFile ();
+void	Sys_CheckBspProcess(void);
 
 // win_qe3.c
 void	FillBSPMenu ();
@@ -281,13 +290,14 @@ bool	ConfirmModified ();
 void	ImportDialog (bool bCheck);	// sikk - Import Dialog for map/prefab
 void	ExportDialog (bool bCheck);	// sikk - Export Dialog for map/prefab
 
+/*
 // textures.c
-HWND	TexWnd_Create (HINSTANCE hInstance);
-LONG	WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+//HWND	TexWnd_Create ();
+//LONG	WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void	TexWnd_Resize(RECT rc);
 
 // win_insp.c
-void	InspWnd_Create (HINSTANCE hInstance);
+void	InspWnd_Create ();
 void	InspWnd_SetMode (int nType);
 void	InspWnd_ToTop();
 void	InspWnd_Resize();
@@ -295,17 +305,19 @@ BOOL	CALLBACK InspWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 void	InspWnd_Move(HWND hwnd, int x, int y, int w, int h);
 void	InspWnd_MoveRect(HWND hwnd, RECT r);
 
-void	ConsoleWnd_Create(HINSTANCE hInstance);
+void	ConsoleWnd_Create();
 void	ConsoleWnd_Resize(RECT rc);
 
 // win_ent.c
-void	EntWnd_Create (HINSTANCE hInstance);
+void	EntWnd_Create ();
 void	EntWnd_Resize(RECT rc);
 
+void	EntWnd_ApplyAngle(int ang);
+void	EntWnd_FlagChecked(int flag);
 void	EntWnd_RefreshEditEntity();
 void	EntWnd_UpdateListSel();
-void	EntWnd_UpdateUI();
 void	EntWnd_CreateEntity ();
+void	EntWnd_UpdateUI();
 void	EntWnd_FillClassList ();
 void	EntWnd_SetKeyValue ();
 void	EntWnd_SetKeyValue(const char* key, const char* value);
@@ -316,27 +328,28 @@ void	EntWnd_FlagsFromEnt ();
 void	EntWnd_RefreshKeyValues ();
 
 // win_cam.c
-void	WCam_Create (HINSTANCE hInstance);
+void	WCam_Create ();
 LONG	WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+// win_z.c
+void WZ_Create ();
+LONG WINAPI WZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // win_xy.c
 int		XYZWnd_GetTopWindowViewType();
-void	WXYZ_Create (HINSTANCE hInstance, int slot);
+void	WXYZ_Create (int slot);
 LONG	WINAPI XYZWnd_Proc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
 void	WXY_Print ();
 int		GetSelectionInfo ();	// sikk - Contex Menu
 void	XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y);	// sikk - Contex Menu
-XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 void	XYZWnd_CycleViewAxis(HWND xyzwin);
 void	XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis);
-
-// win_z.c
-void WZ_Create (HINSTANCE hInstance);
-LONG WINAPI WZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+*/
+XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 
 // win_main.c
-void WMain_Create (HINSTANCE hInstance);
+void WMain_Create ();
 LONG WINAPI CommandHandler (HWND hWnd, WPARAM wParam, LPARAM lParam); // sikk - Declaration for Popup menu
 BOOL DoColor (int iIndex);
 void DoTestMap ();	// sikk - Test Map
@@ -402,6 +415,7 @@ bool SelectDir (HWND h);
 //
 // win_snap.c
 //
+/*
 bool FindClosestBottom (HWND h, LPRECT rect, LPRECT parentrect);
 bool FindClosestTop (HWND h, LPRECT rect, LPRECT parentrect);
 bool FindClosestLeft (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit);
@@ -409,5 +423,5 @@ bool FindClosestRight (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit);
 bool FindClosestHorizontal (HWND h, LPRECT rect, LPRECT parentrect);
 bool FindClosestVertical (HWND h, LPRECT rect, LPRECT parentrect);
 bool TryDocking (HWND h, long side, LPRECT rect, int widthlimit); // sikk - Window Management
-
+*/
 #endif

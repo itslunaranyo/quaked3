@@ -217,6 +217,7 @@ clippoint_t* Clip_StartNextPoint()
 	else
 	{
 		Clip_ResetMode();
+		Clip_StartCommand();
 		pt = &g_cpClip1;
 		g_cpClip1.bSet = true;
 	}
@@ -277,8 +278,8 @@ bool Clip_CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 {
 	vec3		dir, pn, pt;
 	trace_t		t;
-	g_qeglobals.d_camera.PointToRay(x, y, dir);
-	t = Test_Ray(g_qeglobals.d_camera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
+	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
+	t = Test_Ray(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
 		pn = t.face->plane.normal;
@@ -291,7 +292,7 @@ bool Clip_CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 		else
 			*outAxis = XY;
 
-		pt = g_qeglobals.d_camera.origin + t.dist * dir;
+		pt = g_qeglobals.d_vCamera.origin + t.dist * dir;
 		SnapToPoint(pt);
 		ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pt);
 		out = pt;
@@ -338,11 +339,11 @@ Clip_CamGetNearestClipPoint
 clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 {
 	vec3 dir, cPt;
-	g_qeglobals.d_camera.PointToRay(x, y, dir);
+	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
 
 	if (g_cpClip1.bSet)
 	{
-		cPt = g_cpClip1.ptClip - g_qeglobals.d_camera.origin;
+		cPt = g_cpClip1.ptClip - g_qeglobals.d_vCamera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -350,7 +351,7 @@ clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 	}
 	if (g_cpClip2.bSet)
 	{
-		cPt = g_cpClip2.ptClip - g_qeglobals.d_camera.origin;
+		cPt = g_cpClip2.ptClip - g_qeglobals.d_vCamera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -358,7 +359,7 @@ clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 	}
 	if (g_cpClip3.bSet)
 	{
-		cPt = g_cpClip3.ptClip - g_qeglobals.d_camera.origin;
+		cPt = g_cpClip3.ptClip - g_qeglobals.d_vCamera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -594,11 +595,12 @@ void Clip_EndPoint ()
 {
 	if (g_pcpMovingClip && GetCapture())
 	{
-		XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
+		/*XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
 		if (xyz)
 			g_nClipAxis = xyz->dViewType;
 		else
-			g_nClipAxis = XY;
+			g_nClipAxis = XY;*/
+		g_nClipAxis = QE_BestViewAxis();
 
 		g_pcpMovingClip = NULL;
 		ReleaseCapture();

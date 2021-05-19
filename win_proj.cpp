@@ -879,3 +879,93 @@ void DoProject (bool bFirst)
 	g_bFirstProject = bFirst;
 	DialogBox(g_qeglobals.d_hInstance, (char *)IDD_PROJECT, g_qeglobals.d_hwndMain, ProjectSettingsDlgProc);
 }
+
+
+
+/*
+==================
+ProjectDialog
+==================
+*/
+void ProjectDialog()
+{
+	//Obtain the system directory name and store it in szDirName.
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
+	if (strlen(szDirName) == 0)
+	{
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcat(szDirName, "/scripts");
+	}
+
+	// Place the terminating null character in the szFile.
+	szFile[0] = '\0';
+
+	// Set the members of the OPENFILENAME structure. 
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = g_qeglobals.d_hwndMain;// g_qeglobals.d_hwndCamera;
+	ofn.lpstrFilter = szProjectFilter;
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFileTitle = szFileTitle;
+	ofn.nMaxFileTitle = sizeof(szFileTitle);
+	ofn.lpstrInitialDir = szDirName;
+	ofn.Flags = OFN_SHOWHELP | OFN_PATHMUSTEXIST;
+
+	// Display the Open dialog box.
+	if (!GetOpenFileName(&ofn))
+		return;	// canceled
+
+				// Refresh the File menu.
+	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
+
+	// Open the file.
+	if (!QE_LoadProject(ofn.lpstrFile))
+		//		Error("Could not load project file.");
+		DoProject(true);
+
+	// sikk - save loaded project file
+	strcpy(g_qeglobals.d_savedinfo.szLastProject, ofn.lpstrFile);
+}
+
+// sikk---> New Project Dialog
+/*
+==================
+NewProjectDialog
+==================
+*/
+void NewProjectDialog()
+{
+
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
+	if (strlen(szDirName) == 0)
+	{
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcat(szDirName, "/scripts");
+	}
+
+	// Place the terminating null character in the szFile. 
+	szFile[0] = '\0';
+
+	// Set the members of the OPENFILENAME structure.
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = g_qeglobals.d_hwndMain;// g_qeglobals.d_hwndCamera;
+	ofn.lpstrFilter = szProjectFilter;
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFileTitle = szFileTitle;
+	ofn.nMaxFileTitle = sizeof(szFileTitle);
+	ofn.lpstrInitialDir = szDirName;
+	ofn.Flags = OFN_SHOWHELP | OFN_PATHMUSTEXIST |
+		OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+
+	// Display the Open dialog box. 
+	if (!GetSaveFileName(&ofn))
+		return;	// canceled
+
+	DefaultExtension(ofn.lpstrFile, ".qe3");
+	strcpy(g_qeglobals.d_savedinfo.szLastProject, ofn.lpstrFile);
+
+	DoProject(false);
+}

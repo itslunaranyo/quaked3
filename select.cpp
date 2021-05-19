@@ -52,7 +52,8 @@ void Select_HandleChange()
 	{
 		Sys_Status("", 3);
 	}
-	EntWnd_UpdateUI();
+	//EntWnd_UpdateUI();
+	g_qeglobals.d_wndEntity->UpdateUI();
 	SurfWnd_UpdateUI();
 
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
@@ -428,7 +429,7 @@ void Select_Ray (const vec3 origin, const vec3 dir, int flags)
 		{
 			Select_SelectFace(t.face);
 			t.face->owner = t.brush;	// important safety tip: this is important because apparently face.owner isn't set to anything by default?
-			g_qeglobals.d_texturewin.ChooseTexture(&t.face->texdef, false);
+			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, false);
 		}
 
 		g_qeglobals.d_selSelectMode = sel_brush;
@@ -888,12 +889,13 @@ void Select_CompleteTall()
 
 	// lunaran - grid view reunification
 	{
-		int nViewType;
+		int nViewType;/*
 		XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 		if (xyz)
 			nViewType = xyz->dViewType;
 		else
-			nViewType = XY;
+			nViewType = XY;*/
+		nViewType = QE_BestViewAxis();
 		nDim1 = (nViewType == YZ) ? 1 : 0;
 		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
@@ -936,12 +938,13 @@ void Select_PartialTall()
 
 	// lunaran - grid view reunification
 	{
-		int nViewType;
+		int nViewType;/*
 		XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 		if (xyz)
 			nViewType = xyz->dViewType;
 		else
-			nViewType = XY;
+			nViewType = XY; */
+			nViewType = QE_BestViewAxis();
 		nDim1 = (nViewType == YZ) ? 1 : 0;
 		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
@@ -1134,8 +1137,8 @@ void UpdateWorkzone (Brush* b)
 	/*
 	int nDim1, nDim2;
 
-	nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
-	nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
+	nDim1 = (g_qeglobals.d_vXYZ[0].dViewType == YZ) ? 1 : 0;
+	nDim2 = (g_qeglobals.d_vXYZ[0].dViewType == XY) ? 1 : 2;
 
 	g_qeglobals.d_v3WorkMin[nDim1] = b->basis.mins[nDim1];
 	g_qeglobals.d_v3WorkMax[nDim1] = b->basis.maxs[nDim1];
@@ -1160,7 +1163,7 @@ void Select_Clone ()
 	if (!Select_HasBrushes()) return;
 
 	// move cloned brushes based on active XY view
-	switch (XYZWnd_GetTopWindowViewType())
+	switch (QE_BestViewAxis())//XYZWnd_GetTopWindowViewType())
 	{
 	case XZ:
 		delta[0] = g_qeglobals.d_nGridSize;

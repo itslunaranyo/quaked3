@@ -54,7 +54,7 @@ void QE_Init ()
 	*/
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
-	g_qeglobals.d_xyz[0].dViewType = XY;
+	g_qeglobals.d_vXYZ[0].dViewType = XY;
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 
 	// set maximium undo levels
@@ -92,7 +92,7 @@ void QE_Init ()
 	Textures::Init();
 	//Cam_Init();
 	//for (int i = 0; i < 4;i++)
-	//	XYZ_Init(&g_qeglobals.d_xyz[i]);
+	//	XYZ_Init(&g_qeglobals.d_vXYZ[i]);
 	//Z_Init();
 	g_pcmdBC = nullptr;
 	g_map.RegionOff();	// sikk - For initiating Map Size change
@@ -147,7 +147,7 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(0, 5);
 		else
-			g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + SPEED_MOVE * g_qeglobals.d_camera.forward;
+			g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + SPEED_MOVE * g_qeglobals.d_vCamera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -162,7 +162,7 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(0, -5);
 		else
-			g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + -SPEED_MOVE * g_qeglobals.d_camera.forward;
+			g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + -SPEED_MOVE * g_qeglobals.d_vCamera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -177,7 +177,7 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(-5, 0);
 		else
-			g_qeglobals.d_camera.angles[1] += SPEED_TURN;
+			g_qeglobals.d_vCamera.angles[1] += SPEED_TURN;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -192,35 +192,35 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(5, 0);
 		else
-			g_qeglobals.d_camera.angles[1] -= SPEED_TURN;
+			g_qeglobals.d_vCamera.angles[1] -= SPEED_TURN;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 // <---sikk
 	case 'D':
-		g_qeglobals.d_camera.origin[2] += SPEED_MOVE;
+		g_qeglobals.d_vCamera.origin[2] += SPEED_MOVE;
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'C':
-		g_qeglobals.d_camera.origin[2] -= SPEED_MOVE;
+		g_qeglobals.d_vCamera.origin[2] -= SPEED_MOVE;
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'A':
-		g_qeglobals.d_camera.angles[0] += SPEED_TURN;
-		g_qeglobals.d_camera.BoundAngles();
+		g_qeglobals.d_vCamera.angles[0] += SPEED_TURN;
+		g_qeglobals.d_vCamera.BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case 'Z':
-		g_qeglobals.d_camera.angles[0] -= SPEED_TURN;
-		g_qeglobals.d_camera.BoundAngles();
+		g_qeglobals.d_vCamera.angles[0] -= SPEED_TURN;
+		g_qeglobals.d_vCamera.BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
-		g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + -SPEED_MOVE * g_qeglobals.d_camera.right;
+		g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + -SPEED_MOVE * g_qeglobals.d_vCamera.right;
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_PERIOD:
-		g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + SPEED_MOVE * g_qeglobals.d_camera.right;
+		g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + SPEED_MOVE * g_qeglobals.d_vCamera.right;
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case '0':	// sikk - fixed and added shortcut key
@@ -536,13 +536,29 @@ bool QE_LoadProject (char *projectfile)
 
 	EntClass::InitForSourceDirectory(g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
 
-	EntWnd_FillClassList();	// list in entity window
+	//EntWnd_FillClassList();	// list in entity window
+	g_qeglobals.d_wndEntity->FillClassList();
 	FillTextureMenu();
 	FillBSPMenu();
 
 	g_map.New();
 
 	return true;
+}
+
+/*
+==================
+QE_BestViewAxis
+==================
+*/
+int QE_BestViewAxis()
+{
+	for (int i = 0; i < 4; i++)
+	{
+		if (g_qeglobals.d_wndGrid[i]->IsOnTop())
+			return g_qeglobals.d_wndGrid[i]->xyzv->dViewType;
+	}
+	return XY;
 }
 
 /*
@@ -732,46 +748,46 @@ void QE_UpdateCommandUI ()
 //===================================
 	// Cut
 	EnableMenuItem(hMenu, ID_EDIT_CUT, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Copy
 	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Paste
 //	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
-//	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Undo
 	EnableMenuItem(hMenu, ID_EDIT_UNDO, Undo::UndoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo::UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo::UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 	// Redo
 	EnableMenuItem(hMenu, ID_EDIT_REDO, Undo::RedoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_REDO, Undo::RedoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_REDO, Undo::RedoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 
 //===================================
 // View Menu
 //===================================
 	// Toolbar Bands
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_FILEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar1) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDITBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar2) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar3) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar4) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar5) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar6) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar7) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar8) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar9) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar10) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar11) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_FILEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[0]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDITBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[1]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[2]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[3]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[4]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[5]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[6]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[7]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[8]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[9]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[10]) ? MF_CHECKED : MF_UNCHECKED));
 	// Status Bar
 	CheckMenuItem(hMenu, ID_VIEW_STATUSBAR, (IsWindowVisible(g_qeglobals.d_hwndStatus) ? MF_CHECKED : MF_UNCHECKED));
 	// XY Windows
 	CheckMenuItem(hMenu, ID_VIEW_CAMERA,	(IsWindowVisible(g_qeglobals.d_hwndCamera) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (g_qeglobals.d_savedinfo.bShow_XYZ[0] ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(g_qeglobals.d_savedinfo.bShow_Z ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(IsWindowVisible(g_qeglobals.d_hwndXYZ[2]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(IsWindowVisible(g_qeglobals.d_hwndXYZ[1]) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(IsWindowVisible(g_qeglobals.d_hwndZ) ? MF_CHECKED : MF_UNCHECKED));
 	// Cubic Clipping
 	CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar7, TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Filter Commands
 	CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS,			(g_qeglobals.d_savedinfo.bShow_Axis ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS,		(g_qeglobals.d_savedinfo.bShow_Blocks ? MF_CHECKED : MF_UNCHECKED));
@@ -800,22 +816,22 @@ void QE_UpdateCommandUI ()
 //===================================
 	// Clipper Mode
 	CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (g_qeglobals.d_bClipMode ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (g_qeglobals.d_bClipMode ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (g_qeglobals.d_bClipMode ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Drag Edge Mode 
 	CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge) ? MF_CHECKED : MF_UNCHECKED);
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Drag Vertex Mode 
 	CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, (g_qeglobals.d_selSelectMode == sel_vertex) ? MF_CHECKED : MF_UNCHECKED);
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (g_qeglobals.d_selSelectMode == sel_vertex ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (g_qeglobals.d_selSelectMode == sel_vertex ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Scale Lock X
 	CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Scale Lock Y
 	CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKY, (g_qeglobals.d_savedinfo.bScaleLockY ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKY, (g_qeglobals.d_savedinfo.bScaleLockY ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKY, (g_qeglobals.d_savedinfo.bScaleLockY ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Scale Lock Z
 	CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKZ, (g_qeglobals.d_savedinfo.bScaleLockZ ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar6, TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKZ, (g_qeglobals.d_savedinfo.bScaleLockZ ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKZ, (g_qeglobals.d_savedinfo.bScaleLockZ ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 //===================================
 // Grid Menu

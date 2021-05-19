@@ -1269,11 +1269,13 @@ void Brush::MakeCzgCylinder(int degree)
 	}
 
 	// lunaran - grid view reunification
+	/*
 	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 	if (xyz)
 		axis = xyz->dViewType;
 	else
-		axis = XY;
+		axis = XY;*/
+	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
 	CmdCzgCylinder *cmdCzgC = new CmdCzgCylinder();
@@ -1307,11 +1309,13 @@ void Brush::MakeSided(int sides)
 	}
 
 	// lunaran - grid view reunification
+	/*
 	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 	if (xyz)
 		axis = xyz->dViewType;
 	else
-		axis = XY;
+		axis = XY;*/
+	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
 	CmdCylinder	*cmdCyl = new CmdCylinder();
@@ -1345,11 +1349,13 @@ void Brush::MakeSidedCone(int sides)
 	}
 
 	// lunaran - grid view reunification
+	/*
 	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 	if (xyz)
 		axis = xyz->dViewType;
 	else
-		axis = XY;
+		axis = XY;*/
+	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
 	CmdCone	*cmdCone = new CmdCone();
@@ -1555,7 +1561,7 @@ void Brush::Draw ()
 	if (hiddenBrush)
 		return;
 
-//	if (owner->IsPoint() && g_qeglobals.d_camera.draw_mode == cd_texture)
+//	if (owner->IsPoint() && g_qeglobals.d_vCamera.draw_mode == cd_texture)
 //		glDisable (GL_TEXTURE_2D);
 
 	if (owner->IsPoint())
@@ -1569,7 +1575,7 @@ void Brush::Draw ()
 			return;
 		}
 
-		if (g_qeglobals.d_camera.draw_mode == cd_texture)
+		if (g_qeglobals.d_vCamera.draw_mode == cd_texture)
 			glDisable(GL_TEXTURE_2D);
 	}
 
@@ -1582,7 +1588,7 @@ void Brush::Draw ()
 			continue;	// freed face
 
 		assert(face->d_texture);
-		if (face->d_texture != tprev && g_qeglobals.d_camera.draw_mode == cd_texture)
+		if (face->d_texture != tprev && g_qeglobals.d_vCamera.draw_mode == cd_texture)
 		{
 			// set the texture for this face
 			tprev = face->d_texture;
@@ -1597,14 +1603,14 @@ void Brush::Draw ()
 
 	    for (i = 0; i < w->numpoints; i++)
 		{
-			if (g_qeglobals.d_camera.draw_mode == cd_texture)
+			if (g_qeglobals.d_vCamera.draw_mode == cd_texture)
 				glTexCoord2fv(&w->points[i].s);
 			glVertex3fv(&w->points[i].point[0]);
 		}
 		glEnd();
 	}
 
-	if (owner->IsPoint() && g_qeglobals.d_camera.draw_mode == cd_texture)
+	if (owner->IsPoint() && g_qeglobals.d_vCamera.draw_mode == cd_texture)
 		glEnable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);

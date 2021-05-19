@@ -30,9 +30,10 @@ public:
 	void	MouseUp(int x, int y, int buttons);
 	void	MouseMoved(int x, int y, int buttons);
 	void	MouseOver(int x, int y);
-	void	Draw(int w, int h);
+	void	Draw();
 	int		AddToLayout(TextureGroup * tg, int top, int* curIdx);
 	void	Layout();
+	void	Resize(int w, int h);
 	void	SetScale(float scale);
 	Texture* TexAtPos(int x, int y);
 	void	SelectTexture(int x, int y);

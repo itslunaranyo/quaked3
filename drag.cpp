@@ -312,7 +312,7 @@ void Drag_Begin(int x, int y, int buttons,
 			{
 				UpdateWorkzone(t.brush);
 
-				g_qeglobals.d_texturewin.ChooseTexture(&t.face->texdef, true);
+				g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, true);
 				SurfWnd_UpdateUI();
 			}
 			else

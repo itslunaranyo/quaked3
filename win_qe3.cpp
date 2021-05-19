@@ -24,8 +24,6 @@ int		g_nUpdateBits;
 int		g_nScreenWidth;
 int		g_nScreenHeight;
 
-bool	g_bHaveQuit;
-
 char   *g_szBSP_Commands[256];
 HANDLE	g_hBSP_Process;
 
@@ -111,6 +109,57 @@ void Sys_UpdateWindows (int bits)
 //	Sys_Printf("MSG: Updating 0x%X\n", bits);
 	g_nUpdateBits |= bits;
 //	g_nUpdateBits = -1;
+}
+
+/*
+==================
+Sys_ForceUpdateWindows
+==================
+*/
+void Sys_ForceUpdateWindows(int bits)
+{
+	// update any windows now
+	for (auto wvIt = WndView::wndviews.begin(); wvIt != WndView::wndviews.end(); ++wvIt)
+	{
+		if ((*wvIt)->vbits & bits)
+			(*wvIt)->ForceUpdate();
+	}
+	return;
+
+
+	if (bits & W_CAMERA)
+	{
+	//	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
+	//	UpdateWindow(g_qeglobals.d_hwndCamera);
+		g_qeglobals.d_wndCamera->ForceUpdate();
+	}
+	if (bits & W_XY)
+	{
+		InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
+		UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
+		// sikk---> Multiple Orthographic Views
+		if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
+		{
+			InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
+			UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
+		}
+		if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
+		{
+			InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
+			UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
+		}
+		// <---sikk
+	}
+	if (bits & W_Z)
+	{
+		InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
+		UpdateWindow(g_qeglobals.d_hwndZ);
+	}
+	if (bits & W_TEXTURE)
+	{
+		InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
+		UpdateWindow(g_qeglobals.d_hwndInspector);
+	}
 }
 
 /*
@@ -421,7 +470,7 @@ void OpenDialog ()
  
 	// Set the members of the OPENFILENAME structure. 
 	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
+	ofn.hwndOwner		= g_qeglobals.d_hwndMain;//g_qeglobals.d_hwndCamera;
 	ofn.lpstrFilter		= szFilter; 
 	ofn.nFilterIndex	= 1; 
 	ofn.lpstrFile		= szFile; 
@@ -464,7 +513,7 @@ void SaveAsDialog ()
  
 	// Set the members of the OPENFILENAME structure.
 	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
+	ofn.hwndOwner		= g_qeglobals.d_hwndMain;//g_qeglobals.d_hwndCamera;
 	ofn.lpstrFilter		= szFilter; 
 	ofn.nFilterIndex	= 1; 
 	ofn.lpstrFile		= szFile; 
@@ -491,93 +540,7 @@ void SaveAsDialog ()
 	g_map.SaveToFile(ofn.lpstrFile, false);	// ignore region
 }
 
-/*
-==================
-ProjectDialog
-==================
-*/
-void ProjectDialog ()
-{
-	//Obtain the system directory name and store it in szDirName.
- 	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
-	if (strlen(szDirName) == 0)
-	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-		strcat(szDirName, "/scripts");
-	}
 
-	// Place the terminating null character in the szFile.
- 	szFile[0] = '\0'; 
- 
-	// Set the members of the OPENFILENAME structure. 
- 	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
-	ofn.lpstrFilter		= szProjectFilter; 
-	ofn.nFilterIndex	= 1; 
-	ofn.lpstrFile		= szFile; 
-	ofn.nMaxFile		= sizeof(szFile); 
-	ofn.lpstrFileTitle	= szFileTitle; 
-	ofn.nMaxFileTitle	= sizeof(szFileTitle); 
-	ofn.lpstrInitialDir = szDirName; 
-	ofn.Flags			= OFN_SHOWHELP | OFN_PATHMUSTEXIST;
-
-	// Display the Open dialog box.
- 	if (!GetOpenFileName(&ofn))
-		return;	// canceled
- 
-	// Refresh the File menu.
-	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
-
-	// Open the file.
-	if (!QE_LoadProject(ofn.lpstrFile))
-//		Error("Could not load project file.");
-		DoProject(true);
-
-	// sikk - save loaded project file
-	strcpy(g_qeglobals.d_savedinfo.szLastProject, ofn.lpstrFile);
-}
-
-// sikk---> New Project Dialog
-/*
-==================
-NewProjectDialog
-==================
-*/
-void NewProjectDialog ()
-{ 
-
- 	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
-	if (strlen(szDirName) == 0)
-	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-		strcat(szDirName, "/scripts");
-	}
-
-	// Place the terminating null character in the szFile. 
-	szFile[0] = '\0'; 
- 
-	// Set the members of the OPENFILENAME structure.
-	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
-	ofn.lpstrFilter		= szProjectFilter; 
-	ofn.nFilterIndex	= 1; 
-	ofn.lpstrFile		= szFile; 
-	ofn.nMaxFile		= sizeof(szFile); 
-	ofn.lpstrFileTitle	= szFileTitle; 
-	ofn.nMaxFileTitle	= sizeof(szFileTitle); 
-	ofn.lpstrInitialDir	= szDirName; 
-	ofn.Flags			= OFN_SHOWHELP | OFN_PATHMUSTEXIST | 
-						  OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT; 
-
-	// Display the Open dialog box. 
-	if (!GetSaveFileName(&ofn))
-		return;	// canceled
-  
-	DefaultExtension(ofn.lpstrFile, ".qe3");
-	strcpy(g_qeglobals.d_savedinfo.szLastProject, ofn.lpstrFile);
-	
-	DoProject(false);
-}
 // <---sikk
 
 // sikk---> Changed to Save Changes Dialog
@@ -656,7 +619,7 @@ void ImportDialog (bool bCheck)
  
 	// Set the members of the OPENFILENAME structure. 
 	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
+	ofn.hwndOwner		= g_qeglobals.d_hwndMain;//g_qeglobals.d_hwndCamera;
 	ofn.nFilterIndex	= 1; 
 	ofn.lpstrFile		= szFile; 
 	ofn.nMaxFile		= sizeof(szFile); 
@@ -710,7 +673,7 @@ void ExportDialog (bool bCheck)
  
 	// Set the members of the OPENFILENAME structure.
 	ofn.lStructSize		= sizeof(OPENFILENAME); 
-	ofn.hwndOwner		= g_qeglobals.d_hwndCamera;
+	ofn.hwndOwner		= g_qeglobals.d_hwndMain;//g_qeglobals.d_hwndCamera;
 	ofn.nFilterIndex	= 1; 
 	ofn.lpstrFile		= szFile; 
 	ofn.nMaxFile		= sizeof(szFile); 
@@ -777,12 +740,12 @@ void FillBSPMenu ()
 
 /*
 ===============
-CheckBspProcess
+Sys_CheckBspProcess
 
 See if the BSP is done yet
 ===============
 */
-void CheckBspProcess (void)
+void Sys_CheckBspProcess (void)
 {
 	char	outputpath[MAX_PATH];
 	char	temppath[1024];
@@ -901,204 +864,3 @@ BOOL CALLBACK SplashDlgProc (
 }
 // <---sikk
 
-/*
-==================
-WinMain
-==================
-*/
-int WINAPI WinMain (
-	HINSTANCE hInstance, 
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine, 
-	int nCmdShow
-	)
-{
-    MSG		msg;
-	double	curtime, oldtime, delta;
-	HACCEL	accelerators;
-	char	szProject[_MAX_PATH];	// sikk - Load Last Project
-    time_t	lTime;
-
-	g_qeglobals.d_hInstance = hInstance;
-
-// sikk - Quickly made Splash Screen
-#ifndef _DEBUG
-	HWND	hwndSplash;
-	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
-#endif
-
-	InitCommonControls ();
-
-	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
-	g_nScreenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
-
-	// hack for broken NT 4.0 dual screen
-	if (g_nScreenWidth > 2 * g_nScreenHeight)
-		g_nScreenWidth /= 2;
-
-	accelerators = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
-	if (!accelerators)
-		Error("LoadAccelerators: Failed.");
-
-	WMain_Create(hInstance);
-
-	Sys_LogFile();
-
-	WCam_Create(hInstance);
-	WXYZ_Create(hInstance, 0);
-	WXYZ_Create(hInstance, 1);
-	WXYZ_Create(hInstance, 2);
-	WZ_Create(hInstance);
-	InspWnd_Create(hInstance);
-
-	// sikk - Print App name and current time for logging purposes
-	time(&lTime);	
-	Sys_Printf("QuakeEd 3 beta (build 105)\nSesson Started: %s\n", ctime(&lTime));
-
-	// sikk - If 'Load Last Project' is checked, load that file,
-	// else load default file
-	if (g_qeglobals.d_savedinfo.bLoadLastProject)
-	{
-		if (strlen(g_qeglobals.d_savedinfo.szLastProject) > 0)
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
-		else
-		{
-			strcpy(g_qeglobals.d_savedinfo.szLastProject, "scripts/quake.qe3");
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
-		}
-	}
-	else
-	{
-		strcpy(szProject, "scripts/quake.qe3");
-		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
-	}
-	// the project file can be specified on the command line,
-	// or implicitly found in the scripts directory
-	if (lpCmdLine && strlen(lpCmdLine))
-	{
-		ParseCommandLine(lpCmdLine);
-		if (!QE_LoadProject(g_pszArgV[1]))
-			Error("Could not load %s project file.", g_pszArgV[1]);
-	}
-	else if (!QE_LoadProject(szProject))
-	{
-		DoProject(true);	// sikk - Manually create project file if none is found
-		if (!QE_LoadProject("scripts/quake.qe3"))
-			Error("Could not load scripts/quake.qe3 project file.");
-	}
-
-	QE_Init();
-
-	//g_unMouseWheel = GetMouseWheelMsg();	// sikk - Mousewheel Handling
-
-	Sys_Printf("MSG: Entering message loop...\n");
-
-	oldtime = Sys_DoubleTime();
-
-	// sikk - Load Last Map if option is set in Preferences
-	if (g_qeglobals.d_savedinfo.bLoadLastMap && strcmp(g_qeglobals.d_savedinfo.szLastMap, "unnamed.map"))
-		g_map.LoadFromFile(g_qeglobals.d_savedinfo.szLastMap);
-
-	while (!g_bHaveQuit)
-	{
-		Sys_EndWait();	// remove wait cursor if active
-#ifndef _DEBUG
-		try
-		{
-#endif
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-			{
-				// lunaran - this magically makes tab work in the surface dialog
-				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
-				{
-					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
-					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
-						(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
-					{
-						TranslateMessage(&msg);
-						DispatchMessage(&msg);
-					}
-				}
-
-				if (msg.message == WM_QUIT)
-					g_bHaveQuit = true;
-			}
-
-			// lunaran - all consequences of selection alteration put in one place for consistent behavior
-			Select_HandleChange();
-
-			CheckBspProcess();
-
-			curtime = Sys_DoubleTime();
-			delta = curtime - oldtime;
-			oldtime = curtime;
-			if (delta > 0.2)
-				delta = 0.2;
-
-			// sikk---> Quickly made Splash Screen
-#ifndef _DEBUG
-			if (hwndSplash)
-				if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
-					DestroyWindow(hwndSplash);
-#endif
-			// <---sikk
-
-					// run time dependant behavior
-			g_qeglobals.d_camera.MouseControl(delta);
-
-			// update any windows now
-			if (g_nUpdateBits & W_CAMERA)
-			{
-				InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndCamera);
-			}
-			if (g_nUpdateBits & (W_XY))
-			{
-				InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-				// sikk---> Multiple Orthographic Views
-				if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
-				{
-					InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
-					UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
-				}
-				if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
-				{
-					InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
-					UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
-				}
-				// <---sikk
-			}
-			if (g_nUpdateBits & (W_Z))
-			{
-				InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndZ);
-			}
-			if (g_nUpdateBits & W_TEXTURE)
-			{
-				InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndInspector);
-			}
-
-			g_nUpdateBits = 0;
-
-			// if not driving in the camera view, block
-			if (!g_qeglobals.d_camera.nCamButtonState && !g_bHaveQuit)
-				WaitMessage();
-#ifndef _DEBUG
-		}
-		catch (std::exception &ex)
-		{
-			MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
-
-			// close logging if necessary
-			g_qeglobals.d_savedinfo.bLogConsole = false;
-			Sys_LogFile();
-
-			exit(1);
-		}
-#endif
-	}
-    /* return success of application */
-    return TRUE;
-}

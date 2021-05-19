@@ -6,6 +6,45 @@
 
 #include "qe3.h"
 
+void WCam_CreateFont()
+{
+	HFONT	hfont;
+
+	// create GL font
+	hfont = CreateFont(
+		10,	// logical height of font (default was 10)
+		7,	// logical average character width (default was 7)
+		0,	// angle of escapement 
+		0,	// base-line orientation angle 
+		1,	// font weight 
+		0,	// italic attribute flag 
+		0,	// underline attribute flag 
+		0,	// strikeout attribute flag 
+		1,	// character set identifier 
+		0,	// output precision 
+		0,	// clipping precision 
+		0,	// output quality 
+		0,	// pitch and family 
+		0	// pointer to typeface name string (default was 0)
+		);
+
+	if (!hfont)
+		Error("Could not create font.");
+
+	SelectObject(g_qeglobals.d_hdcBase, hfont);
+
+	if ((g_qeglobals.d_nFontList = glGenLists(256)) == 0)
+		Error("Could not create font dlists.");
+
+	// create the bitmap display lists
+	// we're making images of glyphs 0 thru 255
+	if (!wglUseFontBitmaps(g_qeglobals.d_hdcBase, 1, 255, g_qeglobals.d_nFontList))
+		Error("WCam_WndProc: wglUseFontBitmaps failed.");
+
+	// indicate start of glyph display lists
+	glListBase(g_qeglobals.d_nFontList);
+}
+
 /*
 ============
 CameraWndProc
@@ -20,7 +59,6 @@ LONG WINAPI WCam_WndProc (
 {
 	int		fwKeys, xPos, yPos;
     RECT	rect;
-	HFONT	hfont;
 
     GetClientRect(hWnd, &rect);
 
@@ -37,41 +75,7 @@ LONG WINAPI WCam_WndProc (
 
 		Texture_SetMode(g_qeglobals.d_savedinfo.nTexMenu);
 
-		//
-		// create GL font
-		//
-		hfont = CreateFont( 
-			10,	// logical height of font (default was 10)
-			7,	// logical average character width (default was 7)
-			0,	// angle of escapement 
-			0,	// base-line orientation angle 
-			1,	// font weight 
-			0,	// italic attribute flag 
-			0,	// underline attribute flag 
-			0,	// strikeout attribute flag 
-			1,	// character set identifier 
-			0,	// output precision 
-			0,	// clipping precision 
-			0,	// output quality 
-			0,	// pitch and family 
-			0	// pointer to typeface name string (default was 0)
-			);
-
-		if (!hfont)
-			Error("Could not create font.");
-
-		SelectObject(g_qeglobals.d_hdcBase, hfont);
-
-		if ((g_qeglobals.d_nFontList = glGenLists (256)) == 0)
-			Error("Could not create font dlists.");
-			
-		// create the bitmap display lists
-		// we're making images of glyphs 0 thru 255
-		if (!wglUseFontBitmaps(g_qeglobals.d_hdcBase, 1, 255, g_qeglobals.d_nFontList))
-			Error("WCam_WndProc: wglUseFontBitmaps failed.");
-			
-		// indicate start of glyph display lists
-		glListBase(g_qeglobals.d_nFontList);
+		WCam_CreateFont();
 
 		// report OpenGL information
 		Sys_Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
@@ -166,6 +170,14 @@ LONG WINAPI WCam_WndProc (
 			ReleaseCapture();
 		return 0;
 	
+	case WM_MOUSEMOVE:
+		fwKeys = wParam;				// key flags 
+		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
+		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
+		yPos = (int)rect.bottom - 1 - yPos;
+		g_qeglobals.d_camera.MouseMoved(xPos, yPos, fwKeys);
+		return 0;
+		
 // sikk---> Minimum Window Size
 	case WM_GETMINMAXINFO:
 		{
@@ -175,14 +187,6 @@ LONG WINAPI WCam_WndProc (
 		return 0;
 // <---sikk
 
-	case WM_MOUSEMOVE:
-		fwKeys = wParam;				// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
-		yPos = (int)rect.bottom - 1 - yPos;
-		g_qeglobals.d_camera.MouseMoved(xPos, yPos, fwKeys);
-		return 0;
-		
 	case WM_SIZE:
 		g_qeglobals.d_camera.width = rect.right;
 		g_qeglobals.d_camera.height = rect.bottom;
@@ -225,9 +229,10 @@ LONG WINAPI WCam_WndProc (
 WCam_Create
 ==============
 */
-void WCam_Create (HINSTANCE hInstance)
+void WCam_Create ()
 {
     WNDCLASS   wc;
+	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
     /* Register the camera class */
 	memset(&wc, 0, sizeof(wc));

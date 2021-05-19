@@ -96,19 +96,19 @@ LONG WINAPI WZ_WndProc (
 			ReleaseCapture();
 		return 0;
 
-	case WM_GETMINMAXINFO:
-		{
-			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-			lpmmi->ptMinTrackSize.x = ZWIN_WIDTH;
-		}
-		return 0;
-
 	case WM_MOUSEMOVE:
 		fwKeys = wParam;        // key flags 
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
 		g_qeglobals.d_z.MouseMoved(xPos, yPos, fwKeys);
+		return 0;
+
+	case WM_GETMINMAXINFO:
+		{
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMinTrackSize.x = ZWIN_WIDTH;
+		}
 		return 0;
 
 	case WM_SIZE:
@@ -149,12 +149,13 @@ LONG WINAPI WZ_WndProc (
 WZ_Create
 ==============
 */
-void WZ_Create (HINSTANCE hInstance)
+void WZ_Create ()
 {
     WNDCLASS   wc;
 
     /* Register the z class */
 	memset(&wc, 0, sizeof(wc));
+	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
     wc.style         = CS_OWNDC;
     wc.lpfnWndProc   = (WNDPROC)WZ_WndProc;

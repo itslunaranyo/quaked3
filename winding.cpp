@@ -240,12 +240,7 @@ winding_t *Winding::Clone (winding_t *w)
 	
 	c = Winding::Alloc(w->numpoints);
 	Winding::Copy(w, c);
-	/*
-	int size;
-	size = (int)((winding_t *)0)->points[w->numpoints];
-	c = (winding_t*)qmalloc(size);
-	memcpy(c, w, size);
-	*/
+
 	return c;
 }
 

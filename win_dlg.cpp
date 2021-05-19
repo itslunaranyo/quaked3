@@ -140,7 +140,7 @@ void FindBrush (int entitynum, int brushnum)
 	Select_SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
-		g_qeglobals.d_xyz[0].origin[i] = (b->basis.mins[i] + b->basis.maxs[i]) / 2;
+		g_qeglobals.d_vXYZ[0].origin[i] = (b->basis.mins[i] + b->basis.maxs[i]) / 2;
 
 	Sys_Printf("MSG: Selected.\n");
 }
@@ -322,12 +322,8 @@ BOOL CALLBACK RotateDlgProc (
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			
-			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndCamera);
-			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-			UpdateWindow(g_qeglobals.d_hwndZ);
+			Sys_ForceUpdateWindows(W_SCENE);
+
 			return TRUE;
 // <---sikk
 
@@ -1328,13 +1324,8 @@ void OnSelect (HWND hTree)
 
 	// Center on selected entity and update the windows
 	XYZView::PositionAllViews();
-	g_qeglobals.d_camera.PositionCenter();
-	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-	UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-	UpdateWindow(g_qeglobals.d_hwndZ);
-	UpdateWindow(g_qeglobals.d_hwndCamera);
+	g_qeglobals.d_vCamera.PositionCenter();
+	Sys_ForceUpdateWindows(W_SCENE);
 }
 
 /*
@@ -1367,12 +1358,8 @@ void OnDelete (HWND hTree, HWND hList)
 		TreeView_DeleteItem(hTree, hItem);
 		ListView_DeleteAllItems(hList);
 	}
-	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-	UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-	UpdateWindow(g_qeglobals.d_hwndZ);
-	UpdateWindow(g_qeglobals.d_hwndCamera);
+
+	Sys_ForceUpdateWindows(W_SCENE); 
 }
 
 /*
@@ -1461,7 +1448,7 @@ BOOL CALLBACK EntityInfoDlgProc (
 			OnSelect(hTree);
 			return TRUE;
 		case IDC_BUTTON_DELETE:
-			OnDelete(hTree, hList);
+			OnDelete(hTree, hList);	// FIXME: crashes
 			return TRUE;
 		}
 		return 0;
@@ -1864,13 +1851,7 @@ BOOL CALLBACK ScaleDlgProc (
 			Select_Scale(x, y, z);
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
-			
-			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndCamera);
-			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-			UpdateWindow(g_qeglobals.d_hwndZ);
+			Sys_ForceUpdateWindows(W_SCENE);			
 			return TRUE;
 
 		case IDCANCEL:

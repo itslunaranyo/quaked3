@@ -307,7 +307,6 @@ int IO_LoadFile (const char *filename, void **bufferptr)
 	int			 length;
 	FILE		*f;
 	void		*buffer;
-	//extern void *qmalloc(size_t size);
 
 	f = fopen(filename, "rb");
 	if (!f)

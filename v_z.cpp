@@ -94,7 +94,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) || 
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
-		g_qeglobals.d_camera.origin[2] = org[2];
+		g_qeglobals.d_vCamera.origin[2] = org[2];
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 }
@@ -145,7 +145,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 		{
 			origin[2] += (y - cursorY) / scale;
 
-			Sys_GetCursorPos(&cursorX, &cursorY);
+			Sys_SetCursorPos(cursorX, cursorY);
 			Sys_UpdateWindows(W_Z);
 
 			sprintf(zstring, "z Origin: (%d)", (int)origin[2]);
@@ -158,7 +158,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) ||
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
-		g_qeglobals.d_camera.origin[2] = (y - (height / 2)) / scale;
+		g_qeglobals.d_vCamera.origin[2] = (y - (height / 2)) / scale;
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 
@@ -310,7 +310,7 @@ void ZView::DrawCameraIcon ()
 	int		xCam = width / 4;
 
 	x = 0;
-	y = g_qeglobals.d_camera.origin[2];
+	y = g_qeglobals.d_vCamera.origin[2];
 
 	glColor3f (0.0, 0.0, 1.0);
 	glBegin(GL_LINE_STRIP);
@@ -484,8 +484,6 @@ void ZView::Draw ()
 	if (g_qeglobals.d_savedinfo.bShow_Coordinates)	// sikk - Toggle By Menu Command
 		DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
-
-	QE_CheckOpenGLForErrors();
 
 	if (timing)
 	{

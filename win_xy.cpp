@@ -26,10 +26,10 @@ static unsigned s_stipple[32] =
 #define SELECTION_BRUSHES	2
 #define SELECTION_BRUSHENT	4
 
-int		g_nMouseX, g_nMouseY;
-bool	g_bMoved;
+int		g_nMouseXY_X, g_nMouseXY_Y;
+bool	g_bXYMoved;
 vec3	g_v3Origin;
-int		g_dXYZcurrent;	// ugh come on
+int		g_dXYZcurrent = 1;	// ugh come on
 
 
 int XYZWnd_GetTopWindowViewType()
@@ -98,12 +98,12 @@ void XYZWnd_CycleViewAxis(HWND xyzwin)
 
 /*
 ============
-GetSelectionInfo
+GetSelectionInfoXY
 ============
 */
-int GetSelectionInfo ()
+int GetSelectionInfoXY ()
 {
-	int		 retval = 0;
+	int		retval = 0;
 	Brush	*b;
 
 	// lunaran TODO: what the fuck
@@ -111,7 +111,7 @@ int GetSelectionInfo ()
 	{
 		if(b->owner->IsPoint())
 			retval = SELECTION_POINTENT;
-		else if(!_stricmp(b->owner->eclass->name, "worldspawn"))
+		else if(b->owner->IsWorld())
 			retval = SELECTION_BRUSHES;
 		else
 			retval = SELECTION_BRUSHENT;
@@ -130,7 +130,7 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 	HMENU	hMenu;
 	POINT	point;
 	int		retval;
-	int		selected = GetSelectionInfo();
+	int		selected = GetSelectionInfoXY();
 
 	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT)), 0);
 
@@ -305,9 +305,9 @@ LONG WINAPI XYZWnd_Proc (
 // sikk---> Context Menu
 		if(uMsg == WM_RBUTTONDOWN)
 		{
-			g_bMoved = false;
-			g_nMouseX = xPos;
-			g_nMouseY = yPos;
+			g_bXYMoved = false;
+			g_nMouseXY_X = xPos;
+			g_nMouseXY_Y = yPos;
 		}
 // <---sikk
 		return 0;
@@ -323,7 +323,7 @@ LONG WINAPI XYZWnd_Proc (
 		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 // sikk---> Context Menu
-		if (uMsg == WM_RBUTTONUP && !g_bMoved)
+		if (uMsg == WM_RBUTTONUP && !g_bXYMoved)
 			XYZWnd_DoPopupMenu(xyz, xPos, yPos);
 // <---sikk
 		return 0;
@@ -344,8 +344,8 @@ LONG WINAPI XYZWnd_Proc (
 		yPos = (int)rect.bottom - 1 - yPos;
 		xyz->MouseMoved(xPos, yPos, fwKeys);
 // sikk---> Context Menu
-		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
-			g_bMoved = true;
+		if (!g_bXYMoved && (g_nMouseXY_X != xPos || g_nMouseXY_Y != yPos))
+			g_bXYMoved = true;
 // <---sikk
 		return 0;
 
@@ -387,10 +387,11 @@ LONG WINAPI XYZWnd_Proc (
 WXY_Create
 ==============
 */
-void WXYZ_Create (HINSTANCE hInstance, int slot)
+void WXYZ_Create (int slot)
 {
     WNDCLASS	wc;
 	char		szLabel[32];
+	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
     /* Register the xy class */
 	memset(&wc, 0, sizeof(wc));

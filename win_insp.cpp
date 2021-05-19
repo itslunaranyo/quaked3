@@ -27,15 +27,16 @@ void InspWnd_ToTop()
 InspWnd_Create
 ==============
 */
-void InspWnd_Create(HINSTANCE hInstance)
+void InspWnd_Create()
 {
 	WNDCLASS   wc;
+	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
 	/* Register the entity class */
 	memset(&wc, 0, sizeof(wc));
 
 	wc.style = 0;
-	wc.lpfnWndProc = (WNDPROC)InspWndProc;
+//	wc.lpfnWndProc = (WNDPROC)InspWndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
@@ -65,13 +66,13 @@ void InspWnd_Create(HINSTANCE hInstance)
 	if (!g_qeglobals.d_hwndInspector)
 		Error("Could not create Inspector Window.");
 
-	EntWnd_Create(hInstance);
-	TexWnd_Create(hInstance);
-	ConsoleWnd_Create(hInstance);
+	//EntWnd_Create();
+	//TexWnd_Create();
+	//ConsoleWnd_Create();
 
 	LoadWindowState(g_qeglobals.d_hwndInspector, "EntityWindow");
 	ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
-	InspWnd_SetMode(W_CONSOLE);
+	QE_SetInspectorMode(W_CONSOLE);
 }
 
 
@@ -82,6 +83,56 @@ InspWnd_SetMode
 */
 void InspWnd_SetMode(int nType)
 {
+	switch (nType)
+	{
+	case W_ENTITY:
+		g_qeglobals.d_wndEntity->Toggle();
+		break;
+	case W_TEXTURE:
+		g_qeglobals.d_wndTexture->Toggle();
+		break;
+	case W_CONSOLE:
+		g_qeglobals.d_wndConsole->Toggle();
+		break;
+	default:
+		//	from = g_qeglobals.d_wndConsole;
+		break;
+	}
+
+	/*
+	WndView *from, *to;
+	switch (g_qeglobals.d_nInspectorMode)
+	{
+	case W_ENTITY:
+		from = g_qeglobals.d_wndEntity;
+		break;
+	case W_TEXTURE:
+		from = g_qeglobals.d_wndTexture;
+		break;
+	default:
+		//	from = g_qeglobals.d_wndConsole;
+		break;
+	}
+	switch (nType)
+	{
+	case W_ENTITY:
+		to = g_qeglobals.d_wndEntity;
+		break;
+	case W_TEXTURE:
+		to = g_qeglobals.d_wndTexture;
+		break;
+	default:
+		//	to = g_qeglobals.d_wndConsole;
+		break;
+	}
+
+	to->Swap(*from);
+	g_qeglobals.d_nInspectorMode = nType;
+
+	return;
+	*/
+
+	/*
 	HMENU	hMenu = GetMenu(g_qeglobals.d_hwndMain);
 
 	// Is the caller asking us to cycle to the next window?
@@ -126,9 +177,11 @@ void InspWnd_SetMode(int nType)
 	default:
 		break;
 	}
+	ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
 
 	InspWnd_Resize();
 	InspWnd_ToTop();
+	*/
 }
 
 /*
@@ -170,9 +223,9 @@ void InspWnd_Resize()
 	if (rcOn.right < 100 || rcOn.bottom < 100)
 		return;
 
-	EntWnd_Resize((g_qeglobals.d_nInspectorMode == W_ENTITY) ? rcOn : rcOff);
-	TexWnd_Resize((g_qeglobals.d_nInspectorMode == W_TEXTURE) ? rcOn : rcOff);
-	ConsoleWnd_Resize((g_qeglobals.d_nInspectorMode == W_CONSOLE) ? rcOn : rcOff);
+//	EntWnd_Resize((g_qeglobals.d_nInspectorMode == W_ENTITY) ? rcOn : rcOff);
+	//TexWnd_Resize((g_qeglobals.d_nInspectorMode == W_TEXTURE) ? rcOn : rcOff);
+	//ConsoleWnd_Resize((g_qeglobals.d_nInspectorMode == W_CONSOLE) ? rcOn : rcOff);
 
 	//RedrawWindow(g_qeglobals.d_hwndInspector, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
@@ -196,7 +249,7 @@ BOOL CALLBACK InspWndProc(
 	{
 	case WM_GETMINMAXINFO:
 	{
-		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;;
+		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
 		lpmmi->ptMinTrackSize.x = 320;
 		lpmmi->ptMinTrackSize.y = 480; // 500
 	}
@@ -209,12 +262,12 @@ BOOL CALLBACK InspWndProc(
 
 		// sikk---> Window Management
 	case WM_SIZING:
-		if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 300))
+		//if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 300))
 			return TRUE;
 		break;
 
 	case WM_MOVING:
-		if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 0))
+		//if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 0))
 			return TRUE;
 		break;
 		// <---sikk
@@ -240,7 +293,7 @@ BOOL CALLBACK InspWndProc(
 ConsoleWnd_Create
 ================
 */
-void ConsoleWnd_Create(HINSTANCE hInstance)
+void ConsoleWnd_Create()
 {
 	g_qeglobals.d_hwndConsole = CreateWindowEx(WS_EX_CLIENTEDGE,
 		"RichEdit",
