@@ -4,6 +4,9 @@
 
 #include "qe3.h"
 #include <algorithm>
+#include "CmdAddRemove.h"
+#include "CmdHollow.h"
+#include "CmdMerge.h"
 
 /*
 ====================

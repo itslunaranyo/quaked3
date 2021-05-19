@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdBrushClip.h"
 
 CmdBrushClip::CmdBrushClip() : side(CLIP_FRONT), pointsSet(false), Command("Brush Clip")
 {

@@ -5,6 +5,9 @@
 #ifndef __COMMAND_CLONE_H__
 #define __COMMAND_CLONE_H__
 
+#include "Command.h"
+#include "CmdAddRemove.h"
+
 class CmdClone : public Command
 {
 public:

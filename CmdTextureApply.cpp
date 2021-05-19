@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdTextureApply.h"
 
 CmdTextureApply::CmdTextureApply() : Command("Apply Texture")
 {

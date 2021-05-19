@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdCone.h"
 
 CmdCone::CmdCone() : sides(0), target(nullptr), axis(2), Command("Make Cone") {}
 CmdCone::~CmdCone() {}

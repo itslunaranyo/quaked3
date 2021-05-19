@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdSetSpawnflag.h"
 
 CmdSetSpawnflag::CmdSetSpawnflag(int flag, bool val) : newval(val), Command("Set Spawnflag")
 {

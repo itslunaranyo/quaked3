@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdTextureMod.h"
 
 CmdTextureMod::CmdTextureMod() : action(TM_NOTSET), Command("Modify Texture")
 {

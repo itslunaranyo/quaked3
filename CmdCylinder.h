@@ -5,6 +5,10 @@
 #ifndef __COMMAND_CYLINDER_H__
 #define __COMMAND_CYLINDER_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdBrushMod.h"
+
 class CmdCylinder : public Command
 {
 public:

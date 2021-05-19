@@ -33,7 +33,7 @@ public:
 	~Face();
 
 	Face		*fnext;
-	Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
+	//Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
 	Brush		*owner;		// sikk - brush of selected face
 	winding_t	*face_winding;
 	Plane		plane;
@@ -53,6 +53,7 @@ public:
 	inline void MakePlane() { plane.Make(); }
 
 	void	FitTexture(float fHeight, float fWidth);
+	void	Transform(mat4 mat, bool bTexLock);
 	void	MoveTexture(const vec3 delta);
 	void	ColorAndTexture();
 	void	SetTexture(TexDef *texdef, unsigned flags);

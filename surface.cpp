@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdTextureApply.h"
 
 //============================================================
 //
@@ -385,9 +386,6 @@ void RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin)
 	vec3	vNormal;
 	Plane	normal2;
 
-	p1[0] = p1[1] = p1[2] = 0;
-	p2 = p1;
-	p3 = p1;
 	rota = p1;
 	ComputeAbsolute(f, p1, p2, p3);
 
@@ -396,13 +394,9 @@ void RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin)
 	VectorRotate2(p2, rota, vOrigin, p2);
 	VectorRotate2(p3, rota, vOrigin, p3);
 
-	vNormal[0] = f->plane.normal[0];
-	vNormal[1] = f->plane.normal[1];
-	vNormal[2] = f->plane.normal[2];
+	vNormal = f->plane.normal;
 	VectorRotate(vNormal, rota, vNormal);
-	normal2.normal[0] = vNormal[0];
-	normal2.normal[1] = vNormal[1];
-	normal2.normal[2] = vNormal[2];
+	normal2.normal = vNormal;
 	AbsoluteToLocal(normal2, f, p1, p2, p3);
 }
 

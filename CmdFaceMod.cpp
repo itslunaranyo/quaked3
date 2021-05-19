@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdFaceMod.h"
 #include <algorithm>
 
 CmdFaceMod::CmdFaceMod() : Command("Face Mod")

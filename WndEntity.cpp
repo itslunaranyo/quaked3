@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdSetSpawnflag.h"
 
 #define DLGBORDER_X		4
 #define DLGBORDER_Y		4

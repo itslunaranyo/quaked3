@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdTranslate.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 
@@ -55,33 +56,33 @@ void CmdTranslate::Translate(vec3 tr, const bool relative)
 		trans = tr;
 	}
 
+	mat = glm::translate(mat4(1), trans);
+
 	if (!textureLock && !postDrag)
 	{
 		if (tMod == vec3(0))
 			return;
-		if (cmdFM.state != LIVE)
+		if (cmdFM.state != LIVE && brMoved.size())
 			doFM = true;
+		mat4 matmod = glm::translate(mat4(1), tMod);
 		for (auto brIt = brMoved.begin(); brIt != brMoved.end(); ++brIt)
 		{
 			if (doFM)
 				cmdFM.ModifyFaces((*brIt)->faces);
-			(*brIt)->Move(tMod, false);
+			(*brIt)->Transform(matmod, false);
 		}
 		for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 		{
-			(*eIt)->Move(tMod);
+			(*eIt)->Transform(matmod);
 		}
 	}
-	if (trans == vec3(0, 0, 0))
-		state = NOOP;
-	//mat = glm::translate(glm::mat4(1), trans);
 }
 
 //==============================
 
 void CmdTranslate::Do_Impl()
 {
-	if (trans == vec3(0, 0, 0) || state == NOOP)
+	if (trans == vec3(0))
 	{
 		state = NOOP;
 		return;
@@ -91,38 +92,39 @@ void CmdTranslate::Do_Impl()
 		for (auto brIt = brMoved.begin(); brIt != brMoved.end(); ++brIt)
 		{
 			cmdFM.ModifyFaces((*brIt)->faces);
-			(*brIt)->Move(trans, textureLock);
+			(*brIt)->Transform(mat, textureLock);
 		}
 		for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 		{
-			(*eIt)->Move(trans);
+			(*eIt)->Transform(mat);
 		}
 	}
 
-	//mat = glm::translate(glm::mat4(1), -trans);
-	cmdFM.Do();
+	if (brMoved.size())
+		cmdFM.Do();
 }
 
 void CmdTranslate::Undo_Impl()
 {
+	mat4 matinv = glm::inverse(mat);
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 	{
-		(*eIt)->Move(-trans);
+		(*eIt)->Transform(matinv);
 	}
 
-	//mat = glm::translate(glm::mat4(1), trans);
-	cmdFM.Undo();
+	if (brMoved.size())
+		cmdFM.Undo();
 }
 
 void CmdTranslate::Redo_Impl()
 {
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 	{
-		(*eIt)->Move(trans);
+		(*eIt)->Transform(mat);
 	}
 
-	//mat = glm::translate(glm::mat4(1), -trans);
-	cmdFM.Redo();
+	if (brMoved.size())
+		cmdFM.Redo();
 }
 
 void CmdTranslate::Sel_Impl()

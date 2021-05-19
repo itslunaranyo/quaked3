@@ -10,58 +10,10 @@
 qeglobals_t  g_qeglobals;
 
 
-GeoTool *g_gt = nullptr;
 // it can test aaanything you want
 void QE_TestSomething()
 {
-	if (!g_gt)
-		g_gt = new GeoTool(GeoTool::GT_VERTEX);
-	else
-	{
-		delete g_gt;
-		g_gt = nullptr;
-	}
-	/*
-	static int testycool = 0;
-	CmdGeoMod *cmdGM;
-	cmdGM = new CmdGeoMod();
-	std::vector<vec3> pts;
-	cmdGM->SetBrushes(&g_brSelectedBrushes);
-	if (testycool == 0)
-	{
-//		pts.push_back(vec3(0, 0, 0));
-//		pts.push_back(vec3(0, 64, 0));
-		int i = 0;
-		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
-			cmdGM->SetPoint(br, br->faces->face_winding->points[0].point);
 
-		if (!cmdGM->Translate(vec3(-16, 0, 16)))
-			Sys_Printf("NOPE\n");
-		//testycool++;
-	}
-	else if (testycool == 1)
-	{
-		pts.push_back(vec3(-16, 32, -16));
-		pts.push_back(vec3(-16, 96, -16));
-		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
-			cmdGM->SetPoints(br, pts);
-
-		if (!cmdGM->Translate(vec3(16, -32, 0)))
-			Sys_Printf("NOPE\n");
-	//	testycool++;
-	}
-	else if (testycool == 2)
-	{
-		pts.push_back(vec3(0, 16, 0));
-		pts.push_back(vec3(0, 80, 0));
-		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
-			cmdGM->SetPoints(br, pts);
-
-		if (!cmdGM->Translate(vec3(0, -32, 0)))
-			Sys_Printf("NOPE\n");
-	}
-	g_cmdQueue.Complete(cmdGM);
-	*/
 }
 
 
@@ -90,13 +42,54 @@ vec3 pointOnGrid(const vec3 point)
 {
 	vec3 out;
 	out = glm::round(point / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
-	/*
+
+	return out;
+}
+
+
+/*
+==============
+AxializeVector
+lunaran: matches function of TextureAxisFromPlane now, used to fail on diagonal cases
+==============
+*/
+vec3 AxializeVector(const vec3 &v)
+{
+	vec3	out;
+
+	out = AxisForVector(v);
+
 	for (int i = 0; i < 3; i++)
 	{
-		out[i] = qround(point[i], g_qeglobals.d_nGridSize);
+		out[i] = fabs(v[i]) * out[i];
 	}
-	*/
 	return out;
+}
+
+/*
+==============
+AxisForVector
+==============
+*/
+vec3 AxisForVector(const vec3 &v)
+{
+	int		i, bestaxis;
+	float	dot, best;
+
+	best = 0;
+	bestaxis = 0;
+
+	for (i = 0; i < 6; i++)
+	{
+		dot = DotProduct(v, g_v3BaseAxis[i * 3]);
+		if (dot > best)
+		{
+			best = dot;
+			bestaxis = i;
+		}
+	}
+
+	return g_v3BaseAxis[bestaxis * 3];
 }
 
 /*
@@ -875,15 +868,29 @@ void QE_UpdateCommandUI ()
 //===================================
 // Selection Menu
 //===================================
-	// Clipper Mode
-	CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (g_qeglobals.d_clipTool ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (g_qeglobals.d_clipTool ? (LPARAM)TRUE : (LPARAM)FALSE));
-	// Drag Edge Mode 
-	CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge) ? MF_CHECKED : MF_UNCHECKED);
-	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge ? (LPARAM)TRUE : (LPARAM)FALSE));
-	// Drag Vertex Mode 
-	CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, (g_qeglobals.d_selSelectMode == sel_vertex) ? MF_CHECKED : MF_UNCHECKED);
-	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (g_qeglobals.d_selSelectMode == sel_vertex ? (LPARAM)TRUE : (LPARAM)FALSE));
+	{
+		bool modeCheck;
+
+		// Clipper Mode
+		modeCheck = (dynamic_cast<ClipTool*>(Tool::ModalTool()) != nullptr);
+		CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (modeCheck ? MF_CHECKED : MF_UNCHECKED));
+		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+
+		// Drag Edge Mode 
+		GeoTool* gt;
+		gt = dynamic_cast<GeoTool*>(Tool::ModalTool());
+		modeCheck = (gt && (gt->mode & GeoTool::GT_EDGE));
+		CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+
+		// Drag Vertex Mode 
+		modeCheck = (gt && (gt->mode & GeoTool::GT_VERTEX));
+		CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+
+		// TODO: add a button for drag face mode also
+	}
+
 	// Scale Lock X
 	CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? MF_CHECKED : MF_UNCHECKED));
 	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? (LPARAM)TRUE : (LPARAM)FALSE));

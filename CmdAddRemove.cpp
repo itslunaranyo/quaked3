@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdAddRemove.h"
 #include <algorithm>
 
 // brush entities are always delinked (even if 100% of the brushes in an entity

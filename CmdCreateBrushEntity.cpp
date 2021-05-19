@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdCreateBrushEntity.h"
 
 CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Create Brush Entity")
 {

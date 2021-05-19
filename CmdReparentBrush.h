@@ -5,6 +5,9 @@
 #ifndef __COMMAND_REPARENT_BRUSH_H__
 #define __COMMAND_REPARENT_BRUSH_H__
 
+#include "qe3.h"
+#include "Command.h"
+
 class CmdReparentBrush : public Command
 {
 public:

@@ -5,6 +5,8 @@
 #ifndef __COMMAND_BRUSHMOD_H__
 #define __COMMAND_BRUSHMOD_H__
 
+#include "Command.h"
+
 /*
 ========================================================================
 

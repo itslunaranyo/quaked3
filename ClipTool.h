@@ -7,6 +7,8 @@
 
 // 3-Point Clipping Tool
 
+class CmdBrushClip;
+
 class ClipTool : public Tool
 {
 public:

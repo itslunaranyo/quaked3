@@ -5,6 +5,10 @@
 #ifndef __COMMAND_IMPORT_MAP_H__
 #define __COMMAND_IMPORT_MAP_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdAddRemove.h"
+
 class CmdImportMap : public Command
 {
 public:

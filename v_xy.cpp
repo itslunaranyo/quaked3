@@ -349,6 +349,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 
 	// LMB = manipulate selection
 	// Shift+LMB = select
+	/*
 	if (buttonstate & MK_LBUTTON)
 	{
 // sikk---> Quick Move Selection (Ctrl+Alt+LMB)
@@ -382,7 +383,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		}
 		return;
 	}
-
+	*/
 	if (buttonstate & MK_MBUTTON)
 	{
 		// Ctrl+MMB = move camera
@@ -396,6 +397,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		// MMB = angle camera
 		else if (buttonstate == MK_MBUTTON)
 		{
+			/*
 			// sikk---> Free Rotate: Pivot Icon
 			if (GetKeyState(VK_MENU) < 0)
 			{
@@ -406,7 +408,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			}
 			// <---sikk
 			else
-			{
+			{*/
 				point = point - g_qeglobals.d_vCamera.origin;
 
 				nAngle = (dViewType == XY) ? YAW : PITCH;
@@ -417,7 +419,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 					g_qeglobals.d_vCamera.BoundAngles();
 					Sys_UpdateWindows(W_XY|W_CAMERA);
 				}
-			}
+			//}
 			return;
 		}
 		// Shift+MMB = move z checker
@@ -455,7 +457,7 @@ XYZView::MouseUp
 */
 void XYZView::MouseUp (int x, int y, int buttons)
 {
-	Drag_MouseUp();
+//	Drag_MouseUp();
 
 	if (!press_selection)
 		Sys_UpdateWindows(W_SCENE);
@@ -510,14 +512,14 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 	if (!buttonstate)
 		return;
-
+	/*
 	// LMB without selection = drag new brush
 	if (buttonstate == MK_LBUTTON && !press_selection)
 	{
 	//	DragNewBrush(x, y);
 
 		// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
-		g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
+		//g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 		return;
 	}
 
@@ -525,15 +527,15 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	// with selection = drag selection
 	if (buttonstate & MK_LBUTTON)
 	{
-		Drag_MouseMoved(x, y, buttons);
+	//	Drag_MouseMoved(x, y, buttons);
 		
 		// update g_v3RotateOrigin to new brush
-		g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
+		//g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
-
+	*/
 	// Ctrl+MMB = move camera
 	if (buttonstate == (MK_CONTROL | MK_MBUTTON))
 	{
@@ -558,6 +560,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	// MMB = angle camera
 	if (buttonstate == MK_MBUTTON)
 	{
+		/*
 // sikk---> Free Rotate: Pivot Icon
 		// Alt+MMB = move free rotate pivot icon
 		if (GetKeyState(VK_MENU) < 0)
@@ -570,7 +573,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		}
 // <---sikk
 		else
-		{
+		{*/
 			SnapToPoint( x, y, point);
 			point = point - g_qeglobals.d_vCamera.origin;
 
@@ -582,7 +585,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 				g_qeglobals.d_vCamera.BoundAngles();
 				Sys_UpdateWindows(W_XY | W_CAMERA);
 			}
-		}
+		//}
 		return;
 	}
 
@@ -1236,6 +1239,7 @@ XYZView::DrawRotateIcon
 */
 void XYZView::DrawRotateIcon ()
 {
+	/*
 	float x, y;
 
 	if (dViewType == XY)
@@ -1273,6 +1277,7 @@ void XYZView::DrawRotateIcon ()
 	glBegin(GL_POINTS);
 	glVertex3f(x, y, 0);
 	glEnd();
+	*/
 }
 // <---sikk
 
@@ -1615,7 +1620,7 @@ void XYZView::Draw ()
     Brush	*brush;
 	Entity	*e;
 	double	start, end;
-	int		i;
+	//int		i;
 	vec3	mins, maxs;
 
 	if (!g_map.brActive.next)
@@ -1683,70 +1688,12 @@ void XYZView::Draw ()
 	// draw pointfile
 	if (g_qeglobals.d_nPointfileDisplayList)
 		glCallList(g_qeglobals.d_nPointfileDisplayList);
-
-	/*
-	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
-				 g_qeglobals.d_v3SelectTranslate[1], 
-				 g_qeglobals.d_v3SelectTranslate[2]);
-
-	if (g_bRotateCheck)	// sikk - Free Rotate
-		glColor3f(0.8f, 0.1f, 0.9f);
-	else if (g_bScaleCheck)	// sikk - Free Scaling
-		glColor3f(0.1f, 0.8f, 0.1f);
-	else
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].r);
-	if (!g_qeglobals.d_savedinfo.bNoStipple)
-		glEnable(GL_LINE_STIPPLE);
-	glLineStipple(3, 0xaaaa);
-	glLineWidth(2);
-	*/
-
+	
 	if (!DrawTools())
 		DrawSelection();
-
-	// edge / vertex flags
-	if (g_qeglobals.d_selSelectMode == sel_vertex)
-	{
-		glPointSize(4);
-		glColor3f(0, 1, 0);
-		glBegin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_nNumPoints; i++)
-			glVertex3fv(&g_qeglobals.d_v3Points[i].x);
-		glEnd();
-		glPointSize(1);
-	}
-	else if (g_qeglobals.d_selSelectMode == sel_edge)
-	{
-		float	*v1, *v2;
-
-		glPointSize(4);
-		glColor3f(0, 0, 1);
-		glBegin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_nNumEdges; i++)
-		{
-			v1 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p1].x;
-			v2 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p2].x;
-			glVertex3f((v1[0] + v2[0]) * 0.5, 
-				       (v1[1] + v2[1]) * 0.5, 
-					   (v1[2] + v2[2]) * 0.5);
-		}
-		glEnd();
-		glPointSize(1);
-	}
-
-	/*
-	glTranslatef(-g_qeglobals.d_v3SelectTranslate[0], 
-		         -g_qeglobals.d_v3SelectTranslate[1], 
-				 -g_qeglobals.d_v3SelectTranslate[2]);
-	*/
-
+	
 	if (!(dViewType == XY))
 		glPopMatrix();
-
-	/*
-	if (GetKeyState(VK_MENU) < 0)
-		DrawRotateIcon();
-	*/
 
 	// now draw camera point
 	DrawCameraIcon();

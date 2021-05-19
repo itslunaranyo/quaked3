@@ -3,6 +3,8 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdCreateBrushEntity.h"
+#include "CmdCreatePointEntity.h"
 #include "io.h"
 
 int g_nEntityId = 0;	// sikk - Undo/Redo
@@ -674,9 +676,10 @@ void Entity::Move(const vec3 trans)
 	SetOriginFromMember();
 }
 
-void Entity::Transform(glm::mat4 mat)
+void Entity::Transform(mat4 mat)
 {
 	origin = mat * glm::vec4(origin, 1);
+	origin = glm::round(origin);
 	SetOriginFromMember();
 }
 

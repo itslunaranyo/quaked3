@@ -5,6 +5,9 @@
 #ifndef __COMMAND_SET_KEYVALUE_H__
 #define __COMMAND_SET_KEYVALUE_H__
 
+#include "qe3.h"
+#include "Command.h"
+
 class CmdSetKeyvalue : public Command
 {
 public:

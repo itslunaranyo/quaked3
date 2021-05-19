@@ -99,6 +99,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 	vright[1] = 0; 
 	vright[2] = 0;
 
+	/*
 	// LBUTTON = manipulate selection
 	// shift-LBUTTON = select
 	// middle button = grab texture
@@ -112,7 +113,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 		Drag_Begin(x, y, buttons, vright, vup, org, dir);
 		return;
 	}
-
+	*/
 	// control mbutton = move camera
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) || 
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
@@ -129,7 +130,7 @@ Z_MouseUp
 */
 void ZView::MouseUp(int x, int y, int buttons) 
 {
-	Drag_MouseUp();
+	//Drag_MouseUp();
 }
 
 /*
@@ -155,7 +156,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 
 	if (buttons == MK_LBUTTON)
 	{
-		Drag_MouseMoved(x, y, buttons);
+	//	Drag_MouseMoved(x, y, buttons);
 		Sys_UpdateWindows(W_Z | W_CAMERA);
 		return;
 	}

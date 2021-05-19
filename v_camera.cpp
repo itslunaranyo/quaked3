@@ -432,6 +432,7 @@ void CameraView::MouseDown (int x, int y, int buttons)
 	// middle button = grab texture
 	// ctrl-middle button = set entire brush to texture
 	// ctrl-shift-middle button = set single face to texture
+	/*
 	if ((buttons == MK_LBUTTON)	|| 
 		(buttons == (MK_LBUTTON | MK_SHIFT)) || 
 		(buttons == (MK_LBUTTON | MK_CONTROL)) || 
@@ -444,6 +445,7 @@ void CameraView::MouseDown (int x, int y, int buttons)
 		Drag_Begin(x, y, buttons, vright, vup, origin, dir);
 		return;
 	}
+	*/
 }
 
 /*
@@ -453,7 +455,7 @@ CameraView::MouseUp
 */
 void CameraView::MouseUp (int x, int y, int buttons)
 {
-	Drag_MouseUp();
+	//Drag_MouseUp();
 	Sys_UpdateWindows(W_SCENE);
 	nCamButtonState = 0;
 }
@@ -566,7 +568,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		else
 		{
 			Sys_GetCursorPos(&cursorX, &cursorY);
-			Drag_MouseMoved(x, y, buttons);
+			//Drag_MouseMoved(x, y, buttons);
 			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		}
 	}
@@ -818,7 +820,7 @@ CameraView::Draw
 */
 void CameraView::Draw ()
 {
-	int		i, bound;
+	int		bound;
 	double	start, end;
 	float	screenaspect;
 	float	yfov;
@@ -983,35 +985,6 @@ void CameraView::Draw ()
 	DrawActive();
 	if (!DrawTools())
 		DrawSelected(&g_brSelectedBrushes);
-
-	// draw edge / vertex markers in edge/vert mode
-	// lunaran TODO: move this into a vert/edge tool once it exists
-	if (g_qeglobals.d_selSelectMode == sel_vertex)
-	{
-		glPointSize(4);
-		glColor3f(0, 1, 0);
-		glBegin(GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_nNumPoints; i++)
-			glVertex3fv(&g_qeglobals.d_v3Points[i].x);
-		glEnd();
-		glPointSize(1);
-	}
-	else if (g_qeglobals.d_selSelectMode == sel_edge)
-	{
-		float *v1, *v2;
-
-		glPointSize(4);
-		glColor3f(0, 0, 1);
-		glBegin (GL_POINTS);
-		for (i = 0; i < g_qeglobals.d_nNumEdges; i++)
-		{
-			v1 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p1].x;
-			v2 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p2].x;
-			glVertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
-		}
-		glEnd();
-		glPointSize(1);
-	}
 
 	// ----------------------------------------------------------------
 

@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdCzgCylinder.h"
 
 CmdCzgCylinder::CmdCzgCylinder() : degree(1), target(nullptr), axis(2), Command("Make CZG Cylinder") {}
 CmdCzgCylinder::~CmdCzgCylinder() {}

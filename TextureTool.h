@@ -5,6 +5,8 @@
 #ifndef __TEXTURE_TOOL_H__
 #define __TEXTURE_TOOL_H__
 
+class CmdTextureMod;
+
 class TextureTool :	public Tool
 {
 public:

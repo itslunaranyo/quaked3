@@ -5,6 +5,10 @@
 #ifndef __COMMAND_MERGE_H__
 #define __COMMAND_MERGE_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdAddRemove.h"
+
 class CmdMerge : public Command
 {
 public:

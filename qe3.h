@@ -44,7 +44,6 @@
 #include "face.h"
 #include "brush.h"
 #include "csg.h"
-#include "drag.h"
 #include "entclass.h"
 #include "entity.h"
 #include "map.h"
@@ -53,7 +52,6 @@
 #include "modify.h"
 #include "transform.h"
 #include "surface.h"
-//#include "vertsel.h"
 #include "winding.h"
 
 #include "v_view.h"
@@ -62,9 +60,8 @@
 #include "v_xy.h"
 #include "v_z.h"
 #include "mru.h"
-//#include "undo.h"
 
-#include "commands.h"
+#include "Command.h"
 
 #include "WndView.h"
 #include "WndCamera.h"
@@ -271,6 +268,8 @@ char   *QE_ExpandRelativePath (char *p);
 void	QE_SetInspectorMode(int nType);
 
 vec3	pointOnGrid(const vec3 point);
+vec3	AxisForVector(const vec3 &v);		// TODO: mathlib
+vec3	AxializeVector(const vec3 &v);
 
 // system functions
 void    Sys_UpdateBrushStatusBar ();

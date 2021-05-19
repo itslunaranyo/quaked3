@@ -6,6 +6,7 @@
 #define __COMMAND_SET_SPAWNFLAG_H__
 
 #include "qe3.h"
+#include "Command.h"
 
 class CmdSetSpawnflag : public Command
 {

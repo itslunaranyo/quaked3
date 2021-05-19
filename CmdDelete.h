@@ -5,6 +5,11 @@
 #ifndef __COMMAND_DELETE_H__
 #define __COMMAND_DELETE_H__
 
+#include "Command.h"
+#include "CmdAddRemove.h"
+
+class Brush;
+
 class CmdDelete : public Command
 {
 public:

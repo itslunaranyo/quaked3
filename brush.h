@@ -35,8 +35,8 @@ public:
 	Brush	*Clone() const;
 	//Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	ClearFaces();
-	void	Move(const vec3 move, const bool texturelock);
-	void	Transform(const glm::mat4 mat, const bool textureLock);
+	//void	Move(const vec3 move, const bool texturelock);
+	void	Transform(const mat4 mat, const bool textureLock);
 	void	RefreshFlags();
 
 	bool	FullBuild();	// lunaran: full refreshes texture pointers/flags, regular is just windings
@@ -52,21 +52,15 @@ public:
 	void	RefreshTexdefs();
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
-	void	SelectFaceForDragging(Face *f, bool shear);
-	void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
+	//void	SelectFaceForDragging(Face *f, bool shear);
+	//void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
 	bool	PointTest(const vec3 origin);
 	vec3	Center() { return (maxs + mins) * 0.5f; }
 
 	// sikk---> Vertex Editing Splits Face
-	bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);
-	void	ResetFaceOriginals();
+	//bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);
+	//void	ResetFaceOriginals();
 	// <---sikk
-
-	// TODO: make not static; these all start with a single brush anyway
-	static void MakeCzgCylinder(int degree);
-	static void	MakeSided (int sides);
-	static void	MakeSidedCone (int sides);	// sikk - Brush Primitves
-	static void	MakeSidedSphere (int sides);	// sikk - Brush Primitves
 
 	// TODO: promote brushlist to its own container class
 	void	RemoveFromList();

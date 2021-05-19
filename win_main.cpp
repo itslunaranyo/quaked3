@@ -1661,36 +1661,10 @@ LONG WINAPI CommandHandler (
 		case ID_SELECTION_DRAGEDGES:
 			GeoTool::ToggleMode(GeoTool::GT_EDGE);
 			Sys_UpdateWindows(W_XY | W_CAMERA);
-			/*
-			if (g_qeglobals.d_selSelectMode == sel_edge)
-			{
-				g_qeglobals.d_selSelectMode = sel_brush;
-				Sys_UpdateWindows(W_XY|W_CAMERA);
-			}
-			else
-			{
-				SetupVertexSelection();
-				if (g_qeglobals.d_nNumPoints)
-					g_qeglobals.d_selSelectMode = sel_edge;
-			}
-			*/
 			break;
 		case ID_SELECTION_DRAGVERTICES:
 			GeoTool::ToggleMode(GeoTool::GT_VERTEX);
 			Sys_UpdateWindows(W_XY | W_CAMERA);
-			/*
-			if (g_qeglobals.d_selSelectMode == sel_vertex)
-			{
-				g_qeglobals.d_selSelectMode = sel_brush;
-				Sys_UpdateWindows(W_XY | W_CAMERA);
-			}
-			else
-			{
-				SetupVertexSelection();
-				if (g_qeglobals.d_nNumPoints)
-					g_qeglobals.d_selSelectMode = sel_vertex;
-			}
-			*/
 			break;
 		case ID_SELECTION_DRAGFACES:
 			GeoTool::ToggleMode(GeoTool::GT_FACE);
@@ -2220,10 +2194,10 @@ LONG WINAPI CommandHandler (
 			break;
 // <---sikk
 		case ID_PRIMITIVES_CZGCYLINDER1:
-			Brush::MakeCzgCylinder(1);
+			Modify_MakeCzgCylinder(1);
 			break;
 		case ID_PRIMITIVES_CZGCYLINDER2:
-			Brush::MakeCzgCylinder(2);
+			Modify_MakeCzgCylinder(2);
 			break;
 
 
@@ -2666,6 +2640,40 @@ void WMain_Create ()
 
 	ShowWindow(g_qeglobals.d_hwndMain, SW_SHOWMAXIMIZED);	// sikk - changed from "SW_SHOWDEFAULT" (personal preference)
 }
+
+// sikk---> Quickly made Splash Screen
+clock_t	g_clSplashTimer;
+
+/*
+============
+SplashDlgProc
+============
+*/
+BOOL CALLBACK SplashDlgProc(
+	HWND	hwndDlg,// handle to dialog box
+	UINT	uMsg,	// message
+	WPARAM	wParam,	// first message parameter
+	LPARAM	lParam 	// second message parameter
+	)
+{
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		ShowWindow(hwndDlg, SW_SHOW);
+		InvalidateRect(hwndDlg, NULL, FALSE);
+		UpdateWindow(hwndDlg);
+		g_clSplashTimer = clock();
+		return FALSE;
+
+	case WM_LBUTTONDOWN:
+		DestroyWindow(hwndDlg);
+		return 0;
+	}
+	return 0;
+}
+// <---sikk
+
 
 /*
 ==================

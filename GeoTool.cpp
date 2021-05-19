@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdGeoMod.h"
 #include <algorithm>
 
 GeoTool::GeoTool(gt_mode_t gtm) :

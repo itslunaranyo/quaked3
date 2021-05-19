@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdGeoMod.h"
 #include <algorithm>
 
 /*
@@ -611,6 +612,7 @@ bool CmdGeoMod::Polygon::Resolve()
 			}
 		}
 		else break;	// polygon solved, we're done
+		i++;
 	}
 
 	if (i == (int)mesh->polies.size())

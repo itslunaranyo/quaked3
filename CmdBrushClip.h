@@ -5,6 +5,8 @@
 #ifndef __COMMAND_BRUSH_CLIP_H__
 #define __COMMAND_BRUSH_CLIP_H__
 
+#include "Command.h"
+#include "CmdAddRemove.h"
 
 class CmdBrushClip : public Command
 {

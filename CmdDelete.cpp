@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdDelete.h"
 
 CmdDelete::CmdDelete(Brush* brList) : Command("Delete")
 {

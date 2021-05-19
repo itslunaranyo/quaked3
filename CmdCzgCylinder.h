@@ -5,6 +5,11 @@
 #ifndef __COMMAND_CZG_CYLINDER_H__
 #define __COMMAND_CZG_CYLINDER_H__
 
+#include "Command.h"
+#include "CmdBrushMod.h"
+
+class Brush;
+
 class CmdCzgCylinder : public Command
 {
 public:

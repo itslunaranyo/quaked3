@@ -5,8 +5,8 @@
 #ifndef __COMMAND_CREATE_POINT_ENTITY_H__
 #define __COMMAND_CREATE_POINT_ENTITY_H__
 
-class Entity;
-class EntClass;
+#include "qe3.h"
+#include "Command.h"
 
 class CmdCreatePointEntity : public Command
 {

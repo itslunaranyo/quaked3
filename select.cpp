@@ -5,10 +5,7 @@
 #include "qe3.h"
 
 Brush	g_brSelectedBrushes;	// highlighted
-//Face	*g_vfSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
-//int	g_nSelFaceCount;
 bool	g_bSelectionChanged;
-
 std::vector<Face*> Selection::faces;
 
 void Selection::Changed() { g_bSelectionChanged = true;  }
@@ -75,6 +72,14 @@ bool Selection::OnlyPointEntities()
 {
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		if (b->owner->IsBrush())
+			return false;
+
+	return true;
+}
+bool Selection::OnlyBrushEntities()
+{
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		if (b->owner->IsPoint())
 			return false;
 
 	return true;
@@ -763,9 +768,10 @@ vec3 Selection::GetMid()
 	GetBounds(mins, maxs);
 
 	// lunaran: don't snap the midpoint to the grid, snap the bounds first so selections don't wander when rotated
-	mins = pointOnGrid(mins);
-	maxs = pointOnGrid(maxs);
-	mid = (mins + maxs) * 0.5f;
+	// ... this didn't help
+	mins = glm::floor(mins / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
+	maxs = glm::ceil(maxs / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
+	mid = glm::round(((mins + maxs) * 0.5f) / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
 
 	return mid;
 }

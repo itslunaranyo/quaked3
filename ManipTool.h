@@ -8,6 +8,10 @@
 // General Manipulation Tool
 // translates, plane slides, new brush draws, quick skews
 
+class CmdGeoMod;
+class CmdPlaneShift;
+class CmdTranslate;
+
 class ManipTool : public Tool
 {
 public:

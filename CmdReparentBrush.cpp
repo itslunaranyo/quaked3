@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdReparentBrush.h"
 
 CmdReparentBrush::CmdReparentBrush() : newowner(nullptr), Command("Reparent Brush") {}
 

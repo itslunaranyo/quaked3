@@ -5,6 +5,8 @@
 #ifndef __COMMAND_ADDREMOVE_H__
 #define __COMMAND_ADDREMOVE_H__
 
+#include "Command.h"
+
 /*
 ========================================================================
 

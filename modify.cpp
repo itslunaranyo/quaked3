@@ -4,6 +4,15 @@
 
 #include "qe3.h"
 
+#include "CmdDelete.h"
+#include "CmdReparentBrush.h"
+#include "CmdClone.h"
+#include "CmdSetKeyvalue.h"
+#include "CmdCylinder.h"
+#include "CmdCZGCylinder.h"
+#include "CmdCone.h"
+#include "CmdSphere.h"
+
 
 
 /*
@@ -144,6 +153,7 @@ void Modify_InsertBrush()
 // <---sikk
 
 
+//=========================================================================
 
 /*
 ===============
@@ -195,6 +205,10 @@ void Modify_ShowHidden()
 
 	Sys_UpdateWindows(W_SCENE);
 }
+
+
+//=========================================================================
+
 
 /*
 ===============
@@ -314,4 +328,140 @@ void Modify_SetColor(const vec3 color)
 	VecToString(color, szColor);
 	Modify_SetKeyValue("_color", szColor);
 }
+
+
+//=========================================================================
+
+
+/*
+=============
+Modify_MakeCzgCylinder
+
+Makes the current brush into a czg-pattern cylinder because czg is the best
+=============
+*/
+void Modify_MakeCzgCylinder(int degree)
+{
+	int axis;
+	Brush* b;
+
+	if (!QE_SingleBrush())
+	{
+		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		return;
+	}
+
+	// lunaran - grid view reunification
+	axis = QE_BestViewAxis();
+
+	b = g_brSelectedBrushes.next;
+	CmdCzgCylinder *cmdCzgC = new CmdCzgCylinder();
+
+	cmdCzgC->SetAxis(axis);
+	cmdCzgC->SetDegree(degree);
+	cmdCzgC->UseBrush(b);
+
+	g_cmdQueue.Complete(cmdCzgC);
+
+	Sys_UpdateWindows(W_SCENE);
+}
+
+
+/*
+=============
+Modify_MakeSided
+
+Makes the current brush have the given number of 2d sides
+=============
+*/
+void Modify_MakeSided(int sides)
+{
+	int axis;
+	Brush* b;
+
+	if (!QE_SingleBrush())
+	{
+		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		return;
+	}
+
+	// lunaran - grid view reunification
+	axis = QE_BestViewAxis();
+
+	b = g_brSelectedBrushes.next;
+	CmdCylinder	*cmdCyl = new CmdCylinder();
+
+	cmdCyl->SetAxis(axis);
+	cmdCyl->SetSides(sides);
+	cmdCyl->UseBrush(b);
+
+	g_cmdQueue.Complete(cmdCyl);
+
+	Sys_UpdateWindows(W_SCENE);
+}
+
+
+// sikk---> Brush Primitives
+/*
+=============
+Modify_MakeSidedCone
+
+Makes the current brush have the given number of 2D sides and turns it into a cone
+=============
+*/
+void Modify_MakeSidedCone(int sides)
+{
+	int axis;
+	Brush* b;
+
+	if (!QE_SingleBrush())
+	{
+		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		return;
+	}
+
+	// lunaran - grid view reunification
+	axis = QE_BestViewAxis();
+
+	b = g_brSelectedBrushes.next;
+	CmdCone	*cmdCone = new CmdCone();
+
+	cmdCone->SetAxis(axis);
+	cmdCone->SetSides(sides);
+	cmdCone->UseBrush(b);
+
+	g_cmdQueue.Complete(cmdCone);
+
+	Sys_UpdateWindows(W_SCENE);
+}
+
+/*
+=============
+Modify_MakeSidedSphere
+
+Makes the current brush have the given number of 2d sides and turns it into a sphere
+=============
+*/
+void Modify_MakeSidedSphere(int sides)
+{
+	Brush* b;
+
+	if (!QE_SingleBrush())
+	{
+		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		return;
+	}
+
+	b = g_brSelectedBrushes.next;
+	CmdSphere *cmdSph = new CmdSphere();
+
+	cmdSph->SetSides(sides);
+	cmdSph->UseBrush(b);
+
+	g_cmdQueue.Complete(cmdSph);
+
+	Sys_UpdateWindows(W_SCENE);
+
+}
+// <---sikk
 

@@ -4,6 +4,9 @@
 
 #include "qe3.h"
 #include "TextureTool.h"
+#include "CmdTextureApply.h"
+#include "CmdTextureFit.h"
+#include "CmdTextureMod.h"
 
 // 400ms debounce time for adding a new texmod cmd to the undo queue vs reusing the last one
 #define TEXCMD_COMBINE_TIME		(CLOCKS_PER_SEC * 0.4f)

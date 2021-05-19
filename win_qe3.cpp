@@ -687,36 +687,3 @@ UINT GetMouseWheelMsg ()
 // <---sikk
 */
 
-// sikk---> Quickly made Splash Screen
-clock_t	g_clSplashTimer;
-
-/*
-============
-SplashDlgProc
-============
-*/
-BOOL CALLBACK SplashDlgProc (
-    HWND	hwndDlg,// handle to dialog box
-    UINT	uMsg,	// message
-    WPARAM	wParam,	// first message parameter
-    LPARAM	lParam 	// second message parameter
-   )
-{
-
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
-		ShowWindow(hwndDlg, SW_SHOW);
-		InvalidateRect(hwndDlg, NULL, FALSE);
-		UpdateWindow(hwndDlg);
-		g_clSplashTimer = clock();
-		return FALSE;
-
-	case WM_LBUTTONDOWN:
-		DestroyWindow(hwndDlg);
-		return 0;
-	}
-	return 0;
-}
-// <---sikk
-

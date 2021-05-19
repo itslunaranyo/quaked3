@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdMerge.h"
 
 CmdMerge::CmdMerge() : convex(false), Command("CSG Merge")
 {

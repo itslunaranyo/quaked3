@@ -5,6 +5,10 @@
 #ifndef __COMMAND_SPHERE_H__
 #define __COMMAND_SPHERE_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdBrushMod.h"
+
 class CmdSphere : public Command
 {
 public:

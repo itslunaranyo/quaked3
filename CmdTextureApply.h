@@ -5,6 +5,10 @@
 #ifndef __COMMAND_TEXTURE_APPLY_H__
 #define __COMMAND_TEXTURE_APPLY_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdFaceMod.h"
+
 class CmdTextureApply : public Command
 {
 public:

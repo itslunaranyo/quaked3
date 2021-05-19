@@ -35,16 +35,16 @@ public:
 	int			entityId;	// entity ID
 // <---sikk
 
-	bool	IsPoint() const { return (eclass->IsPointClass()); }
-	bool	IsBrush() const { return !(eclass->IsPointClass()); }
-	bool	IsWorld() const { return (eclass == EntClass::worldspawn); }
+	bool		IsPoint() const { return (eclass->IsPointClass()); }
+	bool		IsBrush() const { return !(eclass->IsPointClass()); }
+	bool		IsWorld() const { return (eclass == EntClass::worldspawn); }
 	EntClass	*GetEntClass() const { return eclass; }
 	EPair		*GetFirstEPair() const { return epairs; }
 
-	static bool		Create (EntClass *c);
-	Entity			*Clone();
-	void			LinkBrush (Brush *b);
-	static void		UnlinkBrush (Brush *b);
+	static bool	Create (EntClass *c);
+	Entity		*Clone();
+	void		LinkBrush (Brush *b);
+	static void	UnlinkBrush (Brush *b);
 
 	void	ChangeClassname(EntClass* ec);
 	void	ChangeClassname(const char *classname);
@@ -56,7 +56,7 @@ public:
 	void	SetOriginFromKeyvalue();
 	void	SetOriginFromBrush();
 	void	Move(const vec3 trans);
-	void	Transform(glm::mat4 mat);
+	void	Transform(mat4 mat);
 
 	void	SetSpawnFlag(int flag, bool on);
 

@@ -21,9 +21,7 @@ typedef enum
 {
 	sel_brush,
 	sel_face,
-	sel_component,
-	sel_vertex,
-	sel_edge
+	sel_component
 } select_t;
 
 typedef struct trace_s
@@ -40,13 +38,6 @@ typedef struct trace_s
 extern bool			g_bSelectionChanged;
 extern Brush		g_brSelectedBrushes;
 
-// sikk - Multiple Face Selection
-// lunaran TODO: make this a std vector
-//extern Face		*g_vfSelectedFaces[MAX_MAP_FACES];
-// <-- sikk
-
-extern vec3		g_v3RotateOrigin;	// sikk - Free Rotate
-
 //========================================================================
 
 namespace Selection
@@ -59,6 +50,7 @@ namespace Selection
 	bool	HasBrushes();
 	bool	IsEmpty();
 	bool	OnlyPointEntities();
+	bool	OnlyBrushEntities();
 	int		NumBrushes();
 	int		NumFaces();
 

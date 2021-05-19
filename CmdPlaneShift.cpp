@@ -3,11 +3,10 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdPlaneShift.h"
 
 CmdPlaneShift::CmdPlaneShift() : Command("Plane Shift") {}
 CmdPlaneShift::~CmdPlaneShift() {}
-
-
 
 void CmdPlaneShift::SetFaces(std::vector<Face*> &faceList)
 {

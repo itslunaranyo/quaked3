@@ -5,6 +5,10 @@
 #ifndef __COMMAND_GEO_MOD_H__
 #define __COMMAND_GEO_MOD_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdBrushMod.h"
+
 class CmdGeoMod : public Command
 {
 public:

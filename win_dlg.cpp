@@ -280,6 +280,7 @@ BOOL CALLBACK RotateDlgProc (
 			GetDlgItemText(hwndDlg, IDCANCEL, szCheck, 8);
 			if (strncmp(szCheck, "Close", 5))
 			{
+				// lunaran TODO: rotate once instead of issuing multiple commands for a rotate on more than one axis
 				GetDlgItemText(hwndDlg, IDC_EDIT_ROTX, sz, 255);
 				f = atof(sz);
 				if (f)
@@ -529,16 +530,16 @@ BOOL CALLBACK SidesDlgProc (
 			switch (g_nType)
 			{
 			case (1):
-				Brush::MakeSidedCone(atoi(sz));
+				Modify_MakeSidedCone(atoi(sz));
 				break;
 			case (2):
-				Brush::MakeSidedSphere(atoi(sz));
+				Modify_MakeSidedSphere(atoi(sz));
 				break;
 //			case (3):
 //				Brush_MakeSidedTorus(atoi(sz));
 //				break;
 			default:
-				Brush::MakeSided(atoi(sz));
+				Modify_MakeSided(atoi(sz));
 			}
 // <---sikk
 // sikk--->	For more precision

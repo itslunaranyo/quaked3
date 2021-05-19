@@ -73,5 +73,6 @@ private:
 	std::deque<Command*> undoQueue, redoQueue;
 };
 
+extern CommandQueue g_cmdQueue;
 
 #endif

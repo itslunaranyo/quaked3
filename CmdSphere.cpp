@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdSphere.h"
 
 CmdSphere::CmdSphere() : sides(0), target(nullptr), Command("Make Sphere") {}
 CmdSphere::~CmdSphere() {}

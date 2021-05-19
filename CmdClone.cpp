@@ -3,6 +3,8 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdClone.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 CmdClone::CmdClone(Brush *brList, const vec3 offset) : Command("Clone")
 {
@@ -24,6 +26,8 @@ void CmdClone::Clone(Brush *brList, const vec3 offset)
 
 	for (Brush *b = brList->next; b != brList; b = b->next)
 	{
+		mat4 mat = glm::translate(mat4(1), offset);
+
 		// lunaran TODO: "copy within entity" parameter
 		if (b->owner != laste)		// selections are sorted by entity
 		{
@@ -43,14 +47,14 @@ void CmdClone::Clone(Brush *brList, const vec3 offset)
 
 		if (e->IsPoint())
 		{
-			e->Move(offset);
+			e->Transform(mat);
 		}
 		else
 		{
 			n = b->Clone();
-			n->Build();		// must have geo before the Move() for texture lock
+			n->Build();		// must have geo before the move for texture lock
 			n->owner = e;
-			n->Move(offset, g_qeglobals.d_bTextureLock);
+			n->Transform(mat, g_qeglobals.d_bTextureLock);
 			cmdAR.AddedBrush(n);
 		}
 	}

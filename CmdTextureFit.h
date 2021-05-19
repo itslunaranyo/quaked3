@@ -5,6 +5,10 @@
 #ifndef __COMMAND_TEXTURE_FIT_H__
 #define __COMMAND_TEXTURE_FIT_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdFaceMod.h"
+
 class CmdTextureFit : public Command
 {
 public:

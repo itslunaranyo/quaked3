@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdSetKeyvalue.h"
 
 CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value) : Command("Set Keyvalue")
 {

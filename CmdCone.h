@@ -5,6 +5,9 @@
 #ifndef __COMMAND_CONE_H__
 #define __COMMAND_CONE_H__
 
+#include "Command.h"
+#include "CmdBrushMod.h"
+
 class CmdCone : public Command
 {
 public:

@@ -5,6 +5,9 @@
 #ifndef __COMMAND_TRANSLATE_H__
 #define __COMMAND_TRANSLATE_H__
 
+#include "Command.h"
+#include "CmdFaceMod.h"
+
 class CmdTranslate : public Command
 {
 public:
@@ -21,7 +24,8 @@ public:
 	bool postDrag;
 private:
 	bool textureLock;
-	//glm::mat4 mat;
+
+	mat4 mat;
 	std::vector<Brush*> brMoved;
 	std::vector<Entity*> entMoved;
 

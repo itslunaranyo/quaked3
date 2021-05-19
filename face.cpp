@@ -10,11 +10,10 @@
 Face::Face
 ================
 */
-Face::Face() : owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr) {}
+Face::Face() : owner(nullptr), fnext(nullptr), face_winding(nullptr) {}
 
 Face::Face(Brush *b) : 
-	owner(b), fnext(b->faces), 
-	original(nullptr), face_winding(nullptr)
+	owner(b), fnext(b->faces), face_winding(nullptr)
 {
 	assert(b);
 
@@ -23,14 +22,13 @@ Face::Face(Brush *b) :
 
 Face::Face(Face *f) : 
 	owner(nullptr), fnext(nullptr),
-	plane(f->plane), texdef(f->texdef),
-	original(nullptr), face_winding(nullptr)
+	plane(f->plane), texdef(f->texdef), face_winding(nullptr)
 {
 	assert(f);
 }
 
 Face::Face(Brush *b, Face *f) : 
-	owner(b), original(nullptr), face_winding(nullptr), 
+	owner(b), face_winding(nullptr), 
 	plane(f->plane), texdef(f->texdef)
 {
 	assert(b);
@@ -41,7 +39,7 @@ Face::Face(Brush *b, Face *f) :
 }
 
 Face::Face(Plane &p, TexDef &td) : 
-	owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr),
+	owner(nullptr), fnext(nullptr), face_winding(nullptr),
 	plane(p), texdef(td)
 {}
 
@@ -53,10 +51,7 @@ Face::~Face
 Face::~Face()
 {
 	if (face_winding)
-	{
 		Winding::Free(face_winding);
-	//	face_winding = nullptr;
-	}
 }
 
 
@@ -94,32 +89,6 @@ void Face::ClearChain(Face **f)
 		*f = nullptr;
 	}
 }
-
-/*
-================
-Face::FullClone
-
-sikk - Undo/Redo
-makes an exact copy of the face
-================
-*/
-/*
-Face *Face::FullClone(Brush *own)
-{
-	Face	*n;
-
-	n = new Face(own);
-	n->texdef = texdef;
-	n->plane = plane;
-
-	if (face_winding)
-		n->face_winding = Winding::Clone(face_winding);
-	else
-		n->face_winding = NULL;
-
-	return n;
-}
-*/
 
 /*
 =============
@@ -325,6 +294,31 @@ void Face::FitTexture(float fHeight, float fWidth)
 		scale = (len / texdef.tex->height) / fHeight;
 		texdef.shift[1] = -((int)roundf(min / scale + 0.001f) % texdef.tex->width);
 		texdef.scale[1] = scale;
+	}
+}
+
+/*
+================
+Face::Transform
+================
+*/
+void Face::Transform(mat4 mat, bool bTexLock)
+{
+	vec3	p1, p2, p3;
+
+	if (bTexLock)
+		ComputeAbsolute(this, p1, p2, p3);
+
+	for (int i = 0; i < 3; i++)
+		plane.pts[i] = mat * glm::vec4(plane.pts[i], 1);
+	plane.Make();
+
+	if (bTexLock)
+	{
+		p1 = mat * glm::vec4(p1, 1);
+		p2 = mat * glm::vec4(p2, 1);
+		p3 = mat * glm::vec4(p3, 1);
+		AbsoluteToLocal(plane, this, p1, p2, p3);
 	}
 }
 

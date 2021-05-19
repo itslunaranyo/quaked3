@@ -5,6 +5,10 @@
 #ifndef __COMMAND_HOLLOW_H__
 #define __COMMAND_HOLLOW_H__
 
+#include "qe3.h"
+#include "Command.h"
+#include "CmdAddRemove.h"
+
 class CmdHollow : public Command
 {
 public:

@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdTextureFit.h"
 
 CmdTextureFit::CmdTextureFit() : Command("Fit Texture")
 {

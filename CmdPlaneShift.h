@@ -5,6 +5,9 @@
 #ifndef __COMMAND_PLANE_SHIFT_H__
 #define __COMMAND_PLANE_SHIFT_H__
 
+#include "Command.h"
+#include "CmdFaceMod.h"
+
 class CmdPlaneShift : public Command
 {
 public:

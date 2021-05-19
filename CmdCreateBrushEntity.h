@@ -5,6 +5,9 @@
 #ifndef __COMMAND_CREATE_BRUSH_ENTITY_H__
 #define __COMMAND_CREATE_BRUSH_ENTITY_H__
 
+#include "Command.h"
+#include "CmdReparentBrush.h"
+
 class CmdCreateBrushEntity : public Command
 {
 public:

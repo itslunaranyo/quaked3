@@ -7,6 +7,9 @@
 #include <sstream>
 #include <string>
 
+#include "CmdImportMap.h"
+#include "CmdPaste.h"
+
 Map		g_map;
 Brush	*g_pbrRegionSides[4];
 

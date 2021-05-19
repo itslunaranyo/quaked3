@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdBrushClip.h"
 
 #define CLIP_CAMDOT 0.9996f
 

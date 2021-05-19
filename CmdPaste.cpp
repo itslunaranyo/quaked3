@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdPaste.h"
 
 CmdPaste::CmdPaste() : Command("Paste")
 {

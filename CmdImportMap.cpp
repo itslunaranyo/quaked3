@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdImportMap.h"
 
 CmdImportMap::CmdImportMap() : Command("Import Map")
 {

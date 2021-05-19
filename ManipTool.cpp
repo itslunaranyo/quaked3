@@ -4,6 +4,11 @@
 
 #include "qe3.h"
 
+#include "CmdGeoMod.h"
+#include "CmdPlaneShift.h"
+#include "CmdTranslate.h"
+#include "CmdAddRemove.h"
+
 ManipTool::ManipTool() :
 	state(MT_OFF),
 	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr),
@@ -190,6 +195,11 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 	}
 	else
 	{
+		if (!Selection::OnlyBrushEntities())
+		{
+			StartTranslate();
+			return;
+		}
 		vec3 ray;
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
@@ -201,12 +211,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 			ray.z = mc.org.z;
 			if (b->PointTest(ray))
 			{
-				cmdTr = new CmdTranslate();
-				cmdTr->UseBrushes(&g_brSelectedBrushes);
-				// set tlock on the command once up front rather than letting it ping the 
-				// setting itself, so it remains contained
-				cmdTr->TextureLock(g_qeglobals.d_bTextureLock);
-				state = MT_TRANSLATE;
+				StartTranslate();
 				return;
 			}
 
@@ -280,6 +285,11 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 
 		ptDown = mc.org;
 
+		if (!Selection::OnlyBrushEntities())
+		{
+			StartTranslate();
+			return;
+		}
 		// translate if click hit the selection, side-detect for auto plane drag otherwise
 		trace_t t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);	
 		if (t.selected)
@@ -324,6 +334,13 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 	// brushes selected: translate if click hit the selection, shear if ctrl-click, side-detect for auto plane drag otherwise
 	if (Selection::HasBrushes())
 	{
+		if (!Selection::OnlyBrushEntities())
+		{
+			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.TestRay(mc.org, mc.ray, ptDown);
+			StartTranslate();
+			return;
+		}
 		std::vector<Face*> fSides;
 		t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);
 		if (t.selected)
@@ -377,6 +394,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 			//StartQuickShear(Selection::faces);
 			return;	// can't shear w/selected faces because CmdGeoMod replaces face pointers,
 					// which would have to nuke the selection annoyingly
+					// user can go into face component mode if they want this
 		else
 			StartPlaneShift(Selection::faces);
 	}
@@ -536,6 +554,8 @@ void ManipTool::SideSelectFaces(const vec3 org, const vec3 ray, std::vector<Face
 {
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
+		if (b->owner->IsPoint())
+			continue;
 		for (Face *f = b->faces; f; f = f->fnext)
 		{
 			if (f->TestSideSelect(org, ray))
@@ -550,6 +570,8 @@ void ManipTool::SideSelectShearFaces(const vec3 org, const vec3 ray, std::vector
 {
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
+		if (b->owner->IsPoint())
+			continue;
 		for (Face *f = b->faces; f; f = f->fnext)
 		{
 			if (f->TestSideSelect(org, ray))
@@ -567,6 +589,8 @@ void ManipTool::SideSelectBackFaces(std::vector<Face*> &fSides)
 	// match backfaces to sliding front faces, so brush contacts move with their planes
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
+		if (b->owner->IsPoint())
+			continue;
 		for (Face *f = b->faces; f; f = f->fnext)
 		{
 			for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)

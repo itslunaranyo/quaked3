@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdBrushMod.h"
 
 CmdBrushMod::CmdBrushMod() : Command("Brush Mod")
 {

@@ -8,6 +8,8 @@
 // Geometry Modification Tool
 // vertex/edge/face editing
 
+class CmdGeoMod;
+
 class GeoTool :	public Tool
 {
 public:
