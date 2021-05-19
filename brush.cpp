@@ -28,35 +28,47 @@ Brush::Brush
 =============
 */
 Brush::Brush() :
-	prev(nullptr), next(nullptr),
-	oprev(nullptr), onext(nullptr),
+	prev(nullptr), next(nullptr), oprev(nullptr), onext(nullptr),
 	owner(nullptr), hiddenBrush(false),
 	undoId(0), redoId(0), ownerId(0)
 {}
 
-Brush::brbasis_s::brbasis_s() : faces(nullptr)
+Brush::brbasis_s::brbasis_s() : faces(nullptr), mins(99999), maxs(-99999) {}
+
+Brush::brbasis_s::~brbasis_s()
 {
-	ClearBounds(mins, maxs);
-}
-/*
-// these dumb things are necessary because vec3_t is an array:
-Brush::brbasis_s::brbasis_s(const brbasis_s & other)
-{
-	faces = other.faces;
-	mins = other.mins;
-	maxs = other.maxs;
+	// force faces to be manually deleted so commands are forced to 
+	// free old geometry explicitly
+	//assert(!faces);
 }
 
-Brush::brbasis_s &Brush::brbasis_s::operator=(const brbasis_s &other)
+Brush::brbasis_s Brush::brbasis_s::clone() const
 {
-	if (this != &other)
+	Brush::brbasis_s out;
+	Face	*f, *nf;
+
+	out.mins = mins;
+	out.maxs = maxs;
+	for (f = faces; f; f = f->fnext)
 	{
-		faces = other.faces;
-		mins = other.mins;
-		maxs = other.maxs;
+		nf = f->Clone();
+		nf->fnext = out.faces;
+		out.faces = nf;
 	}
-	return *this;
-}*/
+	return out;
+}
+
+void Brush::brbasis_s::clear()
+{
+	// free faces
+	Face *f, *fnext;
+	for (f = faces; f; f = fnext)
+	{
+		fnext = f->fnext;
+		delete f;
+	}
+	faces = nullptr;
+}
 
 /*
 =============
@@ -64,12 +76,11 @@ Brush::~Brush
 
 Frees the brush with all of its faces and display list.
 Unlinks the brush from whichever chain it is in.
-Decrements the owner entity's brushcount.
-Removes owner entity if this was the last brush unless owner is the world.
 =============
 */
 Brush::~Brush()
 {
+	basis.clear();
 
 	// unlink from active/selected list
 	if (next)
@@ -78,14 +89,6 @@ Brush::~Brush()
 	// unlink from entity list
 	if (onext)
 		Entity::UnlinkBrush(this);
-	Face *f, *fnext;
-
-	// free faces
-	for (f = basis.faces; f; f = fnext)
-	{
-		fnext = f->fnext;
-		delete f;
-	}
 }
 
 /*
@@ -309,17 +312,10 @@ Does NOT add the new brush to any lists
 Brush *Brush::Clone() const
 {
 	Brush	*n;
-	Face	*f, *nf;
 
 	n = new Brush();
 	n->owner = owner;
-
-	for (f = basis.faces; f; f = f->fnext)
-	{
-		nf = f->Clone();
-		nf->fnext = n->basis.faces;
-		n->basis.faces = nf;
-	}
+	n->basis = basis.clone();
 
 	return n;
 }
@@ -371,16 +367,17 @@ Brush *Brush::FullClone() const
 
 void Brush::CopyBasis(brbasis_s & brb)
 {
-	Face *f, *nf;
+	brb = basis.clone();
+}
 
-	brb = basis;
-
-	for (f = basis.faces; f; f = f->fnext)
-	{
-		nf = f->Clone();
-		nf->fnext = brb.faces;
-		brb.faces = nf;
-	}
+/*
+============
+Brush::ClearFaces
+============
+*/
+void Brush::ClearFaces()
+{
+	basis.clear();
 }
 
 /*
@@ -1231,10 +1228,10 @@ Brush::ResetFaceOriginals
 */
 void Brush::ResetFaceOriginals()
 {
-	Face *face;
+	Face *f;
 
-	for (face = basis.faces; face; face = face->fnext)
-		face->original = NULL;
+	for (f = basis.faces; f; f = f->fnext)
+		f->original = nullptr;
 }
 // <---sikk
 
@@ -1257,10 +1254,9 @@ void Brush::MakeSided(int sides)
 	float		sv, cv;
 	vec3		mins, maxs;
 	vec3		mid;
-	Brush	   *b;
-	Face	   *f;
-	texdef_t   *texdef;
-	int			nViewType;	// sikk - Multiple Orthographic Views
+	Brush		*b;
+	Face		*f;
+	texdef_t	*texdef;
 
 	if (sides < 3)
 	{
@@ -1270,7 +1266,7 @@ void Brush::MakeSided(int sides)
 
 	if (sides >= MAX_POINTS_ON_WINDING - 4)
 	{
-		Sys_Printf("WARNING: Couldn't create brush. Too many sides.\n");
+		Sys_Printf("WARNING: Couldn't create brush: Too many sides, you absolute madman.\n");
 		return;
 	}
 
@@ -1285,27 +1281,16 @@ void Brush::MakeSided(int sides)
 	maxs = b->basis.maxs;
 	texdef = &g_qeglobals.d_workTexDef;
 
-	delete b;
+	// lunaran - replace geometry, keep same brush
+	//delete b;
+	b->ClearFaces();
 
 	// lunaran - grid view reunification
 	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
 	if (xyz)
-		nViewType = xyz->dViewType;
+		axis = xyz->dViewType;
 	else
-		nViewType = XY;
-
-	switch (nViewType)
-	{
-	case XY:
-		axis = 2;
-		break;
-	case XZ:
-		axis = 1;
-		break;
-	case YZ:
-		axis = 0;
-		break;
-	}
+		axis = XY;
 
 	// find center of brush
 	width = 8;
@@ -1320,7 +1305,7 @@ void Brush::MakeSided(int sides)
 			width = (maxs[i] - mins[i]) * 0.5;
 	}
 
-	b = new Brush();
+	//b = new Brush();
 
 	// create top face
 	f = new Face(b);
@@ -1369,8 +1354,8 @@ void Brush::MakeSided(int sides)
 		f->planepts[2][axis] = maxs[axis];
 	}
 
-	Select_SelectBrush(b);
-	g_map.world->LinkBrush(b);
+	//Select_SelectBrush(b);
+	//g_map.world->LinkBrush(b);
 	b->Build();
 }
 
@@ -1582,17 +1567,25 @@ void Brush::MakeSidedSphere(int sides)
 Brush::AddToList
 =================
 */
-void Brush::AddToList (Brush *list)
+void Brush::AddToList (Brush *list, bool tail)
 {
 	assert((!next && !prev) || (next && prev));
 
 	if (next || prev)
 		Error("Brush_AddToList: Already linked.");
 
-	next = list->next;
-	list->next->prev = this;
-	list->next = this;
-	prev = list;
+	if (tail)
+	{
+		next = list;
+		prev = list->prev;
+	}
+	else
+	{
+		next = list->next;
+		prev = list;
+	}
+	next->prev = this;
+	prev->next = this;
 }
 
 /*
@@ -1609,7 +1602,7 @@ void Brush::RemoveFromList()
 
 	next->prev = prev;
 	prev->next = next;
-	next = prev = NULL;
+	next = prev = nullptr;
 }
 
 void Brush::CloseLinks()
@@ -1620,7 +1613,7 @@ void Brush::CloseLinks()
 		return;	// done
 
 	if (next || prev)
-		Error("Entity: tried to close non-empty linked list.");
+		Error("Brush: tried to close non-empty linked list.");
 
 	next = prev = this;
 }
@@ -1630,35 +1623,38 @@ void Brush::CloseLinks()
 Brush::MergeListIntoList
 =================
 */
-void Brush::MergeListIntoList(Brush *src, Brush *dest)
+void Brush::MergeListIntoList(Brush *dest, bool tail)
 {
 	// properly doubly-linked lists only
-	if (!src->next || !src->prev)
+	if (!next || !prev)
 	{
 		Error("Tried to merge a list with NULL links!\n");
 		return;
 	}
 
-	if (src->next == src || src->prev == src)
+	if (next == this || prev == this)
 	{
 		Sys_Printf("WARNING: Tried to merge an empty list.\n");
 		return;
 	}
-	// merge at head of list
-	src->next->prev = dest;
-	src->prev->next = dest->next;
-	dest->next->prev = src->prev;
-	dest->next = src->next;
+	if (tail)
+	{
+		// merge at tail of list
+		dest->prev->next = next;
+		next->prev = dest->prev;
+		dest->prev = prev;
+		prev->next = dest;
+	}
+	else
+	{
+		// merge at head of list
+		next->prev = dest;
+		prev->next = dest->next;
+		dest->next->prev = prev;
+		dest->next = next;
+	}
 
-	/*
-	// merge at tail of list
-	dest->prev->next = src->next;
-	src->next->prev = dest->prev;
-	dest->prev = src->prev;
-	src->prev->next = dest;
-	*/
-
-	src->prev = src->next = src;
+	prev = next = this;
 }
 
 /*

@@ -16,7 +16,7 @@ public:
 	virtual ~Command();
 
 	enum { NOOP, LIVE, DONE, UNDONE } state;
-	// NOOP - uninitialized
+	// NOOP - uninitialized/no effect on scene, will be deleted without enqueuing
 	// LIVE - currently being built by the UI
 	// DONE - completed, scene has been changed
 	// UNDONE - completed, changes to scene have been reverted

@@ -25,7 +25,7 @@ public:
 
 	Entity		*prev, *next;
 	Brush		brushes;	// head/tail of list - TODO: make this brush the dummy brush for point entities instead of a stupid linked one?
-	vec3_t		origin;
+	vec3		origin;
 	EntClass	*eclass;
 	EPair		*epairs;
 
@@ -51,35 +51,35 @@ public:
 	Brush	*MakeBrush();
 
 	// TODO: properly constrain the ways origin is set and stored
-	void	SetOrigin(vec3_t org);
+	void	SetOrigin(const vec3 org);
 	void	SetOriginFromMember();
 	void	SetOriginFromKeyvalue();
 	void	SetOriginFromBrush();
-	void	Move(vec3_t trans);
+	void	Move(const vec3 trans);
 
 	void	SetSpawnFlag(int flag, bool on);
 
 	void	SetKeyValue(const char *key, const char *value);
 	void	SetKeyValue(const char *key, const float fvalue);
 	void	SetKeyValue(const char *key, const int ivalue);
-	void	SetKeyValueFVector(const char *key, const vec3_t vec);
-	void	SetKeyValueIVector(const char *key, const vec3_t vec);
+	void	SetKeyValueFVector(const char *key, const vec3 vec);
+	void	SetKeyValueIVector(const char *key, const vec3 vec);
 
 	EPair	*GetEPair(const char *key) const;
 
 	char	*GetKeyValue(const char *key) const;
 	float	GetKeyValueFloat(const char *key) const;
 	int		GetKeyValueInt(const char *key) const;
-	void 	GetKeyValueVector(const char *key, vec3_t vec) const;
+	vec3 	GetKeyValueVector(const char *key) const;
 
 	void 	DeleteKeyValue(const char *key);
 
 	// sikk---> Undo/Redo
 	int		MemorySize();
-	void	CloseLinks();
-	void	AddToList(Entity *list);
-	static void	MergeListIntoList(Entity *src, Entity *dest);
 	void	RemoveFromList();
+	void	CloseLinks();
+	void	AddToList(Entity *list, bool tail = false);
+	void	MergeListIntoList(Entity *dest, bool tail = false);
 	void	FreeEpairs();
 	// <---sikk
 

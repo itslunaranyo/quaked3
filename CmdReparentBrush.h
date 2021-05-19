@@ -2,11 +2,8 @@
 //	CmdReparentBrush.h
 //==============================
 
-#ifndef __REPARENT_BRUSH_H__
-#define __REPARENT_BRUSH_H__
-
-#include "qe3.h"
-#include <vector>
+#ifndef __COMMAND_REPARENT_BRUSH_H__
+#define __COMMAND_REPARENT_BRUSH_H__
 
 class CmdReparentBrush : public Command
 {

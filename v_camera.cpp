@@ -19,9 +19,7 @@ CameraView::Init
 void CameraView::Init ()
 {
 	timing = false;
-	origin[0] = 0;
-	origin[1] = 0;	// sikk - changed from "20"
-	origin[2] = 0;	// sikk - changed from "46"	
+	origin = vec3(0);
 	viewdistance = 256;
 }
 
@@ -234,9 +232,7 @@ void CameraView::PositionRotate ()
 					mins[i] = b->basis.mins[i];
 			}
 		}
-		sorigin[0] = (mins[0] + maxs[0]) / 2;
-		sorigin[1] = (mins[1] + maxs[1]) / 2;
-		sorigin[2] = (mins[2] + maxs[2]) / 2;
+		sorigin = (mins + maxs) / 2.0f;
 	}
 	else if (Select_FaceCount())
 	{
@@ -256,9 +252,7 @@ void CameraView::PositionRotate ()
 			}
 		}
 
-		sorigin[0] = (mins[0] + maxs[0]) / 2;
-		sorigin[1] = (mins[1] + maxs[1]) / 2;
-		sorigin[2] = (mins[2] + maxs[2]) / 2;
+		sorigin = (mins + maxs) / 2.0f;
 	}
 	else
 	{
@@ -683,21 +677,6 @@ bool CameraView::CullBrush (Brush *b)
 	return false;
 }
 
-/*
-================
-CameraView::DrawClipSplits
-================
-*/
-void CameraView::DrawClipSplits ()
-{
-	g_qeglobals.d_pbrSplitList = NULL;
-
-	if (g_qeglobals.d_bClipMode)
-		Clip_ProduceSplitLists();
-		if (g_cpClip1.bSet && g_cpClip2.bSet)
-			g_qeglobals.d_pbrSplitList = (g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
-}
-
 // sikk---> Camera Grid
 /*
 ==============
@@ -943,8 +922,6 @@ void CameraView::Draw ()
 				 g_qeglobals.d_v3SelectTranslate[2]);
 	glMatrixMode(GL_TEXTURE);
 
-//	Cam_DrawClipSplits();
-//	pList = (g_qeglobals.d_bClipMode && g_qeglobals.d_pbrSplitList) ? g_qeglobals.d_pbrSplitList : &g_brSelectedBrushes;
 	pList = &g_brSelectedBrushes;
 
 	// draw normally

@@ -24,8 +24,8 @@ public:
 	} eclass_form_e;
 
 	int				form;
-	vec3_t			mins, maxs;
-	vec3_t			color;
+	vec3			mins, maxs;
+	vec3			color;
 	texdef_t		texdef;
 	qeBuffer		comments;
 	char			flagnames[MAX_FLAGS][32];

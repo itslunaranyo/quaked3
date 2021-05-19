@@ -93,6 +93,13 @@ void Textures::FlushUnused()
 		Textures::AddToNameMap(*tgIt);		// durf
 	}
 
+	// check if selected texture was flushed and get its name out of the work def
+	if (!texMap[label_t(g_qeglobals.d_workTexDef.name)])
+		g_qeglobals.d_workTexDef.name[0] = 0;
+
+	if (!g_qeglobals.d_workTexDef.name[0])
+		SelectFirstTexture();
+
 	g_qeglobals.d_texturewin.stale = true;
 	Sys_UpdateWindows(W_CAMERA);
 }
@@ -261,6 +268,17 @@ void Textures::AddToNameMap(TextureGroup* tg)
 Textures::LoadWad
 ==================
 */
+void Textures::SelectFirstTexture()
+{
+	strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
+	g_qeglobals.d_texturewin.ChooseTexture(&g_qeglobals.d_workTexDef, false);
+}
+
+/*
+==================
+Textures::LoadWad
+==================
+*/
 void Textures::LoadWad(const char* wadfile)
 {
 	WadLoader wl;
@@ -310,8 +328,8 @@ void Textures::LoadWad(const char* wadfile)
 	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
 
 	// select the first texture in the list
-	//if (!g_qeglobals.d_workTexDef.name[0])
-	//	g_qeglobals.d_texturewin.SelectTexture(16, 16);// g_qeglobals.d_texturewin.height - 16);
+	if (!g_qeglobals.d_workTexDef.name[0])
+		SelectFirstTexture();
 }
 
 /*

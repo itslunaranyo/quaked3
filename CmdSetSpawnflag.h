@@ -2,8 +2,8 @@
 //	CmdSetSpawnflag.h
 //==============================
 
-#ifndef __SET_SPAWNFLAG_H__
-#define __SET_SPAWNFLAG_H__
+#ifndef __COMMAND_SET_SPAWNFLAG_H__
+#define __COMMAND_SET_SPAWNFLAG_H__
 
 #include "qe3.h"
 

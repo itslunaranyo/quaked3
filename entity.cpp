@@ -280,77 +280,52 @@ void Entity::FreeEpairs ()
 }
 
 /*
-===========
+=================
 Entity::AddToList
-===========
+=================
 */
-void Entity::AddToList (Entity *list)
+void Entity::AddToList(Entity *list, bool tail)
 {
+	assert((!next && !prev) || (next && prev));
+
 	if (next || prev)
 		Error("Entity_AddToList: Already linked.");
-	next = list->next;
-	list->next->prev = this;
-	list->next = this;
-	prev = list;
+
+	if (tail)
+	{
+		next = list;
+		prev = list->prev;
+	}
+	else
+	{
+		next = list->next;
+		prev = list;
+	}
+	next->prev = this;
+	prev->next = this;
 }
 
 /*
 =================
-Entity::MergeListIntoList
-=================
-*/
-void Entity::MergeListIntoList(Entity *src, Entity *dest)
-{
-	// properly doubly-linked lists only
-	if (!src->next || !src->prev)
-	{
-		Error("Tried to merge a list with NULL links!\n");
-		return;
-	}
-
-	if (src->next == src || src->prev == src)
-	{
-		Sys_Printf("WARNING: Tried to merge an empty list.\n");
-		return;
-	}
-	// merge at head of list
-	src->next->prev = dest;
-	src->prev->next = dest->next;
-	dest->next->prev = src->prev;
-	dest->next = src->next;
-
-	/*
-	// merge at tail of list
-	dest->prev->next = src->next;
-	src->next->prev = dest->prev;
-	dest->prev = src->prev;
-	src->prev->next = dest;
-	*/
-
-	src->prev = src->next = src;
-}
-
-/*
-===========
 Entity::RemoveFromList
-===========
+=================
 */
-void Entity::RemoveFromList ()
+void Entity::RemoveFromList()
 {
+	assert((!next && !prev) || (next && prev));
+
 	if (!next || !prev)
-		Error("Entity::RemoveFromList: Not linked.");
+		Error("Entity::RemoveFromList: Not currently linked.");
+
 	next->prev = prev;
 	prev->next = next;
-	next = prev = NULL;
+	next = prev = nullptr;
 }
 
-/*
-===========
-Entity::CloseLinks
-===========
-*/
 void Entity::CloseLinks()
 {
+	assert((!next && !prev) || (next && prev));
+
 	if (next == prev && prev == this)
 		return;	// done
 
@@ -360,6 +335,44 @@ void Entity::CloseLinks()
 	next = prev = this;
 }
 
+/*
+=================
+Entity::MergeListIntoList
+=================
+*/
+void Entity::MergeListIntoList(Entity *dest, bool tail)
+{
+	// properly doubly-linked lists only
+	if (!next || !prev)
+	{
+		Error("Tried to merge a list with NULL links!\n");
+		return;
+	}
+
+	if (next == this || prev == this)
+	{
+		Sys_Printf("WARNING: Tried to merge an empty list.\n");
+		return;
+	}
+	if (tail)
+	{
+		// merge at tail of list
+		dest->prev->next = next;
+		next->prev = dest->prev;
+		dest->prev = prev;
+		prev->next = dest;
+	}
+	else
+	{
+		// merge at head of list
+		next->prev = dest;
+		prev->next = dest->next;
+		dest->next->prev = prev;
+		dest->next = next;
+	}
+
+	prev = next = this;
+}
 
 /*
 =================

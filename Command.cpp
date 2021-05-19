@@ -15,12 +15,12 @@ the UI builds these Commands and then passes them to the CommandQueue,
 which causes their changes to be applied to the scene.
 
 the Commands remain extant in the CommandQueue to serve as undos/redos.
-the back of each queue is closest to the 'present', and the front is
-farthest in the past (for undos) or the future (for redos).
+the back of each queue is the end closest to the 'present', and the
+front is farthest in the past (for undos) or the future (for redos).
 
-changes to selection or visibility, loading and unloading of wads, or
-other events which do not alter what gets saved to disk are map data
-agnostic, are not Commands, and cannot be undone.
+changes to selection, changes to visibility, loading and unloading of 
+wads, or other events which do not alter what gets saved to disk are 
+map data agnostic, are not Commands, and cannot be undone.
 
 ========================================================================
 */
@@ -74,7 +74,7 @@ void Command::Undo()
 ==================
 Command::Redo
 
-must restore original changes to the scene exactly as after a call to Do().
+must restore changes to the scene exactly as after a call to Do().
 object is moved back to the undo queue after this is called.
 ==================
 */

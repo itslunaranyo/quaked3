@@ -589,7 +589,7 @@ void TextureView::Draw(int dw, int dh)
 			}
 
 			// draw the texture name
-			glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT]);
+			glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT].r);
 			glDisable(GL_TEXTURE_2D);
 
 			// don't draw the directory name

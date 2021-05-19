@@ -5,17 +5,15 @@
 #ifndef __COMMAND_CLONE_H__
 #define __COMMAND_CLONE_H__
 
-#include "qe3.h"
-
 class CmdClone : public Command
 {
 public:
-	CmdClone(Brush* brList, vec3_t offset = nullptr);
+	CmdClone(Brush* brList, const vec3 offset = { 0,0,0 });
 	~CmdClone();
 private:
 	CmdAddRemove cmdAR;
 
-	void Clone(Brush* brList, vec3_t offset);
+	void Clone(Brush* brList, const vec3 offset);
 
 	void Do_Impl();
 	void Undo_Impl();

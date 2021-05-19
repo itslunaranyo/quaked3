@@ -5,7 +5,7 @@
 #ifndef __COMMAND_ADDREMOVE_H__
 #define __COMMAND_ADDREMOVE_H__
 
-#include "qe3.h"
+#include <vector>
 
 class CmdAddRemove : public Command
 {
@@ -15,9 +15,11 @@ public:
 
 	void RemovedBrush(Brush* br);		// mark brush as sequestered from the scene
 	void RemovedBrushes(Brush* brList);	// mark brushes as sequestered from the scene
+	void RemovedBrushes(std::vector<Brush*> &brList);
 
 	void AddedBrush(Brush* br);			// mark brush as contributed to the scene
 	void AddedBrushes(Brush* brList);	// mark brushes as contributed to the scene
+	void AddedBrushes(std::vector<Brush*> &brList);
 
 	void RemovedEntity(Entity* ent);	// mark entity as sequestered from the scene
 	void AddedEntity(Entity* ent);		// mark entity as contributed to the scene

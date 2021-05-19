@@ -5,6 +5,8 @@
 //	face.h
 //==============================
 
+#include "SlabAllocator.h"
+
 // the normals on planes point OUT of the brush
 #define	MAXPOINTS	16
 #define	MAX_FACES	16
@@ -15,7 +17,7 @@
 
 class Brush;
 
-extern const vec3_t g_v3BaseAxis[18];
+extern const vec3 g_v3BaseAxis[18];
 extern const float g_fLightAxis[3];
 
 struct winding_s;
@@ -27,49 +29,48 @@ class Plane
 {
 public:
 	Plane();
-	vec3_t	normal;
+	vec3	normal;
 	double	dist;
 
 	bool		EqualTo(Plane *b, int flip);	// returns true if the planes are equal
-	bool		FromPoints(vec3_t p1, vec3_t p2, vec3_t p3);	// returns false if the points are colinear
+	bool		FromPoints(const vec3 p1, const vec3 p2, const vec3 p3);	// returns false if the points are colinear
 	winding_t	*BasePoly();
-	void		GetTextureAxis(vec3_t xv, vec3_t yv);
+	void		GetTextureAxis(vec3 &xv, vec3 &yv);
 };
 
 //========================================================================
 
-class Face
+class Face : public SlabAllocator<Face>
 {
 public:
 	Face();
 	Face(Brush* b);	// no orphan (brushless) faces
 	~Face();
 
-	Face		*next;
+	Face		*fnext;
 	Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
 	Brush		*owner;		// sikk - brush of selected face
-	vec3_t		planepts[3];
-	texdef_t	texdef;
-	Plane		plane;
 	winding_t	*face_winding;
-	vec3_t		d_color;
-	Texture	*d_texture;
+	vec3		planepts[3];
+	Plane		plane;
+	Texture		*d_texture;
+	texdef_t	texdef;
+	vec3		d_color;
 
 	Face   *Clone();
 	Face   *FullClone(Brush *own);	// sikk - Undo/Redo
 	int		MemorySize();	// sikk - Undo/Redo
-	void	BoundsOnAxis(vec3_t a, float* min, float* max);
-	bool	ClipLine(vec3_t p1, vec3_t p2);
+	void	BoundsOnAxis(const vec3 a, float* min, float* max);
+	bool	ClipLine(vec3 &p1, vec3 &p2);
 
 	void	FitTexture(float fHeight, float fWidth);
-	void	MoveTexture(vec3_t delta);
+	void	MoveTexture(const vec3 delta);
 	void	ColorAndTexture();
 	void	SetTexture(texdef_t *texdef, int nSkipFlags);
 
 	void	MakePlane();
 	void	Draw();
 private:
-	void	Init();
 	void	SetColor();
 	float	ShadeForPlane();
 };
@@ -77,14 +78,12 @@ private:
 //========================================================================
 
 // TODO: find me a home
-int		AddPlanePoint(float *f);
-
-
+int		AddPlanePoint(vec3 *f);
 
 typedef struct
 {
 	int		p1, p2;
-	Face *f1, *f2;
+	Face	*f1, *f2;
 } pedge_t;
 
 

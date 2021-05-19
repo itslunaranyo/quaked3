@@ -25,10 +25,10 @@ typedef enum
 
 typedef struct
 {
-	Brush	   *brush;
-	Face	   *face;
-	float		dist;
-	bool		selected;
+	Brush	*brush;
+	Face	*face;
+	float	dist;
+	bool	selected;
 } trace_t;
 
 //========================================================================
@@ -43,15 +43,15 @@ extern Face		*g_pfaceSelectedFaces[MAX_MAP_FACES];
 
 //extern Face		*g_pfaceSelectedFace;
 //extern Brush	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
-extern vec3_t		g_v3RotateOrigin;	// sikk - Free Rotate
+extern vec3		g_v3RotateOrigin;	// sikk - Free Rotate
 
 //========================================================================
 
 void	Select_HandleChange();
 void	Select_SelectBrush(Brush *b);
 
-trace_t	Test_Ray (vec3_t origin, vec3_t dir, int flags);
-void	Select_Ray (vec3_t origin, vec3_t dir, int flags);
+trace_t	Test_Ray (const vec3 origin, const vec3 dir, int flags);
+void	Select_Ray (const vec3 origin, const vec3 dir, int flags);
 
 bool	Select_HasBrushes();
 int		Select_FaceCount();
@@ -60,9 +60,9 @@ bool	Select_OnlyPointEntities();
 int		Select_NumBrushFacesSelected(Brush* b);
 bool	Select_IsBrushSelected(Brush* bSel);	// sikk - Export Selection (Map/Prefab)
 
-void	Select_GetBounds (vec3_t mins, vec3_t maxs);
-void	Select_GetTrueMid (vec3_t mid);
-void	Select_GetMid (vec3_t mid);
+void	Select_GetBounds (vec3 &mins, vec3 &maxs);
+void	Select_GetTrueMid (vec3 &mid);
+void	Select_GetMid (vec3 &mid);
 void	Select_ApplyMatrix ();
 void	Select_HandleBrush (Brush *b, bool bComplete);
 void	Select_Delete ();
@@ -75,7 +75,7 @@ bool	Select_IsFaceSelected (Face *face);
 bool	Select_DeselectAllFaces ();
 // <---sikk
 void	Select_Clone ();
-void	Select_Move (vec3_t delta);
+void	Select_Move (const vec3 delta);
 void	Select_FlipAxis (int axis);
 void	Select_RotateAxis (int axis, float deg, bool bMouse);  // sikk - Free Rotate: bool bMouse argument added
 void	Select_Scale (float x, float y, float z);	// sikk - Brush Scaling
@@ -94,10 +94,7 @@ void	Select_ShowAllHidden ();
 void	Select_MatchingTextures ();	// sikk - Select All Matching Textures
 void	Select_ConnectEntities ();
 void	Select_MatchingKeyValue (char *szKey, char *szValue);	// sikk - Select Matching Key/Value
-// sikk---> Cut/Copy/Paste
-void	Select_Cut ();
-void	Select_Copy ();
-//void	Select_Paste ();
+
 // returns true if pFind is in pList
 bool	OnEntityList (Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize);
 // <---sikk

@@ -5,8 +5,6 @@
 #ifndef __COMMAND_DELETE_H__
 #define __COMMAND_DELETE_H__
 
-#include "qe3.h"
-
 class CmdDelete : public Command
 {
 public:

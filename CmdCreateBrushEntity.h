@@ -2,10 +2,8 @@
 //	CmdCreateBrushEntity.h
 //==============================
 
-#ifndef __CREATE_BRUSH_ENTITY_H__
-#define __CREATE_BRUSH_ENTITY_H__
-
-#include "qe3.h"
+#ifndef __COMMAND_CREATE_BRUSH_ENTITY_H__
+#define __COMMAND_CREATE_BRUSH_ENTITY_H__
 
 class CmdCreateBrushEntity : public Command
 {

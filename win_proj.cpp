@@ -848,14 +848,14 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 			{
 			case CBN_SELCHANGE:
 				{
-					char buf[256];
-					int index = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
+					char sbuf[256];
+					int sindex = SendMessage((HWND)lParam, CB_GETCURSEL, 0, 0);
 
-					SendMessage((HWND)lParam, CB_GETLBTEXT, (WPARAM)index, (LPARAM)buf);
-					index = GetBspIndex(buf);
-					if (index == -1)
+					SendMessage((HWND)lParam, CB_GETLBTEXT, (WPARAM)sindex, (LPARAM)sbuf);
+					sindex = GetBspIndex(sbuf);
+					if (sindex == -1)
 						return FALSE;
-					SendDlgItemMessage(hwndDlg, IDC_EDIT_BSPCOMMAND, WM_SETTEXT, 0, (LPARAM)g_szBspCommands[index]);
+					SendDlgItemMessage(hwndDlg, IDC_EDIT_BSPCOMMAND, WM_SETTEXT, 0, (LPARAM)g_szBspCommands[sindex]);
 				}
 				break;
 			}

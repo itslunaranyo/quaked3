@@ -14,11 +14,17 @@
 
 //====================================================================
 
+typedef struct windingpoint_s
+{
+	vec3 point;
+	float s, t;
+} windingpoint_t;
+
 typedef struct winding_s
 {
 	int		numpoints;
 	int		maxpoints;
-	float 	points[6][5];	// variable sized
+	windingpoint_t 	points[6];	// variable sized
 } winding_t;
 
 typedef struct free_winding_s {
@@ -41,11 +47,11 @@ namespace Winding
 	void		Copy(winding_t *src, winding_t *dest);	// copy one winding into another
 
 	winding_t	*Clip(winding_t *in, Plane *split, bool keepon);	// clip the winding with the plane
-	winding_t	*TryMerge(winding_t *f1, winding_t *f2, vec3_t planenormal, int keep);	// try to merge the windings, returns the new merged winding or NULL
+	winding_t	*TryMerge(winding_t &f1, winding_t &f2, vec3 planenormal, int keep);	// try to merge the windings, returns the new merged winding or NULL
 	void		RemovePoint(winding_t *w, int point);	// remove a point from the winding
 	void		TextureCoordinates(winding_t *w, Texture *q, Face *f);	// compute s/t coords for textured face winding
 
-	bool		PlanesConcave(winding_t *w1, winding_t *w2, vec3_t normal1, vec3_t normal2, float dist1, float dist2);	// returns true if the planes are concave
+	bool		PlanesConcave(winding_t *w1, winding_t *w2, const vec3 normal1, const vec3 normal2, float dist1, float dist2);	// returns true if the planes are concave
 	int			MemorySize(winding_t *w);	//dum
 }
 #endif

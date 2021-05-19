@@ -50,6 +50,13 @@ void CmdAddRemove::RemovedBrushes(Brush *brList)
 		RemovedBrush(br);
 }
 
+void CmdAddRemove::RemovedBrushes(std::vector<Brush*> &brList)
+{
+	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+		RemovedBrush(*brIt);
+}
+
+
 void CmdAddRemove::AddedBrush(Brush *br)
 {
 	assert(br);
@@ -68,6 +75,12 @@ void CmdAddRemove::AddedBrushes(Brush *brList)
 {
 	for (Brush *br = brList->next; br != brList; br = br->next)
 		AddedBrush(br);
+}
+
+void CmdAddRemove::AddedBrushes(std::vector<Brush*>& brList)
+{
+	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+		AddedBrush(*brIt);
 }
 
 void CmdAddRemove::RemovedEntity(Entity *ent)

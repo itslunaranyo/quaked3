@@ -13,6 +13,8 @@
 #include "CmdCreateBrushEntity.h"
 #include "CmdSetKeyvalue.h"
 #include "CmdSetSpawnflag.h"
+#include "CmdBrushMod.h"
+#include "CmdBrushClip.h"
 
 //#include "Cmd.h"
 

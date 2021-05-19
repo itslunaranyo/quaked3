@@ -2,10 +2,8 @@
 //	CmdSetKeyvalue.h
 //==============================
 
-#ifndef __SET_KEYVALUE_H__
-#define __SET_KEYVALUE_H__
-
-#include "qe3.h"
+#ifndef __COMMAND_SET_KEYVALUE_H__
+#define __COMMAND_SET_KEYVALUE_H__
 
 class CmdSetKeyvalue : public Command
 {

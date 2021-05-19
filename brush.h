@@ -5,8 +5,10 @@
 //	brush.h
 //==============================
 
+#include "SlabAllocator.h"
+
 class Entity;
-class Brush
+class Brush : public SlabAllocator<Brush>
 {
 public:
 	Brush();
@@ -17,11 +19,12 @@ public:
 	Entity	*owner;
 	struct brbasis_s {
 		brbasis_s();
-		brbasis_s(const brbasis_s& other);
-		brbasis_s& operator=(const brbasis_s& other);
+		~brbasis_s();
+		brbasis_s clone() const;
+		void	clear();
 
 		Face	*faces;
-		vec3_t	mins, maxs;
+		vec3	mins, maxs;
 	} basis;
 	bool	hiddenBrush;
 
@@ -38,12 +41,13 @@ public:
 	bool	IsConvex() const;	// sikk - Vertex Editing Splits Face
 	bool	IsFiltered() const;
 
-	static Brush *Create (vec3_t inMins, vec3_t inMaxs, texdef_t *texdef);
-	void	Recreate(vec3_t inMins, vec3_t inMaxs, texdef_t *inTexDef);
+	static Brush *Create (const vec3 inMins, const vec3 inMaxs, texdef_t *texdef);
+	void	Recreate(const vec3 inMins, const vec3 inMaxs, texdef_t *inTexDef);
 	Brush	*Clone() const;
 	Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	CopyBasis(brbasis_s &brb);
-	void	Move(vec3_t move);
+	void	ClearFaces();
+	void	Move(const vec3 move);
 
 	void	Build();
 	void	MakeFacePlanes();
@@ -55,12 +59,12 @@ public:
 	void	FitTexture(int nHeight, int nWidth);
 	void	SetTexture(texdef_t *texdef, int nSkipFlags);
 
-	Face	*RayTest(vec3_t origin, vec3_t dir, float *dist);
+	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
 	void	SelectFaceForDragging(Face *f, bool shear);
-	void	SideSelect(vec3_t origin, vec3_t dir, bool shear);
+	void	SideSelect(const vec3 origin, const vec3 dir, bool shear);
 
 	// sikk---> Vertex Editing Splits Face
-	bool	MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end);
+	bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);
 	void	ResetFaceOriginals();
 	// <---sikk
 
@@ -70,10 +74,10 @@ public:
 	static void	MakeSidedSphere (int sides);	// sikk - Brush Primitves
 
 	// TODO: promote brushlist to its own container class
-	void	AddToList(Brush *list);
 	void	RemoveFromList();
 	void	CloseLinks();
-	static void	MergeListIntoList(Brush *src, Brush *dest);
+	void	AddToList(Brush *list, bool tail = false);
+	void	MergeListIntoList(Brush *dest, bool tail = false);
 	static void	FreeList(Brush *pList);
 	static void	CopyList(Brush *pFrom, Brush *pTo);
 
@@ -97,6 +101,6 @@ extern int	g_nBrushNumCheck;
 
 
 
-void		FacingVectors (Brush *b, vec3_t forward, vec3_t right, vec3_t up);
+void		FacingVectors (const Brush *b, vec3 &forward, vec3 &right, vec3 &up);
 
 #endif

@@ -518,7 +518,7 @@ void Select_BrushesToFaces()
 			Select_SelectFace(f);
 		}
 	}
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
+	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
 	g_bSelectionChanged = true;
 }
 
@@ -543,7 +543,7 @@ void Select_All()
 
 	Select_DeselectAllFaces();
 
-	Brush::MergeListIntoList(&g_map.brActive, &g_brSelectedBrushes);
+	g_map.brActive.MergeListIntoList(&g_brSelectedBrushes);
 
 	g_bSelectionChanged = true;
 }
@@ -591,7 +591,7 @@ void Select_DeselectAll (bool bDeselectFaces)
 
 	UpdateWorkzone(g_brSelectedBrushes.next);
 
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
+	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
 	g_bSelectionChanged = true;
 }
 
@@ -1253,8 +1253,8 @@ void Select_Clone ()
 	}
 
 	// lunaran - select and offset the new brushes, not the old ones
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
-	Brush::MergeListIntoList(&templist, &g_brSelectedBrushes);
+	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
+	templist.MergeListIntoList(&g_brSelectedBrushes);
 	g_bSelectionChanged = true;
 	*/
 	Sys_UpdateWindows(W_ALL);

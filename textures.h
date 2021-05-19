@@ -113,6 +113,7 @@ namespace Textures
 	void SetParameters();
 	void RemoveFromNameMap(TextureGroup* tg);
 	void AddToNameMap(TextureGroup* tg);
+	void SelectFirstTexture();
 
 	extern std::vector<TextureGroup*> groups;
 	extern std::map<label_t, Texture*> texMap;

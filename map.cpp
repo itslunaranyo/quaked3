@@ -221,8 +221,8 @@ bool Map::ParseBufferMerge(const char *data)
 	}
 
 	Select_DeselectAll(true);
-	Entity::MergeListIntoList(&elist, &entities);
-	Brush::MergeListIntoList(&blist, &g_brSelectedBrushes);	// merge to selection
+	elist.MergeListIntoList(&entities);
+	blist.MergeListIntoList(&g_brSelectedBrushes);	// merge to selection
 	return true;
 }
 
@@ -263,8 +263,8 @@ bool Map::ParseBufferReplace(const char *data)
 	}
 
 	// now merge the fully loaded data into the scene
-	Entity::MergeListIntoList(&elist, &entities);
-	Brush::MergeListIntoList(&blist, &brActive);
+	elist.MergeListIntoList(&entities);
+	blist.MergeListIntoList(&brActive);
 	return true;
 }
 
@@ -919,10 +919,10 @@ void Map::RegionSelectedBrushes()
 	Select_GetBounds(regionMins, regionMaxs);
 
 	// move the entire active_brushes list to filtered_brushes
-	Brush::MergeListIntoList(&brActive, &brRegioned);
+	brActive.MergeListIntoList(&brRegioned);
 
 	// move the entire g_brSelectedBrushes list to brActive
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &brActive);
+	g_brSelectedBrushes.MergeListIntoList(&brActive);
 
 	Sys_UpdateWindows(W_ALL);
 }

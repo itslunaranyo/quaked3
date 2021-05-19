@@ -28,7 +28,7 @@ static unsigned s_stipple[32] =
 
 int		g_nMouseX, g_nMouseY;
 bool	g_bMoved;
-vec3_t	g_v3Origin;
+vec3	g_v3Origin;
 int		g_dXYZcurrent;	// ugh come on
 
 

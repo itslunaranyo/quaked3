@@ -15,9 +15,9 @@ The incoming face is NOT left referenced.
 */
 void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 {
-	Brush	   *b;
-	Face	   *nf;
-	vec3		temp;
+	Brush	*b;
+	Face	*nf;
+	vec3	temp;
 
 	b = in->Clone();
 	nf = f->Clone();
@@ -36,7 +36,7 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	}
 	else
 	{
-		in->owner->LinkBrush(b);
+		//in->owner->LinkBrush(b);
 		*back = b;
 	}
 
@@ -62,7 +62,7 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	}
 	else
 	{
-		in->owner->LinkBrush(b);
+		//in->owner->LinkBrush(b);
 		*front = b;
 	}
 }
@@ -107,7 +107,10 @@ void CSG_Hollow ()
 			if (back)
 				delete back;
 			if (front)
+			{
+				front->owner->LinkBrush(front);
 				front->AddToList(&g_brSelectedBrushes);
+			}
 		}
 		delete b;
 	}
@@ -734,7 +737,9 @@ Brush *Brush_Subtract (Brush *a, Brush *b)
 		{	// add to list
 			front->next = out;
 			out = front;
+			front->owner->LinkBrush(front);
 		}
+		back->owner->LinkBrush(back);
 		in = back;
 	}
 

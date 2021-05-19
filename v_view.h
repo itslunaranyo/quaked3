@@ -14,7 +14,7 @@ public:
 
 	int		width, height;
 	float	scale;
-	vec3_t	origin;
+	vec3	origin;
 	bool	timing;
 
 	virtual void MouseDown(int x, int y, int buttons) {};

@@ -1218,11 +1218,11 @@ LONG WINAPI CommandHandler (
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
 			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode != W_TEXTURE)
 				break;
-			Undo::Start("Cut");
-			Undo::AddBrushList(&g_brSelectedBrushes);
+			//Undo::Start("Cut");
+			//Undo::AddBrushList(&g_brSelectedBrushes);
 			g_map.Cut();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
+			//Undo::EndBrushList(&g_brSelectedBrushes);
+			//Undo::End();
 			break;
 		case ID_EDIT_COPY:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window

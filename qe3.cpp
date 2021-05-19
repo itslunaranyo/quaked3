@@ -4,7 +4,6 @@
 
 #include "qe3.h"
 
-
 #define	SPEED_MOVE	32.0f
 #define	SPEED_TURN	22.5f
 
@@ -95,7 +94,7 @@ void QE_Init ()
 	//for (int i = 0; i < 4;i++)
 	//	XYZ_Init(&g_qeglobals.d_xyz[i]);
 	//Z_Init();
-
+	g_pcmdBC = nullptr;
 	g_map.RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface

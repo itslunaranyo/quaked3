@@ -23,7 +23,7 @@ public:
 	Brush		brActive;		// brushes currently being displayed
 	Brush		brRegioned;		// brushes that are outside the region
 
-	vec3_t		regionMins, regionMaxs;
+	vec3		regionMins, regionMaxs;
 	bool		regionActive;
 
 	void	New();

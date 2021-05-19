@@ -7,11 +7,12 @@
 // 3-Point Clipping Tool
 
 #include "v_xy.h"
+class CmdBrushClip;
 
 typedef struct
 {
 	bool	bSet;
-	vec3_t	ptClip;      // the 3d point
+	vec3	ptClip;      // the 3d point
 } clippoint_t;
 
 //========================================================================
@@ -19,11 +20,12 @@ typedef struct
 extern clippoint_t	g_cpClip1;
 extern clippoint_t	g_cpClip2;
 extern clippoint_t	g_cpClip3;
-extern clippoint_t *g_pcpMovingClip;
+extern clippoint_t	*g_pcpMovingClip;
+extern CmdBrushClip	*g_pcmdBC;
 
 //========================================================================
 
-void SnapToPoint(vec3_t point);
+void SnapToPoint(vec3 &point);
 
 void Clip_ProduceSplitLists ();
 void Clip_SetMode ();

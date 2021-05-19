@@ -29,7 +29,7 @@
 
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "cmdlib.h"
-#include "lbmlib.h"
+//#include "lbmlib.h"
 #include "mathlib.h"
 #include "parse.h"
 
@@ -89,7 +89,7 @@ typedef struct
 			bCubicClip;			// sikk - Cubic Clipping
 	int		nCubicScale;		// sikk - Cubic Clipping
 	int		nCameraSpeed;		// sikk - Camera Speed Trackbar 
-	vec3_t	v3Colors[COLOR_LAST];
+	vec3	v3Colors[COLOR_LAST];
 	REBARBANDINFO rbiSettings[11];	// sikk - Save Rebar Band Info
 //	int		nRebarSavedIndex[11];
 
@@ -135,7 +135,7 @@ typedef struct
 	bool		d_bShowGrid;
 	int			d_nGridSize;
 
-	vec3_t		d_v3WorkMin, 			// defines the boundaries of the current work area is used to guess
+	vec3		d_v3WorkMin, 			// defines the boundaries of the current work area is used to guess
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
 	texdef_t	d_workTexDef;			// lunaran: moved out of texturewin_t
 
@@ -167,15 +167,15 @@ typedef struct
 				d_hwndSplash,			// sikk - Splash screen
 				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
 
-	Entity   *d_entityProject;
+	Entity		*d_entityProject;
 	int			d_nNumEntities;
 
 	int			d_nNumPoints;
 	int			d_nNumEdges;
 	int			d_nNumMovePoints;
-	vec3_t		d_v3Points[MAX_POINTS];
+	vec3		d_v3Points[MAX_POINTS];
 	pedge_t		d_pEdges[MAX_EDGES];
-	float		*d_fMovePoints[1024];
+	vec3		*d_fMovePoints[1024];
 
 	Texture		*d_qtextures;
 	TextureView d_texturewin;
@@ -194,7 +194,7 @@ typedef struct
 
 	//int         d_nWorkCount;		// no longer necessary for punishing jromero unproductivity
 
-	vec3_t      d_v3SelectTranslate;    // for dragging w/o making new display lists
+	vec3		d_v3SelectTranslate;    // for dragging w/o making new display lists
 	select_t    d_selSelectMode;
 
 	int		    d_nFontList;
@@ -204,10 +204,6 @@ typedef struct
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
 
 	bool	    d_bClipMode;
-	bool	    d_bClipSwitch;
-	Brush     d_brFrontSplits;
-	Brush     d_brBackSplits;
-	Brush    *d_pbrSplitList;
 
 	// handle to the console log file
 	// we use low level I/O to get rid of buffering and have everything on file if we crash
@@ -367,7 +363,7 @@ void DoNewProject();	// sikk - New Project Dialog
 void DoProject (bool bFirst);	// sikk - Project Settings Dialog
 void FillEntityListbox(HWND hwnd, bool bPointbased, bool bBrushbased);	// sikk - Create Entity Dialog
 bool ConfirmClassnameHack(EntClass *desired);
-void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, vec3_t origin);	// sikk - Create Entity Dialog
+void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 origin);	// sikk - Create Entity Dialog
 void DoMapInfo ();	// sikk - Map Info Dialog
 void DoEntityInfo ();	// sikk - Entity Info Dialog
 void DoPreferences ();	// sikk - Preferences Dialog
