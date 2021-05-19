@@ -2,12 +2,10 @@
 //	ClipTool.h
 //==============================
 
-#ifndef __CLIP_H__
-#define __CLIP_H__
+#ifndef __CLIP_TOOL_H__
+#define __CLIP_TOOL_H__
 
 // 3-Point Clipping Tool
-
-#include "Tool.h"
 
 class ClipTool : public Tool
 {
@@ -18,7 +16,10 @@ public:
 	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void Draw();
+
+	bool Draw3D(CameraView &v);
+	bool Draw2D(XYZView &v);
+
 	void SelectionChanged();
 
 private:
@@ -65,6 +66,9 @@ private:
 	clippoint_t* XYGetNearestClipPoint(XYZView * xyz, int x, int y);
 	void MovePoint(XYZView* xyz, int x, int y);
 	void EndPoint();
+
+	void Draw();
+	void DrawPoints();
 };
 
 

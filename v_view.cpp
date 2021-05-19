@@ -127,8 +127,11 @@ void View::DrawPathLines()
 	}
 }
 
-void View::DrawTools()
+// returns false if the selection hasn't been drawn in a special way by a tool
+bool View::DrawTools()
 {
-	for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
-		(*tIt)->Draw();
+	//for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
+	//	if ((*tIt)->Draw())
+	//		return true;
+	return false;
 }

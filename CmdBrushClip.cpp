@@ -69,17 +69,17 @@ void CmdBrushClip::CreateSplitLists()
 
 	Brush *f, *b;
 
-	Face splif;
-	splif.texdef = g_qeglobals.d_workTexDef;
-	splif.d_texture = Textures::ForName(splif.texdef.name);
-	splif.planepts[0] = cp1;
-	splif.planepts[1] = cp2;
-	splif.planepts[2] = cp3;
-	splif.plane.FromPoints(cp1, cp2, cp3);
+	Face splitf;
+	splitf.texdef = g_qeglobals.d_workTexDef;
+	splitf.d_texture = Textures::ForName(splitf.texdef.name);
+	splitf.planepts[0] = cp1;
+	splitf.planepts[1] = cp2;
+	splitf.planepts[2] = cp3;
+	splitf.plane.FromPoints(cp1, cp2, cp3);
 
 	for (auto brIt = brIn.begin(); brIt != brIn.end(); ++brIt)
 	{
-		CSG::SplitBrushByFace(*brIt, &splif, &f, &b);
+		CSG::SplitBrushByFace(*brIt, &splitf, &f, &b);
 		if (f)
 			brFront.push_back(f);
 		if (b)

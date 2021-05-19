@@ -6,6 +6,8 @@
 
 #define	MAX_FLAGS	8
 
+// lunaran TODO: too much static shit in this class
+
 class EntClass
 {
 public:

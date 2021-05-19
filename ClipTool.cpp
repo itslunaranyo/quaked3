@@ -9,9 +9,10 @@
 ClipTool::ClipTool() : 
 	ptMoving(nullptr),
 	g_pcmdBC(nullptr),
-	Tool("clipper", true)	// clip tool is modal
+	Tool("Clipper", true)	// clip tool is modal
 {
 	g_qeglobals.d_clipTool = this;
+	Selection::DeselectAllFaces();
 	Reset();
 }
 
@@ -41,8 +42,9 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 //		return false;
 
 	case WM_LBUTTONDOWN:
-		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
-			return false;
+		if (wParam & MK_SHIFT)
+			return !!(wParam & MK_CONTROL);	// prevent face selection
+			//return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -104,7 +106,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		hot = true;
 
 		// lunaran - alt quick clip
-		if (AltDown())
+		if (wParam & MK_ALT)
 			StartQuickClip(&v, x, y);
 		else
 			DropPoint(&v, x, y);
@@ -116,7 +118,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
-		if (AltDown())
+		if (wParam & MK_ALT)
 			EndQuickClip();
 		else
 			EndPoint();
@@ -337,19 +339,25 @@ ClipTool::clippoint_t* ClipTool::StartNextPoint()
 	clippoint_t *pt;
 	pt = nullptr;
 
-	if (points[0].set == false)
+	if (!points[0].set)
 	{
+		assert(!points[1].set);
+		assert(!points[2].set);
 		StartCommand();
 		pt = &points[0];
 		points[0].set = true;
 	}
-	else if (points[1].set == false)
+	else if (!points[1].set)
 	{
+		assert(points[0].set);
+		assert(!points[2].set);
 		pt = &points[1];
 		points[1].set = true;
 	}
-	else if (points[2].set == false)
+	else if (!points[2].set)
 	{
+		assert(points[0].set);
+		assert(points[1].set);
 		pt = &points[2];
 		points[2].set = true;
 	}
@@ -579,7 +587,7 @@ void ClipTool::DropPoint (XYZView* xyz, int x, int y)
 {
 	int nDim;
 
-	axis = xyz->dViewType;
+	axis = xyz->GetAxis();
 
 	if (ptMoving)  // <-- when a new click is issued on an existing point
 	{
@@ -597,7 +605,7 @@ void ClipTool::DropPoint (XYZView* xyz, int x, int y)
 			xyz->SnapToPoint(x, y, pPt->point);
 
 		// third coordinates for clip point: use d_v3WorkMax
-		nDim = (xyz->dViewType == YZ ) ? 0 : ((xyz->dViewType == XZ) ? 1 : 2);
+		nDim = (axis == YZ ) ? 0 : ((axis == XZ) ? 1 : 2);
 
 		// lunaran: put third clip at work min instead of work max so they aren't all coplanar to the view
 		if (points[2].set)
@@ -621,7 +629,7 @@ void ClipTool::GetCoordXY(int x, int y, vec3 &pt)
 	XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
 	if (xyz)
 		xyz->SnapToPoint(x, y, pt);
-	nDim = (xyz->dViewType == YZ) ? 0 : ((xyz->dViewType == XZ) ? 1 : 2);
+	nDim = (xyz->GetAxis() == YZ) ? 0 : ((xyz->GetAxis() == XZ) ? 1 : 2);
 
 	pt[nDim] = g_qeglobals.d_v3WorkMax[nDim];
 }
@@ -639,8 +647,8 @@ ClipTool::clippoint_t* ClipTool::XYGetNearestClipPoint(XYZView* xyz, int x, int 
 	tdp[0] = tdp[1] = tdp[2] = 256;
 
 	xyz->SnapToPoint(x, y, tdp);
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (xyz->GetAxis() == YZ) ? 1 : 0;
+	nDim2 = (xyz->GetAxis() == XY) ? 1 : 2;
 
 	// lunaran: based on screen distance and not world distance
 	float margin = 10.0f / xyz->scale;
@@ -725,6 +733,55 @@ void ClipTool::EndPoint ()
 
 
 
+bool ClipTool::Draw3D(CameraView &v)
+{
+	if (!g_pcmdBC)
+		return false;
+	Draw();
+	DrawPoints();
+	glEnable(GL_DEPTH_TEST);
+	return true;
+}
+
+bool ClipTool::Draw2D(XYZView &v)
+{
+	if (!g_pcmdBC)
+		return false;
+	Draw();
+	DrawPoints();
+	return true;
+}
+
+
+void ClipTool::DrawPoints()
+{
+	char		strMsg[4];
+
+	glDisable(GL_DEPTH_TEST);
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER].r);
+
+	glPointSize(4);
+	glBegin(GL_POINTS);
+	for (int i = 0; i < 3; i++)
+	{
+		if (!points[i].set)
+			break;
+		glVertex3fv(&points[i].point.x);
+	}
+	glEnd();
+	glPointSize(1);
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (!points[i].set)
+			break;
+		glRasterPos3f(points[i].point[0] + 1, points[i].point[1] + 1, points[i].point[2] + 1);
+		sprintf(strMsg, "%i", i);
+		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
+	}
+}
+
+
 /*
 ==============
 ClipTool::Draw
@@ -732,60 +789,61 @@ ClipTool::Draw
 */
 void ClipTool::Draw ()
 {
-	if (!g_pcmdBC)
-		return;
-	
-	char		strMsg[4];
-	Brush		*pBrush;
+	Brush		*brush;
 	Face		*face;
-	winding_t	*w;
-	int			order;
-	int			i;
 
-	glPointSize(4);
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER].r);
-	glBegin(GL_POINTS);
-
-	for (int i = 0; i < 3; i++)
-	{
-		if (!points[i].set)
-			break;
-		glVertex3fv(&points[i].point.x);
-	}
-
-	glEnd();
-	glPointSize(1);
-    
-	for (int i = 0; i < 3; i++)
-	{
-		if (!points[i].set)
-			break;
-		glRasterPos3f(points[i].point[0] + 2, points[i].point[1] + 2, points[i].point[2] + 2);
-		sprintf(strMsg, "%i", i);
-		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
-	}
-
-	if (points[0].set && points[1].set)
+	if (points[1].set)
 	{
 		std::vector<Brush*> *brList = (backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
-
 		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
-		{
-			pBrush = *brIt;
-			glColor3f(1, 1, 0);
-			for (face = pBrush->basis.faces, order = 0; face; face = face->fnext, order++)
-			{
-				w = face->face_winding;
-				if (!w)
-					continue;
-				// draw the polygon
-				glBegin(GL_LINE_LOOP);
-				for (i = 0; i < w->numpoints; i++)
-					glVertex3fv(&w->points[i].point.x);
-				glEnd();
-			}
-		}
+			(*brIt)->Draw();
+
+		glDisable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
+					g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
+					g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+					0.3f);
+		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
+			for (face = (*brIt)->basis.faces; face; face = face->fnext)
+				face->Draw();
+		glDisable(GL_BLEND);
+
+		glDisable(GL_DEPTH_TEST);
+		glColor3f(1, 1, 0);
+		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
+			for (face = (*brIt)->basis.faces; face; face = face->fnext)
+				face->DrawWire();
+
 	}
+	else
+	{
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+			brush->Draw();
+
+		glDisable(GL_TEXTURE_2D);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
+				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
+				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+				0.3f);
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+			for (face = brush->basis.faces; face; face = face->fnext)
+				face->Draw();
+		glDisable(GL_BLEND);
+
+		glDisable(GL_DEPTH_TEST);
+		glColor3f(1, 1, 0);
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+			for (face = brush->basis.faces; face; face = face->fnext)
+				face->DrawWire();
+	}
+
+	glEnable(GL_TEXTURE_2D);
 }
 
 

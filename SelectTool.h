@@ -15,7 +15,6 @@ public:
 	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
 	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void Draw();
 
 private:
 	bool selecting;	// vs deselecting, obvs

@@ -22,7 +22,9 @@ public:
 	const bool modal;	// modal tools are mutually exclusive, and delete each other from the stack
 
 	virtual void SelectionChanged() {}
-	virtual void Draw() {}
+	virtual bool Draw3D(CameraView &v) { return false; }
+	virtual bool Draw2D(XYZView &v) { return false; }
+	virtual bool Draw1D(ZView &v) { return false; }
 
 	virtual bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	virtual bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);

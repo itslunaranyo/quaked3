@@ -456,8 +456,8 @@ WndView::ForceUpdate
 */
 void WndView::ForceUpdate()
 {
-	InvalidateRect(w_hwnd, NULL, FALSE);
-	UpdateWindow(w_hwnd);
+	InvalidateRect(w_hwnd, &clientRect, FALSE);
+	//UpdateWindow(w_hwnd);
 }
 
 /*

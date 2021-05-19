@@ -22,9 +22,9 @@ public:
 	virtual void MouseUp(int x, int y, int buttons) {};
 	virtual void MouseMoved(int x, int y, int buttons) {};
 	virtual void Draw();
+	virtual bool DrawTools();
 
 	void	DrawPathLines();
-	void	DrawTools();
 	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward) { return false; }
 
 	int	cursorX, cursorY;

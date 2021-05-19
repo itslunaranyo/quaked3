@@ -2814,7 +2814,6 @@ int WINAPI WinMain (
 
 			// update any windows now
 			Sys_ForceUpdateWindows(g_nUpdateBits);
-			g_nUpdateBits = 0;
 
 			// if not driving in the camera view, block
 			if (!g_qeglobals.d_vCamera.nCamButtonState && !g_bHaveQuit)

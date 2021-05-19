@@ -136,6 +136,7 @@ void Sys_ForceUpdateWindows(int bits)
 		if ((*wvIt)->vbits & bits)
 			(*wvIt)->ForceUpdate();
 	}
+	g_nUpdateBits = 0;
 }
 
 /*

@@ -650,7 +650,7 @@ bool CameraView::CullBrush (Brush *b)
 // sikk---> Camera Grid
 /*
 ==============
-CameraView::DrawGrid
+CameraView::Draw2D
 ==============
 */
 void CameraView::DrawGrid ()
@@ -682,17 +682,122 @@ void CameraView::DrawGrid ()
 /*
 ==============
 CameraView::Draw
+
+draw active (unselected) brushes, sorting out the transparent ones for a separate draw
+==============
+*/
+void CameraView::DrawActive()
+{
+	int i, numTransBrushes = 0;
+
+	for (Brush *brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+	{
+		if (CullBrush(brush))
+			continue;
+		if (brush->IsFiltered())
+			continue;
+	// sikk---> Transparent Brushes
+		// TODO: Make toggle via Preferences Option. 
+		assert(brush->basis.faces->d_texture);
+		if (!strncmp(brush->basis.faces->d_texture->name, "*", 1) ||
+			!strcmp(brush->basis.faces->d_texture->name, "clip") ||
+			!strncmp(brush->basis.faces->d_texture->name, "hint", 4) ||
+			!strcmp(brush->basis.faces->d_texture->name, "trigger"))
+			g_pbrTransBrushes[numTransBrushes++] = brush;
+		else
+		{
+			brush->Draw();
+		}
+	}
+
+	// draw the transparent brushes
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for (i = 0; i < numTransBrushes; i++ )
+		g_pbrTransBrushes[i]->Draw();
+	glDisable(GL_BLEND);
+	// <---sikk
+}
+
+/*
+==============
+CameraView::DrawSelected
+
+draw selected brushes textured, then in red, then in wireframe
+==============
+*/
+void CameraView::DrawSelected(Brush	*pList)
+{
+	Brush	*brush;
+	Face	*face;
+
+	// Draw selected brushes
+	glMatrixMode(GL_PROJECTION);
+	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
+				 g_qeglobals.d_v3SelectTranslate[1], 
+				 g_qeglobals.d_v3SelectTranslate[2]);
+
+	// draw brushes first normally
+	for (brush = pList->next; brush != pList; brush = brush->next)
+		brush->Draw();
+
+	// redraw tint on top
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_BLEND);
+
+	// lunaran: brighten & clarify selection tint, use selection color preference
+	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
+			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
+			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+			0.3f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glDisable(GL_TEXTURE_2D);
+
+	// fully selected brushes, then loose faces
+	for (brush = pList->next; brush != pList; brush = brush->next)
+		for (face = brush->basis.faces; face; face = face->fnext)
+			face->Draw();
+
+	for (int i = 0; i < Selection::FaceCount(); i++)
+		g_vfSelectedFaces[i]->Draw();
+
+	// non-zbuffered outline
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glColor3f(1, 1, 1);
+
+	for (brush = pList->next; brush != pList; brush = brush->next)
+		for (face = brush->basis.faces; face; face = face->fnext)
+			face->Draw();
+}
+
+/*
+==============
+CameraView::DrawTools
+==============
+*/
+bool CameraView::DrawTools()
+{
+	for (auto tIt = g_qeglobals.d_tools.rbegin(); tIt != g_qeglobals.d_tools.rend(); ++tIt)
+	{
+		if ((*tIt)->Draw3D(*this))
+			return true;
+	}
+	return false;
+}
+
+/*
+==============
+CameraView::Draw
 ==============
 */
 void CameraView::Draw ()
 {
-	int			i;
-	double		start, end;
-	float		screenaspect;
-	float		yfov;
-	Brush    *pList;
-	Brush	   *brush;
-	Face	   *face;
+	int		i;
+	double	start, end;
+	float	screenaspect;
+	float	yfov;
 
 	if (!g_map.brActive.next)
 		return;	// not valid yet
@@ -791,44 +896,9 @@ void CameraView::Draw ()
 		break;
 	}
 
-// sikk---> Camera Grid
+// sikk---> Camera Grid/Axis/Map Boundry Box
 	DrawGrid();
-// <---sikk
 
-	glMatrixMode(GL_TEXTURE);
-
-	g_nNumTransBrushes = 0;	// sikk - Transparent Brushes
-
-	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
-	{
-		if (CullBrush(brush))
-			continue;
-		if (brush->IsFiltered())
-			continue;
-// sikk---> Transparent Brushes
-		// TODO: Make toggle via Preferences Option. 
-		assert(brush->basis.faces->d_texture);
-		if (!strncmp(brush->basis.faces->d_texture->name, "*", 1) ||
-			!strcmp(brush->basis.faces->d_texture->name, "clip") ||
-			!strncmp(brush->basis.faces->d_texture->name, "hint", 4) ||
-			!strcmp(brush->basis.faces->d_texture->name, "trigger"))
-			g_pbrTransBrushes[g_nNumTransBrushes++] = brush;
-		else
-		{
-			brush->Draw();
-		}
-	}
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for (i = 0; i < g_nNumTransBrushes; i++ )
-		g_pbrTransBrushes[i]->Draw();
-	glDisable(GL_BLEND);
-// <---sikk
-
-	glMatrixMode(GL_PROJECTION);
-
-// sikk---> Show Axis in center of view
 	// TODO: Display Axis in lower left corner of window and rotate with camera orientation (e.g. blender)
 	if (g_qeglobals.d_savedinfo.bShow_Axis)
 	{
@@ -850,9 +920,7 @@ void CameraView::Draw ()
 		glVertex3i(0, 0, g_qeglobals.d_savedinfo.nMapSize / 2);
 		glEnd();
 	}
-// <---sikk
 
-// sikk---> Show Map Boundry Box
 	if (g_qeglobals.d_savedinfo.bShow_MapBoundry)
 	{
 		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY].r);
@@ -883,59 +951,16 @@ void CameraView::Draw ()
 	}
 // <---sikk
 
-	// now draw selected brushes
-	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
-				 g_qeglobals.d_v3SelectTranslate[1], 
-				 g_qeglobals.d_v3SelectTranslate[2]);
 	glMatrixMode(GL_TEXTURE);
 
-	pList = &g_brSelectedBrushes;
+	// ----------------------------------------------------------------
 
-	// draw normally
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		brush->Draw();
+	DrawActive();
+	if (!DrawTools())
+		DrawSelected(&g_brSelectedBrushes);
 
-	// blend on top
-	glMatrixMode(GL_PROJECTION);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glEnable(GL_BLEND);
-//	glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
-//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// lunaran: brighten & clarify selection tint, use selection color preference
-	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
-			0.3f);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glDisable(GL_TEXTURE_2D);
-
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->fnext)
-			face->Draw();
-
-//	if (g_pfaceSelectedFace)
-//		Face_Draw(g_pfaceSelectedFace);
-// sikk---> Multiple Face Selection
-//	if (Selection::FaceCount())
-//	{
-		for (i = 0; i < Selection::FaceCount(); i++)
-			g_vfSelectedFaces[i]->Draw();
-//	}
-// <---sikk
-
-	// non-zbuffered outline
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glColor3f(1, 1, 1);
-
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->fnext)
-			face->Draw();
-
-	// edge / vertex flags
+	// draw edge / vertex markers in edge/vert mode
+	// lunaran TODO: move this into a vert/edge tool once it exists
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
 	{
 		glPointSize(4);
@@ -963,7 +988,7 @@ void CameraView::Draw ()
 		glPointSize(1);
 	}
 
-	DrawTools();
+	// ----------------------------------------------------------------
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -972,8 +997,7 @@ void CameraView::Draw ()
 	if (g_qeglobals.d_nPointfileDisplayList)
 		Pointfile_Draw();
 
-	// bind back to the default texture so that we don't have problems
-	// elsewhere using/modifying texture maps between contexts
+	// bind back to the default texture
 	glBindTexture(GL_TEXTURE_2D, 0);
 
     glFinish();

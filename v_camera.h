@@ -44,6 +44,7 @@ public:
 	void BoundAngles();
 
 	void Draw ();
+	bool CullBrush(Brush *b);
 
 private:
 
@@ -53,9 +54,11 @@ private:
 
 	void Init ();
 	void InitCull();
-	bool CullBrush(Brush *b);
-	void DrawGrid ();	// sikk - Camera Grid
 	void BuildMatrix ();
+	void DrawGrid ();	// sikk - Camera Grid
+	void DrawActive();
+	void DrawSelected(Brush	*pList);
+	bool DrawTools();
 };
 
 //========================================================================

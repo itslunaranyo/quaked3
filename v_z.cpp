@@ -198,7 +198,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 
 /*
 ==============
-ZView::DrawGrid
+ZView::Draw2D
 ==============
 */
 void ZView::DrawGrid ()

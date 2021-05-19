@@ -240,6 +240,9 @@ SurfWnd_UpdateUI
 */
 void SurfWnd_UpdateUI()
 {
+	if (!g_qeglobals.d_hwndSurfaceDlg)
+		return;
+
 	SurfWnd_RefreshEditTexdef();
 	SurfWnd_FromEditTexdef();
 }

@@ -18,11 +18,9 @@ this is the opposite of the windows paradigm, where an input handler returns
 true if the input *wasn't* handled and should continue to be processed)
 
 - tools should not capture any input they don't use, to ensure lower tools
-aren't starved for their expected input. this especially includes unused
-shift/ctrl/alt modifier combos. the exception is when a tool is 'hot', which
-indicates it's in the middle of some modal operation like a drag. as a rule,
-every tool should return false on any mousemove or mouseup if the tool isn't
-hot, regardless of side effects.
+aren't starved for their expected inputs. this especially includes unused
+shift/ctrl/alt modifier combos. as a rule, every tool should return false on
+any mousemove or mouseup if the tool isn't hot, regardless of side effects.
 
 ============================================================
 */

@@ -486,6 +486,8 @@ void Brush::Build()
 Brush::MakeFaceWinding
 
 returns the visible polygon on a face
+
+TODO: why isn't this in Face::?
 =================
 */
 winding_t *Brush::MakeFaceWinding(Face *face)
@@ -1278,12 +1280,6 @@ void Brush::MakeCzgCylinder(int degree)
 	}
 
 	// lunaran - grid view reunification
-	/*
-	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
-	if (xyz)
-		axis = xyz->dViewType;
-	else
-		axis = XY;*/
 	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
@@ -1318,12 +1314,6 @@ void Brush::MakeSided(int sides)
 	}
 
 	// lunaran - grid view reunification
-	/*
-	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
-	if (xyz)
-		axis = xyz->dViewType;
-	else
-		axis = XY;*/
 	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
@@ -1358,12 +1348,6 @@ void Brush::MakeSidedCone(int sides)
 	}
 
 	// lunaran - grid view reunification
-	/*
-	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
-	if (xyz)
-		axis = xyz->dViewType;
-	else
-		axis = XY;*/
 	axis = QE_BestViewAxis();
 
 	b = g_brSelectedBrushes.next;
@@ -1634,11 +1618,8 @@ void Brush::DrawXY (int nViewType)
 {
 	int			i;
 	int			order;
-	float		fMid;
-	vec3		vCorners[4];
-	vec3		vTop, vBottom;
-	Face	   *face;
-	winding_t  *w;
+	Face		*face;
+	winding_t	*w;
 
 	if (hiddenBrush)
 		return;
@@ -1647,7 +1628,11 @@ void Brush::DrawXY (int nViewType)
 	{
 		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->nShowFlags & ECLASS_LIGHT))
 		{
-    		fMid = basis.mins[2] + (basis.maxs[2] - basis.mins[2]) / 2;
+ 			vec3	vCorners[4];
+			vec3	vTop, vBottom;
+			float	fMid;
+
+   			fMid = basis.mins[2] + (basis.maxs[2] - basis.mins[2]) / 2;
 
 			vCorners[0][0] = basis.mins[0];
 			vCorners[0][1] = basis.mins[1];
@@ -1700,21 +1685,8 @@ void Brush::DrawXY (int nViewType)
 	for (face = basis.faces, order = 0; face; face = face->fnext, order++)
 	{
 		// only draw polygons facing in a direction we care about
-		switch (nViewType)
-		{
-		case XY:
-			if (face->plane.normal[2] <= 0)
-				continue;
-			break;
-		case XZ:
-			if (face->plane.normal[1] <= 0)
-				continue;
-			break;
-		case YZ:
-			if (face->plane.normal[0] <= 0)
-				continue;
-			break;
-		}
+		if (face->plane.normal[nViewType] <= 0)
+			continue;
 
 		w = face->face_winding;
 		if (!w)

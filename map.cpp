@@ -829,7 +829,7 @@ void Map::RegionXY()
 
 	// sikk---> Proper Regioning for XZ & YZ Views
 
-	if (g_qeglobals.d_vXYZ[0].dViewType == XY)
+	if (g_qeglobals.d_vXYZ[0].GetAxis() == XY)
 	{
 		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
 		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
@@ -838,7 +838,7 @@ void Map::RegionXY()
 		regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 	}
-	if (g_qeglobals.d_vXYZ[0].dViewType == XZ)
+	else if (g_qeglobals.d_vXYZ[0].GetAxis() == XZ)
 	{
 		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
 		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
@@ -847,7 +847,7 @@ void Map::RegionXY()
 		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
 		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
 	}
-	if (g_qeglobals.d_vXYZ[0].dViewType == YZ)
+	else if (g_qeglobals.d_vXYZ[0].GetAxis() == YZ)
 	{
 		regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size

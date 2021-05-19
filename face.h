@@ -72,6 +72,7 @@ public:
 
 	void	MakePlane();
 	void	Draw();
+	void	DrawWire();
 private:
 	void	SetColor();
 	float	ShadeForPlane();

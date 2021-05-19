@@ -96,11 +96,14 @@ void QE_Init ()
 	// initialize variables
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
-	g_qeglobals.d_vXYZ[0].dViewType = XY;
+	g_qeglobals.d_vXYZ[0].SetAxis(XY);
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 	g_qeglobals.d_clipTool = nullptr;
+	g_qeglobals.d_v3WorkMin = vec3(0);
+	g_qeglobals.d_v3WorkMax = vec3(8);
 
 	new SelectTool();
+	new ManipTool();
 
 	// set maximium undo levels
 	Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
@@ -569,7 +572,7 @@ int QE_BestViewAxis()
 	for (int i = 0; i < 3; i++)
 	{
 		if (g_qeglobals.d_wndGrid[i]->IsOnTop())
-			return g_qeglobals.d_wndGrid[i]->xyzv->dViewType;
+			return g_qeglobals.d_wndGrid[i]->xyzv->GetAxis();
 	}
 	return XY;
 }

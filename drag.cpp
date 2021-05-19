@@ -223,7 +223,7 @@ void Drag_Setup(int x, int y, int buttons,
 			if (buttons & MK_CONTROL)
 				pBrush->SideSelect(origin, dir, true);
 			else
-				pBrush->SideSelect(origin, dir, false);
+				pBrush->SideSelect(origin, dir);
 		}
 	}
 	else
@@ -231,7 +231,7 @@ void Drag_Setup(int x, int y, int buttons,
 		if (buttons & MK_CONTROL)
 			g_brSelectedBrushes.next->SideSelect(origin, dir, true);
 		else
-			g_brSelectedBrushes.next->SideSelect(origin, dir, false);
+			g_brSelectedBrushes.next->SideSelect(origin, dir);
 	}
 	if (g_brSelectedBrushes.next->owner->IsPoint())
 		Sys_Printf("CMD: Dragging entire selection.\n");

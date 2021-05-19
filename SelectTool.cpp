@@ -7,7 +7,7 @@
 
 SelectTool::SelectTool() : 
 	selecting(true),
-	Tool("selectomatic", false)	// always on (not modal)
+	Tool("Selection", false)	// always on (not modal)
 {
 }
 
@@ -95,7 +95,7 @@ bool SelectTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wn
 		if (AltDown())
 			selFlags |= SF_CYCLE;
 
-		switch (v.dViewType)
+		switch (v.GetAxis())
 		{
 		case YZ:
 			rayOrg.x = g_qeglobals.d_savedinfo.nMapSize / 2;
@@ -159,10 +159,6 @@ bool SelectTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return false;
 
 	return InputCommand(wParam);
-}
-
-void SelectTool::Draw()
-{
 }
 
 /*

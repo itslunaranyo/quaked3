@@ -83,8 +83,6 @@ bool Plane::FromPoints(const vec3 p1, const vec3 p2, const vec3 p3)
 /*
 =================
 Plane::BasePoly
-
-TODO: is this the cause of brushes appearing broken/invisible when near the map extents?
 =================
 */
 winding_t *Plane::BasePoly()
@@ -540,13 +538,22 @@ Face::Draw
 */
 void Face::Draw()
 {
-	int i;
-
-	if (face_winding == 0)
+	if (!face_winding)
 		return;
 
 	glBegin(GL_POLYGON);
-	for (i = 0; i < face_winding->numpoints; i++)
+	for (int i = 0; i < face_winding->numpoints; i++)
+		glVertex3fv(&face_winding->points[i].point[0]);
+	glEnd();
+}
+
+void Face::DrawWire()
+{
+	if (!face_winding)
+		return;
+
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < face_winding->numpoints; i++)
 		glVertex3fv(&face_winding->points[i].point[0]);
 	glEnd();
 }

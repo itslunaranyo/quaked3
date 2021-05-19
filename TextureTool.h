@@ -14,7 +14,10 @@ public:
 	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void Draw();
+
+	bool Draw3D(CameraView &v);
+	bool Draw2D(XYZView &v);
+
 	void SelectionChanged();
 };
 

@@ -30,22 +30,21 @@ void WndGrid::Initialize(int winNum)
 
 void WndGrid::SetAxis(int viewAxis)
 {
-	xyzv->dViewType = viewAxis;
+	xyzv->SetAxis(viewAxis);
 
-	if (xyzv->dViewType == YZ)
+	if (viewAxis == YZ)
 		SetTitle("Side View (YZ)");
-	else if (xyzv->dViewType == XZ)
+	else if (viewAxis == XZ)
 		SetTitle("Front View (XZ)");
 	else
 		SetTitle("Top View (XY)");
 
-	xyzv->PositionView();
 	ForceUpdate();
 }
 
 void WndGrid::CycleAxis()
 {
-	SetAxis((xyzv->dViewType + 1) % 3);
+	SetAxis((xyzv->GetAxis() + 1) % 3);
 }
 
 #define SELECTION_POINTENT	1
@@ -181,7 +180,7 @@ void WndGrid::DoPopupMenu(int x, int y)
 		DoCreateEntity(false, true, true, org);
 		break;
 	case ID_MENU_CREATEPOINTENTITY:
-		org[xyzv->dViewType] = g_qeglobals.d_v3WorkMin[xyzv->dViewType];
+		org[xyzv->GetAxis()] = g_qeglobals.d_v3WorkMin[xyzv->GetAxis()];
 
 		DoCreateEntity(true, false, false, org);
 		break;

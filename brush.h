@@ -62,7 +62,7 @@ public:
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
 	void	SelectFaceForDragging(Face *f, bool shear);
-	void	SideSelect(const vec3 origin, const vec3 dir, bool shear);
+	void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
 	bool	PointTest(const vec3 origin);
 
 	// sikk---> Vertex Editing Splits Face

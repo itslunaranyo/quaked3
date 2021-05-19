@@ -45,6 +45,13 @@ void Command::Do()
 {
 	assert(state == LIVE);
 	Do_Impl();
+
+	// commands can decide as they're Do()ne that despite being set up and
+	// receiving config, their net change to the scene was a zero, and
+	// NOOP themselves as a signal
+	if (state == NOOP)
+		return;
+
 	state = DONE;
 	if (selectOnDo)
 		Select();
@@ -134,6 +141,13 @@ void CommandQueue::Complete(Command *cmd)
 		delete cmd;
 		return;
 	}
+
+	if (cmd->state == Command::NOOP)
+	{
+		delete cmd;
+		return;
+	}
+
 	undoQueue.push_back(cmd);
 
 	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)

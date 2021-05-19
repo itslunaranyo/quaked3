@@ -48,6 +48,8 @@
 #include "map.h"
 #include "points.h"
 #include "select.h"
+#include "modify.h"
+#include "transform.h"
 #include "surface.h"
 #include "vertsel.h"
 #include "winding.h"
@@ -72,6 +74,7 @@
 
 #include "Tool.h"
 #include "SelectTool.h"
+#include "ManipTool.h"
 #include "TextureTool.h"
 #include "ClipTool.h"
 
@@ -296,62 +299,6 @@ bool	ConfirmModified ();
 void	ImportDialog (bool bCheck);	// sikk - Import Dialog for map/prefab
 void	ExportDialog (bool bCheck);	// sikk - Export Dialog for map/prefab
 
-/*
-// textures.c
-//HWND	TexWnd_Create ();
-//LONG	WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void	TexWnd_Resize(RECT rc);
-
-// win_insp.c
-void	InspWnd_Create ();
-void	InspWnd_SetMode (int nType);
-void	InspWnd_ToTop();
-void	InspWnd_Resize();
-BOOL	CALLBACK InspWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void	InspWnd_Move(HWND hwnd, int x, int y, int w, int h);
-void	InspWnd_MoveRect(HWND hwnd, RECT r);
-
-void	ConsoleWnd_Create();
-void	ConsoleWnd_Resize(RECT rc);
-
-// win_ent.c
-void	EntWnd_Create ();
-void	EntWnd_Resize(RECT rc);
-
-void	EntWnd_ApplyAngle(int ang);
-void	EntWnd_FlagChecked(int flag);
-void	EntWnd_RefreshEditEntity();
-void	EntWnd_UpdateListSel();
-void	EntWnd_CreateEntity ();
-void	EntWnd_UpdateUI();
-void	EntWnd_FillClassList ();
-void	EntWnd_SetKeyValue ();
-void	EntWnd_SetKeyValue(const char* key, const char* value);
-void	EntWnd_RemoveKeyValue ();
-void	EntWnd_EditKeyValue ();
-void	EntWnd_CreateControls (HINSTANCE hInstance);
-void	EntWnd_FlagsFromEnt ();
-void	EntWnd_RefreshKeyValues ();
-
-// win_cam.c
-void	WCam_Create ();
-LONG	WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-// win_z.c
-void WZ_Create ();
-LONG WINAPI WZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-// win_xy.c
-int		XYZWnd_GetTopWindowViewType();
-void	WXYZ_Create (int slot);
-LONG	WINAPI XYZWnd_Proc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-//static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void	WXY_Print ();
-int		GetSelectionInfo ();	// sikk - Contex Menu
-void	XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y);	// sikk - Contex Menu
-void	XYZWnd_CycleViewAxis(HWND xyzwin);
-void	XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis);
-*/
 XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 
 // win_main.c
@@ -418,16 +365,5 @@ void DeleteBspCommand (HWND hwndDlg);
 void SaveSettings (HWND hwndDlg);
 bool SelectDir (HWND h);
 
-//
-// win_snap.c
-//
-/*
-bool FindClosestBottom (HWND h, LPRECT rect, LPRECT parentrect);
-bool FindClosestTop (HWND h, LPRECT rect, LPRECT parentrect);
-bool FindClosestLeft (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit);
-bool FindClosestRight (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit);
-bool FindClosestHorizontal (HWND h, LPRECT rect, LPRECT parentrect);
-bool FindClosestVertical (HWND h, LPRECT rect, LPRECT parentrect);
-bool TryDocking (HWND h, long side, LPRECT rect, int widthlimit); // sikk - Window Management
-*/
+
 #endif

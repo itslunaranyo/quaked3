@@ -101,23 +101,6 @@ namespace Selection
 }
 // ================================
 
-void	Modify_Delete();
-void	Modify_Clone();
-
-void	Transform_Move(const vec3 delta);
-void	Transform_ApplyMatrix();
-void	Transform_FlipAxis(int axis);
-void	Transform_RotateAxis(int axis, float deg, bool bMouse);  // sikk - Free Rotate: bool bMouse argument added
-void	Transform_Scale(float x, float y, float z);	// sikk - Brush Scaling
-
-void	Modify_Ungroup();	// sikk - made sense to put it here
-void	Modify_InsertBrush();	// sikk - Insert Brush into Entity
-void	Modify_Hide();
-void	Modify_ShowHidden();
-
-void	Modify_ConnectEntities();
-void	Modify_SetKeyValue(const char *key, const char *value);
-void	Modify_SetColor(const vec3 color);
 
 // sikk - Multiple Face Selection: returns true if pFind is in pList
 bool	OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize);

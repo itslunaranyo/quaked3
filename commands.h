@@ -35,6 +35,7 @@
 #include "CmdSphere.h"
 #include "CmdHollow.h"
 #include "CmdMerge.h"
+#include "CmdPlaneShift.h"
 
 //#include "Cmd.h"
 

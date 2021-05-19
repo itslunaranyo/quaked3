@@ -25,7 +25,7 @@ public:
 	~Texture() {};
 
 	Texture		*next;
-	char		name[32];		// longer than the WAD2 spec to make room for the (rgb) single color texture hack names
+	char		name[32];		// longer than the WAD2 spec (16) to make room for the (rgb) single color texture hack names
     int			width, height;
 	int			texture_number;	// gl bind number
 	vec3		color;			// for flat shade mode
