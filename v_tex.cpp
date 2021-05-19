@@ -4,12 +4,11 @@
 
 #include "qe3.h"
 
-static int	cursorX, cursorY;
 #define	FONT_HEIGHT	10
-
 
 TextureView::TextureView()
 {
+	stale = true;
 	scale = 1.0f;	// sikk - Mouse Zoom Texture Window
 }
 
@@ -64,6 +63,9 @@ TextureView::MouseMoved
 */
 void TextureView::MouseMoved(int x, int y, int buttons)
 {
+	if (stale)
+		Layout();
+
 	float	lscale = 1;	// sikk - Mouse Zoom Texture Window (changed from "int")
 
 	if (buttons & MK_SHIFT)
@@ -107,7 +109,7 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 			Sys_SetCursorPos(cursorX, cursorY);
 			Sys_UpdateWindows(W_TEXTURE);
 		}
-		//		return;
+		//return;
 	}
 	else
 		MouseOver(x, height - 1 - y);
@@ -121,7 +123,7 @@ TextureView::MouseOver
 void TextureView::MouseOver(int x, int y)
 {
 	char		texstring[256];
-	qtexture_t*	tex;
+	Texture*	tex;
 
 	tex = TexAtPos(x, y);
 	if (tex)
@@ -148,42 +150,19 @@ lunaran: cache texture window layout instead of rebuilding it every frame
 ============================================================================
 */
 
-
-/*
-============
-TextureView::Layout
-============
-*/
-void TextureView::Layout()
+int TextureView::AddToLayout(TextureGroup* tg, int top, int* curIdx)
 {
-	qtexture_t	*q;
-	int			curIdx, curX, curY, curRowHeight;
-	char*		wad;
+	Texture	*q;
+	int		curX, curY, curRowHeight;
 
 	curX = 8;
-	curY = -8;
+	curY = top;
 	curRowHeight = 0;
-	count = 0;
 
-	if (layout)
+	for (q = tg->first; q; q = q->next)
 	{
-		free(layout);
-		layout = NULL;
-	}
-	for (q = g_qeglobals.d_qtextures; q; q = q->next)
-	{
-		if (q->name[0] == '(') continue;	// fake color texture
-		count++;
-	}
-	if (!count) return;
-
-	layout = (texWndPlacement_t*)qmalloc(sizeof(texWndPlacement_t) * count);
-
-	curIdx = 0;
-	wad = NULL;
-	for (q = g_qeglobals.d_qtextures; q; q = q->next)
-	{
-		if (q->name[0] == '(') continue;
+		if (Textures::texMap[label_t(q->name)] != q)
+			continue;
 
 		// go to the next row unless the texture is the first on the row
 		if (curRowHeight)
@@ -194,21 +173,13 @@ void TextureView::Layout()
 				curY -= curRowHeight + FONT_HEIGHT + 4;
 				curRowHeight = 0;
 			}
-			else if (wad && g_qeglobals.d_savedinfo.bSortTexByWad && q->wad && strcmp(q->wad, wad) != 0)
-			{
-				curX = 8;
-				curY -= curRowHeight + FONT_HEIGHT + 16;
-				curRowHeight = 0;
-			}
 		}
-		// lunaran: row breaks for new wads when sorted
-		wad = q->wad;
 
-		layout[curIdx].tex = q;
-		layout[curIdx].x = curX;
-		layout[curIdx].y = curY;
-		layout[curIdx].w = q->width * scale;
-		layout[curIdx].h = q->height * scale;
+		layout[*curIdx].tex = q;
+		layout[*curIdx].x = curX;
+		layout[*curIdx].y = curY;
+		layout[*curIdx].w = q->width * scale;
+		layout[*curIdx].h = q->height * scale;
 
 		// Is our texture larger than the row? If so, grow the row height to match it
 		if (curRowHeight < q->height * scale)	// sikk - Mouse Zoom Texture Window
@@ -218,9 +189,50 @@ void TextureView::Layout()
 		curX += q->width * scale < 64 ? 64 : q->width * scale;	// sikk - Mouse Zoom Texture Window
 		curX += 8;
 
-		curIdx++;
+		(*curIdx)++;
+		count++;
 	}
-	length = curY - curRowHeight - FONT_HEIGHT - 8 + height;
+
+	// new row
+	return curY - (curRowHeight + FONT_HEIGHT + 4);
+}
+
+/*
+============
+TextureView::Layout
+============
+*/
+void TextureView::Layout()
+{
+	int curY, curIdx;
+
+	curY = -8;
+
+	if (layout)
+	{
+		free(layout);
+		layout = nullptr;
+	}
+
+	count = Textures::group_unknown.numTextures;
+	for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
+		count += (*tgIt)->numTextures;
+
+	if (!count) return;
+
+	layout = (texWndPlacement_t*)qmalloc(sizeof(texWndPlacement_t) * count);
+
+	curIdx = 0;
+	count = 0;
+	for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
+	{
+		curY = AddToLayout(*tgIt, curY, &curIdx) - 12;	// padding
+	}
+	curY = AddToLayout(&Textures::group_unknown, curY, &curIdx);
+
+	length = curY + height;
+
+	stale = false;
 }
 
 
@@ -235,7 +247,7 @@ void TextureView::SetScale(float inscale)
 {
 	char		texscalestring[128];
 	texWndPlacement_t* twp;
-	qtexture_t *firsttexture;
+	Texture *firsttexture;
 	int i;
 
 	if (inscale > 8)
@@ -293,7 +305,7 @@ Sets texture window's caption to the name and size of the texture
 under the current mouse position.
 ==============
 */
-qtexture_t* TextureView::TexAtPos(int x, int y)
+Texture* TextureView::TexAtPos(int x, int y)
 {
 	texWndPlacement_t* twp;
 
@@ -387,7 +399,7 @@ void TextureView::SelectTexture(int x, int y)
 {
 	texdef_t	texdef;
 
-	qtexture_t*	tw;
+	Texture*	tw;
 
 	tw = TexAtPos(x, y);
 	if (tw)
@@ -413,15 +425,16 @@ void TextureView::SelectTexture(int x, int y)
 texcmp
 ==============
 */
-int texcmp(qtexture_t* a, qtexture_t* b)
+int texcmp(Texture* a, Texture* b)
 {
+	/*
 	if (g_qeglobals.d_savedinfo.bSortTexByWad && a->wad && b->wad)
 	{
 		int cmp;
 		cmp = strcmp(a->wad, b->wad);
 		if (cmp != 0)
 			return cmp;
-	}
+	}*/
 	return strcmp(a->name, b->name);
 }
 
@@ -432,7 +445,7 @@ TextureView::SortTextures
 */
 void TextureView::SortTextures()
 {
-	qtexture_t	*q, *qtemp, *qhead, *qcur, *qprev;
+	Texture	*q, *qtemp, *qhead, *qcur, *qprev;
 
 	Sys_Printf("CMD: Sorting active textures...\n");
 
@@ -505,6 +518,8 @@ void TextureView::Draw(int dw, int dh)
 	texWndPlacement_t* twp;
 	char	   *name;
 
+	if (stale) Layout();
+
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][0],
 		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][1],
 		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][2],
@@ -528,7 +543,7 @@ void TextureView::Draw(int dw, int dh)
 			(twp->y > origin[1] - dh))	// sikk - Mouse Zoom Texture Window
 		{
 			// if in use, draw a background
-			if (twp->tex->inuse)
+			if (twp->tex->used)
 			{
 				glLineWidth(1);
 				glColor3f(0.5, 1, 0.5);

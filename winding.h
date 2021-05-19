@@ -43,7 +43,7 @@ namespace Winding
 	winding_t	*Clip(winding_t *in, Plane *split, bool keepon);	// clip the winding with the plane
 	winding_t	*TryMerge(winding_t *f1, winding_t *f2, vec3_t planenormal, int keep);	// try to merge the windings, returns the new merged winding or NULL
 	void		RemovePoint(winding_t *w, int point);	// remove a point from the winding
-	void		TextureCoordinates(winding_t *w, qtexture_t *q, Face *f);	// compute s/t coords for textured face winding
+	void		TextureCoordinates(winding_t *w, Texture *q, Face *f);	// compute s/t coords for textured face winding
 
 	bool		PlanesConcave(winding_t *w1, winding_t *w2, vec3_t normal1, vec3_t normal2, float dist1, float dist2);	// returns true if the planes are concave
 	int			MemorySize(winding_t *w);	//dum

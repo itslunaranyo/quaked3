@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <time.h>
+#include "qeBuffer.h"
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
@@ -59,7 +60,8 @@ FILE   *SafeOpenRead (char *filename);
 void	SafeRead (FILE *f, void *buffer, int count);
 void	SafeWrite (FILE *f, void *buffer, int count);
 
-int		LoadFile (char *filename, void **bufferptr);
+int		LoadFile(char *filename, void **bufferptr);
+int		LoadFile(const char *filename, qeBuffer &fileBuf);
 int		LoadFileNoCrash (char *filename, void **bufferptr);
 void	SaveFile (char *filename, void *buffer, int count);
 
@@ -68,10 +70,10 @@ void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);
 void 	StripExtension (char *path);
 
-void 	ExtractFilePath (char *path, char *dest);
-void	ExtractFileName (char *path, char *dest);
-void 	ExtractFileBase (char *path, char *dest);
-void	ExtractFileExtension (char *path, char *dest);
+void 	ExtractFilePath (const char *path, char *dest);
+void	ExtractFileName (const char *path, char *dest);
+void 	ExtractFileBase (const char *path, char *dest);
+void	ExtractFileExtension (const char *path, char *dest);
 
 int		ParseHex (char *hex);
 int 	ParseNum (char *str);

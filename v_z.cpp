@@ -340,7 +340,7 @@ void ZView::Draw ()
 	float		w, h;
 	float		top, bottom;
 	double		start, end;
-	qtexture_t *q;
+	Texture *q;
 	vec3_t		org_top, org_bottom, dir_up, dir_down;
 
 	int xCam = width / 3;
@@ -421,7 +421,7 @@ void ZView::Draw ()
 			continue;
 		bottom = org_bottom[2] + bottom;
 
-		q = Texture_ForName(brush->brush_faces->texdef.name);
+		q = Textures::ForName(brush->brush_faces->texdef.name);
 
 		glColor3f(q->color[0], q->color[1], q->color[2]);
 		glBegin(GL_QUADS);
@@ -456,7 +456,7 @@ void ZView::Draw ()
 				if (brush->RayTest(org_bottom, dir_up, &bottom))
 				{
 					bottom = org_bottom[2] + bottom;
-					q = Texture_ForName(brush->brush_faces->texdef.name);
+					q = Textures::ForName(brush->brush_faces->texdef.name);
 
 					glColor3f(q->color[0], q->color[1], q->color[2]);
 					glBegin(GL_QUADS);

@@ -8,12 +8,14 @@
 
 #define	MAX_TEXTUREDIRS	128
 
-static unsigned		tex_palette[256];
-static qtexture_t	*notexture;
-static bool			nomips;
+static unsigned	tex_palette[256];
+static Palette texpal;
+Texture	*Textures::nulltexture;
+static bool		nomips;
 
 static HGLRC s_hglrcTexture;
 static HDC	 s_hdcTexture;
+
 
 // sikk---> Removed Anisotropy
 //#define	TX_NEAREST				1
@@ -29,90 +31,653 @@ char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
 
 //=====================================================
 
+std::list<TextureGroup*>	Textures::groups;
+std::map<label_t, Texture*>	Textures::texMap;
+TextureGroup				Textures::group_solid;
+TextureGroup				Textures::group_unknown;
+
 /*
 ==================
-Texture_Init
+Textures::Init
 ==================
 */
-void Texture_Init ()
+void Textures::Init()
 {
-	char	name[1024];
-	byte   *pal;
+	// load palette
+	texpal.LoadFromFile("palette.lmp");	// TODO: specify name in project
 
-	// load the palette
-	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
-	// lunaran - check both, old location was hardcoded because that's where quake.exe expects it to be
-	sprintf(name, "%s/gfx/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
-	LoadFile(name, (void**)&pal);
-	if (!pal)
-	{
-		Sys_Printf("Could not load %s, trying texturepath ...\n", name);
-		sprintf(name, "%s/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
-		LoadFile(name, (void**)&pal);
-		if (!pal)
-		{
-			Error("Could not load %s", name);
-		}
-	}
-	Texture_InitPalette(pal);
-	free(pal);
+	// prepare null texture
+	MakeNullTexture();
 
-	// create the fallback texture
-	Texture_MakeNotexture();
-
-	g_qeglobals.d_qtextures = NULL;
+	// create solid color group
+	strcpy(group_solid.name, "*solid");
+	// * is invalid as a filename character, so a theoretical wad named "solid" can't collide
+	
+	g_qeglobals.d_qtextures = nullptr;
 }
 
+/*
+==================
+Textures::Flush
+==================
+*/
+void Textures::Flush()
+{
+	// delete all texture groups
+	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
+		delete *tgIt;
+
+	groups.clear();
+	Textures::texMap.clear();
+
+	g_qeglobals.d_texturewin.stale = true;
+
+	// if a map is loaded, we must force all brushes to refresh their texture assignments to 
+	// properly populate the unknown wad and redo texture projections for the 64x64 notexture
+	Map_BuildBrushData();
+	Sys_UpdateWindows(W_CAMERA);
+}
+
+/*
+==================
+Textures::FlushUnused
+==================
+*/
+void Textures::FlushUnused()
+{
+	// call flushunused on all texture groups
+	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
+	{
+		Textures::RemoveFromNameMap(*tgIt);	// hurf
+		(*tgIt)->FlushUnused();
+		Textures::AddToNameMap(*tgIt);		// durf
+	}
+
+	g_qeglobals.d_texturewin.stale = true;
+	Sys_UpdateWindows(W_CAMERA);
+}
+
+/*
+==================
+Textures::ClearUsed
+==================
+*/
+void Textures::ClearUsed()
+{
+	// call clearused on all texture groups
+	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
+		(*tgIt)->ClearUsed();
+
+	// TODO: should "refresh used" instead, so used status contains no false negatives
+	// otherwise FlushUnused could flush used textures
+	g_qeglobals.d_texturewin.stale = true;
+}
+
+/*
+==================
+Textures::CreateSolid
+==================
+*/
+Texture *Textures::CreateSolid(const char *name)
+{
+	int			gltex;
+	WadLoader	wl;
+	vec3_t		color;
+	qeBuffer	data(4);
+	Texture		*solidtex;
+
+	// make solid texture from name
+	sscanf(name, "(%f %f %f)", &color[0], &color[1], &color[2]);
+
+	data[0] = color[0] * 255;
+	data[1] = color[1] * 255;
+	data[2] = color[2] * 255;
+	data[3] = 255;
+
+	gltex = wl.MakeGLTexture(1, 1, data);
+	solidtex = new Texture(1, 1, name, color, gltex);
+
+	// stash in the solid color group
+	group_solid.Add(solidtex);
+	return solidtex;
+}
+
+/*
+==================
+Textures::MakeNullTexture
+
+one texture map that is universally pointed to by all broken texture entries
+==================
+*/
+Texture *Textures::MakeNullTexture()
+{
+	int			gltex;
+	WadLoader	wl;
+	vec3_t		color;
+	qeBuffer	data(64*64*4);
+	int			x, y, ofs;
+
+	data.zero();
+
+	// hot programmer pink checkerboard
+	for (x = 0; x < 32; x++) for (y = 0; y < 32; y++)
+	{
+		ofs = 4 * (x * 64 + y);
+		data[ofs] = 255;
+		data[ofs + 2] = 255;
+		data[ofs + 3] = 255;
+
+		ofs = 4 * ((x+32) * 64 + y + 32);
+		data[ofs] = 255;
+		data[ofs + 2] = 255;
+		data[ofs + 3] = 255;
+	}
+	
+	color[0] = color[2] = 128;
+	color[1] = 0;
+
+	gltex = wl.MakeGLTexture(64, 64, data);
+	nulltexture = new Texture(64, 64, "nulltexture", color, gltex);
+	return nulltexture;
+}
+
+/*
+==================
+Textures::ForName
+
+keeping every wad in a separate group means textures with matching names
+never clash, which would be great if not for the fact that it's inconsistent with
+the way qbsp behaves (where textures loaded later override those loaded earlier).
+an unordered_map speeds up lookups, and also provides late-stomps-early as a
+convenient side effect.
+==================
+*/
+Texture *Textures::ForName(const char *name)
+{
+	Texture* tx;
+	if (name[0] == '(')
+	{
+		// keep the solid textures out of the main texture space
+		tx = group_solid.ForName(name);
+		if (!tx)
+		{
+			tx = CreateSolid(name);
+		}
+		return tx;
+	}
+
+	// check the global texture name map
+	tx = texMap[label_t(name)];
+	if (tx)
+	{
+		tx->used = true;
+		return tx;
+	}
+
+	// still not found, make wrapper for nulltexture and put it in the unknown wad
+	tx = new Texture(*nulltexture);
+	strncpy(tx->name, name, 32);
+	tx->next = nullptr;
+	tx->used = true;
+
+	group_unknown.Add(tx);
+	texMap[label_t(name)] = tx;
+	g_qeglobals.d_texturewin.stale = true;
+	return tx;
+}
+
+/*
+==================
+Textures::RemoveFromNameMap
+
+do before deleting a texturegroup that is potentially used
+the null indexes are okay because they'll turn into notextures in 
+the unknown group if they're used again
+==================
+*/
+void Textures::RemoveFromNameMap(TextureGroup* tg)
+{
+	for (Texture* q = tg->first; q; q = q->next)
+		texMap[label_t(q->name)] = nullptr;
+}
+
+/*
+==================
+Textures::AddToNameMap
+==================
+*/
+void Textures::AddToNameMap(TextureGroup* tg)
+{
+	Texture* old;
+	for (Texture* q = tg->first; q; q = q->next)
+	{
+		label_t lbl(q->name);
+		old = texMap[lbl];
+		texMap[lbl] = q;
+	}
+}
+
+/*
+==================
+Textures::LoadWad
+==================
+*/
+void Textures::LoadWad(const char* wadfile)
+{
+	WadLoader wl;
+	TextureGroup* wad;
+	bool refresh = false;
+
+	Sys_Printf("CMD: Loading all textures...\n");
+
+	auto tgIt = groups.begin();
+	// check if the wad is already loaded and trash it first
+	for (tgIt; tgIt != groups.end(); tgIt++)
+	{
+		if (!strncmp((*tgIt)->name, wadfile, 32))
+			break;
+	}
+	if (tgIt != groups.end())
+	{
+		wad = *tgIt;	// old wad
+		Textures::RemoveFromNameMap(wad);
+		*tgIt = wl.LoadTexturesFromWad(wadfile);
+		if (!wad)
+		{
+			InspWnd_SetMode(W_CONSOLE);	// show errors
+			return;
+		}
+		Textures::AddToNameMap(*tgIt);
+		delete wad;
+	}
+	else
+	{
+		wad = wl.LoadTexturesFromWad(wadfile);
+		if (!wad)
+		{
+			InspWnd_SetMode(W_CONSOLE);
+			return;
+		}
+
+		Textures::AddToNameMap(wad);
+		groups.push_back(wad);
+		groups.sort(TextureGroup::sortcmp);
+	}
+
+	g_qeglobals.d_texturewin.stale = true;
+	g_qeglobals.d_texturewin.origin[1] = 0;
+
+	InspWnd_SetMode(W_TEXTURE);
+	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
+
+	// select the first texture in the list
+	if (!g_qeglobals.d_workTexDef.name[0])
+		g_qeglobals.d_texturewin.SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
+}
+
+/*
+==================
+Textures::MenuLoadWad
+==================
+*/
+void Textures::MenuLoadWad(const int menunum)
+{
+	LoadWad(g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
+
+	// refresh texture assignments on all brushes after a manual wad load, since
+	// the loaded wad might refresh an existing wad or fill in some broken textures
+	Map_BuildBrushData();
+	Sys_UpdateWindows(W_CAMERA);
+}
+
+/*
+==================
+Textures::ForName
+==================
+*/
+void Textures::SetRenderMode(const int menunum)
+{
+
+}
+
+/*
+==================
+Textures::ForName
+==================
+*/
+void Textures::SetParameters()
+{
+
+}
+
+//=====================================================
+
+/*
+==================
+Texture::Texture
+==================
+*/
+Texture::Texture(int w, int h, const char* n, vec3_t c, int gltex) :
+	next(nullptr), width(w), height(h), used(false), texture_number(gltex)
+{
+	strncpy(name, n, 32);
+	VectorCopy(c, color);
+	SetFlags();
+}
+
+/*
+==================
+Texture::SetFlags
+==================
+*/
+void Texture::SetFlags()
+{
+	showflags = 0;
+	if (!strncmp(name, "*", 1))
+		showflags |= BFL_LIQUID;
+	else if (!strncmp(name, "sky", 3))
+		showflags |= BFL_SKY;
+	else if (!strncmp(name, "clip", 4))
+		showflags |= BFL_CLIP;
+	else if (!strncmp(name, "hint", 4))
+		showflags |= BFL_HINT;
+	else if (!strncmp(name, "skip", 4))
+		showflags |= BFL_SKIP;
+	//else if (!strncmp(name, "hintskip"))
+	//	showflags |= BFL_HINT | BFL_SKIP;
+}
 
 
 //=====================================================
 
 /*
-==============
-Texture_InitPalette
-==============
+==================
+TextureGroup::TextureGroup
+==================
 */
-void Texture_InitPalette (byte *pal)
+TextureGroup::TextureGroup()
 {
-    int		r, g, b, v;
-    int		i;
-	int		inf;
-	byte	gammatable[256];
-	float	gamma;
+	first = nullptr;
+	numTextures = 0;
+	strncpy_s(name, "?", 2);
+}
 
-	gamma = g_qeglobals.d_savedinfo.fGamma;
-
-	if (gamma == 1.0)
+/*
+==================
+TextureGroup::~TextureGroup
+==================
+*/
+TextureGroup::~TextureGroup()
+{
+	Texture *tex, *nexttex;
+	
+	for (tex = first; tex; tex = nexttex)
 	{
-		for (i = 0; i < 256; i++)
-			gammatable[i] = i;
+		nexttex = tex->next;
+		delete tex;
 	}
-	else
+}
+
+
+/*
+==================
+TextureGroup::ByColor
+
+lunaran - this would be a quick way to find entity solid color textures if I were smart
+==================
+*/
+Texture *TextureGroup::ByColor(vec3_t oc)
+{
+	for (Texture *tex = first; tex; tex = tex->next)
 	{
-		for (i = 0; i < 256; i++)
+		if (VectorCompare(tex->color, oc))
+			return tex;
+	}
+	return nullptr;
+}
+
+/*
+==================
+TextureGroup::ForName
+==================
+*/
+Texture *TextureGroup::ForName(const char *name)
+{
+	for (Texture *tex = first; tex; tex = tex->next)
+	{
+		if (!strncmp(name, tex->name, 32))
+			return tex;
+	}
+	return nullptr;
+}
+
+/*
+==================
+TextureGroup::ClearUsed
+==================
+*/
+void TextureGroup::ClearUsed()
+{
+	for (Texture *tex = first; tex; tex = tex->next)
+		tex->used = false;
+}
+
+/*
+==================
+TextureGroup::Add
+==================
+*/
+void TextureGroup::Add(Texture* tx)
+{
+	numTextures++;
+
+	// add sorted by name
+	if (!first)
+	{
+		first = tx;
+		return;
+	}
+	if (strncmp(tx->name, first->name, 32) < 0)
+	{
+		tx->next = first;
+		first = tx;
+		return;
+	}
+
+	Texture *qtex;
+	qtex = first;
+	while (qtex->next)
+	{
+		if (strncmp(tx->name, qtex->next->name, 32) < 0)
 		{
-			inf = 255 * pow((i + 0.5) / 255.5 , gamma) + 0.5;
-			if (inf < 0)
-				inf = 0;
-			if (inf > 255)
-				inf = 255;
-			gammatable[i] = inf;
+			tx->next = qtex->next;
+			qtex->next = tx;
+			return;
+		}
+		qtex = qtex->next;
+	}
+	qtex->next = tx;
+}
+
+/*
+==================
+TextureGroup::FlushUnused
+==================
+*/
+void TextureGroup::FlushUnused()
+{
+	Texture *head, *cur, *temp, *prev;
+	head = cur = first;
+	prev = nullptr;
+	while (cur)
+	{
+		if (!cur->used)
+		{
+			temp = cur;
+			if (head == cur)
+				head = cur->next;
+			if (prev)
+				prev->next = cur->next;
+			cur = cur->next;
+			delete temp;
+			numTextures--;
+		}
+		else
+		{
+			prev = cur;
+			cur = cur->next;
 		}
 	}
-
-    for (i = 0; i < 256; i++)
-    {
-		r = gammatable[pal[0]];
-		g = gammatable[pal[1]];
-		b = gammatable[pal[2]];
-		pal += 3;
-		
-		v = (r << 24) + (g << 16) + (b << 8) + 255;
-		v = BigLong(v);
-		
-		tex_palette[i] = v;
-    }
+	first = head;
 }
+
+//=====================================================
+
+/*
+==================
+WadLoader::LoadTexturesFromWad
+==================
+*/
+TextureGroup* WadLoader::LoadTexturesFromWad(const char* filename)
+{
+	qeBuffer wadFileBuf;
+	if (!ReadWad(filename, wadFileBuf)) return nullptr;
+
+	TextureGroup *wad;
+	wad = ParseWad(wadFileBuf);
+	//ExtractFileBase(filename, wad->name);
+	strcpy(wad->name, filename);
+
+	return wad;
+}
+
+/*
+==================
+WadLoader::ReadWad
+==================
+*/
+bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
+{
+	char	filepath[MAX_PATH];
+
+	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), filename);
+
+	if (LoadFile(filepath, wadFileBuf) <= 0)
+	{
+		Sys_Printf("WARNING: %s could not be loaded.\n", filename);
+		return false;
+	}
+
+	if ( strncmp(((char*)*wadFileBuf), "WAD2", 4) )
+	{
+		Sys_Printf("WARNING: %s is not a valid wadfile.\n", filename);
+		return false;
+	}
+	return true;
+}
+
+/*
+==================
+WadLoader::ParseWad
+==================
+*/
+TextureGroup *WadLoader::ParseWad(qeBuffer &wadFileBuf)
+{
+	TextureGroup *texGroup = new TextureGroup();
+	lumpinfo_t	*lumpinfo;
+	miptex_t	*qmip;
+	int			i, gltex;
+	vec3_t		color;
+
+	wadinfo_t *wadinfo = (wadinfo_t*)*wadFileBuf;
+
+	// loop through lumps, validate & gather up their sizes
+	lumpinfo = (lumpinfo_t *)((byte*)*wadFileBuf + wadinfo->infotableofs);
+
+	for (i = 0; i < wadinfo->numlumps; i++, lumpinfo++)
+	{
+		qmip = (miptex_t *)((byte*)*wadFileBuf + lumpinfo->filepos);
+
+		if (lumpinfo->type != TYP_MIPTEX)
+		{
+			Sys_Printf("Warning: %s is not a miptex, ignoring", lumpinfo->name);
+			continue;
+		}
+
+		if (qmip->width > 1024 || qmip->width < 1 || qmip->height > 1024 || qmip->height < 1)
+		{
+			Sys_Printf("Warning: %s has bad size, ignoring", lumpinfo->name);
+			continue;
+		}
+
+		if (lumpinfo->filepos + (qmip->width * qmip->height) > wadFileBuf.size())
+		{
+			Sys_Printf("Warning: %s is incomplete, stopping after %i textures", lumpinfo->name, i);
+			return texGroup;
+		}
+
+		qeBuffer texData;
+		MiptexToRGB(qmip, texData, color);
+		gltex = MakeGLTexture(qmip->width, qmip->height, texData);
+
+		// instantiate a Texture and give it *miptex to draw parms and bitmap data from
+		texGroup->Add(new Texture(qmip->width, qmip->height, qmip->name, color, gltex));
+	}
+	return texGroup;
+}
+
+/*
+==================
+WadLoader::MiptexToRGB
+==================
+*/
+void WadLoader::MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3_t avg)
+{
+	unsigned int i, count;
+	byte		*src;
+	vec3_t pxc;
+
+	VectorCopy(g_v3VecOrigin, avg);
+	src = (byte *)mip + mip->offsets[0];
+	count = mip->width * mip->height;
+	texDataBuf.resize(count * 4);
+
+	// The bitmaps in wads are upside down, which is right side up relative to a 
+	// GL bottom-left-origin, so we can just copy straight
+	unsigned int* pixel;
+	for (i = 0; i < count; i++)
+	{
+		pixel = (unsigned*)(*texDataBuf) + i;
+		*pixel = texpal.ColorAsInt(src[i]);
+		texpal.ColorAsVec3(src[i], pxc);
+		VectorAdd(avg, pxc, avg);
+	}
+	VectorScale(avg, 1.0 / count, avg);
+}
+
+/*
+==================
+WadLoader::MakeGLTexture
+==================
+*/
+int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
+{
+	int texnum = g_nTextureExtensionNumber++;
+
+	glBindTexture(GL_TEXTURE_2D, texnum);
+	SetTexParameters();
+
+	if (nomips)
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
+	else
+		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return texnum;
+}
+
+//=====================================================
 
 /*
 ============
@@ -266,173 +831,6 @@ void Texture_SetMode (int iMenu)
 }
 
 /*
-=================
-Texture_LoadTexture
-=================
-*/
-qtexture_t *Texture_LoadTexture (miptex_t *qtex)
-{
-    byte	   *source;
-    unsigned   *dest;
-    int			width, height, i, count;
-	int			total[3];
-    qtexture_t *q;
-    
-    q = (qtexture_t*)qmalloc(sizeof(*q));
-    width = LittleLong(qtex->width);
-    height = LittleLong(qtex->height);
-
-    q->width = width;
-    q->height = height;
-
-	dest = (unsigned int*)qmalloc(width * height * 4);
-
-    count = width * height;
-    source = (byte *)qtex + LittleLong(qtex->offsets[0]);
-
-	// The dib is upside down so we want to copy it into 
-	// the buffer bottom up.
-	total[0] = total[1] = total[2] = 0;
-
-    for (i = 0; i < count; i++)
-	{
-		dest[i] = tex_palette[source[i]];
-
-		total[0] += ((byte *)(dest + i))[0];
-		total[1] += ((byte *)(dest + i))[1];
-		total[2] += ((byte *)(dest + i))[2];
-	}
-
-	q->color[0] = (float)total[0] / (count * 255);
-	q->color[1] = (float)total[1] / (count * 255);
-	q->color[2] = (float)total[2] / (count * 255);
-
-    q->texture_number = g_nTextureExtensionNumber++;
-
-	glBindTexture(GL_TEXTURE_2D, q->texture_number);
-	SetTexParameters();
-
-	if (nomips)
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dest);
-	else
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, GL_RGBA, GL_UNSIGNED_BYTE, dest);
-
-	free(dest);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-    return q;
-}
-
-/*
-===============
-Texture_CreateSolid
-
-Create a single pixel texture of the apropriate color
-===============
-*/
-qtexture_t *Texture_CreateSolid (char *name)
-{
-	byte		data[4];
-	qtexture_t *q;
-
-    q = (qtexture_t*)qmalloc(sizeof(*q));
-	
-	sscanf(name, "(%f %f %f)", &q->color[0], &q->color[1], &q->color[2]);
-
-	data[0] = q->color[0] * 255;
-	data[1] = q->color[1] * 255;
-	data[2] = q->color[2] * 255;
-	data[3] = 255;
-
-	q->width = q->height = 1;
-    q->texture_number = g_nTextureExtensionNumber++;
-	glBindTexture(GL_TEXTURE_2D, q->texture_number);
-	SetTexParameters();
-
-	if (nomips)
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	else
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	return q;
-}
-
-/*
-=================
-Texture_MakeNotexture
-=================
-*/
-void Texture_MakeNotexture ()
-{
-    qtexture_t *q;
-    byte		data[4][4];
-
-	notexture = q = (qtexture_t*)qmalloc(sizeof(*q));
-	strcpy(q->name, "notexture");
-    q->width = q->height = 64;
-	q->wad = NULL;
-    
-	memset(data, 0, sizeof(data));
-	data[0][2] = data[3][2] = 255;
-
-	q->color[0] = 0;
-	q->color[1] = 0;
-	q->color[2] = 0.5;
-
-    q->texture_number = g_nTextureExtensionNumber++;
-	glBindTexture(GL_TEXTURE_2D, q->texture_number);
-	SetTexParameters();
-
-	if (nomips)
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	else
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 2, 2, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-
-/*
-===============
-Texture_ForName
-
-TODO: this slows down map loading by a feckton
-FIXME: not anymore ... somehow ... why?
-===============
-*/
-qtexture_t *Texture_ForName (char *name)
-{
-	qtexture_t	*q;
-
-	// return notexture;
-	for (q = g_qeglobals.d_qtextures; q; q = q->next)
-	{
-		if (!strncmp(name, q->name, 32))
-		{
-			q->inuse = true;
-		    return q;
-		}
-	}
-
-	if (name[0] == '(')
-	{
-		q = Texture_CreateSolid(name);
-		strncpy(q->name, name, sizeof(q->name) - 1); 
-
-		q->inuse = true;
-		q->next = g_qeglobals.d_qtextures;
-		g_qeglobals.d_qtextures = q;
- 
-		return q;
-	}
-	
-	return notexture;
-}
-
-/*
 ==================
 FillTextureMenu
 ==================
@@ -489,240 +887,8 @@ void FillTextureMenu ()
 	}
 }
 
-/*
-==================
-Texture_ClearInuse
 
-A new map is being loaded, so clear inuse markers
-==================
-*/
-void Texture_ClearInuse ()
-{
-	qtexture_t *q;
-
-	for (q = g_qeglobals.d_qtextures; q; q = q->next)
-		q->inuse = false;
-}
-
-
-/*
-==================
-Texture_FlushAll
-==================
-*/
-void Texture_FlushAll()
-{
-	qtexture_t	*q, *qprev, *qnextex;
-	unsigned int n;
-
-	if (g_qeglobals.d_qtextures)
-	{
-		q = g_qeglobals.d_qtextures->next;
-		qprev = g_qeglobals.d_qtextures;
-		while (q != NULL && q != g_qeglobals.d_qtextures)
-		{
-			qnextex = q->next;
-
-			n = q->texture_number;
-			glDeleteTextures(1, &n);
-			qprev->next = qnextex;
-			free(q);
-
-			q = qnextex;
-		}
-	}
-	g_qeglobals.d_texturewin.Layout();
-}
-
-
-/*
-==================
-Texture_FlushUnused
-==================
-*/
-void Texture_FlushUnused ()
-{
-	qtexture_t	*q, *qprev, *qnextex;
-	unsigned int n;
-
-	Sys_Printf("CMD: Flushing unused textures...\n");
-	if (g_qeglobals.d_qtextures)
-	{
-		q = g_qeglobals.d_qtextures->next;
-		qprev = g_qeglobals.d_qtextures;
-		while (q != NULL && q != g_qeglobals.d_qtextures)
-		{
-			qnextex = q->next;
-
-			if (!q->inuse)
-			{
-				n = q->texture_number;
-				glDeleteTextures(1, &n);
-				qprev->next = qnextex;
-				free(q);
-			}
-			else
-				qprev = q;
-
-			q = qnextex;
-		}
-	}
-
-	g_qeglobals.d_texturewin.Layout();
-}
-
-/*
-==================
-Texture_InitFromWad
-==================
-*/ 
-void Texture_InitFromWad (char *file)
-{
-	char		 filepath[1024];
-	FILE		*f;
-	byte		*wadfile;
-	wadinfo_t	*wadinfo;
-	lumpinfo_t	*lumpinfo;
-	miptex_t	*qtex;
-	qtexture_t	*q;
-	int			 numlumps;
-	int			 i;
-	char		*wname;
-
-	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), file);
-
-	if ((f = fopen(filepath, "rb")) == NULL)
-	{
-		Sys_Printf("WARNING: Could not open %s\n", file);
-		return;
-	}
-	fclose(f);
-
-	Sys_Printf("CMD: Opening %s\n", file);
-	
-//	LoadFileNoCrash (filepath, (void **)&wadfile);
-	LoadFile(filepath, (void **)&wadfile);
-
-	if (strncmp((char*)wadfile, "WAD2", 4))
-	{
-		Sys_Printf("WARNING: %s is not a valid wadfile.\n", file);
-		free(wadfile);
-		return;
-	}
-
-	wadinfo = (wadinfo_t *)wadfile;
-	numlumps = LittleLong(wadinfo->numlumps);
-	lumpinfo = (lumpinfo_t *)(wadfile + LittleLong(wadinfo->infotableofs));
-
-	wname = (char*)qmalloc(32 * sizeof(char));	// we do leak this tiny bit of memory if the same wad is loaded twice but I can live with that
-	strncpy(wname, file, 31);
-
-	for (i = 0; i < numlumps; i++, lumpinfo++)
-	{
-		qtex = (miptex_t *)(wadfile + LittleLong(lumpinfo->filepos));
-
-		StringTolower(lumpinfo->name);
-
-		if (lumpinfo->type != TYP_MIPTEX)
-		{
-			Sys_Printf("WARNING: %s is not a miptex. Ignoring...\n", lumpinfo->name);
-			continue;
-		}
-
-		// sanity check.
-		if (LittleLong(qtex->width) > 1024 || 
-			LittleLong(qtex->width) < 1 || 
-			LittleLong(qtex->height) > 1024 || 
-			LittleLong(qtex->height) < 1)
-		{
-			Sys_Printf("WARNING: %s has wrong size. Ignoring...\n", lumpinfo->name);
-			continue;
-		}
-
-		for (q = g_qeglobals.d_qtextures; q; q = q->next)
-		{
-			if (!strcmp(lumpinfo->name, q->name))
-			{
-				Sys_Printf("WARNING: %s is already loaded. Skipping..\n", lumpinfo->name);
-				goto skip;
-			}
-		}
-		
-		Sys_Printf("CMD: Loading %s\n", lumpinfo->name);
-
-//		q = Texture_LoadTexture((miptex_t *)(wadfile + LittleLong(lumpinfo->filepos)));
-		q = Texture_LoadTexture(qtex);
-
-		strncpy(q->name, lumpinfo->name, sizeof(q->name) - 1);
-		q->inuse = false;
-		q->wad = wname;
-		q->next = g_qeglobals.d_qtextures;
-		g_qeglobals.d_qtextures = q;
-
-skip:;
-	}
-	free(wadfile);
-} 
-
-/*
-==============
-Texture_ShowWad
-==============
-*/
-void Texture_ShowWad (int menunum)
-{
-	g_qeglobals.d_texturewin.origin[1] = 0;
-	Sys_Printf("CMD: Loading all textures...\n");
-
-	// load .wad file
-	//strcpy(wadname, g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
-
-	Texture_InitFromWad(g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
-
-	g_qeglobals.d_texturewin.SortTextures();
-	InspWnd_SetMode(W_TEXTURE);
-	//TexWnd_Layout();
-	Sys_UpdateWindows(W_TEXTURE);
-
-	// select the first texture in the list
-	if (!g_qeglobals.d_workTexDef.name[0])
-		g_qeglobals.d_texturewin.SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
-}
-
-
-/*
-==============
-Texture_ShowInuse
-==============
-*/
-void Texture_ShowInuse ()
-{
-	Face *f;
-
-	g_qeglobals.d_texturewin.origin[1] = 0;
-	Sys_Printf("CMD: Selecting active textures...\n");
-	Texture_ClearInuse();
-
-	for (Brush *b = g_brActiveBrushes.next; b != NULL && b != &g_brActiveBrushes; b = b->next)
-		for (f = b->brush_faces; f; f = f->next)
-			Texture_ForName(f->texdef.name);
-
-	for (Brush *b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
-		for (f = b->brush_faces; f; f = f->next)
-			Texture_ForName(f->texdef.name);
-
-	g_qeglobals.d_texturewin.SortTextures();
-	InspWnd_SetMode(W_TEXTURE);
-	Sys_UpdateWindows(W_TEXTURE);
-
-	SetWindowText(g_qeglobals.d_hwndInspector, "Textures: in use");
-
-	// select the first texture in the list
-	if (!g_qeglobals.d_workTexDef.name[0])
-		g_qeglobals.d_texturewin.SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
-}
-
-//HFONT ghFont = NULL;	sikk - unused
+//=====================================================
 
 /*
 ============
@@ -860,7 +1026,6 @@ HWND TexWnd_Create (HINSTANCE hInstance)
 	return g_qeglobals.d_hwndTexture;
 }
 
-
 /*
 ===============
 TexWnd_Resize
@@ -872,8 +1037,7 @@ void TexWnd_Resize(RECT rc)
 	g_qeglobals.d_texturewin.width = rc.right;
 	g_qeglobals.d_texturewin.height = rc.bottom;
 
-	if(g_qeglobals.d_nInspectorMode == W_TEXTURE)
-		g_qeglobals.d_texturewin.Layout();
+	g_qeglobals.d_texturewin.stale = true;
 }
 
 

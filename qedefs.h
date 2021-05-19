@@ -168,4 +168,33 @@
 enum VIEWTYPE {YZ, XZ, XY};
 // XY = x0, y1; XZ = x0, y2; YZ = x1, y2.
 
+enum entitymask_t
+{
+	// entity flags
+	EFL_WORLDSPAWN = 1,
+	EFL_POINTENTITY = 1 << 1,
+	EFL_BRUSHENTITY = 1 << 2,
+	EFL_TRIGGER = 1 << 3,
+	EFL_LIGHT = 1 << 4,
+	EFL_MONSTER = 1 << 5,
+	EFL_FUNCWALL = 1 << 6,
+	EFL_FUNCDETAIL = 1 << 7,
+	EFL_CUSTOM1 = 1 << 8,
+	EFL_CUSTOM2 = 1 << 9,
+	EFL_CUSTOM3 = 1 << 10,
+	EFL_CUSTOM4 = 1 << 11,
+	EFL_CUSTOM5 = 1 << 12,
+	EFL_CUSTOM6 = 1 << 13,
+	EFL_CUSTOM7 = 1 << 14,
+	EFL_CUSTOM8 = 1 << 15,
+
+	// brush flags
+	BFL_HIDDEN = 1 << 16,
+	BFL_CLIP = 1 << 17,
+	BFL_HINT = 1 << 18,
+	BFL_SKIP = 1 << 19,
+	BFL_LIQUID = 1 << 20,
+	BFL_SKY = 1 << 21,
+};
+
 #endif

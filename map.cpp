@@ -126,7 +126,7 @@ void Map_BuildBrushData ()
 	Brush	*b, *next;
 	double time;
 
-	if (g_brActiveBrushes.next == NULL)
+	if (!g_brActiveBrushes.next || g_brActiveBrushes.next == &g_brActiveBrushes)
 		return;
 
 	Sys_BeginWait();	// this could take a while
@@ -175,7 +175,6 @@ void Map_Free ()
 	    if (MessageBox(g_qeglobals.d_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			Map_SaveBetween();
 
-	Texture_ClearInuse();
 	Pointfile_Clear();
 	strcpy(g_szCurrentMap, "unnamed.map");
 	Sys_SetTitle(g_szCurrentMap);
@@ -202,6 +201,9 @@ void Map_Free ()
 
 	g_peWorldEntity = NULL;
 
+	// dump the wads after we dump the geometry, because flush calls MapRebuild 
+	// which will generate a bunch of notextures that just get thrown away
+	Textures::Flush();
 	Winding::Clear();
 }
 
@@ -281,7 +283,7 @@ void Map_LoadFile (char *filename)
 		strcpy(wadkey, ValueForKey(g_peWorldEntity, "wad"));
 
 		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-			Texture_InitFromWad(tempwad);
+			Textures::LoadWad(tempwad);
 	}
 
     Sys_Printf("--- LoadMapFile ---\n");
@@ -321,8 +323,8 @@ void Map_LoadFile (char *filename)
 	g_bModified = false;
 	Sys_SetTitle(temp);
 
-	Texture_ShowInuse();
-	Texture_FlushUnused();
+	//Texture_ShowInuse();
+	Textures::FlushUnused();
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
 		g_qeglobals.d_savedinfo.bNoClamp = false;
@@ -891,7 +893,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 	{
 		strcpy(wadkey, ValueForKey(g_peWorldEntity, "wad"));
 		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-			Texture_InitFromWad(tempwad);
+			Textures::LoadWad(tempwad);
 	}
 
 	if (bCheck)

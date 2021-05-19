@@ -23,8 +23,10 @@
 #include <gl/glaux.h>
 #include <math.h>
 #include <stdlib.h>
-#include <assert.h>	// lunaran - for my own sanity
+#include <cassert>	// lunaran - for my own sanity
+#include <string>
 
+#include "qeBuffer.h"	// lunaran - generic heap space, malloc as an object
 #include "cmdlib.h"
 #include "lbmlib.h"
 #include "mathlib.h"
@@ -33,6 +35,7 @@
 #include "qedefs.h"
 #include "qfiles.h"
 
+#include "palette.h"
 #include "textures.h"
 #include "face.h"
 #include "brush.h"
@@ -168,9 +171,9 @@ typedef struct
 	int			d_nNumMovePoints;
 	vec3_t		d_v3Points[MAX_POINTS];
 	pedge_t		d_pEdges[MAX_EDGES];
-	float      *d_fMovePoints[1024];
+	float		*d_fMovePoints[1024];
 
-	qtexture_t *d_qtextures;
+	Texture		*d_qtextures;
 	TextureView d_texturewin;
 
 	int			d_nPointfileDisplayList;

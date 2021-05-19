@@ -2,8 +2,7 @@
 //	cmdlib.c
 //==============================
 
-#include "cmdlib.h"
-
+#include "qe3.h"
 
 #define PATHSEPERATOR   '/'
 
@@ -327,6 +326,30 @@ int LoadFile (char *filename, void **bufferptr)
 
 /*
 ==============
+LoadFile
+==============
+*/
+int LoadFile(const char *filename, qeBuffer &fileBuf)
+{
+	FILE* f;
+	int length = -1;
+
+	if ((f = fopen(filename, "rb")) == NULL)
+	{
+		return -1;
+	}
+
+	length = Q_filelength(f);
+	fileBuf.resize(length + 1);
+	((char*)*fileBuf)[length] = 0;
+	SafeRead(f, *fileBuf, min(length,(int)fileBuf.size()));	// truncate if buffer is too small
+	fclose(f);
+
+	return length;
+}
+
+/*
+==============
 LoadFileNoCrash
 
 returns -1 length if not present
@@ -444,9 +467,9 @@ void StripExtension (char *path)
 ExtractFilePath
 ====================
 */
-void ExtractFilePath (char *path, char *dest)
+void ExtractFilePath (const char *path, char *dest)
 {
-	char *src;
+	const char *src;
 
 	src = path + strlen(path) - 1;
 
@@ -463,9 +486,9 @@ void ExtractFilePath (char *path, char *dest)
 ExtractFileName
 ===============
 */
-void ExtractFileName (char *path, char *dest)
+void ExtractFileName (const char *path, char *dest)
 {
-	char *src;
+	const char *src;
 
 	src = path + strlen(path) - 1;
 
@@ -484,9 +507,9 @@ void ExtractFileName (char *path, char *dest)
 ExtractFileBase
 ===============
 */
-void ExtractFileBase (char *path, char *dest)
+void ExtractFileBase (const char *path, char *dest)
 {
-	char *src;
+	const char *src;
 
 	src = path + strlen(path) - 1;
 
@@ -505,9 +528,9 @@ void ExtractFileBase (char *path, char *dest)
 ExtractFileExtension
 ====================
 */
-void ExtractFileExtension (char *path, char *dest)
+void ExtractFileExtension (const char *path, char *dest)
 {
-	char *src;
+	const char *src;
 
 	src = path + strlen(path) - 1;
 

@@ -1994,19 +1994,14 @@ LONG WINAPI CommandHandler (
 
 		case ID_TEXTURES_FLUSH_ALL:
 			Sys_BeginWait();
-//			Map_New();	// sikk - I don't understand the point to start a new map. 
-						// We want to flush all textures, not flush everything I've
-						// done to this point and forgot to save.
-			Texture_FlushAll();
-			Texture_Init();
+			Textures::Flush();
 			InspWnd_SetMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
 			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed All...");
 			break;
 		case ID_TEXTURES_FLUSH_UNUSED:
 			Sys_BeginWait();
-			Texture_ShowInuse();
-			Texture_FlushUnused();
+			Textures::FlushUnused();
 			InspWnd_SetMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
 			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed Unused...");
@@ -2016,7 +2011,7 @@ LONG WINAPI CommandHandler (
 		// with a "Show All" command .
 		case ID_TEXTURES_SHOWINUSE:
 			Sys_BeginWait();
-			Texture_ShowInuse();
+			//Texture_ShowInuse();
 			InspWnd_SetMode(W_TEXTURE);
 			break;
 
@@ -2121,7 +2116,7 @@ LONG WINAPI CommandHandler (
 		case CMD_TEXTUREWAD + 62:
 		case CMD_TEXTUREWAD + 63:
 			Sys_BeginWait();
-			Texture_ShowWad(LOWORD(wParam));
+			Textures::MenuLoadWad(LOWORD(wParam));
 			InspWnd_SetMode(W_TEXTURE);
 			break;
 

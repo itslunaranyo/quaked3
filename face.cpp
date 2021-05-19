@@ -490,7 +490,7 @@ Face::SetTexture
 void Face::SetTexture(texdef_t *texdefIn, int nSkipFlags)
 {
 	Surf_ApplyTexdef(&texdef, texdefIn, nSkipFlags);
-	d_texture = Texture_ForName(texdefIn->name);
+	d_texture = Textures::ForName(texdefIn->name);
 	owner->Build();
 }
 
@@ -502,7 +502,7 @@ Face::SetColor
 void Face::SetColor()
 {
 	float shade;
-	qtexture_t *q;
+	Texture *q;
 
 	q = d_texture;
 	shade = ShadeForPlane();

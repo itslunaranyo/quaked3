@@ -1591,7 +1591,7 @@ BOOL CALLBACK PreferencesDlgProc (
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bTestAfterBSP		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastProject	? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastMap		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSortTexByWad		? BST_CHECKED : BST_UNCHECKED), 0);
+	//	SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSortTexByWad		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bModName			? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bHeapsize			? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSkill			? BST_CHECKED : BST_UNCHECKED), 0);
@@ -1639,7 +1639,7 @@ BOOL CALLBACK PreferencesDlgProc (
 			g_qeglobals.d_savedinfo.bTestAfterBSP		= SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastProject	= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastMap		= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bSortTexByWad		= SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_GETCHECK, 0, 0);
+		//	g_qeglobals.d_savedinfo.bSortTexByWad		= SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bModName			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,			BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bHeapsize			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bSkill				= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,			BM_GETCHECK, 0, 0);

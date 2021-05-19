@@ -266,7 +266,7 @@ Brush* Brush_ConvexMerge(Brush *bList)
 		{
 			// apply workzone texdef to the rest
 			f->texdef = g_qeglobals.d_workTexDef;
-			f->d_texture = Texture_ForName(f->texdef.name);
+			f->d_texture = Textures::ForName(f->texdef.name);
 		}
 	}
 

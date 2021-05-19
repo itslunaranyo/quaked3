@@ -90,7 +90,7 @@ void QE_Init ()
 	/*
 	** other stuff
 	*/
-	Texture_Init();
+	Textures::Init();
 	//Cam_Init();
 	//for (int i = 0; i < 4;i++)
 	//	XYZ_Init(&g_qeglobals.d_xyz[i]);
@@ -666,7 +666,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 	
 //	entity_t	*e;
 	Brush		*b, *next;
-	qtexture_t	*q;
+	Texture	*q;
 
 	g_nNumBrushes = 0;
 	g_nNumEntities = 0;
@@ -692,7 +692,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 		if (q->name[0] == '(')
 			continue; // don't count entity textures
 
-		if (q->inuse)
+		if (q->used)
 			g_nNumTextures++;
 	}
 

@@ -53,7 +53,7 @@ public:
 	Plane		plane;
 	winding_t	*face_winding;
 	vec3_t		d_color;
-	qtexture_t	*d_texture;
+	Texture	*d_texture;
 
 	Face   *Clone();
 	Face   *FullClone(Brush *own);	// sikk - Undo/Redo

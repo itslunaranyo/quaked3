@@ -400,7 +400,7 @@ void Brush::Build()
 
 		// lunaran TODO: doesn't need to happen this often, move to face_settexdef
 		// also duplicate this somewhere else so it still happens for all faces during map_buildbrushdata
-		face->d_texture = Texture_ForName(face->texdef.name);
+		face->d_texture = Textures::ForName(face->texdef.name);
 
 		for (i = 0; i < w->numpoints; i++)
 		{
@@ -1647,7 +1647,7 @@ void Brush::Draw ()
 {
 	int			i, order;
 	Face	   *face;
-    qtexture_t *prev = 0;
+    Texture *prev = 0;
 	winding_t  *w;
 
 	if (hiddenBrush)
@@ -2112,8 +2112,8 @@ Brush *Brush::Parse ()
 		StringTolower(f->texdef.name);
 
 		// the wads probably aren't loaded yet, but this replaces the default null
-		// reference with 'notexture' on all faces
-		f->d_texture = Texture_ForName(f->texdef.name);
+		// reference with 'nulltexture' on all faces
+		f->d_texture = Textures::ForName(f->texdef.name);
 	} while (1);
 
 	return b;

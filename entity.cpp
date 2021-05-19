@@ -1,5 +1,5 @@
 //==============================
-//	entity.c
+//	entity.cpp
 //==============================
 
 #include "qe3.h"
@@ -56,7 +56,7 @@ eclass_t *Eclass_InitFromText (char *text)
 	r = sscanf(text, " (%f %f %f)", &e->color[0], &e->color[1], &e->color[2]);
 	if (r != 3)
 		return e;
-	sprintf(color, "(%f %f %f)", e->color[0], e->color[1], e->color[2]);
+	sprintf(color, "(%1.3f %1.3f %1.3f)", e->color[0], e->color[1], e->color[2]);
 	strcpy(e->texdef.name, color);
 
 	while (*text != ')')

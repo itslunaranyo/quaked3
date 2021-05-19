@@ -541,7 +541,7 @@ winding_t *Winding::TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, 
 Winding::TextureCoordinates
 ==================
 */
-void Winding::TextureCoordinates(winding_t *w, qtexture_t *q, Face *f)
+void Winding::TextureCoordinates(winding_t *w, Texture *q, Face *f)
 {
 	float		s, t, ns, nt;
 	float		ang, sinv, cosv;

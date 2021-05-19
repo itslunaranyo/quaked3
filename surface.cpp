@@ -232,7 +232,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 		{
 			if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
 			{
-				pFace->d_texture = Texture_ForName(pFace->texdef.name);
+				pFace->d_texture = Textures::ForName(pFace->texdef.name);
 				strcpy(pFace->texdef.name, pReplace);
 			}
 		}
