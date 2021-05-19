@@ -220,7 +220,7 @@ Create new rectilinear brush
 The brush is NOT linked to any list
 =============
 */
-Brush *Brush::Create(const vec3 inMins, const vec3 inMaxs, texdef_t *texdef)
+Brush *Brush::Create(const vec3 inMins, const vec3 inMaxs, TexDef *texdef)
 {
 	Brush	   *b;
 
@@ -236,7 +236,7 @@ Brush *Brush::Create(const vec3 inMins, const vec3 inMaxs, texdef_t *texdef)
 	return b;
 }
 
-void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, texdef_t *inTexDef)
+void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 {
 	vec3		pts[4][2];
 	int			i, j;
@@ -252,8 +252,6 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, texdef_t *inTexDef)
 
 	basis.mins = inMins;
 	basis.maxs = inMaxs;
-	//basis.mins = inMins;
-	//basis.maxs = inMaxs;
 
 	pts[0][0][0] = inMins[0];
 	pts[0][0][1] = inMins[1];
@@ -280,25 +278,16 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, texdef_t *inTexDef)
 		f = new Face(this);
 		f->texdef = *inTexDef;
 		j = (i + 1) % 4;
-
-		f->planepts[0] = pts[j][1];
-		f->planepts[1] = pts[i][1];
-		f->planepts[2] = pts[i][0];
+		f->plane.FromPoints(pts[j][1], pts[i][1], pts[i][0]);
 	}
 
 	f = new Face(this);
 	f->texdef = *inTexDef;
-
-	f->planepts[0] = pts[0][1];
-	f->planepts[1] = pts[1][1];
-	f->planepts[2] = pts[2][1];
+	f->plane.FromPoints(pts[0][1], pts[1][1], pts[2][1]);
 
 	f = new Face(this);
 	f->texdef = *inTexDef;
-
-	f->planepts[0] = pts[2][0];
-	f->planepts[1] = pts[1][0];
-	f->planepts[2] = pts[0][0];
+	f->plane.FromPoints(pts[2][0], pts[1][0], pts[0][0]);
 }
 
 
@@ -388,7 +377,7 @@ Brush::Move
 */
 void Brush::Move(const vec3 move)
 {
-	int		i;
+	//int		i;
 	Face	*f;
 
 	if (VectorCompare(move, vec3(0))) return;
@@ -398,8 +387,7 @@ void Brush::Move(const vec3 move)
 		if (owner->IsBrush() && g_qeglobals.d_bTextureLock)
 			f->MoveTexture(move);
 
-		for (i = 0; i < 3; i++)
-			f->planepts[i] = f->planepts[i] + move;
+		f->plane.Translate(move);
 	}
 
 	Build();
@@ -420,9 +408,9 @@ void Brush::Transform(const glm::mat4 mat, bool textureLock)
 	{
 		//if (owner->IsBrush() && textureLock)
 		//	f->MoveTexture(move);
-
+		assert(0);	// write me
 		for (i = 0; i < 3; i++)
-			f->planepts[i] = mat * glm::vec4(f->planepts[i], 1);
+			f->plane.pts[i] = mat * glm::vec4(f->plane.pts[i], 1);
 	}
 
 	Build();
@@ -456,7 +444,7 @@ void Brush::Build()
 
 		// lunaran TODO: doesn't need to happen this often, move to face_settexdef
 		// also duplicate this somewhere else so it still happens for all faces during map_buildbrushdata
-		face->d_texture = Textures::ForName(face->texdef.name);
+		face->texdef.tex = Textures::ForName(face->texdef.name);
 
 		for (i = 0; i < w->numpoints; i++)
 		{
@@ -549,28 +537,8 @@ Brush::MakeFacePlanes
 */
 void Brush::MakeFacePlanes()
 {
-	int		i;
-	Face	*f;
-	vec3	t1, t2, t3;
-
-	for (f = basis.faces; f; f = f->fnext)
-	{
-		// convert to a vector / dist plane
-		for (i = 0; i < 3; i++)
-		{
-			t1[i] = f->planepts[0][i] - f->planepts[1][i];
-			t2[i] = f->planepts[2][i] - f->planepts[1][i];
-			t3[i] = f->planepts[1][i];
-		}
-
-		f->plane.normal = CrossProduct(t1, t2);
-
-		if (VectorCompare(f->plane.normal, vec3(0)))
-			printf("WARNING: Brush plane with no normal\n");
-
-		VectorNormalize(f->plane.normal);
-		f->plane.dist = DotProduct(t3, f->plane.normal);
-	}
+	for (Face *f = basis.faces; f; f = f->fnext)
+		f->plane.Make();
 }
 
 /*
@@ -580,16 +548,11 @@ Brush::SnapPlanePoints
 */
 void Brush::SnapPlanePoints()
 {
-	int		i, j;
-	Face *f;
-
 	if (g_qeglobals.d_savedinfo.bNoClamp)
 		return;
 
-	for (f = basis.faces; f; f = f->fnext)
-		for (i = 0; i < 3; i++)
-			for (j = 0; j < 3; j++)
-				f->planepts[i][j] = floor(f->planepts[i][j] + 0.5);
+	for (Face *f = basis.faces; f; f = f->fnext)
+		f->plane.Snap();
 }
 
 /*
@@ -643,7 +606,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 	}
 */
 	// Check for texture names containing "(" (parentheses) or " " (spaces) in their maps
-	if (f->texdef.name[0] == '(' || strchr(f->texdef.name, ' '))
+	if (f->texdef.name[0] == '#' || strchr(f->texdef.name, ' '))
 	{
 		int			nBrushNum = 0;
 		char		sz[128], szMB[128];
@@ -705,7 +668,7 @@ void Brush::FitTexture(int nHeight, int nWidth)
 Brush::SetTexture
 =================
 */
-void Brush::SetTexture(texdef_t *texdef, int nSkipFlags)
+void Brush::SetTexture(TexDef *texdef, int nSkipFlags)
 {
 	Face *f;
 
@@ -780,8 +743,8 @@ Face *Brush::RayTest(const vec3 origin, const vec3 dir, float *dist)
 ==============
 Brush::SelectFaceForDragging
 
-Adds the faces planepts to move_points, and
-rotates and adds the planepts of adjacent face if shear is set
+Adds the faces plane.pts to move_points, and
+rotates and adds the plane.pts of adjacent face if shear is set
 ==============
 */
 void Brush::SelectFaceForDragging(Face *f, bool shear)
@@ -798,7 +761,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 
 	c = 0;
 	for (i = 0; i < 3; i++)
-		c += AddPlanePoint(&f->planepts[i]);
+		c += AddPlanePoint(&f->plane.pts[i]);
 	if (c == 0)
 		return;		// already completely added
 
@@ -810,7 +773,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 		for (f2 = b2->basis.faces; f2; f2 = f2->fnext)
 		{
 			for (i = 0; i < 3; i++)
-				if (fabs(DotProduct(f2->planepts[i], f->plane.normal) - f->plane.dist) > ON_EPSILON)
+				if (fabs(DotProduct(f2->plane.pts[i], f->plane.normal) - f->plane.dist) > ON_EPSILON)
 					break;
 			if (i == 3)
 			{	// move this face as well
@@ -851,23 +814,23 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 					i = w->numpoints - 1;
 			}
 
-			AddPlanePoint(&f2->planepts[0]);
+			AddPlanePoint(&f2->plane.pts[0]);
 
-			f2->planepts[0] = w->points[i].point;
+			f2->plane.pts[0] = w->points[i].point;
 			if (++i == w->numpoints)
 				i = 0;
 
 			// see if the next point is also on the plane
 			d = DotProduct(w->points[i].point, f->plane.normal) - f->plane.dist;
 			if (d > -ON_EPSILON && d < ON_EPSILON)
-				AddPlanePoint(&f2->planepts[1]);
+				AddPlanePoint(&f2->plane.pts[1]);
 
-			f2->planepts[1] = w->points[i].point;
+			f2->plane.pts[1] = w->points[i].point;
 			if (++i == w->numpoints)
 				i = 0;
 
 			// the third point is never on the plane
-			f2->planepts[2] = w->points[i].point;
+			f2->plane.pts[2] = w->points[i].point;
 		}
 
 		Winding::Free(w);
@@ -911,6 +874,13 @@ void Brush::SideSelect(const vec3 origin, const vec3 dir, bool shear)
 	}
 }
 
+/*
+=================
+Brush::PointTest
+
+test if a point is inside the volume of the brush
+=================
+*/
 bool Brush::PointTest(const vec3 origin)
 {
 	float d;
@@ -1033,7 +1003,7 @@ bool Brush::MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end)
 							newface->face_winding = Winding::Clone(&tmpw);
 
 							// get the texture information
-							newface->d_texture = face->d_texture;
+							//newface->DEPtexture = face->DEPtexture;
 
 							// add the face to the brush
 							newface->fnext = basis.faces;
@@ -1083,8 +1053,8 @@ bool Brush::MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end)
 						newface->face_winding = Winding::Clone(&tmpw);
 
 						// get the texture
-						newface->d_texture = face->d_texture;
-						//newface->d_texture = Texture_ForName(newface->inTexDef.name);
+						//newface->DEPtexture = face->DEPtexture;
+						//newface->DEPtexture = Texture_ForName(newface->inTexDef.name);
 
 						// add the face to the brush
 						newface->fnext = basis.faces;
@@ -1161,9 +1131,12 @@ bool Brush::MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end)
 			frac = front / (front - back);
 			if (frac < smallestfrac)
 			{
+				/*
 				mid[0] = start[0] + (end[0] - start[0]) * frac;
 				mid[1] = start[1] + (end[1] - start[1]) * frac;
 				mid[2] = start[2] + (end[2] - start[2]) * frac;
+				*/
+				mid = start + (end - start) * frac;
 				smallestfrac = frac;
 			}
 
@@ -1177,11 +1150,17 @@ bool Brush::MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end)
 			movefaces[i]->face_winding->points[movefacepoints[i]].point = mid;
 
 			// create new face plane
+			/*
 			for (j = 0; j < 3; j++)
-				movefaces[i]->planepts[j] = movefaces[i]->face_winding->points[j].point;
-
+				movefaces[i]->plane.pts[j] = movefaces[i]->face_winding->points[j].point;
 			movefaces[i]->MakePlane();
+
 			if (VectorLength(movefaces[i]->plane.normal) < 0.1)
+				result = false;
+			*/
+			if (!movefaces[i]->plane.FromPoints(movefaces[i]->face_winding->points[0].point,
+				movefaces[i]->face_winding->points[1].point,
+				movefaces[i]->face_winding->points[2].point))
 				result = false;
 		}
 
@@ -1193,10 +1172,12 @@ bool Brush::MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end)
 				// move the vertex back to the initial position
 				movefaces[i]->face_winding->points[movefacepoints[i]].point = start;
 				// create new face plane
-				for (j = 0; j < 3; j++)
-					movefaces[i]->planepts[j] = movefaces[i]->face_winding->points[j].point;
-
-				movefaces[i]->MakePlane();
+				//for (j = 0; j < 3; j++)
+				//	movefaces[i]->plane.pts[j] = movefaces[i]->face_winding->points[j].point;
+				//movefaces[i]->MakePlane();
+				movefaces[i]->plane.FromPoints(movefaces[i]->face_winding->points[0].point,
+					movefaces[i]->face_winding->points[1].point,
+					movefaces[i]->face_winding->points[2].point);
 			}
 			result = false;
 			end = start;
@@ -1580,12 +1561,12 @@ void Brush::Draw ()
 		if (!w)
 			continue;	// freed face
 
-		assert(face->d_texture);
-		if (face->d_texture != tprev && g_qeglobals.d_vCamera.draw_mode == cd_texture)
+		assert(face->texdef.tex);
+		if (face->texdef.tex != tprev && g_qeglobals.d_vCamera.draw_mode == cd_texture)
 		{
 			// set the texture for this face
-			tprev = face->d_texture;
-			glBindTexture(GL_TEXTURE_2D, face->d_texture->texture_number);
+			tprev = face->texdef.tex;
+			glBindTexture(GL_TEXTURE_2D, face->texdef.tex->texture_number);
 		}
 
 //		glColor3fv(face->d_color);
@@ -1930,9 +1911,9 @@ The brush is NOT linked to any list
 */
 Brush *Brush::Parse ()
 {
-	int			i, j;
-	Brush    *b;
-	Face	   *f;
+	int		i, j;
+	Brush	*b;
+	Face	*f;
 
 	g_qeglobals.d_nParsedBrushes++;
 	b = new Brush();
@@ -1969,17 +1950,19 @@ Brush *Brush::Parse ()
 			for (j = 0; j < 3; j++)
 			{
 				GetToken(false);
-				f->planepts[i][j] = atof(g_szToken);	// sikk - changed to atof for BrushPrecision option
+				f->plane.pts[i][j] = atof(g_szToken);	// sikk - changed to atof for BrushPrecision option
 			}
 			
 			GetToken(false);
 			if (strcmp(g_szToken, ")"))
 				Error("Brush_Parse: Incorrect token.");
 		}
+		f->plane.Make();
 
 		// read the texturedef
 		GetToken(false);
-		strcpy(f->texdef.name, g_szToken);
+		StringTolower(g_szToken);
+		f->texdef.Set(g_szToken);
 		GetToken(false);
 		f->texdef.shift[0] = atoi(g_szToken);
 		GetToken(false);
@@ -1991,11 +1974,10 @@ Brush *Brush::Parse ()
 		GetToken(false);
 		f->texdef.scale[1] = atof(g_szToken);
 		
-		StringTolower(f->texdef.name);
 
 		// the wads probably aren't loaded yet, but this replaces the default null
 		// reference with 'nulltexture' on all faces
-		f->d_texture = Textures::ForName(f->texdef.name);
+		//f->DEPtexture = Textures::ForName(f->texdef.name);
 	} while (1);
 
 	return b;
@@ -2018,9 +2000,9 @@ void Brush::Write(std::ostream& out)
 	{
 		for (i = 0; i < 3; i++)
 			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision
-				out << "( " << fa->planepts[i][0] << " " << fa->planepts[i][1] << " " << fa->planepts[i][2] << " ) ";
+				out << "( " << fa->plane.pts[i][0] << " " << fa->plane.pts[i][1] << " " << fa->plane.pts[i][2] << " ) ";
 			else
-				out << "( " << (int)fa->planepts[i][0] << " " << (int)fa->planepts[i][1] << " " << (int)fa->planepts[i][2] << " ) ";
+				out << "( " << (int)fa->plane.pts[i][0] << " " << (int)fa->plane.pts[i][1] << " " << (int)fa->plane.pts[i][2] << " ) ";
 
 		pname = fa->texdef.name;
 		if (pname[0] == 0)
@@ -2056,9 +2038,9 @@ void Brush::Write (FILE *f)
 	{
 		for (i = 0; i < 3; i++)
 			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision
-				fprintf(f, "( %f %f %f ) ", fa->planepts[i][0], fa->planepts[i][1], fa->planepts[i][2]);
+				fprintf(f, "( %f %f %f ) ", fa->plane.pts[i][0], fa->plane.pts[i][1], fa->plane.pts[i][2]);
 			else
-				fprintf(f, "( %d %d %d ) ", (int)fa->planepts[i][0], (int)fa->planepts[i][1], (int)fa->planepts[i][2]);
+				fprintf(f, "( %d %d %d ) ", (int)fa->plane.pts[i][0], (int)fa->plane.pts[i][1], (int)fa->plane.pts[i][2]);
 
 		pname = fa->texdef.name;
 		if (pname[0] == 0)

@@ -325,7 +325,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -349,7 +349,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -374,7 +374,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{

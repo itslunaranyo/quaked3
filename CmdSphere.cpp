@@ -29,11 +29,12 @@ void CmdSphere::UseBrush(Brush *br)
 void CmdSphere::Do_Impl()
 {
 	vec3 mins, maxs, mid;
+	vec3 p0, p1, p2;
 	int radius;
 	Face *f;
-	texdef_t td;
+	TexDef td;
 	float dt, dp, t, p;
-	int i, j, k;
+	int i, j;
 
 	td = target->basis.faces->texdef;
 	mins = target->basis.mins;
@@ -67,12 +68,10 @@ void CmdSphere::Do_Impl()
 			f = new Face(target);
 			f->texdef = td;
 
-			VectorPolar(f->planepts[0], radius, t, p);
-			VectorPolar(f->planepts[1], radius, t, p + dp);
-			VectorPolar(f->planepts[2], radius, t + dt, p + dp);
-
-			for (k = 0; k < 3; k++)
-				f->planepts[k] = f->planepts[k] + mid;
+			VectorPolar(p0, radius, t, p);
+			VectorPolar(p1, radius, t, p + dp);
+			VectorPolar(p2, radius, t + dt, p + dp);
+			f->plane.FromPoints(p0 + mid, p1 + mid, p2 + mid);
 		}
 	}
 
@@ -85,12 +84,10 @@ void CmdSphere::Do_Impl()
 		f = new Face(target);
 		f->texdef = td;
 
-		VectorPolar(f->planepts[0], radius, t, p);
-		VectorPolar(f->planepts[1], radius, t + dt, p + dp);
-		VectorPolar(f->planepts[2], radius, t + dt, p);
-
-		for (k = 0; k < 3; k++)
-			f->planepts[k] = f->planepts[k] + mid;
+		VectorPolar(p0, radius, t, p);
+		VectorPolar(p1, radius, t + dt, p + dp);
+		VectorPolar(p2, radius, t + dt, p);
+		f->plane.FromPoints(p0 + mid, p1 + mid, p2 + mid);
 	}
 
 	target->Build();

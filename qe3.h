@@ -153,7 +153,7 @@ typedef struct
 
 	vec3		d_v3WorkMin, 			// defines the boundaries of the current work area is used to guess
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
-	texdef_t	d_workTexDef;			// lunaran: moved out of texturewin_t
+	TexDef	d_workTexDef;			// lunaran: moved out of texturewin_t
 
 	HGLRC		d_hglrcBase;
 	HDC			d_hdcBase;

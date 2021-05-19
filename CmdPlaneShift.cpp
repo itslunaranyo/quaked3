@@ -37,7 +37,6 @@ void CmdPlaneShift::AddFaces(std::vector<Face*> &faceList)
 void CmdPlaneShift::Translate(vec3 shift)
 {
 	vec3 shiftMod;
-	int i;
 
 	if (planeShift != vec3(0))
 		shiftMod = shift - planeShift;
@@ -49,10 +48,7 @@ void CmdPlaneShift::Translate(vec3 shift)
 	lastBrush = nullptr;
 	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
 	{
-		for (i = 0; i < 3; i++)
-		{
-			(*fIt)->planepts[i] += shiftMod;
-		}
+		(*fIt)->plane.Translate(shiftMod);
 		if ((*fIt)->owner != lastBrush)
 		{
 			// rebuild brush if we've moved the last face

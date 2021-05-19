@@ -816,14 +816,17 @@ Selection::MatchingTextures
 */
 void Selection::MatchingTextures()
 {
-	Brush	   *b, *next;
-	Face	   *f;
-	texdef_t   *texdef;
+	Brush	*b, *next;
+	Face	*f;
+	TexDef	*texdef;
+	Texture	*txfind;
 
 	if (g_nSelFaceCount)
 		texdef = &g_vfSelectedFaces[0]->texdef;
 	else
 		texdef = &g_qeglobals.d_workTexDef;
+
+	txfind = texdef->tex;
 
 	DeselectAll();
 
@@ -832,7 +835,7 @@ void Selection::MatchingTextures()
 		next = b->next;
 		for (f = b->basis.faces; f; f = f->fnext)
 		{
-			if (!strcmp(f->texdef.name, texdef->name))
+			if (f->texdef.tex == txfind)
 			{
 				SelectFace(f);
 			}

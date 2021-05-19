@@ -109,7 +109,7 @@ SelectFaceEdge
 */
 void SelectFaceEdge (Face *f, int p1, int p2)
 {
-	int			i, j, k;
+	int			i;
 	int			pnum[128];
 	winding_t  *w;
 
@@ -125,16 +125,23 @@ void SelectFaceEdge (Face *f, int p1, int p2)
 	{
 		if (pnum[i] == p1 && pnum[(i + 1) % w->numpoints] == p2)
 		{
-			f->planepts[0] = g_qeglobals.d_v3Points[pnum[i]];
-			f->planepts[1] = g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]];
-			f->planepts[2] = g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]];
+			/*
+			f->plane.pts[0] = g_qeglobals.d_v3Points[pnum[i]];
+			f->plane.pts[1] = g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]];
+			f->plane.pts[2] = g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]];
 			
 			for (j = 0; j < 3; j++)
 				for (k = 0; k < 3; k++)
-					f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+					f->plane.pts[j][k] = floor(f->plane.pts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+			*/
 
-			AddPlanePoint(&f->planepts[0]);
-			AddPlanePoint(&f->planepts[1]);
+			f->plane.FromPoints(g_qeglobals.d_v3Points[pnum[i]],
+								g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]],
+								g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]]);
+			f->plane.Snap(g_qeglobals.d_nGridSize);
+
+			AddPlanePoint(&f->plane.pts[0]);
+			AddPlanePoint(&f->plane.pts[1]);
 			break;
 		}
 	}
@@ -152,7 +159,7 @@ SelectVertex
 */
 void SelectVertex (int p1)
 {
-	int			i, j, k;
+	int			i;
 	Brush	   *b;
 	Face	   *f;
 	winding_t  *w;
@@ -169,15 +176,22 @@ void SelectVertex (int p1)
 		{
 			if (FindPoint(w->points[i].point) == p1)
 			{ 
-				f->planepts[0] = w->points[(i + w->numpoints - 1) % w->numpoints].point;
-				f->planepts[1] = w->points[i].point;
-				f->planepts[2] = w->points[(i + 1) % w->numpoints].point;
+				/*
+				f->plane.pts[0] = w->points[(i + w->numpoints - 1) % w->numpoints].point;
+				f->plane.pts[1] = w->points[i].point;
+				f->plane.pts[2] = w->points[(i + 1) % w->numpoints].point;
 				
 				for (j = 0; j < 3; j++)
 					for (k = 0; k < 3; k++)
-						f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+						f->plane.pts[j][k] = floor(f->plane.pts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+				*/
 
-				AddPlanePoint(&f->planepts[1]);
+				f->plane.FromPoints(w->points[(i + w->numpoints - 1) % w->numpoints].point,
+									w->points[i].point,
+									w->points[(i + 1) % w->numpoints].point);
+				f->plane.Snap(g_qeglobals.d_nGridSize);
+
+				AddPlanePoint(&f->plane.pts[1]);
 				break;
 			}
 		}

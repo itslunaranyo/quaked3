@@ -737,6 +737,8 @@ bool ClipTool::Draw3D(CameraView &v)
 {
 	if (!g_pcmdBC)
 		return false;
+	if (!points[0].set)
+		return false;
 	Draw();
 	DrawPoints();
 	glEnable(GL_DEPTH_TEST);
@@ -747,6 +749,9 @@ bool ClipTool::Draw2D(XYZView &v)
 {
 	if (!g_pcmdBC)
 		return false;
+	if (!points[0].set)
+		return false;
+	v.DrawSelection();
 	Draw();
 	DrawPoints();
 	return true;

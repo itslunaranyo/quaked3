@@ -820,10 +820,11 @@ BOOL CALLBACK FindTextureDlgProc (
     LPARAM	lParam 	// second message parameter
    )
 {
-	char		szFind[64];
-	char		szReplace[64];
-	bool		bSelected, bForce;
-	texdef_t   *texdef;
+	char	szFind[64];
+	char	szReplace[64];
+	bool	bSelected, bForce;
+	TexDef	*texdef;
+	//Texture	*txFind, *txRepl;
 
 	texdef = &g_qeglobals.d_workTexDef;
 
@@ -843,25 +844,6 @@ BOOL CALLBACK FindTextureDlgProc (
 	case WM_COMMAND: 
 		switch (LOWORD(wParam)) 
 		{ 
-		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind, 64);
-			strncpy (texdef->name, szFind, sizeof(texdef->name) - 1);
-			if (texdef->name[0] <= ' ')
-				strcpy(texdef->name, "none");
-			
-			GetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace, 4);
-			strncpy(texdef->name, szReplace, sizeof(texdef->name) - 1);
-			if (texdef->name[0] <= ' ')
-				strcpy(texdef->name, "none");
-
-			bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
-			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
-
-			Surf_FindReplace(szFind, szReplace, bSelected, bForce);
-
-			EndDialog(hwndDlg, 1);
-			return TRUE;
-
 		case IDAPPLY:
 			GetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind, 64);
 			strncpy (texdef->name, szFind, sizeof(texdef->name) - 1);
@@ -877,9 +859,14 @@ BOOL CALLBACK FindTextureDlgProc (
 			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
 
 			Surf_FindReplace(szFind, szReplace, bSelected, bForce);
+
+			// because F&R dialog is modal, the camera window never gets a normal redraw message
+			// and apply appears to do nothing until the dialog is closed, so force update here
+			Sys_ForceUpdateWindows(W_CAMERA);
+
 			return TRUE;
 
-		case IDCANCEL:
+		case IDCLOSE:
 			EndDialog(hwndDlg, 0);
 			return TRUE;
 		}
@@ -1192,7 +1179,7 @@ void DoMapInfo ()
 
 	ENTITY INFO
 
-**NOTE: EntityInfo TreeView does not update  entities deleted from main
+FIXME: EntityInfo TreeView does not update  entities deleted from main
 		app until map is saved/autosaved. Radiant's works the same way. 
 =====================================================================
 */

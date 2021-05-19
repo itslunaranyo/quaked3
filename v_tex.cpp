@@ -346,7 +346,7 @@ Texture* TextureView::TexAtPos(int x, int y)
 TextureView::UpdateStatus
 ============
 */
-void TextureView::UpdateStatus(texdef_t* texdef)
+void TextureView::UpdateStatus(TexDef* texdef)
 {
 	char		sz[256];
 	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, 0, 0);// q->width, q->height);	// lunaran TODO: texdef doesn't contain a pointer to the texture?
@@ -358,13 +358,13 @@ void TextureView::UpdateStatus(texdef_t* texdef)
 TextureView::ChooseTexture
 ============
 */
-void TextureView::ChooseTexture(texdef_t *texdef, bool bSetSelection)
+void TextureView::ChooseTexture(TexDef *texdef, bool bSetSelection)
 {
 	//int			x, y;
 	//qtexture_t *q;
 	texWndPlacement_t* twp;
 
-	if (texdef->name[0] == '(')
+	if (texdef->name[0] == '#')
 	{
 		Sys_Printf("WARNING: Cannot select an entity texture.\n");
 		return;
@@ -415,7 +415,7 @@ By mouse click
 */
 void TextureView::SelectTexture(int x, int y)
 {
-	texdef_t	texdef;
+	TexDef	texdef;
 	Texture*	tw;
 
 	tw = TexAtPos(x, y);
@@ -425,7 +425,8 @@ void TextureView::SelectTexture(int x, int y)
 		texdef.scale[0] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 		texdef.scale[1] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 
-		strcpy(texdef.name, tw->name);
+		//strcpy(texdef.name, tw->name);
+		texdef.Set(tw);
 		ChooseTexture(&texdef, true);
 		return;
 	}
@@ -589,7 +590,8 @@ void TextureView::Draw()
 			glEnd();
 
 			// draw the selection border
-			if (!_strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
+			//if (!_strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
+			if (g_qeglobals.d_workTexDef.tex == twp->tex)
 			{
 				glLineWidth(3);
 				glColor3f(1, 0, 0);

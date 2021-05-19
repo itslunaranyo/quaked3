@@ -71,10 +71,7 @@ void CmdBrushClip::CreateSplitLists()
 
 	Face splitf;
 	splitf.texdef = g_qeglobals.d_workTexDef;
-	splitf.d_texture = Textures::ForName(splitf.texdef.name);
-	splitf.planepts[0] = cp1;
-	splitf.planepts[1] = cp2;
-	splitf.planepts[2] = cp3;
+	//splitf.DEPtexture = Textures::ForName(splitf.texdef.name);
 	splitf.plane.FromPoints(cp1, cp2, cp3);
 
 	for (auto brIt = brIn.begin(); brIt != brIn.end(); ++brIt)

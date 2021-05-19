@@ -52,7 +52,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	case WM_MOUSEMOVE:
 		if (keys & MK_LBUTTON)
 		{
-			assert(hot);
+			//assert(hot);	// happens after a context menu click
 			vWnd.GetMsgXY(lParam, mx, my);
 			v.ToGridPoint(mx, my, x, y);
 			DragMove(x,y);

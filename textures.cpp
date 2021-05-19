@@ -95,9 +95,12 @@ void Textures::FlushUnused()
 
 	// check if selected texture was flushed and get its name out of the work def
 	if (!texMap[label_t(g_qeglobals.d_workTexDef.name)])
+	{
+		g_qeglobals.d_workTexDef.tex = nullptr;
 		g_qeglobals.d_workTexDef.name[0] = 0;
+	}
 
-	if (!g_qeglobals.d_workTexDef.name[0])
+	if (!g_qeglobals.d_workTexDef.tex)
 		SelectFirstTexture();
 
 	g_qeglobals.d_vTexture.stale = true;
@@ -133,12 +136,13 @@ Texture *Textures::CreateSolid(const char *name)
 	Texture		*solidtex;
 
 	// make solid texture from name
-	sscanf(name, "(%f %f %f)", &color[0], &color[1], &color[2]);
+	//sscanf(name, "#%f %f %f", &color[0], &color[1], &color[2]);
+	hexToRGB(name, color);
 
-	data[0] = color[0] * 255;
-	data[1] = color[1] * 255;
-	data[2] = color[2] * 255;
-	data[3] = 255;
+	data[0] = color[0];// * 255;
+	data[1] = color[1];// * 255;
+	data[2] = color[2];// * 255;
+	data[3] = 1;
 
 	gltex = wl.MakeGLTexture(1, 1, data);
 	solidtex = new Texture(1, 1, name, color, gltex);
@@ -201,7 +205,7 @@ convenient side effect.
 Texture *Textures::ForName(const char *name)
 {
 	Texture* tx;
-	if (name[0] == '(')
+	if (name[0] == '#')
 	{
 		// keep the solid textures out of the main texture space
 		tx = group_solid.ForName(name);
@@ -222,7 +226,7 @@ Texture *Textures::ForName(const char *name)
 
 	// still not found, make wrapper for nulltexture and put it in the unknown wad
 	tx = new Texture(*nulltexture);
-	strncpy(tx->name, name, 32);
+	strncpy(tx->name, name, 16);
 	tx->next = nullptr;
 	tx->used = true;
 
@@ -272,7 +276,8 @@ void Textures::SelectFirstTexture()
 {
 	if (groups.empty())
 		return;
-	strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
+	//strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
+	g_qeglobals.d_workTexDef.Set(groups.front()->first);
 	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef, false);
 }
 
@@ -330,7 +335,7 @@ void Textures::LoadWad(const char* wadfile)
 	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
 
 	// select the first texture in the list
-	if (!g_qeglobals.d_workTexDef.name[0])
+	if (!g_qeglobals.d_workTexDef.tex)
 		SelectFirstTexture();
 }
 
@@ -379,7 +384,7 @@ Texture::Texture
 Texture::Texture(int w, int h, const char* n, vec3 c, int gltex) :
 	next(nullptr), width(w), height(h), used(false), texture_number(gltex), color(c)
 {
-	strncpy(name, n, 32);
+	strncpy(name, n, 16);
 	SetFlags();
 }
 
@@ -392,15 +397,18 @@ void Texture::SetFlags()
 {
 	showflags = 0;
 	if (!strncmp(name, "*", 1))
-		showflags |= BFL_LIQUID;
+		showflags |= BFL_LIQUID | BFL_TRANS;
 	else if (!strncmp(name, "sky", 3))
 		showflags |= BFL_SKY;
 	else if (!strncmp(name, "clip", 4))
-		showflags |= BFL_CLIP;
+		showflags |= BFL_CLIP | BFL_TRANS;
 	else if (!strncmp(name, "hint", 4))
-		showflags |= BFL_HINT;
+		showflags |= BFL_HINT | BFL_TRANS;
 	else if (!strncmp(name, "skip", 4))
 		showflags |= BFL_SKIP;
+	else if (!strcmp(name, "trigger"))
+		showflags |= BFL_TRANS;
+
 	//else if (!strncmp(name, "hintskip"))
 	//	showflags |= BFL_HINT | BFL_SKIP;
 }
@@ -463,7 +471,7 @@ Texture *TextureGroup::ForName(const char *name)
 {
 	for (Texture *tex = first; tex; tex = tex->next)
 	{
-		if (!strncmp(name, tex->name, 32))
+		if (!strncmp(name, tex->name, 16))
 			return tex;
 	}
 	return nullptr;
@@ -495,7 +503,7 @@ void TextureGroup::Add(Texture* tx)
 		first = tx;
 		return;
 	}
-	if (strncmp(tx->name, first->name, 32) < 0)
+	if (strncmp(tx->name, first->name, 16) < 0)
 	{
 		tx->next = first;
 		first = tx;
@@ -506,7 +514,7 @@ void TextureGroup::Add(Texture* tx)
 	qtex = first;
 	while (qtex->next)
 	{
-		if (strncmp(tx->name, qtex->next->name, 32) < 0)
+		if (strncmp(tx->name, qtex->next->name, 16) < 0)
 		{
 			tx->next = qtex->next;
 			qtex->next = tx;
@@ -902,4 +910,22 @@ void FillTextureMenu ()
 
 		_findclose(handle);
 	}
+}
+
+void TexDef::Clamp()
+{
+	if (!tex)
+	{
+		name[0] = 0;
+		return;
+	}
+
+	while (shift[0] > tex->width)
+		shift[0] -= tex->width;
+	while (shift[1] > tex->height)
+		shift[1] -= tex->height;
+	while (shift[0] < 0)
+		shift[0] += tex->width;
+	while (shift[1] < 0)
+		shift[1] += tex->height;
 }

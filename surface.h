@@ -21,8 +21,8 @@ void AbsoluteToLocal(Plane normal2, Face *f, vec3 &p1, vec3 &p2, vec3 &p3);
 void RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin);
 
 void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce);
-void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags);
-void Surf_ApplyTexdef(texdef_t *dst, texdef_t *src, int nSkipFlags);
+void Surf_SetTexdef(TexDef *texdef, int nSkipFlags);
+void Surf_ApplyTexdef(TexDef *dst, TexDef *src, int nSkipFlags);
 void Surf_RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin);
 void Surf_FitTexture(float nHeight, float nWidth);
 void Surf_ShiftTexture(int x, int y);

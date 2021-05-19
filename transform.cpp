@@ -55,16 +55,15 @@ void Transform_ApplyMatrix()
 		{
 			for (i = 0; i < 3; i++)
 			{
-				temp = f->planepts[i] - g_v3SelectOrigin;
+				temp = f->plane.pts[i] - g_v3SelectOrigin;
 				for (j = 0; j < 3; j++)
-					f->planepts[i][j] = DotProduct(temp, g_v3SelectMatrix[j]) + g_v3SelectOrigin[j];
+					f->plane.pts[i][j] = DotProduct(temp, g_v3SelectMatrix[j]) + g_v3SelectOrigin[j];
 			}
 			if (g_bSelectFlipOrder)
 			{
-				temp = f->planepts[0];
-				f->planepts[0] = f->planepts[2];
-				f->planepts[2] = temp;
+				f->plane.Flip();
 			}
+			f->plane.Make();
 		}
 		b->Build();
 	}
@@ -250,23 +249,17 @@ void Transform_Scale(float x, float y, float z)
 	{
 		for (f = b->basis.faces; f; f = f->fnext)
 		{
+			f->plane.Translate(-g_v3SelectOrigin);
 			for (i = 0; i < 3; i++)
 			{
-				f->planepts[i][0] -= g_v3SelectOrigin[0];
-				f->planepts[i][1] -= g_v3SelectOrigin[1];
-				f->planepts[i][2] -= g_v3SelectOrigin[2];
-
-				f->planepts[i][0] *= x;
-				//				f->planepts[i][0] = floor(f->planepts[i][0] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-				f->planepts[i][1] *= y;
-				//				f->planepts[i][1] = floor(f->planepts[i][1] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-				f->planepts[i][2] *= z;
-				//				f->planepts[i][2] = floor(f->planepts[i][2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-
-				f->planepts[i][0] += g_v3SelectOrigin[0];
-				f->planepts[i][1] += g_v3SelectOrigin[1];
-				f->planepts[i][2] += g_v3SelectOrigin[2];
+				f->plane.pts[i][0] *= x;
+				f->plane.pts[i][1] *= y;
+				f->plane.pts[i][2] *= z;
+				//f->plane.pts[i][0] = floor(f->plane.pts[i][0] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+				//f->plane.pts[i][1] = floor(f->plane.pts[i][1] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+				//f->plane.pts[i][2] = floor(f->plane.pts[i][2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 			}
+			f->plane.Translate(g_v3SelectOrigin);
 		}
 
 		b->Build();

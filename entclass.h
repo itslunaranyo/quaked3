@@ -26,7 +26,7 @@ public:
 	int				form;
 	vec3			mins, maxs;
 	vec3			color;
-	texdef_t		texdef;
+	TexDef		texdef;
 	qeBuffer		comments;
 	char			flagnames[MAX_FLAGS][32];
 	unsigned int	nShowFlags;

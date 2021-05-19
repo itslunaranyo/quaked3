@@ -81,6 +81,10 @@ void	VectorToAngles(const vec3 vec, vec3 &angles);
 
 bool	Point_Equal(const vec3 p1, const vec3 p2, const float epsilon); // returns true if the points are equal
 
+void	rgbToHex(const vec3 vrgb, char *hex);
+void	hexToRGB(const char *hex, vec3 &vrgb);
+
+
 /*
 vec_t	_DotProduct (vec3_t v1, vec3_t v2);
 void	_VectorSubtract (vec3_t va, vec3_t vb, vec3_t out);

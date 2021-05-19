@@ -29,11 +29,16 @@ class Plane
 {
 public:
 	Plane();
+	vec3	pts[3];
 	vec3	normal;
 	double	dist;
 
-	bool		EqualTo(Plane *b, int flip);	// returns true if the planes are equal
-	bool		FromPoints(const vec3 p1, const vec3 p2, const vec3 p3);	// returns false if the points are colinear
+	bool		EqualTo(Plane *b, int flip);	// returns true if the planes are equal-ish
+	bool		FromPoints(const vec3 p0, const vec3 p1, const vec3 p2);	// returns false if the points are collinear
+	bool		Make();
+	void		Flip();
+	void		Translate(vec3 move);
+	void		Snap(int increment = 1);
 	winding_t	*BasePoly();
 	void		GetTextureAxis(vec3 &xv, vec3 &yv);
 };
@@ -53,14 +58,12 @@ public:
 	Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
 	Brush		*owner;		// sikk - brush of selected face
 	winding_t	*face_winding;
-	vec3		planepts[3];
 	Plane		plane;
-	Texture		*d_texture;
-	texdef_t	texdef;
+	TexDef		texdef;
 	vec3		d_color;
 
-	Face   *Clone();
-	Face   *FullClone(Brush *own);	// sikk - Undo/Redo
+	Face	*Clone();
+	Face	*FullClone(Brush *own);	// sikk - Undo/Redo
 	int		MemorySize();	// sikk - Undo/Redo
 	void	BoundsOnAxis(const vec3 a, float* min, float* max);
 	bool	ClipLine(vec3 &p1, vec3 &p2);
@@ -68,7 +71,7 @@ public:
 	void	FitTexture(float fHeight, float fWidth);
 	void	MoveTexture(const vec3 delta);
 	void	ColorAndTexture();
-	void	SetTexture(texdef_t *texdef, int nSkipFlags);
+	void	SetTexture(TexDef *texdef, int nSkipFlags);
 
 	void	MakePlane();
 	void	Draw();

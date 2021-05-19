@@ -39,9 +39,9 @@ public:
 	void	Scroll(int dist, bool fast);
 	Texture* TexAtPos(int x, int y);
 	void	SelectTexture(int x, int y);
-	void	ChooseTexture(texdef_t *texdef, bool bSetSelection);
+	void	ChooseTexture(TexDef *texdef, bool bSetSelection);
 	void	SortTextures();
-	void	UpdateStatus(texdef_t* texdef);
+	void	UpdateStatus(TexDef* texdef);
 
 };
 

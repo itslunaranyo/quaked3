@@ -960,7 +960,7 @@ void Entity::ChangeClassname(EntClass* ec)
 void Entity::ChangeClassname(const char *classname)
 {
 	// lunaran TODO: jesus christ there has to be a better way
-	bool hasbrushes = (brushes.onext->basis.faces->d_texture->name[0] != '(');
+	bool hasbrushes = (brushes.onext->basis.faces->texdef.tex->name[0] != '#');
 
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
 	ChangeClassname(ec);

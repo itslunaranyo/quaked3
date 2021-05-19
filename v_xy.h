@@ -36,6 +36,7 @@ public:
 	vec3	const SnapPoint(const vec3 ptIn);
 
 	void	Draw();
+	void	DrawSelection();
 	void	BeginDrawSelection();
 	void	EndDrawSelection();
 	bool	CullBrush(Brush *b);
@@ -61,7 +62,6 @@ private:
 	void	DrawLightRadius (Brush *pBrush, int nViewType);
 	void	DrawRotateIcon ();	// sikk - Free Rotate: Pivot Icon
 	void	DrawZIcon ();
-	void	DrawSelection();
 	bool	DrawTools();
 
 	bool	DragDelta(int x, int y, vec3 move);

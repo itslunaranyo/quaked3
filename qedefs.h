@@ -64,7 +64,7 @@
 #define	KEY_UP			256
 #define	KEY_DOWN		512
 
-// xy.c
+// lunaran TODO: get rid of this junk and convert to entitymask_t
 #define	EXCLUDE_LIGHTS		1
 #define	EXCLUDE_ENT			2
 #define	EXCLUDE_PATHS		4
@@ -156,12 +156,13 @@ enum entitymask_t
 	EFL_CUSTOM4		= 1 << 15,
 
 	// brush flags
-	BFL_HIDDEN = 1 << 16,
-	BFL_CLIP = 1 << 17,
-	BFL_HINT = 1 << 18,
-	BFL_SKIP = 1 << 19,
-	BFL_LIQUID = 1 << 20,
-	BFL_SKY = 1 << 21,
+	BFL_HIDDEN	= 1 << 16,
+	BFL_CLIP	= 1 << 17,
+	BFL_HINT	= 1 << 18,
+	BFL_SKIP	= 1 << 19,
+	BFL_LIQUID	= 1 << 20,
+	BFL_SKY		= 1 << 21,
+	BFL_TRANS	= 1 << 22,
 };
 
 #endif

@@ -581,7 +581,7 @@ void Winding::TextureCoordinates(winding_t *w, Texture *q, Face *f)
 	float		s, t, ns, nt;
 	float		ang, sinv, cosv;
 	vec3		vecs[2];
-	texdef_t	*texdef;
+	TexDef	*texdef;
 	windingpoint_t		*xyzst;
 
 	for (int i = 0; i < w->numpoints; i++)

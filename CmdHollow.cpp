@@ -45,8 +45,7 @@ void CmdHollow::Do_Impl()
 		{
 			split = f->Clone();
 			move = f->plane.normal * (float)g_qeglobals.d_nGridSize;
-			for (int i = 0; i < 3; i++)
-				split->planepts[i] -= move;
+			split->plane.Translate(-move);
 
 			CSG::SplitBrushByFace(br, split, &front);
 			delete split;

@@ -962,7 +962,7 @@ void Map::RegionAdd()
 {
 	vec3		mins, maxs;
 	int			i;
-	texdef_t	texdef;
+	TexDef	texdef;
 
 	if (!regionActive)
 		return;

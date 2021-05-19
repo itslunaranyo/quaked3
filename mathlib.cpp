@@ -144,7 +144,43 @@ bool Point_Equal(const vec3 p1, const vec3 p2, const float epsilon)
 	return true;
 }
 
+void rgbToHex(const vec3 vrgb, char *hex)
+{
+	int i, c;
+	unsigned rgb[3];
+	char hx[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
 
+	c = 0;
+	hex[c++] = '#';
+	for (i = 0; i < 3; i++)
+	{
+		rgb[i] = (unsigned)(255 * fabs(vrgb[i]) + 0.5f);
+		hex[c++] = hx[rgb[i] >> 4];
+		hex[c++] = hx[rgb[i] & 15];
+	}
+	hex[c] = 0;
+}
+
+void hexToRGB(const char *hex, vec3 &vrgb)
+{
+	int i;
+	unsigned rgb[6];
+
+	if (hex[0] != '#')
+		return;
+
+	for (i = 0; i < 6; i++)
+	{
+		if (hex[i + 1] >= 'A')
+			rgb[i] = hex[i + 1] - 'A' + 10;
+		else
+			rgb[i] = hex[i + 1] - '0';
+	}
+	for (i = 0; i < 3; i++)
+	{
+		vrgb[i] = (rgb[i * 2] * 16 + rgb[i * 2 + 1]) / 255.0f;
+	}
+}
 
 #ifdef _OLD_VEC3
 /*

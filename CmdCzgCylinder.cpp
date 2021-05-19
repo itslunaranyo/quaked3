@@ -83,8 +83,9 @@ float *CmdCzgCylinder::PatternForDegree(int d)
 void CmdCzgCylinder::Do_Impl()
 {
 	vec3 mins, maxs, mid, size;
+	vec3 p0, p1, p2;
 	Face *f;
-	texdef_t td;
+	TexDef td;
 	int i, j, x, y, z, sides;
 	float *pattern;
 
@@ -110,29 +111,31 @@ void CmdCzgCylinder::Do_Impl()
 	f = new Face(target);
 	f->texdef = td;
 
-	f->planepts[0][x] = maxs[x];
-	f->planepts[0][y] = maxs[y];
-	f->planepts[0][z] = maxs[z];
-	f->planepts[1][x] = maxs[x];
-	f->planepts[1][y] = mins[y];
-	f->planepts[1][z] = maxs[z];
-	f->planepts[2][x] = mins[x];
-	f->planepts[2][y] = mins[y];
-	f->planepts[2][z] = maxs[z];
+	p0[x] = maxs[x];
+	p0[y] = maxs[y];
+	p0[z] = maxs[z];
+	p1[x] = maxs[x];
+	p1[y] = mins[y];
+	p1[z] = maxs[z];
+	p2[x] = mins[x];
+	p2[y] = mins[y];
+	p2[z] = maxs[z];
+	f->plane.FromPoints(p0, p1, p2);
 
 	// create bottom face
 	f = new Face(target);
 	f->texdef = td;
 
-	f->planepts[0][x] = mins[x];
-	f->planepts[0][y] = mins[y];
-	f->planepts[0][z] = mins[z];
-	f->planepts[1][x] = maxs[x];
-	f->planepts[1][y] = mins[y];
-	f->planepts[1][z] = mins[z];
-	f->planepts[2][x] = maxs[x];
-	f->planepts[2][y] = maxs[y];
-	f->planepts[2][z] = mins[z];
+	p0[x] = mins[x];
+	p0[y] = mins[y];
+	p0[z] = mins[z];
+	p1[x] = maxs[x];
+	p1[y] = mins[y];
+	p1[z] = mins[z];
+	p2[x] = maxs[x];
+	p2[y] = maxs[y];
+	p2[z] = mins[z];
+	f->plane.FromPoints(p0, p1, p2);
 
 	for (i = 0; i < sides; i++)
 	{
@@ -147,15 +150,16 @@ void CmdCzgCylinder::Do_Impl()
 		f = new Face(target);
 		f->texdef = td;
 
-		f->planepts[0][x] = x1;
-		f->planepts[0][y] = y1;
-		f->planepts[0][z] = mins[z];
-		f->planepts[1][x] = x2;
-		f->planepts[1][y] = y2;
-		f->planepts[1][z] = mins[z];
-		f->planepts[2][x] = x2;
-		f->planepts[2][y] = y2;
-		f->planepts[2][z] = maxs[z];
+		p0[x] = x1;
+		p0[y] = y1;
+		p0[z] = mins[z];
+		p1[x] = x2;
+		p1[y] = y2;
+		p1[z] = mins[z];
+		p2[x] = x2;
+		p2[y] = y2;
+		p2[z] = maxs[z];
+		f->plane.FromPoints(p0, p1, p2);
 	}
 
 	target->Build();

@@ -720,7 +720,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 
 	for (q = g_qeglobals.d_qtextures; q; q = q->next)
     {
-		if (q->name[0] == '(')
+		if (q->name[0] == '#')
 			continue; // don't count entity textures
 
 		if (q->used)

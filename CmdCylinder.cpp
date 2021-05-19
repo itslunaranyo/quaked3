@@ -39,9 +39,10 @@ void CmdCylinder::UseBrush(Brush *br)
 void CmdCylinder::Do_Impl()
 {
 	vec3 mins, maxs, mid;
+	vec3 p0, p1, p2;
 	int width;
 	Face *f;
-	texdef_t td;
+	TexDef td;
 	int up, right, fwd;
 
 	up = axis;
@@ -72,29 +73,31 @@ void CmdCylinder::Do_Impl()
 	f = new Face(target);
 	f->texdef = td;
 
-	f->planepts[0][right] =	maxs[right];
-	f->planepts[0][fwd] =	maxs[fwd];
-	f->planepts[0][up] =	maxs[up];
-	f->planepts[1][right] =	maxs[right];
-	f->planepts[1][fwd] =	mins[fwd];
-	f->planepts[1][up] =	maxs[up];
-	f->planepts[2][right] =	mins[right];
-	f->planepts[2][fwd] =	mins[fwd];
-	f->planepts[2][up] =	maxs[up];
+	p0[right] =	maxs[right];
+	p0[fwd] =	maxs[fwd];
+	p0[up] =	maxs[up];
+	p1[right] =	maxs[right];
+	p1[fwd] =	mins[fwd];
+	p1[up] =	maxs[up];
+	p2[right] =	mins[right];
+	p2[fwd] =	mins[fwd];
+	p2[up] =	maxs[up];
+	f->plane.FromPoints(p0, p1, p2);
 
 	// create bottom face
 	f = new Face(target);
 	f->texdef = td;
 
-	f->planepts[0][right] =	mins[right];
-	f->planepts[0][fwd] =	mins[fwd];
-	f->planepts[0][up] =	mins[up];
-	f->planepts[1][right] =	maxs[right];
-	f->planepts[1][fwd] =	mins[fwd];
-	f->planepts[1][up] =	mins[up];
-	f->planepts[2][right] =	maxs[right];
-	f->planepts[2][fwd] =	maxs[fwd];
-	f->planepts[2][up] =	mins[up];
+	p0[right] =	mins[right];
+	p0[fwd] =	mins[fwd];
+	p0[up] =	mins[up];
+	p1[right] =	maxs[right];
+	p1[fwd] =	mins[fwd];
+	p1[up] =	mins[up];
+	p2[right] =	maxs[right];
+	p2[fwd] =	maxs[fwd];
+	p2[up] =	mins[up];
+	f->plane.FromPoints(p0, p1, p2);
 
 	for (int i = 0; i < sides; i++)
 	{
@@ -105,17 +108,18 @@ void CmdCylinder::Do_Impl()
 		sv = sin(i * Q_PI * 2 / sides);
 		cv = cos(i * Q_PI * 2 / sides);
 
-		f->planepts[0][right] =	floor(mid[right] + width * cv + 0.5);
-		f->planepts[0][fwd] =	floor(mid[fwd] + width * sv + 0.5);
-		f->planepts[0][up] =	mins[up];
+		p0[right] =	floor(mid[right] + width * cv + 0.5);
+		p0[fwd] =	floor(mid[fwd] + width * sv + 0.5);
+		p0[up] =	mins[up];
 
-		f->planepts[1][right] =	f->planepts[0][right];
-		f->planepts[1][fwd] =	f->planepts[0][fwd];
-		f->planepts[1][up] =	maxs[up];
+		p1[right] =	p0[right];
+		p1[fwd] =	p0[fwd];
+		p1[up] =	maxs[up];
 
-		f->planepts[2][right] =	floor(f->planepts[0][right] - width * sv + 0.5);
-		f->planepts[2][fwd] =	floor(f->planepts[0][fwd] + width * cv + 0.5);
-		f->planepts[2][up] =	mins[up];
+		p2[right] =	floor(p0[right] - width * sv + 0.5);
+		p2[fwd] =	floor(p0[fwd] + width * cv + 0.5);
+		p2[up] =	mins[up];
+		f->plane.FromPoints(p0, p1, p2);
 	}
 
 	target->Build();

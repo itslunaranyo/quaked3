@@ -698,11 +698,12 @@ void CameraView::DrawActive()
 			continue;
 	// sikk---> Transparent Brushes
 		// TODO: Make toggle via Preferences Option. 
-		assert(brush->basis.faces->d_texture);
-		if (!strncmp(brush->basis.faces->d_texture->name, "*", 1) ||
-			!strcmp(brush->basis.faces->d_texture->name, "clip") ||
-			!strncmp(brush->basis.faces->d_texture->name, "hint", 4) ||
-			!strcmp(brush->basis.faces->d_texture->name, "trigger"))
+		// lunaran TODO: collect into texture showflags to eliminate all these strcmps
+		assert(brush->basis.faces->texdef.tex);
+		if (!strncmp(brush->basis.faces->texdef.tex->name, "*", 1) ||
+			!strcmp(brush->basis.faces->texdef.tex->name, "clip") ||
+			!strncmp(brush->basis.faces->texdef.tex->name, "hint", 4) ||
+			!strcmp(brush->basis.faces->texdef.tex->name, "trigger"))
 			g_pbrTransBrushes[numTransBrushes++] = brush;
 		else
 		{

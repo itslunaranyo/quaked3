@@ -41,8 +41,8 @@ public:
 	bool	IsConvex() const;	// sikk - Vertex Editing Splits Face
 	bool	IsFiltered() const;
 
-	static Brush *Create (const vec3 inMins, const vec3 inMaxs, texdef_t *texdef);
-	void	Recreate(const vec3 inMins, const vec3 inMaxs, texdef_t *inTexDef);
+	static Brush *Create (const vec3 inMins, const vec3 inMaxs, TexDef *texdef);
+	void	Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef);
 	Brush	*Clone() const;
 	Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	CopyBasis(brbasis_s &brb);
@@ -58,7 +58,7 @@ public:
 
 	void	CheckTexdef(Face *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 	void	FitTexture(int nHeight, int nWidth);
-	void	SetTexture(texdef_t *texdef, int nSkipFlags);
+	void	SetTexture(TexDef *texdef, int nSkipFlags);
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
 	void	SelectFaceForDragging(Face *f, bool shear);

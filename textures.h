@@ -9,7 +9,7 @@ class TextureGroup;
 // lunaran - for mapping texture names to addresses without screwing around with std::strings
 typedef struct label_s
 {
-	char n[16];
+	char n[16];		// matches the WAD2 spec (16)
 	label_s() { n[0] = 0; }
 	label_s(const char* name) { strncpy(n, name, 16); }
 	bool operator<(const label_s &other) const { return (strncmp(n, other.n, 16) < 0); }
@@ -25,7 +25,7 @@ public:
 	~Texture() {};
 
 	Texture		*next;
-	char		name[32];		// longer than the WAD2 spec (16) to make room for the (rgb) single color texture hack names
+	char		name[16];		// matches the WAD2 spec (16)
     int			width, height;
 	int			texture_number;	// gl bind number
 	vec3		color;			// for flat shade mode
@@ -66,7 +66,7 @@ public:
 	~WadLoader() {};
 
 	TextureGroup* LoadTexturesFromWad(const char* filename);
-	int MakeGLTexture(int w, int h, qeBuffer &data);	// FIXME: temporary, make part of gltexture class
+	int MakeGLTexture(int w, int h, qeBuffer &data);	// lunaran FIXME: temporary, make part of gltexture class
 private:
 	bool ReadWad(const char* filename, qeBuffer &wadFileBuf);
 	TextureGroup *ParseWad(qeBuffer &wadFileBuf);
@@ -74,22 +74,6 @@ private:
 };
 
 
-typedef struct texdef_s
-{
-	char	name[32];
-//	qtexture_t* tex;		// some day
-	float	shift[2];
-	float	scale[2];
-	float	rotate;
-
-//	int		contents;
-//	int		flags;
-//	int		value;
-} texdef_t;
-
-
-// a texturename of the form (0 0 0) will
-// create a solid color texture
 
 //========================================================================
 
@@ -121,6 +105,29 @@ namespace Textures
 	extern TextureGroup group_unknown;	// bucket for bad textures
 	extern TextureGroup group_solid;	// bucket for silly solid color entity textures
 };
+
+
+class TexDef
+{
+public:
+	TexDef() : tex(nullptr), shift(), scale(), rotate(0) {};
+
+	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, 16); }
+	void	Set(const char* txn) { strncpy(name, txn, 16); tex = Textures::ForName(name); }
+	void	Clamp();
+
+	Texture	*tex;
+	char	name[16];		// matches the WAD2 spec (16)
+	float	shift[2];
+	float	scale[2];
+	float	rotate;
+
+	//	int		contents;
+	//	int		flags;
+	//	int		value;
+};
+
+
 
 // as yet orphan bs:
 

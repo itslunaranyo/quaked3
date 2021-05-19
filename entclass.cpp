@@ -78,7 +78,7 @@ EntClass *EntClass::InitFromText(char *text)
 	int			r, i;
 	char		*p, parms[256];
 	EntClass	*e;
-	char		color[32];
+	//char		color[16];
 
 	e = new EntClass();
 
@@ -97,8 +97,9 @@ EntClass *EntClass::InitFromText(char *text)
 		delete e;
 		return nullptr;
 	}
-	sprintf(color, "(%1.3f %1.3f %1.3f)", e->color[0], e->color[1], e->color[2]);
-	strcpy(e->texdef.name, color);
+	//sprintf(color, "#%1.3f %1.3f %1.3f", e->color[0], e->color[1], e->color[2]);
+	//strcpy(e->texdef.name, color);
+	rgbToHex(e->color, e->texdef.name);
 
 	while (*text != ')')
 	{

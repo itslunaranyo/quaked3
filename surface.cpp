@@ -167,8 +167,8 @@ void AbsoluteToLocal(Plane normal2, Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 	// change it if necessary
 	f->texdef.rotate = -f->texdef.rotate;
 
-	Clamp(&f->texdef.shift[0], f->d_texture->width);
-	Clamp(&f->texdef.shift[1], f->d_texture->height);
+	Clamp(&f->texdef.shift[0], f->texdef.tex->width);
+	Clamp(&f->texdef.shift[1], f->texdef.tex->height);
 	Clamp(&f->texdef.rotate, 360);
 
 	// lunaran fix: prefer small rotation and fewer negative scales
@@ -198,6 +198,10 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 {
 	Brush	*pBrush, *pList;
 	Face	*pFace;
+	Texture *txFind, *txRepl;
+
+	txFind = Textures::ForName(pFind);
+	txRepl = Textures::ForName(pReplace);
 
 	pList = (bSelected) ? &g_brSelectedBrushes : &g_map.brActive;
 	if (!bSelected)
@@ -207,9 +211,11 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 	{
 		for (pFace = pBrush->basis.faces; pFace; pFace = pFace->fnext)
 		{
-			if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
+			//if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
+			if (bForce || pFace->texdef.tex == txFind)
 			{
-				pFace->d_texture = Textures::ForName(pFace->texdef.name);
+				//pFace->DEPtexture = Textures::ForName(pFace->texdef.name);
+				pFace->texdef.tex = txRepl;
 				strcpy(pFace->texdef.name, pReplace);
 			}
 		}
@@ -223,12 +229,15 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 Surf_ApplyTexdef
 =================
 */
-void Surf_ApplyTexdef(texdef_t *dst, texdef_t *src, int nSkipFlags)
+void Surf_ApplyTexdef(TexDef *dst, TexDef *src, int nSkipFlags)
 {
 	if (nSkipFlags)
 	{
 		if (!(nSkipFlags & SURF_MIXEDNAME))
-			strcpy(dst->name, src->name);
+		{
+			strncpy(dst->name, src->name, 16);
+			dst->tex = src->tex;
+		}
 		if (!(nSkipFlags & SURF_MIXEDSHIFTX))
 			dst->shift[0] = src->shift[0];
 		if (!(nSkipFlags & SURF_MIXEDSHIFTY))
@@ -251,7 +260,7 @@ void Surf_ApplyTexdef(texdef_t *dst, texdef_t *src, int nSkipFlags)
 Surf_SetTexdef
 ================
 */
-void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
+void Surf_SetTexdef(TexDef *texdef, int nSkipFlags)
 {
 	Brush	*b;
 

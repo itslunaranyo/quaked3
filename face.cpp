@@ -65,19 +65,85 @@ Plane::FromPoints
 returns false and does not modify the plane if the points are collinear
 ============
 */
-bool Plane::FromPoints(const vec3 p1, const vec3 p2, const vec3 p3)
+bool Plane::FromPoints(const vec3 p0, const vec3 p1, const vec3 p2)
 {
 	vec3	pNorm;
 
-	pNorm = CrossProduct(p2 - p1, p3 - p1);
+	pNorm = CrossProduct(p0 - p1, p2 - p1);
 
 	if (VectorNormalize(pNorm) < 0.1)
 		return false;
 
 	normal = pNorm;
-	dist = DotProduct(p1, pNorm);
+	dist = DotProduct(p0, pNorm);
+	pts[0] = p0;
+	pts[1] = p1;
+	pts[2] = p2;
 
 	return true;
+}
+
+/*
+=================
+Plane::Make
+=================
+*/
+bool Plane::Make()
+{
+	vec3 norm;
+	norm = CrossProduct(pts[0] - pts[1], pts[2] - pts[1]);
+
+	if (VectorCompare(norm, vec3(0)) || VectorNormalize(norm) < 0.05f)
+	{
+		printf("WARNING: Brush plane with no normal\n");
+		return false;
+	}
+
+	normal = norm;
+	dist = DotProduct(pts[1], normal);
+	return true;
+}
+
+/*
+=================
+Plane::Flip
+=================
+*/
+void Plane::Flip()
+{
+	vec3 temp;
+	temp = pts[0];
+	pts[0] = pts[1];
+	pts[1] = temp;
+	Make();
+}
+
+/*
+=================
+Plane::Translate
+=================
+*/
+void Plane::Translate(vec3 move)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		pts[i] += move;
+	}
+	dist = DotProduct(pts[0], normal);
+}
+
+/*
+=================
+Plane::Snap
+=================
+*/
+void Plane::Snap(int increment)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		pts[i] = glm::floor(pts[i] / (float)increment + vec3(0.5)) * (float)increment;
+	}
+	Make();
 }
 
 /*
@@ -179,9 +245,9 @@ void Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 Face::Face
 ================
 */
-Face::Face() : owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr), d_texture(nullptr)
+Face::Face() : owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr)//, DEPtexture(nullptr)
 {
-	texdef = { 0,0,0,0 };
+	//texdef = { 0,0,0,0 };
 }
 
 /*
@@ -191,39 +257,29 @@ Face::Face
 */
 Face::Face(Brush *b) : 
 	owner(b), fnext(b->basis.faces), 
-	original(nullptr), face_winding(nullptr), d_texture(nullptr)
+	original(nullptr), face_winding(nullptr)//, DEPtexture(nullptr)
 {
 	assert(b);
 
-	texdef = { 0,0,0,0 };
+	//texdef = { 0,0,0,0 };
 
 	b->basis.faces = this;
 }
 
 Face::Face(Face *f) : 
 	owner(nullptr), 
-	texdef(f->texdef), d_texture(f->d_texture), 
+	plane(f->plane), texdef(f->texdef), //DEPtexture(f->DEPtexture), 
 	original(nullptr), face_winding(nullptr)
 {
 	assert(f);
-
-	planepts[0] = f->planepts[0];
-	planepts[1] = f->planepts[1];
-	planepts[2] = f->planepts[2];
-	plane = f->plane;
 }
 
 Face::Face(Brush *b, Face *f) : 
 	owner(b), original(nullptr), face_winding(nullptr), 
-	texdef(f->texdef), d_texture(f->d_texture)
+	plane(f->plane), texdef(f->texdef)//, DEPtexture(f->DEPtexture)
 {
 	assert(b);
 	assert(f);
-
-	planepts[0] = f->planepts[0];
-	planepts[1] = f->planepts[1];
-	planepts[2] = f->planepts[2];
-	plane = f->plane;
 
 	fnext = b->basis.faces;
 	b->basis.faces = this;
@@ -255,9 +311,8 @@ Face *Face::Clone()
 
 	n = new Face();
 	n->texdef = texdef;
-	n->planepts[0] = planepts[0];
-	n->planepts[1] = planepts[1];
-	n->planepts[2] = planepts[2];
+	n->plane = plane;
+
 	//n->owner = owner;
 
 	// all other fields are derived, and will be set by Brush_Build
@@ -278,15 +333,15 @@ Face *Face::FullClone(Brush *own)
 
 	n = new Face(own);
 	n->texdef = texdef;
-	memcpy(n->planepts, planepts, sizeof(n->planepts));
-	memcpy(&n->plane, &plane, sizeof(Plane));
+
+	n->plane = plane;
 
 	if (face_winding)
 		n->face_winding = Winding::Clone(face_winding);
 	else
 		n->face_winding = NULL;
 
-	n->d_texture = d_texture;
+	//n->DEPtexture = DEPtexture;
 
 	return n;
 }
@@ -407,8 +462,8 @@ void Face::FitTexture(float fHeight, float fWidth)
 	{
 		BoundsOnAxis(u, &min, &max);
 		len = max - min;
-		scale = (len / d_texture->width) / fWidth;
-		texdef.shift[0] = -((int)roundf(min / scale + 0.001f) % d_texture->width);
+		scale = (len / texdef.tex->width) / fWidth;
+		texdef.shift[0] = -((int)roundf(min / scale + 0.001f) % texdef.tex->width);
 		texdef.scale[0] = scale;
 	}
 
@@ -416,8 +471,8 @@ void Face::FitTexture(float fHeight, float fWidth)
 	{
 		BoundsOnAxis(v, &min, &max);
 		len = max - min;
-		scale = (len / d_texture->height) / fHeight;
-		texdef.shift[1] = -((int)roundf(min / scale + 0.001f) % d_texture->width);
+		scale = (len / texdef.tex->height) / fHeight;
+		texdef.shift[1] = -((int)roundf(min / scale + 0.001f) % texdef.tex->width);
 		texdef.scale[1] = scale;
 	}
 }
@@ -452,15 +507,8 @@ void Face::MoveTexture(const vec3 move)
 
 	texdef.shift[0] -= s;
 	texdef.shift[1] -= t;
-
-	while (texdef.shift[0] > d_texture->width)
-		texdef.shift[0] -= d_texture->width;
-	while (texdef.shift[1] > d_texture->height)
-		texdef.shift[1] -= d_texture->height;
-	while (texdef.shift[0] < 0)
-		texdef.shift[0] += d_texture->width;
-	while (texdef.shift[1] < 0)
-		texdef.shift[1] += d_texture->height;
+	
+	texdef.Clamp();
 }
 
 /*
@@ -470,10 +518,10 @@ Face::ColorAndTexture
 */
 void Face::ColorAndTexture()
 {
-	if (!d_texture) return;
+	if (!texdef.tex) return;
 
 	SetColor();
-	Winding::TextureCoordinates(face_winding, d_texture, this);
+	Winding::TextureCoordinates(face_winding, texdef.tex, this);
 }
 
 /*
@@ -481,10 +529,10 @@ void Face::ColorAndTexture()
 Face::SetTexture
 =================
 */
-void Face::SetTexture(texdef_t *texdefIn, int nSkipFlags)
+void Face::SetTexture(TexDef *texdefIn, int nSkipFlags)
 {
 	Surf_ApplyTexdef(&texdef, texdefIn, nSkipFlags);
-	d_texture = Textures::ForName(texdefIn->name);
+	//DEPtexture = Textures::ForName(texdefIn->name);
 	owner->Build();
 }
 
@@ -498,7 +546,7 @@ void Face::SetColor()
 	float shade;
 	Texture *q;
 
-	q = d_texture;
+	q = texdef.tex;
 	shade = ShadeForPlane();
 
 	if (g_qeglobals.d_vCamera.draw_mode == cd_texture && owner->owner->IsBrush())
@@ -568,24 +616,7 @@ sikk - Vertex Editing Splits Face
 */
 void Face::MakePlane()
 {
-	int		j;
-	vec3	t1, t2, t3;
-
-	// convert to a vector / dist plane
-	for (j = 0; j < 3; j++)
-	{
-		t1[j] = planepts[0][j] - planepts[1][j];
-		t2[j] = planepts[2][j] - planepts[1][j];
-		t3[j] = planepts[1][j];
-	}
-
-	plane.normal = CrossProduct(t1, t2);
-
-	if (VectorCompare(plane.normal, vec3(0)))
-		Sys_Printf("WARNING: Brush plane with no normal.\n");
-
-	VectorNormalize(plane.normal);
-	plane.dist = DotProduct(t3, plane.normal);
+	plane.Make();
 }
 
 

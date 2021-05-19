@@ -12,7 +12,7 @@ SURFACE INSPECTOR
 =====================================================================
 */
 
-texdef_t	g_texdefEdit;
+TexDef	g_texdefEdit;
 int			g_nEditSurfMixed;
 
 
@@ -128,7 +128,7 @@ Set the window fields to mirror the edit texdef
 void SurfWnd_FromEditTexdef()
 {
 	char		sz[16];
-	texdef_t   *texdef;
+	TexDef   *texdef;
 	float shiftxp, shiftyp, rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
@@ -191,7 +191,7 @@ Reads the window fields and changes relevant texdef members on selection
 void SurfWnd_Apply()
 {
 	char		sz[64];
-	texdef_t	texdef;
+	TexDef	texdef;
 	int			mixed = 0;
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);

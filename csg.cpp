@@ -45,9 +45,7 @@ void CSG::SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	nf = f->Clone();
 
 	// swap the plane winding
-	temp = nf->planepts[0];
-	nf->planepts[0] = nf->planepts[1];
-	nf->planepts[1] = temp;
+	nf->plane.Flip();
 
 	nf->texdef = b->basis.faces->texdef;
 	nf->fnext = b->basis.faces;
@@ -116,7 +114,7 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 		{
 			if ((*fIt)->plane.EqualTo(&f2->plane, false))
 			{
-				if ((*fIt)->d_texture != f2->d_texture)
+				if ((*fIt)->texdef.tex != f2->texdef.tex)
 					return nullptr;	// never merge together two planes with different textures
 				match = true;
 				break;
@@ -252,23 +250,16 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 				planeBuf[pl] = p;
 				pl++;
 
-				// add a face to the brush now while we still have the plane points
+				// add a face to the brush now while we still have the plane
 				f = new Face(result);
 				f->plane = p;
-				for (int j = 0; j < 3; j++)
-				{
-					f->planepts[0] = pointBuf[x];
-					f->planepts[1] = pointBuf[yf];
-					f->planepts[2] = pointBuf[zf];
-				}
 			}
 		}
 	}
 	numPlanes = pl;
 
 	assert(numPlanes > 3);
-	//free(pointBuf);
-	//free(planeBuf);
+
 	delete pointBuf;
 	delete planeBuf;
 
@@ -284,14 +275,14 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 			{
 				if (bf->plane.EqualTo(&f->plane, true))
 				{
-					if (match && ftx != bf->d_texture)
+					if (match && ftx != bf->texdef.tex)
 					{
 						// clashing textures on this plane when notexmerge was specified, abort merge
 						delete result;
 						return nullptr;
 					}
 					f->texdef = bf->texdef;
-					ftx = f->d_texture = bf->d_texture;
+					ftx = f->texdef.tex = bf->texdef.tex;
 					match = true;
 					if (!notexmerge)
 						break;
@@ -310,7 +301,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 			}*/
 			// apply workzone texdef to the rest
 			f->texdef = g_qeglobals.d_workTexDef;
-			f->d_texture = Textures::ForName(f->texdef.name);
+			//f->DEPtexture = Textures::ForName(f->texdef.name);
 		}
 	}
 
