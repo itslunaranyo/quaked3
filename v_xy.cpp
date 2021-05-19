@@ -12,7 +12,7 @@ bool	g_bSnapCheck, g_bRotateCheck, g_bScaleCheck;
 // TODO: this is a tool, not an attribute of a view
 	
 
-XYZView::XYZView()
+XYZView::XYZView() : nRotate(0)
 {
 	Init();
 }
@@ -29,13 +29,6 @@ XYZView::Init
 */
 void XYZView::Init()
 {
-	origin[0] = 0;
-	origin[1] = 0;	// sikk - changed from "20"
-	origin[2] = 0;	// sikk - changed from "46"
-
-	nRotate = 0;
-	scale = 1;
-
 	SetBounds();
 }
 
@@ -390,50 +383,51 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		return;
 	}
 
-	// Ctrl+MMB = move camera
-	if (buttonstate == (MK_CONTROL | MK_MBUTTON))
-	{	
-//			g_qeglobals.d_vCamera.origin[0] = point[0];
-//			g_qeglobals.d_vCamera.origin[1] = point[1];
-		CopyVector(point, g_qeglobals.d_vCamera.origin);
-
-		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
-	}
-
-	// MMB = angle camera
-	if (buttonstate == MK_MBUTTON)
-	{	
-// sikk---> Free Rotate: Pivot Icon
-		if (GetKeyState(VK_MENU) < 0)
+	if (buttonstate & MK_MBUTTON)
+	{
+		// Ctrl+MMB = move camera
+		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
 		{
-			SnapToPoint( x, y, point);
-			CopyVector(point, g_v3RotateOrigin);
-			Sys_UpdateWindows(W_XY);
+			CopyVector(point, g_qeglobals.d_vCamera.origin);
+
+			Sys_UpdateWindows(W_SCENE);
 			return;
 		}
-// <---sikk
-		else
+		// MMB = angle camera
+		else if (buttonstate == MK_MBUTTON)
 		{
-			point = point - g_qeglobals.d_vCamera.origin;
-
-			nAngle = (dViewType == XY) ? YAW : PITCH;
-
-			if (point[nDim2] || point[nDim1])
+			// sikk---> Free Rotate: Pivot Icon
+			if (GetKeyState(VK_MENU) < 0)
 			{
-				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
-				g_qeglobals.d_vCamera.BoundAngles();
-				Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+				SnapToPoint(x, y, point);
+				CopyVector(point, g_v3RotateOrigin);
+				Sys_UpdateWindows(W_XY);
+				return;
 			}
-		}
-	}
+			// <---sikk
+			else
+			{
+				point = point - g_qeglobals.d_vCamera.origin;
 
-	// Shift+MMB = move z checker
-	if (buttonstate == (MK_SHIFT | MK_MBUTTON))
-	{
-		SnapToPoint( x, y, point);
-		CopyVector(point, g_qeglobals.d_vZ.origin);
-		Sys_UpdateWindows(W_XY | W_Z);
-		return;
+				nAngle = (dViewType == XY) ? YAW : PITCH;
+
+				if (point[nDim2] || point[nDim1])
+				{
+					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
+					g_qeglobals.d_vCamera.BoundAngles();
+					Sys_UpdateWindows(W_XY|W_CAMERA);
+				}
+			}
+			return;
+		}
+		// Shift+MMB = move z checker
+		else if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+		{
+			SnapToPoint(x, y, point);
+			CopyVector(point, g_qeglobals.d_vZ.origin);
+			Sys_UpdateWindows(W_XY | W_Z);
+			return;
+		}
 	}
 	/*
 // sikk - Undo/Redo for Free Rotate & Free Scale

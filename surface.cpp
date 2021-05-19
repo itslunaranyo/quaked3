@@ -304,6 +304,10 @@ void Surf_ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags)
 		{
 			strncpy(dst.name, src.name, MAX_TEXNAME);
 			dst.tex = src.tex;
+			if (&dst != &g_qeglobals.d_workTexDef)
+			{
+				dst.tex->Use();
+			}
 		}
 		if (!(flags & SFI_SHIFTX))
 			dst.shift[0] = src.shift[0];

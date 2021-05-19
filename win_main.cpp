@@ -770,10 +770,10 @@ void Sys_UpdateGridStatusBar ()
 {
 	char gridstatus[128] = "";
 
-	sprintf(gridstatus, "Grid Size: %d  Grid Snap: %s  Clip Mode: %s  Texture Lock: %s  Cubic Clip: %d", 
+	sprintf(gridstatus, "Grid Size: %d  Grid Snap: %s  Tool: %s  Texture Lock: %s  Cubic Clip: %d", 
 			g_qeglobals.d_nGridSize, 
 			g_qeglobals.d_savedinfo.bNoClamp ? "OFF" : "On", 
-			g_qeglobals.d_clipTool ? "On" : "Off",	// TODO: reference any modal tool
+			g_qeglobals.d_tools.back()->modal ? g_qeglobals.d_tools.back()->name : "None",
 			g_qeglobals.d_bTextureLock ? "On" : "Off",
 			g_qeglobals.d_savedinfo.nCubicScale);	// sikk - Cubic Clipping
 	Sys_Status(gridstatus, 1);
@@ -1166,11 +1166,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_FILE_IMPORTMAP:	// sikk - Import Map Dialog
-			ImportDialog(true);
+			ImportDialog();
 			break;
-		case ID_FILE_IMPORTPREFAB:	// sikk - Import Prefab Dialog
-			ImportDialog(false);
-			break;
+		//case ID_FILE_IMPORTPREFAB:	// sikk - Import Prefab Dialog
+		//	ImportDialog(false);
+		//	break;
 
 		case ID_FILE_POINTFILE:
 			if (g_qeglobals.d_nPointfileDisplayList)
@@ -1750,11 +1750,12 @@ LONG WINAPI CommandHandler (
 		case ID_SELECTION_CLIPPER:
 			if (g_qeglobals.d_selSelectMode != sel_brush)
 			{
+				Selection::DeselectAllFaces();
 				g_qeglobals.d_selSelectMode = sel_brush;
 				Sys_UpdateWindows(W_XY | W_CAMERA);
 			}
-			if (g_qeglobals.d_clipTool)
-				delete g_qeglobals.d_clipTool;
+			if (dynamic_cast<ClipTool*>(g_qeglobals.d_tools.back()))
+				delete g_qeglobals.d_tools.back();
 			else
 				g_qeglobals.d_clipTool = new ClipTool();
 			break;
@@ -1772,11 +1773,8 @@ LONG WINAPI CommandHandler (
 			Modify_InsertBrush();
 			break;
 
-		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog (Map format)
-			ExportDialog(true);
-			break;
-		case ID_SELECTION_EXPORTPREFAB:	// sikk - Export Selection Dialog (Prefab format)
-			ExportDialog(false);
+		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog
+			ExportDialog();
 			break;
 
 //===================================
@@ -2309,7 +2307,6 @@ LONG WINAPI WMain_WndProc (
 	switch (uMsg)
 	{
 	case WM_TIMER:	// 1/sec
-		QE_CountBrushesAndUpdateStatusBar();
 		QE_CheckAutoSave();
 		return 0;
 
@@ -2473,7 +2470,13 @@ void WMain_Create ()
 
 	// create a timer so that we can count brushes
 	SetTimer(g_qeglobals.d_hwndMain, QE_TIMER0, 1000, NULL);
-	
+
+#ifdef _DEBUG
+	sprintf(g_qeAppName, "QuakeEd 3.%i DEBUG (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
+#else
+	sprintf(g_qeAppName, "QuakeEd 3.%i (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
+#endif
+
 	LoadWindowState(g_qeglobals.d_hwndMain, "MainWindow");
 
 	g_qeglobals.d_hwndRebar			= CreateReBar(g_qeglobals.d_hwndMain, hInstance);
@@ -2708,7 +2711,7 @@ int WINAPI WinMain (
 
 	// sikk - Print App name and current time for logging purposes
 	time(&lTime);	
-	Sys_Printf("QuakeEd 3 beta (build 105)\nSesson Started: %s\n", ctime(&lTime));
+	Sys_Printf("%s\nSesson Started: %s\n", g_qeAppName, ctime(&lTime));
 
 	if (lpCmdLine && strlen(lpCmdLine))
 	{

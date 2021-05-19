@@ -57,6 +57,7 @@ void CmdTextureApply::Apply(TexDef &td, unsigned skipFlags)
 			{
 				strncpy((*fIt)->texdef.name, td.name, MAX_TEXNAME);
 				(*fIt)->texdef.tex = td.tex;
+				td.tex->Use();
 			}
 			if (!(skipFlags & SFI_SHIFTX))
 				(*fIt)->texdef.shift[0] = td.shift[0];

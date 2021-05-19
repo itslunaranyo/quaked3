@@ -11,6 +11,8 @@ public:
 	CmdPaste();
 	~CmdPaste() {}
 
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 

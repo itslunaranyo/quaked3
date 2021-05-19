@@ -591,22 +591,28 @@ BEGIN
     CTEXT           "Sides:",IDC_STATIC,10,15,25,12,SS_CENTERIMAGE
 END
 
-IDD_ABOUT DIALOGEX 0, 0, 297, 212
+IDD_ABOUT DIALOGEX 0, 0, 297, 235
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "About QuakeEd"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,240,5,50,14
-    CONTROL         IDB_ABOUT,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN | WS_BORDER,7,7,83,58
-    CONTROL         "QuakeEd 3 Beta (build 105) \nCopyright (C) 1997-2008 id Software, Inc.\n\nOriginal QE4 Code by id Software\nModified by eerie && sikkpin\n\nReleased under the \nGNU General Public Liscense",IDC_STATIC,
-                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,100,7,130,65
-    GROUPBOX        "OpenGL Properties",IDC_STATIC,5,75,285,50
-    LTEXT           "Vendor:\t\tWHOEVER",IDC_ABOUT_GLVENDOR,15,90,270,10
-    LTEXT           "Version:\t\t1.1",IDC_ABOUT_GLVERSION,15,100,270,10
-    LTEXT           "Renderer:\tWHATEVER",IDC_ABOUT_GLRENDERER,15,110,270,10
-    GROUPBOX        "OpenGL Extensions",IDC_STATIC,5,130,285,75
-    EDITTEXT        IDC_ABOUT_GLEXTENSIONS,10,140,275,60,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,243,5,50,14
+    CONTROL         IDB_ABOUT,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN | WS_BORDER,4,3,88,64
+    CONTROL         "Copyright (C) 1997-2018 id Software, Inc.",IDC_STATIC,
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,96,21,190,11
+    GROUPBOX        "OpenGL Properties",IDC_STATIC,4,72,289,45
+    LTEXT           "Vendor:\t\tWHOEVER",IDC_ABOUT_GLVENDOR,13,83,270,10
+    LTEXT           "Version:\t\t1.1",IDC_ABOUT_GLVERSION,13,93,270,10
+    LTEXT           "Renderer:\tWHATEVER",IDC_ABOUT_GLRENDERER,13,103,270,10
+    GROUPBOX        "OpenGL Extensions",IDC_STATIC,4,123,289,107
+    EDITTEXT        IDC_ABOUT_GLEXTENSIONS,10,132,276,94,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+    CONTROL         "Original QE4 Code by id Software\nModifications by Lunaran, sikkpin, eerie && others",IDC_STATIC,
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,96,35,190,18
+    CONTROL         "Released under the GNU General Public License (v3)",IDC_STATIC,
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,96,57,190,11
+    CONTROL         "QuakeEd Three Version A Million",IDC_ABOUT_APPNAME,
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,96,6,141,11
 END
 
 IDD_SURFACE DIALOGEX 0, 0, 147, 211
@@ -894,8 +900,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,0,5
- PRODUCTVERSION 3,1,0,5
+ FILEVERSION 3,2,30,0
+ PRODUCTVERSION 3,2,30,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -912,14 +918,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3 Beta (build 105) "
-            VALUE "FileVersion", "3.1.0.5"
-            VALUE "InternalName", "QuakeEd 3 Beta (build 105)"
-            VALUE "LegalCopyright", "Copyright © 1997-2008"
-            VALUE "LegalTrademarks", "Quake™ 1996-2008"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 30)"
+            VALUE "FileVersion", "3.2.30.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 30)"
+            VALUE "LegalCopyright", "Copyright © 1997-2018"
+            VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.1.0.5"
+            VALUE "ProductVersion", "3.2.30.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1205,10 +1211,10 @@ BEGIN
 
     IDD_ABOUT, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 290
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 205
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 293
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 230
     END
 
     IDD_SURFACE, DIALOG
@@ -1395,6 +1401,11 @@ BEGIN
 END
 
 IDD_FINDREPLACE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ABOUT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

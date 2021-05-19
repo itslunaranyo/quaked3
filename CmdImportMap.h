@@ -13,6 +13,8 @@ public:
 
 	void File(const char* fname);
 
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 	qeBuffer filename;

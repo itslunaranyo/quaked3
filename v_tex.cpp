@@ -6,10 +6,8 @@
 
 #define	FONT_HEIGHT	10
 
-TextureView::TextureView()
+TextureView::TextureView() : stale(true)
 {
-	stale = true;
-	scale = 1.0f;	// sikk - Mouse Zoom Texture Window
 }
 
 TextureView::~TextureView()
@@ -226,7 +224,7 @@ void TextureView::Layout()
 
 	if (layout)
 	{
-		delete layout;
+		delete[] layout;
 		layout = nullptr;
 	}
 
@@ -234,20 +232,21 @@ void TextureView::Layout()
 	for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
 		count += (*tgIt)->numTextures;
 
-	if (!count) return;
-
-	layout = new texWndPlacement_t[count];
-
-	curIdx = 0;
-	count = 0;
-	for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
+	if (count)
 	{
-		curY = AddToLayout(*tgIt, curY, &curIdx) - 12;	// padding
+		layout = new texWndPlacement_t[count];
+
+		curIdx = 0;
+		count = 0;
+		for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
+		{
+			curY = AddToLayout(*tgIt, curY, &curIdx) - 12;	// padding
+		}
+		curY = AddToLayout(&Textures::group_unknown, curY, &curIdx);
+
+		length = curY + height;
+		Scroll(0, false);	// snap back to bounds
 	}
-	curY = AddToLayout(&Textures::group_unknown, curY, &curIdx);
-
-	length = curY + height;
-
 	stale = false;
 }
 
@@ -542,6 +541,9 @@ void TextureView::Draw()
 {
 	texWndPlacement_t* twp;
 	char	   *name;
+	vec3 txavg;
+
+	txavg = 0.5f * (g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK] + g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT]);
 
 	if (stale) Layout();
 
@@ -571,7 +573,7 @@ void TextureView::Draw()
 			if (twp->tex->used)
 			{
 				glLineWidth(1);
-				glColor3f(0.5, 1, 0.5);
+				glColor3fv(&txavg.r);
 				glDisable(GL_TEXTURE_2D);
 
 				glBegin(GL_LINE_LOOP);

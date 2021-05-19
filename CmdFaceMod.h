@@ -5,6 +5,18 @@
 #ifndef __COMMAND_FACE_MOD_H__
 #define __COMMAND_FACE_MOD_H__
 
+/*
+========================================================================
+
+FACE MODIFICATION
+
+For any change which modifies the properties of any number of brush faces,
+without adding or removing them or changing their relationships. 
+- does not change memory location of modified faces
+
+========================================================================
+*/
+
 class CmdFaceMod : public Command
 {
 public:

@@ -53,7 +53,7 @@ float *CmdCzgCylinder::PatternForDegree(int d)
 	// degree at a time because it's more fun than just hardcoding a big array
 	for (i = 0; i < d; i++)
 	{
-		if (temp) delete temp;
+		if (temp) delete[] temp;
 		temp = pattern;
 		step = 6 * (1 << i);
 		pattern = new float[step];
@@ -68,7 +68,7 @@ float *CmdCzgCylinder::PatternForDegree(int d)
 	}
 
 	// mirror it now so we don't have to try to address it backwards for the other semicircle
-	delete temp;
+	delete[] temp;
 	temp = pattern;
 	pattern = new float[step*2];
 	for (i = 0; i < step; i++)
@@ -76,7 +76,7 @@ float *CmdCzgCylinder::PatternForDegree(int d)
 	for (i = 0; i < step; i++)
 		pattern[2*step-i-1] = temp[i];
 
-	delete temp;
+	delete[] temp;
 	return pattern;
 }
 
@@ -165,7 +165,7 @@ void CmdCzgCylinder::Do_Impl()
 	target->Build();
 	cmdBM.Do();	// does nothing, but make sure cmdBM's state is set to DONE
 
-	delete pattern;
+	delete[] pattern;
 }
 
 void CmdCzgCylinder::Undo_Impl()

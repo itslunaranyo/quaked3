@@ -144,7 +144,7 @@ void CmdBrushMod::RestoreBrush(Brush *br)
 				nf->fnext = br->faces;
 				br->faces = nf;
 			}
-			br->Build();
+			br->FullBuild();
 			break;
 		}
 	}
@@ -172,7 +172,7 @@ void CmdBrushMod::RestoreAll()
 			nf->fnext = brbIt->br->faces;
 			brbIt->br->faces = nf;
 		}
-		brbIt->br->Build();
+		brbIt->br->FullBuild();
 		break;
 	}
 	//state = NOOP;
@@ -190,7 +190,7 @@ void CmdBrushMod::RevertBrush(Brush *br)
 		if (brbIt->br == br)
 		{
 			Swap(*brbIt);	// switch original geometry back into the scene first
-			br->Build();
+			br->FullBuild();
 			brushCache.erase(brbIt);	// deletes entry and takes the swapped garbage with it
 			break;
 		}

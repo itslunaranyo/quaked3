@@ -29,6 +29,11 @@ public:
 	unsigned id;
 	const char *name;
 
+	// net change in brushcount and entitycount on do or redo as a result of 
+	// this command (the same numbers are used and negated for undo)
+	virtual int BrushDelta() { return 0; };
+	virtual int EntityDelta() { return 0; };
+
 protected:
 	bool selectOnDo;
 	bool selectOnUndo;

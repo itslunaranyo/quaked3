@@ -32,13 +32,14 @@ pointOnGrid
 */
 vec3 pointOnGrid(const vec3 point)
 {
-	// glm's round proved to be kind of funky
-	//point = glm::round(point / (float)g_qeglobals.d_nGridSize + 0.5f) * (float)g_qeglobals.d_nGridSize;
 	vec3 out;
+	out = glm::round(point / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
+	/*
 	for (int i = 0; i < 3; i++)
 	{
 		out[i] = qround(point[i], g_qeglobals.d_nGridSize);
 	}
+	*/
 	return out;
 }
 
@@ -493,6 +494,11 @@ void QE_CheckOpenGLForErrors (void)
     }
 }
 
+/*
+==================
+QE_SaveMap
+==================
+*/
 void QE_SaveMap()
 {
 	g_map.SaveToFile(g_map.name, false);	// ignore region
@@ -502,6 +508,11 @@ void QE_SaveMap()
 	Sys_UpdateWindows(W_TITLE);
 }
 
+/*
+==================
+QE_CheckOpenGLForErrors
+==================
+*/
 void QE_UpdateTitle()
 {
 	char tmp[MAX_PATH + 2];
@@ -517,8 +528,7 @@ void QE_UpdateTitle()
 ===============
 QE_CheckAutoSave
 
-If five minutes have passed since making a change
-and the map hasn't been saved, save it out.
+If x minutes have passed since making a change and the map hasn't been saved, save it
 ===============
 */
 void QE_CheckAutoSave ()
@@ -528,7 +538,7 @@ void QE_CheckAutoSave ()
 
 	if (!g_qeglobals.d_savedinfo.bAutosave)	// sikk - Preferences Dialog
 		return;
-	if (!g_cmdQueue.IsModified())
+	if (!g_cmdQueue.IsModified() || g_map.autosaveTime == -1)
 		return;
 
 	now = clock();
@@ -549,7 +559,7 @@ void QE_CheckAutoSave ()
 		Sys_Printf("MSG: Autosave successful.\n");
 		Sys_Status("Autosave successful.", 0);
 
-		g_map.autosaveTime = 0;
+		g_map.autosaveTime = -1;
 	}
 }
 
@@ -718,70 +728,6 @@ char *QE_ExpandRelativePath (char *p)
 	return temp;
 }
 
-/*
-==================
-QE_CountBrushesAndUpdateStatusBar
-==================
-*/
-void QE_CountBrushesAndUpdateStatusBar ()
-{
-	static int	s_lastbrushcount, s_lastentitycount, s_lasttexturecount;
-	static bool	s_didonce;
-	
-//	Entity	*e;
-	Brush		*b, *next;
-	Texture	*q;
-
-	g_map.numBrushes = 0;
-	g_map.numEntities = 0;
-	g_map.numTextures = 0;
-	
-	if (g_map.brActive.next != NULL)
-	{
-		for (b = g_map.brActive.next; b != NULL && b != &g_map.brActive; b = next)
-		{
-			next = b->next;
-			if (b->faces)
-			{
-				if (b->owner->IsPoint())
-					g_map.numEntities++;
-				else
-					g_map.numBrushes++;
-			}
-		}
-	}
-
-	for (q = g_qeglobals.d_qtextures; q; q = q->next)
-    {
-		if (q->name[0] == '#')
-			continue; // don't count entity textures
-
-		if (q->used)
-			g_map.numTextures++;
-	}
-
-	if (((g_map.numBrushes != s_lastbrushcount) || 
-		(g_map.numEntities != s_lastentitycount) || 
-		(g_map.numTextures != s_lasttexturecount)) || 
-		(!s_didonce))
-	{
-		Sys_UpdateBrushStatusBar();
-
-		s_lastbrushcount = g_map.numBrushes;
-		s_lastentitycount = g_map.numEntities;
-		s_lasttexturecount = g_map.numTextures;
-		s_didonce = true;
-	}
-	/*
-	//if (g_map.modified)
-	if (g_cmdQueue.IsModified())
-	{
-		char title[1024];
-		sprintf(title, "%s *", g_map.name);
-		QE_ConvertDOSToUnixName(title, title);
-		Sys_SetTitle(title);
-	}*/
-}
 
 // sikk--->	Update Menu Items & Toolbar Buttons
 /*

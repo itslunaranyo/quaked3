@@ -16,10 +16,8 @@ int			g_nNumTransBrushes;
 CameraView::Init
 ============
 */
-void CameraView::Init ()
+void CameraView::Init()
 {
-	timing = false;
-	origin = vec3(0);
 	viewdistance = 256;
 }
 
@@ -262,6 +260,8 @@ void CameraView::PositionRotate ()
 	{
 		AngleVectors(g_qeglobals.d_vCamera.angles, forward, vec3(0), vec3(0));
 		forward[2] = -forward[2];
+		if (g_qeglobals.d_vCamera.viewdistance <= 8)
+			g_qeglobals.d_vCamera.viewdistance = 256;
 		sorigin = g_qeglobals.d_vCamera.origin + g_qeglobals.d_vCamera.viewdistance * forward;
 	}
 

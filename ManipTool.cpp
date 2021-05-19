@@ -191,10 +191,6 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 	// faces selected: always go for a plane drag
 	if (Selection::NumFaces())
 	{
-		//for (int i = 0; i < Selection::NumFaces(); i++)
-		//{
-		//	fSides.push_back(g_vfSelectedFaces[i]);
-		//}
 		fSides = Selection::faces;
 	}
 	else
@@ -310,6 +306,9 @@ void ManipTool::DragStart(const mouseContext_t &mc)
 	}
 	else	// ----------------
 	{
+		// lunaran TODO: reimplement sikkpin's ctrl-alt-click to slam-move selection - override
+		// ptdown to force a baseline offset on the translate
+
 		// brushes selected: translate if click hit the selection, side-detect for auto plane drag otherwise
 		t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);
 

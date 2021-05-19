@@ -427,6 +427,19 @@ Brush::Build
 Builds a brush rendering data and also sets the min/max bounds
 ==================
 */
+bool Brush::FullBuild()
+{
+	RefreshTexdefs();
+	return Build();
+}
+
+/*
+==================
+Brush::Build
+
+Builds a brush rendering data and also sets the min/max bounds
+==================
+*/
 bool Brush::Build()
 {
 	//float		v;
@@ -607,6 +620,7 @@ void Brush::FitTexture(int nHeight, int nWidth)
 {
 	for (Face *face = faces; face; face = face->fnext)
 		face->FitTexture(nHeight, nWidth);
+	Build();
 }
 
 /*
@@ -619,8 +633,7 @@ void Brush::SetTexture(TexDef *texdef, unsigned flags)
 	for (Face *f = faces; f; f = f->fnext)
 		f->SetTexture(texdef, flags);
 
-	//Build();
-	RefreshFlags();
+	Build();
 }
 
 /*
@@ -1822,7 +1835,7 @@ Brush *Brush::Parse ()
 	Brush	*b;
 	Face	*f;
 
-	g_qeglobals.d_nParsedBrushes++;
+//	g_qeglobals.d_nParsedBrushes++;
 	b = new Brush();
 		
 	do
@@ -1869,7 +1882,7 @@ Brush *Brush::Parse ()
 		// read the texturedef
 		GetToken(false);
 		StringTolower(g_szToken);
-		f->texdef.Set(g_szToken);
+		strncpy(f->texdef.name, g_szToken, MAX_TEXNAME);
 		GetToken(false);
 		f->texdef.shift[0] = atoi(g_szToken);
 		GetToken(false);

@@ -14,6 +14,8 @@ public:
 	void UseBrush(Brush* br);
 	void UseBrushes(Brush* brList);
 
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 	std::vector<Brush*> brHollowed;

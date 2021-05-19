@@ -7,12 +7,16 @@
 /*
 ========================================================================
 
-	COMMANDS
+COMMANDS
 
 every action that modifies the map data (brushes, geometry, texturing,
 entities, keyvalues, so on) is an instance of some subclass of Command.
 the UI builds these Commands and then passes them to the CommandQueue,
-which causes their changes to be applied to the scene.
+which takes over handling their undo/redo status. sometimes this also 
+causes their changes to be applied to the scene, in other cases it is
+easier for the tool building the command to track a modification in
+progress (such as during mouse drags), and only make it 'official' by 
+submitting a command for it when finished.
 
 the Commands remain extant in the CommandQueue to serve as undos/redos.
 the back of each queue is the end closest to the 'present', and the
@@ -21,6 +25,10 @@ front is farthest in the past (for undos) or the future (for redos).
 changes to selection, changes to visibility, loading and unloading of 
 wads, or other events which do not alter what gets saved to disk are 
 map data agnostic, are not Commands, and cannot be undone.
+
+all commands are free to store brush and face pointers, but they must
+also avoid moving brushes or faces in memory under all circumstances,
+to maintain integrity across the entire length of the queue. 
 
 ========================================================================
 */
@@ -35,24 +43,25 @@ Command::~Command() {}
 Command::Do
 
 called when the command object is passed into the queue and completed.
-commands can set up anything they need in advance, but must not permanently
+
+commands can set up anything they need in advance, but must not *permanently*
 modify the scene before Do() is called. deleting any command before this
 point should leave the scene exactly as it was when that command was first
-instantiated.
+instantiated. deleting it after (when state == DONE) happens when the undo
+drops off the far end of the list, so it should clean up all its memory
+but not reverse its changes to the scene.
 ==================
 */
 void Command::Do()
 {
-	//assert(state == LIVE);
-	// sub-commands can sometimes do nothing, just check here
 	if (state == NOOP)
 		return;
 
 	Do_Impl();
 
-	// commands can decide as they're Do()ne that despite being set up and
+	// commands can decide in their Do()s that, despite being set up and
 	// receiving config, their net change to the scene was a zero, and
-	// NOOP themselves as a signal
+	// NOOP themselves to signal this
 	if (state == NOOP)
 		return;
 
@@ -79,8 +88,12 @@ void Command::Undo()
 	Undo_Impl();
 	state = UNDONE;
 
-	if (selectOnUndo)
+	// replace the selection on undo but don't create one
+	if (selectOnUndo && !Selection::IsEmpty())
+	{
+		Selection::DeselectAll();
 		Select();
+	}
 }
 
 /*
@@ -97,8 +110,11 @@ void Command::Redo()
 	Redo_Impl();
 	state = DONE;
 
-	if (selectOnDo)
+	if (selectOnDo && !Selection::IsEmpty())
+	{
+		Selection::DeselectAll();
 		Select();
+	}
 }
 
 /*
@@ -154,6 +170,12 @@ void CommandQueue::Complete(Command *cmd)
 		return;
 	}
 
+	// commands are individually responsible for enumerating brushes and
+	// entities added and removed from the scene, to maintain the total
+	g_map.numBrushes += cmd->BrushDelta();
+	g_map.numEntities += cmd->EntityDelta();
+	g_map.autosaveTime = 0;
+
 	undoQueue.push_back(cmd);
 	cmd->id = ++gId;
 	if (!idFirstAfterSave)
@@ -162,13 +184,21 @@ void CommandQueue::Complete(Command *cmd)
 	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)
 		ClearOldestUndo();
 
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
 }
 
+/*
+==================
+CommandQueue::SetSize
+
+if the user changes the undo queue size in preferences, shrink it immediately
+==================
+*/
 void CommandQueue::SetSize(int size)
 {
 	g_qeglobals.d_savedinfo.nUndoLevels = size;
-	while ((unsigned)size > undoQueue.size())
+	while ((unsigned)size < undoQueue.size())
 	{
 		ClearOldestUndo();
 	}
@@ -190,10 +220,14 @@ void CommandQueue::Undo()
 
 	Command* cmd = undoQueue.back();
 	undoQueue.pop_back();
+	g_map.numBrushes -= cmd->BrushDelta();
+	g_map.numEntities -= cmd->EntityDelta();
+	g_map.autosaveTime = 0;
 	Sys_Printf("Undo: %s\n", cmd->name);
 	cmd->Undo();
 	redoQueue.push_back(cmd);
 
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -213,10 +247,14 @@ void CommandQueue::Redo()
 
 	Command* cmd = redoQueue.back();
 	redoQueue.pop_back();
+	g_map.numBrushes += cmd->BrushDelta();
+	g_map.numEntities += cmd->EntityDelta();
+	g_map.autosaveTime = 0;
 	Sys_Printf("Redo: %s\n", cmd->name);
 	cmd->Redo();
 	undoQueue.push_back(cmd);
 
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -243,15 +281,11 @@ void CommandQueue::SetSaved()
 {
 	if (undoQueue.size())
 		idLastBeforeSave = undoQueue.back()->id;
-	//else
-	//	idLastBeforeSave = 0;
 
 	if (redoQueue.size())
 		idFirstAfterSave = redoQueue.back()->id;
 	else
 		idFirstAfterSave = 0;
-
-	//QE_UpdateTitle();
 }
 
 /*
@@ -261,22 +295,14 @@ CommandQueue::IsModified
 */
 bool CommandQueue::IsModified()
 {
-	if (undoQueue.size())
-	{
-		if (idLastBeforeSave == undoQueue.back()->id)
-			return false;
-	}
-	else
-	{
-		if (!idLastBeforeSave)
-			return false;
-		// if undoqueue is empty but there is an idLastBeforeSave, we filled the undo queue and then undid all of it
-		if (redoQueue.size())
-		{
-			if (idFirstAfterSave == redoQueue.back()->id)
-				return false;
-		}
-	}
+	if (undoQueue.empty() && redoQueue.empty() &&
+		!idLastBeforeSave && !idFirstAfterSave)
+		return false;
+
+	if (undoQueue.size() && idLastBeforeSave == undoQueue.back()->id)
+		return false;
+	if (redoQueue.size() && idFirstAfterSave == redoQueue.back()->id)
+		return false;
 
 	return true;
 }
@@ -288,6 +314,8 @@ CommandQueue::ClearOldestUndo
 */
 void CommandQueue::ClearOldestUndo()
 {
+	if (undoQueue.empty())
+		return;
 	Command* cmd = undoQueue.front();
 	undoQueue.pop_front();
 	delete cmd;

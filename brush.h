@@ -39,6 +39,8 @@ public:
 	void	Transform(const glm::mat4 mat, const bool textureLock);
 	void	RefreshFlags();
 
+	bool	FullBuild();
+
 	bool	Build();	// lunaran: now returns false if brush disappeared when built
 	void	MakeFacePlanes();
 	void	SnapPlanePoints();

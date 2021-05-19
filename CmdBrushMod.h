@@ -5,6 +5,20 @@
 #ifndef __COMMAND_BRUSHMOD_H__
 #define __COMMAND_BRUSHMOD_H__
 
+/*
+========================================================================
+
+BRUSH MODIFICATION
+
+For any change which modifies the geometry of any number of brushes,
+without changing the number of brushes in the scene. 
+- does not change the memory location of modified brushes
+- replaces brush faces with duplicates to be further modified by some 
+  outer command, but restores memory location of original faces on undo
+
+========================================================================
+*/
+
 class CmdBrushMod : public Command
 {
 public:

@@ -31,7 +31,7 @@ public:
 	vec3		color;			// for flat shade mode
 	bool		used;			// true = is present on the level
 	unsigned	showflags;
-
+	void		Use();
 private:
 	void SetFlags();
 };
@@ -112,7 +112,7 @@ class TexDef
 public:
 	TexDef();
 
-	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, MAX_TEXNAME); stx->used = true; }
+	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, MAX_TEXNAME);/* stx->used = true;*/ }
 	void	Set(const char* txn) { strncpy(name, txn, MAX_TEXNAME); tex = Textures::ForName(name); }
 	void	Clamp();
 

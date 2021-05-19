@@ -10,6 +10,9 @@ class CmdClone : public Command
 public:
 	CmdClone(Brush* brList, const vec3 offset = { 0,0,0 });
 	~CmdClone();
+
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 

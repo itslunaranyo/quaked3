@@ -51,7 +51,7 @@ void CmdPaste::Do_Impl()
 		bSnapCheck = true;
 	}
 	// <---sikk
-	g_qeglobals.d_nParsedBrushes = 0;
+//	g_qeglobals.d_nParsedBrushes = 0;
 
 	blist.CloseLinks();
 	elist.CloseLinks();

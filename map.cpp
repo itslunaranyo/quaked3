@@ -86,7 +86,9 @@ void Map::Free()
 	name[0] = 0;
 	hasFilename = false;
 	//Sys_SetTitle(name);
-	g_qeglobals.d_nNumEntities = 0;
+	//g_qeglobals.d_nNumEntities = 0;
+	g_map.numBrushes = 0;
+	g_map.numEntities = 0;
 
 	if (brActive.next)
 		while (brActive.next != &brActive)
@@ -149,13 +151,10 @@ void Map::BuildBrushData(Brush &blist)
 
 		// buildbrushdata is called after a wad is loaded or refreshed to make sure names match texture pointers
 		// wads are also not loaded until after worldspawn is parsed during a map load
-		b->RefreshTexdefs();
-
-		b->Build();
-		if (!b->faces)
+		if (!b->FullBuild() || !b->faces)
 		{
 			delete b;
-			Sys_Printf("MSG: Removed degenerate brush.\n");
+			Sys_Printf("WARNING: Removed degenerate brush.\n");
 		}
 	}
 }
@@ -177,6 +176,7 @@ void Map::BuildBrushData()
 	BuildBrushData(brActive);
 	BuildBrushData(g_brSelectedBrushes);
 	BuildBrushData(brRegioned);
+	Sys_UpdateBrushStatusBar();
 
 	time = Sys_DoubleTime() - time;
 	if (time)
@@ -310,8 +310,6 @@ void Map::LoadFromFile(const char *filename)
 	SaveBetween(between);
 	Free();
 
-	g_qeglobals.d_nParsedBrushes = 0;
-
 	qeBuffer buf;
 	IO_LoadFile(filename, buf);
 
@@ -339,10 +337,18 @@ void Map::LoadFromFile(const char *filename)
 				Textures::LoadWad(tempwad);
 		}
 
+		for (Brush* b = brActive.next; b != &brActive; b = b->next)
+			numBrushes++;
+		for (Entity* e = entities.next; e != &entities; e = e->next)
+		{
+			if (e->IsPoint())
+				numBrushes--;
+			numEntities++;
+		}
+
 		Sys_Printf("--- LoadMapFile ---\n");
 		Sys_Printf("%s\n", temp);
-		Sys_Printf("%5i brushes\n", g_qeglobals.d_nParsedBrushes);
-		Sys_Printf("%5i entities\n", g_qeglobals.d_nNumEntities);
+		Sys_Printf("%5i brushes\n%5i entities\n", numBrushes, numEntities);
 
 		LoadBetween(between);
 		g_map.BuildBrushData();
@@ -376,6 +382,7 @@ void Map::LoadFromFile(const char *filename)
 		RegionOff();
 	}
 
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load

@@ -5,7 +5,9 @@
 #ifndef __QEDEFS_H__
 #define __QEDEFS_H__
 
-#define QE_VERSION  0x0301
+#define QE_VERSION_MAJOR	3
+#define	QE_VERSION_MINOR	2
+#define QE_VERSION_BUILD	30
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -26,9 +28,6 @@
 #define VIEW_WINDOW_CLASS		"QVIEWWND"
 #define	CAMERA_WINDOW_CLASS		"QCAM"
 #define	XYZ_WINDOW_CLASS		"QXYZ%d"
-#define	XY_WINDOW_CLASS			"QXY"
-#define	XZ_WINDOW_CLASS			"QXZ"	// sikk - Multiple Orthographic Views
-#define	YZ_WINDOW_CLASS			"QYZ"	// sikk - Multiple Orthographic Views
 #define	Z_WINDOW_CLASS   		"QZ"
 #define	INSPECTOR_WINDOW_CLASS	"QINSP"
 #define	CONSOLE_WINDOW_CLASS	"QCONS"

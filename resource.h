@@ -181,6 +181,7 @@
 #define IDC_SPIN_TEXSCALE               1280
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
+#define IDC_ABOUT_APPNAME               1285
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -423,9 +424,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        191
+#define _APS_NEXT_RESOURCE_VALUE        192
 #define _APS_NEXT_COMMAND_VALUE         40456
-#define _APS_NEXT_CONTROL_VALUE         1285
+#define _APS_NEXT_CONTROL_VALUE         1286
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -167,11 +167,11 @@ void CmdFaceMod::RebuildAll()
 		assert(fbIt->f);
 		if (last != fbIt->f->owner)
 		{
-			if (last) last->Build();
+			if (last) last->FullBuild();
 			last = fbIt->f->owner;
 		}
 	}
-	last->Build();
+	last->FullBuild();
 }
 
 //==============================
@@ -189,7 +189,7 @@ void CmdFaceMod::Swap(fBasis &fb)
 	fb.f->texdef = fb.texdef;
 	fb.texdef = temp.texdef;
 
-	fb.f->owner->Build();
+	fb.f->owner->FullBuild();
 }
 
 void CmdFaceMod::SwapAll()
@@ -211,11 +211,11 @@ void CmdFaceMod::SwapAll()
 
 		if (last != fbIt->f->owner)
 		{
-			if (last) last->Build();
+			if (last) last->FullBuild();
 			last = fbIt->f->owner;
 		}
 	}
-	last->Build();
+	last->FullBuild();
 }
 
 bool CmdFaceMod::fbasisCmp(const fBasis &a, const fBasis &b)

@@ -30,6 +30,8 @@ HANDLE	g_hBSP_Process;
 
 HCURSOR	g_hcursorWait;
 
+char	g_qeAppName[64];
+
 //===========================================
 
 void Sys_DeltaTime()
@@ -53,7 +55,7 @@ void Sys_SetTitle (char *text)
 	char	buf[512];
 	int		len;
 
-	len = sprintf(buf, "QuakeEd 3 - [%s]", text);	// sikk - Put "QuakeEd 3" in title
+	len = sprintf(buf, "%s - [%s]", g_qeAppName, text);	// sikk - Put "QuakeEd 3" in title
 	/*
 	for(int i = 0; i < len; i++) // Make pathnames look more "Win32" (HI HEFFO!)
 		if(buf[i] == '/')
@@ -326,8 +328,8 @@ static char szFilter[260] =			/* filter string for map files   */
 	"QuakeEd Map (*.map)\0*.map\0\0";
 static char szProjectFilter[260] =	/* filter string for qe3 files   */ 
 	"QuakeEd Project (*.qe3)\0*.qe3\0\0";
-static char szPrefabFilter[260] =	/* filter string for pfb files   */ 
-	"QuakeEd Prefab (*.pfb)\0*.pfb\0\0";
+//static char szPrefabFilter[260] =	/* filter string for pfb files   */ 
+//	"QuakeEd Prefab (*.pfb)\0*.pfb\0\0";
 static char chReplace;				/* string separator for szFilter */ 
 static int	i, cbString;			/* integer count variables       */ 
 static HANDLE hf;					/* file handle                   */ 
@@ -469,35 +471,19 @@ bool ConfirmModified ()
 /*
 ==================
 ImportDialog
-
-Argument: true = Map | false = Prefab
 ==================
 */
-void ImportDialog (bool bCheck)
+void ImportDialog()
 {
-	if (bCheck)	// Importing a Map File
+	// Obtain the system directory name and store it in szDirName. 
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	if (strlen(szDirName) == 0)
 	{
-		// Obtain the system directory name and store it in szDirName. 
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
-		if (strlen(szDirName) == 0)
-		{
-			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-			strcat(szDirName, "/maps");
-		}
-		// Filter string for Map files
-		ofn.lpstrFilter = szFilter; 
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcat(szDirName, "/maps");
 	}
-	else	// Importing a Prefab File
-	{
-		// Obtain Prefab Path and store it in szDirName. 
-		strcpy(szDirName, g_qeglobals.d_savedinfo.szPrefabPath);
-		if (strlen(g_qeglobals.d_savedinfo.szPrefabPath) == 0)
-			// if Prefab Path is empty, use mapspath as default
-			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
-		// Filter string for Prefab files
-		ofn.lpstrFilter = szPrefabFilter; 
-
-	}
+	// Filter string for Map files
+	ofn.lpstrFilter = szFilter; 
 
 	// Place the terminating null character in the szFile.
 	szFile[0] = '\0'; 
@@ -524,34 +510,19 @@ void ImportDialog (bool bCheck)
 /*
 ==================
 ExportDialog
-
-Argument: true = Map | false = Prefab
 ==================
 */
-void ExportDialog (bool bCheck)
+void ExportDialog()
 { 
-	if (bCheck)	// Exporting a Map File
+	// Obtain the system directory name and store it in szDirName. 
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	if (strlen(szDirName) == 0)
 	{
-		// Obtain the system directory name and store it in szDirName. 
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
-		if (strlen(szDirName) == 0)
-		{
-			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-			strcat(szDirName, "/maps");
-		}
-		// Filter string for Map files
-		ofn.lpstrFilter = szFilter; 
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcat(szDirName, "/maps");
 	}
-	else	// Exporting a Prefab File
-	{
-		// Obtain Prefab Path and store it in szDirName. 
-		strcpy(szDirName, g_qeglobals.d_savedinfo.szPrefabPath);
-		// if Prefab Path is empty, use mapspath as default
-		if (strlen(g_qeglobals.d_savedinfo.szPrefabPath) == 0)
-			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
-		// Filter string for Prefab files
-		ofn.lpstrFilter = szPrefabFilter; 
-	}
+	// Filter string for Map files
+	ofn.lpstrFilter = szFilter; 
 
 	// Place the terminating null character in the szFile. 
 	szFile[0] = '\0'; 

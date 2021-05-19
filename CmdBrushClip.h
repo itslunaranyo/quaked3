@@ -21,6 +21,8 @@ public:
 
 	std::vector<Brush*> brIn, brFront, brBack;
 
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 	clipside side;

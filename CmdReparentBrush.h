@@ -15,6 +15,7 @@ public:
 	void AddBrush(Brush* br);
 	void AddBrushes(Brush* brList);
 
+	int EntityDelta() { return entRemoved.size() * -1; };
 private:
 	struct brush_reparent_s
 	{

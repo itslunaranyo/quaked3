@@ -28,7 +28,7 @@ public:
 	bool		regionActive;
 
 	void	New();
-	void	BuildBrushData(Brush & blist);
+	void	BuildBrushData(Brush &blist);
 	void	BuildBrushData();
 
 	void	LoadFromFile(const char* filename);

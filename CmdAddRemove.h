@@ -5,6 +5,21 @@
 #ifndef __COMMAND_ADDREMOVE_H__
 #define __COMMAND_ADDREMOVE_H__
 
+/*
+========================================================================
+
+ADD/REMOVE
+
+For any change which modifies the number of brushes or entities in the
+scene, or otherwise edits brushes in a destructive way. handles addition
+and removal simultaneously.
+- shifts removed brushes and entities out of the scene lists but does not
+  modify their memory locations
+- inserts added brushes and entities into the scene lists
+- simply does the reverse of the above on undo
+
+========================================================================
+*/
 
 class CmdAddRemove : public Command
 {
@@ -26,6 +41,9 @@ public:
 	void AddedEntity(Entity* ent);		// mark entity as contributed to the scene
 	void AddedEntities(std::vector<Entity*> &entList);
 	//void AddedEntities(Entity* entList);	// same as above
+
+	int BrushDelta();
+	int EntityDelta();
 
 private:
 	void Do_Impl();

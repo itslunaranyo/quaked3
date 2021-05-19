@@ -49,6 +49,7 @@ Tool::Tool(const char* n, bool isModal = false) : name(n), modal(isModal), hot(f
 		delete g_qeglobals.d_tools.back();
 
 	g_qeglobals.d_tools.push_back(this);
+	Sys_UpdateGridStatusBar();
 }
 
 Tool::~Tool()
@@ -59,6 +60,7 @@ Tool::~Tool()
 	if (hot) ReleaseCapture();	// jic
 
 	g_qeglobals.d_tools.pop_back();
+	Sys_UpdateGridStatusBar();
 }
 
 bool Tool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd) { return hot; }

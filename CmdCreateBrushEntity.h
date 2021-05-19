@@ -13,6 +13,8 @@ public:
 
 	void AddBrush(Brush* br);
 	void AddBrushes(Brush* brList);
+
+	int EntityDelta() { return cmdRPB.EntityDelta(); };
 private:
 	CmdReparentBrush cmdRPB;
 	Entity *ent;

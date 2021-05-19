@@ -6,7 +6,7 @@
 
 
 
-View::View()
+View::View() : origin(0), scale(1), timing(false)
 {
 }
 

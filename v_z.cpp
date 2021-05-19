@@ -25,14 +25,8 @@ ZView::Init
 */
 void ZView::Init()
 {
-	origin[0] = 0;
-	origin[1] = 0;	// sikk - changed from "20"
-	origin[2] = 0;	// sikk - changed from "46"
-	scale = 1;
-
 	if (!g_qeglobals.d_savedinfo.bShow_Z)
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-
 }
 
 /*

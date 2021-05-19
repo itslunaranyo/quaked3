@@ -15,6 +15,8 @@ public:
 	void UseBrushes(Brush* brList);
 	//void AllowConvex(bool acvx) { convex = acvx; }
 
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 	std::vector<Brush*> brMerged;

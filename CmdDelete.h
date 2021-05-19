@@ -10,6 +10,9 @@ class CmdDelete : public Command
 public:
 	CmdDelete(Brush *brList);
 	~CmdDelete();
+
+	int BrushDelta() { return cmdAR.BrushDelta(); };
+	int EntityDelta() { return cmdAR.EntityDelta(); };
 private:
 	CmdAddRemove cmdAR;
 

@@ -25,22 +25,28 @@ BOOL CALLBACK AboutDlgProc(
     WPARAM	wParam,	// first message parameter
     LPARAM	lParam 	// second message parameter
    )
-
 {
-	char	szRenderer[1024];
-	char	szVersion[1024];
-	char	szVendor[1024];
-	char	szExtensions[16384];	// lunaran: was 4096, this should work for another few years
-	char	szExtensionscopy[16384];
-	char   *psz;
-
 	switch (uMsg)
     {
 	case WM_INITDIALOG:
-		sprintf(szRenderer, "Renderer:\t%s", glGetString(GL_RENDERER));
-		sprintf(szVersion, "Version:\t\t%s", glGetString(GL_VERSION));
-		sprintf(szVendor, "Vendor:\t\t%s", glGetString(GL_VENDOR));
-		strncpy(szExtensions, (char*)glGetString(GL_EXTENSIONS),8192);
+	{
+		char	szTemp[1024];
+		char	szExtensions[16384];	// lunaran: was 4096, this should work for another few years
+		char	szExtensionscopy[16384];
+		char	*psz;
+
+		SetDlgItemText(hwndDlg, IDC_ABOUT_APPNAME, g_qeAppName);
+
+		sprintf(szTemp, "Renderer:\t%s", glGetString(GL_RENDERER));
+		SetDlgItemText(hwndDlg, IDC_ABOUT_GLRENDERER, szTemp);
+
+		sprintf(szTemp, "Version:\t\t%s", glGetString(GL_VERSION));
+		SetDlgItemText(hwndDlg, IDC_ABOUT_GLVERSION, szTemp);
+
+		sprintf(szTemp, "Vendor:\t\t%s", glGetString(GL_VENDOR));
+		SetDlgItemText(hwndDlg, IDC_ABOUT_GLVENDOR, szTemp);
+
+		strncpy(szExtensions, (char*)glGetString(GL_EXTENSIONS), 8192);
 		szExtensionscopy[0] = 0;
 
 		for (psz = strtok(szExtensions, " \n\t"); psz; psz = strtok(NULL, " \n"))
@@ -49,12 +55,9 @@ BOOL CALLBACK AboutDlgProc(
 			strcat(szExtensionscopy, "\r\n");
 		}
 
-		SetDlgItemText(hwndDlg, IDC_ABOUT_GLRENDERER, szRenderer);
-		SetDlgItemText(hwndDlg, IDC_ABOUT_GLVERSION, szVersion);
-		SetDlgItemText(hwndDlg, IDC_ABOUT_GLVENDOR, szVendor);
 		SetDlgItemText(hwndDlg, IDC_ABOUT_GLEXTENSIONS, szExtensionscopy);
 		return TRUE;
-
+	}
 	case WM_CLOSE:
 		EndDialog(hwndDlg, 0);
 		return 0;

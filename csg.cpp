@@ -258,8 +258,8 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 
 	assert(numPlanes > 3);
 
-	delete pointBuf;
-	delete planeBuf;
+	delete[] pointBuf;
+	delete[] planeBuf;
 
 	for (f = result->faces; f; f = f->fnext)
 	{

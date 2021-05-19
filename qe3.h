@@ -191,7 +191,6 @@ typedef struct
 	TextureView d_vTexture;
 
 	Entity		*d_entityProject;
-	int			d_nNumEntities;
 
 	int			d_nNumPoints;
 	int			d_nNumEdges;
@@ -215,7 +214,6 @@ typedef struct
 	select_t    d_selSelectMode;
 
 	int		    d_nFontList;
-	int         d_nParsedBrushes;
 
 	bool		d_bTextureLock;
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
@@ -241,10 +239,10 @@ extern double	g_deltaTime;
 extern int		g_nUpdateBits;
 extern int		g_nScreenWidth;
 extern int		g_nScreenHeight;
-extern char    *g_szBSP_Commands[256];
+extern char		*g_szBSP_Commands[256];
 extern HANDLE	g_hBSP_Process;
 
-//extern UINT		g_unMouseWheel;	// sikk - Mousewheel Handling
+extern char		g_qeAppName[64];
 
 /*
 ** global declarations
@@ -257,7 +255,6 @@ extern bool	g_bSnapCheck;
 void	QE_CheckAutoSave ();
 void	QE_CheckOpenGLForErrors (void);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
-void	QE_CountBrushesAndUpdateStatusBar ();
 void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
 void	QE_Init ();
 bool	QE_KeyDown (int key);
@@ -299,8 +296,8 @@ void	NewProjectDialog ();	// sikk - New Project Dialog
 void	OpenDialog ();
 void	SaveAsDialog ();
 bool	ConfirmModified ();
-void	ImportDialog (bool bCheck);	// sikk - Import Dialog for map/prefab
-void	ExportDialog (bool bCheck);	// sikk - Export Dialog for map/prefab
+void	ImportDialog();
+void	ExportDialog();
 
 XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 

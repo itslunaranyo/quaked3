@@ -63,6 +63,8 @@ Textures::Flush
 */
 void Textures::Flush()
 {
+	g_map.numTextures = 0;
+
 	// delete all texture groups
 	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
 		delete *tgIt;
@@ -85,33 +87,28 @@ Textures::FlushUnused
 */
 void Textures::FlushUnused(bool rebuild)
 {
-	RefreshUsedStatus();
+	if (rebuild)
+		RefreshUsedStatus();
 
-	// call flushunused on all texture groups
-	Textures::RemoveFromNameMap(&group_unknown);	// hurf
 	group_unknown.FlushUnused();
-	Textures::AddToNameMap(&group_unknown);		// durf
 	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
 	{
-		Textures::RemoveFromNameMap(*tgIt);	// hurf
 		(*tgIt)->FlushUnused();
-		Textures::AddToNameMap(*tgIt);		// durf
 	}
 	
 	if (rebuild)
 		g_map.BuildBrushData();
 
-	// check if selected texture was flushed and get its name out of the work def
 	if (!texMap[label_t(g_qeglobals.d_workTexDef.name)])
 	{
+		// get the bad texture pointer out of the workdef too
 		g_qeglobals.d_workTexDef.tex = nullptr;
-		g_qeglobals.d_workTexDef.name[0] = 0;
 	}
-
 	if (!g_qeglobals.d_workTexDef.tex)
 		SelectFirstTexture();
 
 	g_qeglobals.d_vTexture.stale = true;
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_CAMERA|W_TEXTURE);
 }
 
@@ -122,6 +119,8 @@ Textures::RefreshUsedStatus
 */
 void Textures::RefreshUsedStatus()
 {
+	g_map.numTextures = 0;
+
 	// call clearused on all texture groups
 	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
 		(*tgIt)->ClearUsed();
@@ -137,6 +136,7 @@ void Textures::RefreshUsedStatus()
 		b->RefreshTexdefs();
 
 	g_qeglobals.d_vTexture.stale = true;
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_TEXTURE);
 }
 
@@ -144,7 +144,7 @@ void Textures::RefreshUsedStatus()
 ==================
 Textures::CreateSolid
 
-lunaran TODO: do we really need a 1px texture for a color, or can we just
+lunaran TODO: do we really still need a 1px texture for a color, or can we just
 	render vtx color on a universal white texture
 ==================
 */
@@ -241,7 +241,7 @@ Texture *Textures::ForName(const char *name)
 	tx = texMap[label_t(name)];
 	if (tx)
 	{
-		tx->used = true;
+		tx->Use();
 		return tx;
 	}
 
@@ -249,7 +249,7 @@ Texture *Textures::ForName(const char *name)
 	tx = new Texture(*nulltexture);
 	strncpy(tx->name, name, MAX_TEXNAME);
 	tx->next = nullptr;
-	tx->used = true;
+	//tx->used = true;
 
 	group_unknown.Add(tx);
 	texMap[label_t(name)] = tx;
@@ -270,7 +270,17 @@ the unknown group if they're used again
 void Textures::RemoveFromNameMap(TextureGroup* tg)
 {
 	for (Texture* q = tg->first; q; q = q->next)
+	{
 		texMap[label_t(q->name)] = nullptr;
+		if (q->used)
+			g_map.numTextures--;
+	}
+
+	if (!texMap[label_t(g_qeglobals.d_workTexDef.name)])
+	{
+		// get the bad texture pointer out of the workdef too
+		g_qeglobals.d_workTexDef.tex = nullptr;
+	}
 }
 
 /*
@@ -287,18 +297,24 @@ void Textures::AddToNameMap(TextureGroup* tg)
 		old = texMap[lbl];
 		texMap[lbl] = q;
 	}
+	if (g_qeglobals.d_workTexDef.tex == nullptr && texMap[label_t(g_qeglobals.d_workTexDef.name)])
+	{
+		// desired workdef texture was added to the name map, light it up
+		g_qeglobals.d_workTexDef.Set(g_qeglobals.d_workTexDef.name);
+		g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
+	}
 }
 
 /*
 ==================
-Textures::LoadWad
+Textures::SelectFirstTexture
 ==================
 */
 void Textures::SelectFirstTexture()
 {
 	if (groups.empty())
 		return;
-	//strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
+
 	g_qeglobals.d_workTexDef.Set(groups.front()->first);
 	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
 }
@@ -326,13 +342,13 @@ void Textures::LoadWad(const char* wadfile)
 	if (tgIt != groups.end())
 	{
 		wad = *tgIt;	// old wad
-		Textures::RemoveFromNameMap(wad);
 		*tgIt = wl.LoadTexturesFromWad(wadfile);
-		if (!wad)
+		if (!*tgIt)
 		{
 			QE_SetInspectorMode(W_CONSOLE);	// show errors
 			return;
 		}
+		Textures::RemoveFromNameMap(wad);
 		Textures::AddToNameMap(*tgIt);
 		delete wad;
 	}
@@ -354,6 +370,7 @@ void Textures::LoadWad(const char* wadfile)
 	g_qeglobals.d_vTexture.origin[1] = 0;
 
 	QE_SetInspectorMode(W_TEXTURE);
+	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
 
 	// select the first texture in the list
@@ -408,6 +425,19 @@ Texture::Texture(int w, int h, const char* n, vec3 c, int gltex) :
 {
 	strncpy(name, n, MAX_TEXNAME);
 	SetFlags();
+}
+
+/*
+==================
+Texture::Use
+==================
+*/
+void Texture::Use()
+{
+	if (used) return;
+
+	g_map.numTextures++;
+	used = true;
 }
 
 /*
@@ -567,6 +597,7 @@ void TextureGroup::FlushUnused()
 			if (prev)
 				prev->next = cur->next;
 			cur = cur->next;
+			Textures::texMap[label_t(temp->name)] = nullptr;
 			delete temp;
 			numTextures--;
 		}

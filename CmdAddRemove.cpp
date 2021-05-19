@@ -102,6 +102,16 @@ void CmdAddRemove::AddedEntities(std::vector<Entity*>& entList)
 		AddedEntity(*eIt);
 }
 
+int CmdAddRemove::BrushDelta()
+{
+	return brAdded.size() - brRemoved.size();
+}
+
+int CmdAddRemove::EntityDelta()
+{
+	return entAdded.size() - entRemoved.size();
+}
+
 // ========================================================================
 
 void CmdAddRemove::Do_Impl()
@@ -164,6 +174,11 @@ void CmdAddRemove::Restore(std::vector<Brush*>& brList)
 		br = *brIt;
 		br->AddToList(&g_map.brActive);	// put back in scene
 		br->owner->LinkBrush(br);
+
+		// brushes in undo-limbo aren't caught by mass rebuilds for wad load/flush
+		// events, so always refresh brushes when they're brought back so we get
+		// the right broken pink texture and not the wrong broken white texture
+		br->FullBuild();
 	}
 }
 

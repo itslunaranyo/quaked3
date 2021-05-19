@@ -14,6 +14,7 @@ public:
 	CmdCreatePointEntity(const char* classname, const vec3 origin);
 	~CmdCreatePointEntity();
 
+	int EntityDelta() { return 1; };
 private:
 	EntClass* ec;
 	Entity *ent;
