@@ -368,9 +368,14 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		return 0;
 
+	// lunaran FIXME: this keeps the entity title bar activated when child ctrls are focused, but prevents 
+	// it being darkened again when they're unfocused for another window, because no message goes through
+	// this hwnd in that case
 	case WM_KILLFOCUS:
+	//	SendMessage(w_hwnd, WM_NCACTIVATE, (GetParent((HWND)wParam) == w_hwndEntDialog), 0);
+	//	return 0;
 	case WM_SETFOCUS:
-		SendMessage(w_hwnd, WM_NCACTIVATE, uMsg == WM_SETFOCUS, 0);
+		SendMessage(w_hwnd, WM_NCACTIVATE, (uMsg == WM_SETFOCUS), 0);
 		return 0;
 
 	case WM_NCLBUTTONDOWN:
@@ -543,6 +548,34 @@ void WndEntity::ForceUpdate()
 {
 	UpdateUI();
 }
+
+
+/*
+==============
+WndEntity::TryFieldCNP
+
+message passing is still a mess...
+==============
+*/
+bool WndEntity::TryFieldCNP(int tryMsg)
+{
+	HWND focus = GetFocus();
+	if (focus == w_hwndCtrls[ENT_KEYFIELD])
+	{
+		SendMessage(w_hwndCtrls[ENT_KEYFIELD], tryMsg, 0, 0);
+		return true;
+	}
+	if (focus == w_hwndCtrls[ENT_VALUEFIELD])
+	{
+		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], tryMsg, 0, 0);
+		return true;
+	}
+	return false;
+}
+
+bool WndEntity::TryCut() { return TryFieldCNP(WM_CUT); }
+bool WndEntity::TryCopy() { return TryFieldCNP(WM_COPY); }
+bool WndEntity::TryPaste() { return TryFieldCNP(WM_PASTE); }
 
 /*
 ==============

@@ -399,27 +399,13 @@ void CameraView::MouseDown (int x, int y, int buttons)
 	nCamButtonState = buttons;
 	buttonX = x;
 	buttonY = y;
-
-	// clipper
-	if ((buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
-	{
-		if (Drag_TrySelect(buttons, origin, dir))
-			return;
-
-		// lunaran - alt quick clip
-		if (GetKeyState(VK_MENU) < 0)
-			Clip_CamStartQuickClip(x, y);
-		else
-			Clip_CamDropPoint(x, y);
-		Sys_UpdateWindows(W_XY|W_CAMERA);
-	}
-
+	
 	// LBUTTON = manipulate selection
 	// shift-LBUTTON = select
 	// middle button = grab texture
 	// ctrl-middle button = set entire brush to texture
 	// ctrl-shift-middle button = set single face to texture
-	else if ((buttons == MK_LBUTTON)	|| 
+	if ((buttons == MK_LBUTTON)	|| 
 		(buttons == (MK_LBUTTON | MK_SHIFT)) || 
 		(buttons == (MK_LBUTTON | MK_CONTROL)) || 
 		(buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT)) || 
@@ -446,20 +432,8 @@ CameraView::MouseUp
 */
 void CameraView::MouseUp (int x, int y, int buttons)
 {
-	// clipper
-	if (g_qeglobals.d_bClipMode)
-	{
-		// lunaran - alt quick clip
-		if (GetKeyState(VK_MENU) < 0)
-			Clip_CamEndQuickClip();
-		else
-			Clip_CamEndPoint();
-	}
-	else
-	{
-		Drag_MouseUp();
-	}
-	Sys_UpdateWindows(W_ALL);
+	Drag_MouseUp();
+	Sys_UpdateWindows(W_SCENE);
 	nCamButtonState = 0;
 }
 
@@ -478,15 +452,9 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 
 	nCamButtonState = buttons;
 
-	if ((!buttons || buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
+	if (!buttons)
 	{
-		Clip_CamMovePoint(x, y);
-	}
-	else if (!buttons)
-	{
-		//
 		// calc ray direction
-		//
 		u = (float)(y - height / 2) / (width / 2);
 		r = (float)(x - width / 2) / (width / 2);
 		f = 1;
@@ -552,7 +520,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 	}
 
 // sikk---> Mouse Driven Texture Manipulation - TODO: Too sensitive...
-	if (buttons & MK_LBUTTON  && !g_qeglobals.d_bClipMode)
+	if (buttons & MK_LBUTTON)
 	{			
 		if (GetKeyState(VK_MENU) < 0)
 		{
@@ -661,14 +629,14 @@ bool CameraView::CullBrush (Brush *b)
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->basis.mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this fucking scary hack
+		point[i] = ((float*)&b->basis.mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this hack
 
 	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->basis.mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this fucking scary hack too
+		point[i] = ((float*)&b->basis.mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this hack too
 
 	d = DotProduct(point, v3Cull2);
 	if (d < -1)
@@ -993,7 +961,7 @@ void CameraView::Draw ()
 		glPointSize(1);
 	}
 
-	Clip_Draw();
+	DrawTools();
 
 	glEnable(GL_DEPTH_TEST);
 

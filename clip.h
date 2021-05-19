@@ -1,50 +1,81 @@
-#ifndef __CLIP_H__
-#define __CLIP_H__
 //==============================
 //	clip.h
 //==============================
 
+#ifndef __CLIP_H__
+#define __CLIP_H__
+
 // 3-Point Clipping Tool
 
+class WndView;
 class XYZView;
+class CameraView;
 class CmdBrushClip;
 
-typedef struct
+#include "Tool.h"
+
+class ClipTool : public Tool
 {
-	bool	bSet;
-	vec3	ptClip;      // the 3d point
-} clippoint_t;
+public:
+	ClipTool();
+	~ClipTool();
 
-//========================================================================
+	int Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
+	int Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	int Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void Draw();
+	void SelectionChanged();
 
-extern clippoint_t	g_cpClip1;
-extern clippoint_t	g_cpClip2;
-extern clippoint_t	g_cpClip3;
-extern clippoint_t	*g_pcpMovingClip;
-extern CmdBrushClip	*g_pcmdBC;
+private:
+	typedef struct
+	{
+		bool	set;
+		vec3	point;      // the 3d point
+		void Reset() { set = false; point = vec3(0); }
+	} clippoint_t;
+
+	//========================================================================
+
+	clippoint_t	points[3];
+	clippoint_t *ptMoving;
+	CmdBrushClip *g_pcmdBC;
+	int axis;
+	bool backside;
+
+	int InputCommand(WPARAM w);
+
+	void Reset();
+	void PointsUpdated();
+	void Clip();
+	void Split();
+	void Flip();
+
+	void Crosshair(bool bCrossHair);
+	void StartCommand();
+	clippoint_t* StartNextPoint();
+
+	void CamStartQuickClip(int x, int y);
+	void CamEndQuickClip();
+	void StartQuickClip(XYZView* xyz, int x, int y);
+	void EndQuickClip();
+
+	bool CamPointOnSelection(int x, int y, vec3 & out, int * outAxis);
+	void CamDropPoint(int x, int y);
+	clippoint_t* CamGetNearestClipPoint(int x, int y);
+	void CamMovePoint(int x, int y);
+	void CamEndPoint();
+
+	void DropPoint(XYZView* xyz, int x, int y);
+	void GetCoordXY(int x, int y, vec3 & pt);
+	clippoint_t* XYGetNearestClipPoint(XYZView * xyz, int x, int y);
+	void MovePoint(XYZView* xyz, int x, int y);
+	void EndPoint();
+};
+
+
 
 //========================================================================
 
 void SnapToPoint(vec3 &point);
-
-void Clip_SetMode();
-void Clip_UnsetMode();
-void Clip_ResetMode();
-void Clip_Clip();
-void Clip_Split();
-void Clip_Flip();
-
-void Clip_CamStartQuickClip(int x, int y);
-void Clip_CamEndQuickClip();
-void Clip_CamDropPoint(int x, int y);
-void Clip_CamMovePoint(int x, int y);
-void Clip_CamEndPoint();
-
-void Clip_StartQuickClip(XYZView* xyz, int x, int y);
-void Clip_EndQuickClip();
-void Clip_DropPoint(XYZView* xyz, int x, int y);
-void Clip_MovePoint(XYZView* xyz, int x, int y);
-void Clip_EndPoint();
-void Clip_Draw();
 
 #endif

@@ -49,6 +49,7 @@ public:
 	void SetWindowRect(RECT *rc);
 	void SetWindowRect(int x, int y, int w, int h);
 	void Swap(WndView &other);
+	virtual void GetMsgXY(LPARAM l, int &x, int &y);
 
 	static std::vector<WndView*> wndviews;
 	static WndView *wvbInitializing;

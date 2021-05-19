@@ -27,6 +27,13 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int xPos, yPos, fwKeys;
 
+	if (Tool::HandleInputTex(uMsg, wParam, lParam, *texv, *this))
+	{
+		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
+			Focus();
+		return 1;
+	}
+
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:

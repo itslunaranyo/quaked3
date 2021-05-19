@@ -63,6 +63,8 @@
 
 #include "commands.h"
 
+#include "Tool.h"
+
 #include "WndView.h"
 #include "WndCamera.h"
 #include "WndTexture.h"
@@ -208,7 +210,9 @@ typedef struct
 	bool		d_bTextureLock;
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
 
-	bool	    d_bClipMode;
+	std::vector<Tool*> d_tools;
+	//bool	    d_bClipMode;
+	ClipTool	*d_clipTool;
 
 	// handle to the console log file
 	// we use low level I/O to get rid of buffering and have everything on file if we crash
@@ -223,7 +227,7 @@ typedef struct
 ** extern declarations
 */
 extern qeglobals_t g_qeglobals;
-
+extern double	g_deltaTime;
 extern int		g_nUpdateBits;
 extern int		g_nScreenWidth;
 extern int		g_nScreenHeight;
@@ -277,6 +281,7 @@ void    Sys_EndWait ();
 void    Sys_Status (const char *psz, int part);
 void	Sys_LogFile ();
 void	Sys_CheckBspProcess(void);
+void	Sys_DeltaTime();
 
 // win_qe3.c
 void	FillBSPMenu ();

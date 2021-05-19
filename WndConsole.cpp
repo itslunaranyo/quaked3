@@ -76,6 +76,13 @@ void WndConsole::AddText(const char *txt)
 	SendMessage(cons, EM_SCROLLCARET, 0, 0); // eerie // sikk - removed comment
 }
 
+bool WndConsole::TryCopy()
+{
+	if (GetFocus() != w_hwndCons) return false;
+	SendMessage(w_hwndCons, WM_COPY, 0, 0);
+	return true;
+}
+
 int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -116,10 +123,16 @@ int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 
+	// lunaran FIXME: this keeps the title bar activated when child ctrls are focused, but prevents 
+	// it being darkened again when they're unfocused for another window, because no message goes through
+	// this hwnd in that case
 	case WM_KILLFOCUS:
+	//	if ((HWND)wParam != w_hwndCons)
+	//		SendMessage(w_hwnd, WM_NCACTIVATE, FALSE, 0);
+	//	return 0;
 	case WM_SETFOCUS:
-		SendMessage(w_hwnd, WM_NCACTIVATE, uMsg == WM_SETFOCUS, 0);
-		return 0;
+		SendMessage(w_hwnd, WM_NCACTIVATE, (uMsg==WM_SETFOCUS), 0);
+		break;
 
 	case WM_NCLBUTTONDOWN:
 	case WM_NCRBUTTONDOWN:

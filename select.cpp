@@ -53,6 +53,11 @@ void Select_HandleChange()
 		Sys_Status("", 3);
 	}
 
+	for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
+	{
+		(*tIt)->SelectionChanged();
+	}
+
 	SurfWnd_UpdateUI();
 	Sys_UpdateWindows(W_SCENE|W_ENTITY);
 	g_bSelectionChanged = false;

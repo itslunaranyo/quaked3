@@ -27,6 +27,13 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int		fwKeys, xPos, yPos;
 
+	if (Tool::HandleInput3D(uMsg, wParam, lParam, *cv, *this))
+	{
+		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
+			Focus();
+		return 1;
+	}
+
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:

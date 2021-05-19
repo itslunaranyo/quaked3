@@ -6,20 +6,197 @@
 
 #define CLIP_CAMDOT 0.9996f
 
-clippoint_t		g_cpClip1;
-clippoint_t		g_cpClip2;
-clippoint_t		g_cpClip3;
-clippoint_t		*g_pcpMovingClip;
+ClipTool::ClipTool() : 
+	ptMoving(nullptr),
+	g_pcmdBC(nullptr),
+	Tool(true)	// clip tool is modal
+{
+	g_qeglobals.d_clipTool = this;
+	Reset();
+}
 
-// lunaran - let clip tool store the 2-point axis projection rather than derive it in various places
-int				g_nClipAxis;
+ClipTool::~ClipTool()
+{
+	g_qeglobals.d_clipTool = nullptr;
+	Reset();
+	Sys_UpdateGridStatusBar();
+}
 
-// lunaran - moved from globals in anticipation of wrapping clip tool in an object
-bool	    d_bClipSwitch;
+/*
+==================
+ClipTool::Input3D
+==================
+*/
+int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+{
+	int keys = wParam;
+	int x, y;
 
-CmdBrushClip *g_pcmdBC;
+	switch (uMsg)
+	{
+	case WM_COMMAND:
+		return InputCommand(wParam);
 
-void Clip_Crosshair(bool bCrossHair)
+//	case WM_KEYDOWN:
+//		return 0;
+
+	case WM_LBUTTONDOWN:
+		if (ShiftDown() || CtrlDown())
+			return 0;
+		vWnd.GetMsgXY(lParam, x, y);
+		SetCapture(vWnd.w_hwnd);
+		hot = true;
+
+		// lunaran - alt quick clip
+		if (AltDown())
+			CamStartQuickClip(x, y);
+		else
+			CamDropPoint(x, y);
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return 1;
+
+	case WM_LBUTTONUP:
+		hot = false;
+		vWnd.GetMsgXY(lParam, x, y);
+		// lunaran - alt quick clip
+		if (AltDown())
+			CamEndQuickClip();
+		else
+			CamEndPoint();
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+			ReleaseCapture();
+		return 1;
+
+	case WM_MOUSEMOVE:
+		if ((!keys || keys & MK_LBUTTON))
+		{
+			vWnd.GetMsgXY(lParam, x, y);
+			CamMovePoint(x, y);
+			return (keys & MK_LBUTTON);
+		}
+		return 0;
+	}
+	return hot;
+}
+
+/*
+==================
+ClipTool::Input2D
+==================
+*/
+int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+{
+	int keys = wParam;
+	int x, y;
+
+	switch (uMsg)
+	{
+	case WM_COMMAND:
+		return InputCommand(wParam);
+
+	case WM_LBUTTONDOWN:
+		if (ShiftDown() || CtrlDown())
+			return 0;
+		vWnd.GetMsgXY(lParam, x, y);
+		SetCapture(vWnd.w_hwnd);
+		hot = true;
+
+		// lunaran - alt quick clip
+		if (AltDown())
+			StartQuickClip(&v, x, y);
+		else
+			DropPoint(&v, x, y);
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return 1;
+
+	case WM_LBUTTONUP:
+		hot = false;
+		vWnd.GetMsgXY(lParam, x, y);
+		// lunaran - alt quick clip
+		if (AltDown())
+			EndQuickClip();
+		else
+			EndPoint();
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+			ReleaseCapture();
+		return 1;
+
+	case WM_MOUSEMOVE:
+		if ((!keys || keys & MK_LBUTTON))
+		{
+			vWnd.GetMsgXY(lParam, x, y);
+			MovePoint(&v, x, y);
+			return 1;
+		}
+		return 0;
+	}
+	return hot;
+}
+
+/*
+==================
+ClipTool::Input
+==================
+*/
+int ClipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	int keys = wParam;
+//	int x, y;
+
+	if (uMsg != WM_COMMAND)
+		return 0;
+
+	return InputCommand(wParam);
+}
+
+/*
+==================
+ClipTool::InputCommand
+==================
+*/
+int ClipTool::InputCommand(WPARAM w)
+{
+	switch (LOWORD(w))
+	{
+	case ID_SELECTION_CLIPSELECTED:
+		Clip();
+		return 1;
+	case ID_SELECTION_SPLITSELECTED:
+		Split();
+		return 1;
+	case ID_SELECTION_FLIPCLIP:
+		Flip();
+		return 1;
+	}
+	return hot;
+}
+
+/*
+==================
+ClipTool::SelectionChanged
+
+trash the command and remake it with the same points/sidedness
+==================
+*/
+void ClipTool::SelectionChanged()
+{
+	if (g_pcmdBC)
+	{
+		delete g_pcmdBC;
+		g_pcmdBC = nullptr;
+	}
+	StartCommand();
+	PointsUpdated();
+}
+
+/*
+==================
+ClipTool::Crosshair
+==================
+*/
+void ClipTool::Crosshair(bool bCrossHair)
 {
 	SetCursor((bCrossHair) ? LoadCursor(NULL, IDC_CROSS) : LoadCursor(NULL, IDC_ARROW));
 }
@@ -34,67 +211,35 @@ void Clip_Crosshair(bool bCrossHair)
 
 /*
 ==================
-Clip_StartCommand
+ClipTool::StartCommand
 ==================
 */
-void Clip_StartCommand()
+void ClipTool::StartCommand()
 {
 	if (g_pcmdBC) return;
 
 	g_pcmdBC = new CmdBrushClip();
-	g_pcmdBC->SetSide(d_bClipSwitch ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
+	g_pcmdBC->SetSide(backside ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
 	g_pcmdBC->StartBrushes(&g_brSelectedBrushes);
 }
 
 /*
 ==================
-Clip_SetMode
+ClipTool::Reset
 ==================
 */
-void Clip_SetMode ()
+void ClipTool::Reset ()
 {
-	g_qeglobals.d_bClipMode ^= 1;
-	Clip_ResetMode();
-	Sys_UpdateGridStatusBar();
-}
+	for (int i = 0; i < 3; i++)
+		points[i].Reset();
 
-/*
-==================
-Clip_UnsetMode
-==================
-*/
-void Clip_UnsetMode ()
-{
-	if (!g_qeglobals.d_bClipMode) return;
-	g_qeglobals.d_bClipMode = false;
-	Clip_ResetMode();
-	Sys_UpdateGridStatusBar();
-}
+	if (ptMoving)
+	{
+		ReleaseCapture();
+		hot = false;
+		ptMoving = nullptr;
+	}
 
-/*
-==================
-Clip_ResetMode
-==================
-*/
-void Clip_ResetMode ()
-{
-	if (g_qeglobals.d_bClipMode)
-	{
-		g_cpClip1.ptClip = vec3(0);
-		g_cpClip1.bSet = false;
-		g_cpClip2.ptClip = vec3(0);
-		g_cpClip2.bSet = false;
-		g_cpClip3.ptClip = vec3(0);
-		g_cpClip3.bSet = false;
-	}
-	else
-	{
-		if (g_pcpMovingClip)
-		{
-			ReleaseCapture();
-			g_pcpMovingClip = NULL;
-		}
-	}
 	if (g_pcmdBC)
 	{
 		delete g_pcmdBC;
@@ -106,120 +251,115 @@ void Clip_ResetMode ()
 
 /*
 ==================
-Clip_PointsUpdated
+ClipTool::PointsUpdated
 ==================
 */
-void Clip_PointsUpdated()
+void ClipTool::PointsUpdated()
 {
 	assert(g_pcmdBC);
-	if (!g_cpClip1.bSet)
+	if (!points[0].set)
 	{
 		g_pcmdBC->UnsetPoints();
 		return;
 	}
 
-	if (g_cpClip3.bSet)
+	if (points[2].set)
 	{
 		// use all three points
-		g_pcmdBC->SetPoints(g_cpClip1.ptClip, g_cpClip2.ptClip, g_cpClip3.ptClip);
+		g_pcmdBC->SetPoints(points[0].point, points[1].point, points[2].point);
 	}
-	else if (g_cpClip2.bSet)
+	else if (points[1].set)
 	{
 		// use implied third point
-		vec3 p3 = g_cpClip2.ptClip;
-		p3[g_nClipAxis] += 128;
-		g_pcmdBC->SetPoints(g_cpClip1.ptClip, g_cpClip2.ptClip, p3);
+		vec3 p3 = points[1].point;
+		p3[axis] += 128;
+		g_pcmdBC->SetPoints(points[0].point, points[1].point, p3);
 	}
 }
 
 
 /*
 ==================
-Clip_Clip
+ClipTool::Clip
 ==================
 */
-void Clip_Clip ()
+void ClipTool::Clip ()
 {
-	//Brush	   *pList;
-	//Brush		hold_brushes;
-
-	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
+	if (!g_pcmdBC)
 		return;
 
 	g_cmdQueue.Complete(g_pcmdBC);
-	//g_pcmdBC->Select();
 	g_pcmdBC = nullptr;
-	Clip_ResetMode();
+	Reset();
 
 	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
 ==================
-Clip_Split
+ClipTool::Split
 ==================
 */
-void Clip_Split ()
+void ClipTool::Split ()
 {
-	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
+	if (!g_pcmdBC)
 		return;
 
 	g_pcmdBC->SetSide(CmdBrushClip::clipside::CLIP_BOTH);
 	g_cmdQueue.Complete(g_pcmdBC);
-	//g_pcmdBC->Select();
 	g_pcmdBC = nullptr;
-	Clip_ResetMode();
+	Reset();
 	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
 ==================
-Clip_Flip
+ClipTool::Flip
 ==================
 */
-void Clip_Flip ()
+void ClipTool::Flip ()
 {
-	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
+	if (!g_pcmdBC)
 		return;
 
-	d_bClipSwitch = !d_bClipSwitch;
-	g_pcmdBC->SetSide(d_bClipSwitch ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
+	backside = !backside;
+	g_pcmdBC->SetSide(backside ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
 
 	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
 ==================
-Clip_StartNextPoint
+ClipTool::StartNextPoint
 ==================
 */
-clippoint_t* Clip_StartNextPoint()
+ClipTool::clippoint_t* ClipTool::StartNextPoint()
 {
 	clippoint_t *pt;
 	pt = nullptr;
 
-	if (g_cpClip1.bSet == false)
+	if (points[0].set == false)
 	{
-		Clip_StartCommand();
-		pt = &g_cpClip1;
-		g_cpClip1.bSet = true;
+		StartCommand();
+		pt = &points[0];
+		points[0].set = true;
 	}
-	else if (g_cpClip2.bSet == false)
+	else if (points[1].set == false)
 	{
-		pt = &g_cpClip2;
-		g_cpClip2.bSet = true;
+		pt = &points[1];
+		points[1].set = true;
 	}
-	else if (g_cpClip3.bSet == false)
+	else if (points[2].set == false)
 	{
-		pt = &g_cpClip3;
-		g_cpClip3.bSet = true;
+		pt = &points[2];
+		points[2].set = true;
 	}
 	else
 	{
-		Clip_ResetMode();
-		Clip_StartCommand();
-		pt = &g_cpClip1;
-		g_cpClip1.bSet = true;
+		Reset();
+		StartCommand();
+		pt = &points[0];
+		points[0].set = true;
 	}
 	return pt;
 }
@@ -235,46 +375,35 @@ clippoint_t* Clip_StartNextPoint()
 
 /*
 ==================
-Clip_CamStartQuickClip
+ClipTool::CamStartQuickClip
 ==================
 */
-void Clip_CamStartQuickClip(int x, int y)
+void ClipTool::CamStartQuickClip(int x, int y)
 {
-	Clip_ResetMode();
+	Reset();
 
-	Clip_CamDropPoint(x, y);
-	Clip_CamDropPoint(x, y);
-	g_pcpMovingClip = &g_cpClip2;
+	CamDropPoint(x, y);
+	CamDropPoint(x, y);
+	ptMoving = &points[1];
 }
 
 /*
 ==================
-Clip_CamEndQuickClip
+ClipTool::CamEndQuickClip
 ==================
 */
-void Clip_CamEndQuickClip()
+void ClipTool::CamEndQuickClip()
 {
-	Clip_CamEndPoint();
-	Clip_Clip();
+	CamEndPoint();
+	Clip();
 }
 
 /*
 ==================
-SnapToPoint
+ClipTool::CamPointOnSelection
 ==================
 */
-void SnapToPoint(vec3 &point)
-{
-	for (int i = 0; i < 3; i++)
-		point[i] = floor(point[i] / g_qeglobals.d_nGridSize + 0.5f) * g_qeglobals.d_nGridSize;
-}
-
-/*
-==================
-Clip_CamPointOnSelection
-==================
-*/
-bool Clip_CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
+bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 {
 	vec3		dir, pn, pt;
 	trace_t		t;
@@ -303,114 +432,102 @@ bool Clip_CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 
 /*
 ==================
-Clip_CamDropPoint
+ClipTool::CamDropPoint
 ==================
 */
-void Clip_CamDropPoint(int x, int y)
+void ClipTool::CamDropPoint(int x, int y)
 {
-	int		nAxis;
+	int		nAxis = -1;
 	vec3	pt;
 
-	if (!Clip_CamPointOnSelection(x, y, pt, &nAxis))
+	if (!CamPointOnSelection(x, y, pt, &nAxis))
 		return;
 
-	if (g_pcpMovingClip && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
 	{
-		g_pcpMovingClip->ptClip = pt;
+		ptMoving->point = pt;
 	}
 	else
 	{
-		if (g_cpClip1.bSet == false)
-			g_nClipAxis = nAxis;
+		if (points[0].set == false)
+			axis = nAxis;
 
 		clippoint_t		*pPt;
-		pPt = Clip_StartNextPoint();
-		pPt->ptClip = pt;
+		pPt = StartNextPoint();
+		pPt->point = pt;
 	}
-	Clip_PointsUpdated();
+	PointsUpdated();
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 }
 
 /*
 ==================
-Clip_CamGetNearestClipPoint
+ClipTool::CamGetNearestClipPoint
 ==================
 */
-clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
+ClipTool::clippoint_t *ClipTool::CamGetNearestClipPoint(int x, int y)
 {
 	vec3 dir, cPt;
 	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
 
-	if (g_cpClip1.bSet)
+	for (int i = 0; i < 3; i++)
 	{
-		cPt = g_cpClip1.ptClip - g_qeglobals.d_vCamera.origin;
-		VectorNormalize(cPt);
+		if (points[i].set)
+		{
+			cPt = points[i].point - g_qeglobals.d_vCamera.origin;
+			VectorNormalize(cPt);
 
-		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
-			return &g_cpClip1;
+			if (DotProduct(cPt, dir) > CLIP_CAMDOT)
+				return &points[i];
+		}
 	}
-	if (g_cpClip2.bSet)
-	{
-		cPt = g_cpClip2.ptClip - g_qeglobals.d_vCamera.origin;
-		VectorNormalize(cPt);
 
-		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
-			return &g_cpClip2;
-	}
-	if (g_cpClip3.bSet)
-	{
-		cPt = g_cpClip3.ptClip - g_qeglobals.d_vCamera.origin;
-		VectorNormalize(cPt);
-
-		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
-			return &g_cpClip3;
-	}
-	return NULL;
+	return nullptr;
 }
 
 /*
 ==================
-Clip_CamMovePoint
+ClipTool::CamMovePoint
 ==================
 */
-void Clip_CamMovePoint(int x, int y)
+void ClipTool::CamMovePoint(int x, int y)
 {
 	int junk;
 	bool	bCrossHair = false;
 
 	// lunaran TODO: don't use windows mouse capture status for control flow maybe
-	if (g_pcpMovingClip && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
 	{
 		// lunaran - grid view reunification
-		if (Clip_CamPointOnSelection(x, y, g_pcpMovingClip->ptClip, &junk))
+		if (CamPointOnSelection(x, y, ptMoving->point, &junk))
 		{
-			Clip_PointsUpdated();
+			PointsUpdated();
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			bCrossHair = true;
 		}
 	}
 	else
 	{
-		g_pcpMovingClip = Clip_CamGetNearestClipPoint(x, y);
-		if (g_pcpMovingClip)
+		ptMoving = CamGetNearestClipPoint(x, y);
+		if (ptMoving)
 			bCrossHair = true;
 	}
 
-	Clip_Crosshair(bCrossHair);
+	Crosshair(bCrossHair);
 }
 
 /*
 ==================
-Clip_CamEndPoint
+ClipTool::CamEndPoint
 ==================
 */
-void Clip_CamEndPoint()
+void ClipTool::CamEndPoint()
 {
-	if (g_pcpMovingClip && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
 	{
-		g_pcpMovingClip = NULL;
+		ptMoving = NULL;
 		ReleaseCapture();
-		Clip_PointsUpdated();
+		PointsUpdated();
 	}
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 }
@@ -426,79 +543,79 @@ void Clip_CamEndPoint()
 
 /*
 ==============
-Clip_StartQuickClip
+ClipTool::StartQuickClip
 
 lunaran: puts point 1 and 2 in the same place and immediately begins dragging point 2
 ==============
 */
-void Clip_StartQuickClip(XYZView* xyz, int x, int y)
+void ClipTool::StartQuickClip(XYZView* xyz, int x, int y)
 {
-	Clip_ResetMode();
+	Reset();
 
-	Clip_DropPoint(xyz, x, y);
-	Clip_DropPoint(xyz, x, y);
-	g_pcpMovingClip = &g_cpClip2;
+	DropPoint(xyz, x, y);
+	DropPoint(xyz, x, y);
+	ptMoving = &points[1];
 
 }
 
 /*
 ==============
-Clip_EndQuickClip
+ClipTool::EndQuickClip
 
 lunaran: stop dragging the current point and immediately clip with it
 ==============
 */
-void Clip_EndQuickClip()
+void ClipTool::EndQuickClip()
 {
-	Clip_EndPoint();
-	Clip_Clip();
+	EndPoint();
+	Clip();
 }
 
 /*
 ==============
-Clip_DropPoint
+ClipTool::DropPoint
 ==============
 */
-void Clip_DropPoint (XYZView* xyz, int x, int y)
+void ClipTool::DropPoint (XYZView* xyz, int x, int y)
 {
 	int nDim;
 
-	g_nClipAxis = xyz->dViewType;
+	axis = xyz->dViewType;
 
-	if (g_pcpMovingClip)  // <-- when a new click is issued on an existing point
+	if (ptMoving)  // <-- when a new click is issued on an existing point
 	{
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, g_pcpMovingClip->ptClip);
+			xyz->SnapToPoint(x, y, ptMoving->point);
 	}
 	else // <-- if a new point is dropped in space
 	{
 		clippoint_t		*pPt;
-		pPt = Clip_StartNextPoint();
+		pPt = StartNextPoint();
 
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, pPt->ptClip);
+			xyz->SnapToPoint(x, y, pPt->point);
 
 		// third coordinates for clip point: use d_v3WorkMax
 		nDim = (xyz->dViewType == YZ ) ? 0 : ((xyz->dViewType == XZ) ? 1 : 2);
 
 		// lunaran: put third clip at work min instead of work max so they aren't all coplanar to the view
-		if (g_cpClip3.bSet)
-			(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMin[nDim];
+		if (points[2].set)
+			(pPt->point)[nDim] = g_qeglobals.d_v3WorkMin[nDim];
 		else
-			(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
+			(pPt->point)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
 	}
-	Clip_PointsUpdated();
+	PointsUpdated();
 	Sys_UpdateWindows(W_XY| W_CAMERA);
 }
 
 /*
 ==============
-Clip_GetCoordXY
+ClipTool::GetCoordXY
 ==============
 */
-void Clip_GetCoordXY(int x, int y, vec3 &pt)
+void ClipTool::GetCoordXY(int x, int y, vec3 &pt)
 {
 	int nDim;
 	// lunaran - grid view reunification
@@ -512,10 +629,10 @@ void Clip_GetCoordXY(int x, int y, vec3 &pt)
 
 /*
 ==============
-Clip_XYGetNearestClipPoint
+ClipTool::XYGetNearestClipPoint
 ==============
 */
-clippoint_t* Clip_XYGetNearestClipPoint(XYZView* xyz, int x, int y)
+ClipTool::clippoint_t* ClipTool::XYGetNearestClipPoint(XYZView* xyz, int x, int y)
 {
 	int nDim1, nDim2;
 	vec3	tdp;
@@ -528,28 +645,28 @@ clippoint_t* Clip_XYGetNearestClipPoint(XYZView* xyz, int x, int y)
 
 	// lunaran: based on screen distance and not world distance
 	float margin = 10.0f / xyz->scale;
-	if (g_cpClip1.bSet)
+	if (points[0].set)
 	{
-		if (fabs(g_cpClip1.ptClip[nDim1] - tdp[nDim1]) < margin &&
-			fabs(g_cpClip1.ptClip[nDim2] - tdp[nDim2]) < margin)
+		if (fabs(points[0].point[nDim1] - tdp[nDim1]) < margin &&
+			fabs(points[0].point[nDim2] - tdp[nDim2]) < margin)
 		{
-			return &g_cpClip1;
+			return &points[0];
 		}
 	}
-	if (g_cpClip2.bSet)
+	if (points[1].set)
 	{
-		if (fabs(g_cpClip2.ptClip[nDim1] - tdp[nDim1]) < margin &&
-			fabs(g_cpClip2.ptClip[nDim2] - tdp[nDim2]) < margin)
+		if (fabs(points[1].point[nDim1] - tdp[nDim1]) < margin &&
+			fabs(points[1].point[nDim2] - tdp[nDim2]) < margin)
 		{
-			return &g_cpClip2;
+			return &points[1];
 		}
 	}
-	if (g_cpClip3.bSet)
+	if (points[2].set)
 	{
-		if (fabs(g_cpClip3.ptClip[nDim1] - tdp[nDim1]) < margin &&
-			fabs(g_cpClip3.ptClip[nDim2] - tdp[nDim2]) < margin)
+		if (fabs(points[2].point[nDim1] - tdp[nDim1]) < margin &&
+			fabs(points[2].point[nDim2] - tdp[nDim2]) < margin)
 		{
-			return &g_cpClip3;
+			return &points[2];
 		}
 	}
 	return NULL;
@@ -557,65 +674,66 @@ clippoint_t* Clip_XYGetNearestClipPoint(XYZView* xyz, int x, int y)
 
 /*
 ==============
-Clip_MovePoint
-should be named Clip_MoveMouse
+ClipTool::MovePoint
+should be named ClipTool::MoveMouse
 ==============
 */
-void Clip_MovePoint (XYZView* xyz, int x, int y)
+void ClipTool::MovePoint (XYZView* xyz, int x, int y)
 {
 	bool	bCrossHair = false;
 
 	// lunaran TODO: don't use windows mouse capture status for control flow maybe
-	if (g_pcpMovingClip && GetCapture())
+	if (ptMoving && GetCapture())
 	{
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, g_pcpMovingClip->ptClip);
+			xyz->SnapToPoint(x, y, ptMoving->point);
 		bCrossHair = true;
-		Clip_PointsUpdated();
+		PointsUpdated();
 		Sys_UpdateWindows(W_XY | W_CAMERA);
 	}
 	else
 	{
-		g_pcpMovingClip = Clip_XYGetNearestClipPoint(xyz, x, y);
-		if (g_pcpMovingClip)
+		ptMoving = XYGetNearestClipPoint(xyz, x, y);
+		if (ptMoving)
 			bCrossHair = true;
 	}
 
-	Clip_Crosshair(bCrossHair);
+	Crosshair(bCrossHair);
 
 }
 
 /*
 ==============
-Clip_EndPoint
+ClipTool::EndPoint
 ==============
 */
-void Clip_EndPoint ()
+void ClipTool::EndPoint ()
 {
-	if (g_pcpMovingClip && GetCapture())
+	if (ptMoving && GetCapture())
 	{
-		/*XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
-		if (xyz)
-			g_nClipAxis = xyz->dViewType;
-		else
-			g_nClipAxis = XY;*/
-		g_nClipAxis = QE_BestViewAxis();
+		axis = QE_BestViewAxis();
 
-		g_pcpMovingClip = NULL;
+		ptMoving = nullptr;
 		ReleaseCapture();
 	}
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 }
 
+
+
+
+
+
+
 /*
 ==============
-Clip_Draw
+ClipTool::Draw
 ==============
 */
-void Clip_Draw ()
+void ClipTool::Draw ()
 {
-	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
+	if (!g_pcmdBC)
 		return;
 	
 	char		strMsg[4];
@@ -629,37 +747,28 @@ void Clip_Draw ()
 	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER].r);
 	glBegin(GL_POINTS);
 
-	if (g_cpClip1.bSet)
-		glVertex3fv(&g_cpClip1.ptClip.x);
-	if (g_cpClip2.bSet)
-		glVertex3fv(&g_cpClip2.ptClip.x);
-	if (g_cpClip3.bSet)
-		glVertex3fv(&g_cpClip3.ptClip.x);
+	for (int i = 0; i < 3; i++)
+	{
+		if (!points[i].set)
+			break;
+		glVertex3fv(&points[i].point.x);
+	}
 
 	glEnd();
 	glPointSize(1);
-     
-	if (g_cpClip1.bSet)
+    
+	for (int i = 0; i < 3; i++)
 	{
-		glRasterPos3f(g_cpClip1.ptClip[0] + 2, g_cpClip1.ptClip[1] + 2, g_cpClip1.ptClip[2] + 2);
-		strcpy(strMsg, "1");
+		if (!points[i].set)
+			break;
+		glRasterPos3f(points[i].point[0] + 2, points[i].point[1] + 2, points[i].point[2] + 2);
+		sprintf(strMsg, "%i", i);
 		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
 	}
-	if (g_cpClip2.bSet)
+
+	if (points[0].set && points[1].set)
 	{
-		glRasterPos3f(g_cpClip2.ptClip[0] + 2, g_cpClip2.ptClip[1] + 2, g_cpClip2.ptClip[2] + 2);
-		strcpy(strMsg, "2");
-		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
-	}
-	if (g_cpClip3.bSet)
-	{
-		glRasterPos3f(g_cpClip3.ptClip[0] + 2, g_cpClip3.ptClip[1] + 2, g_cpClip3.ptClip[2] + 2);
-		strcpy(strMsg, "3");
-		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
-	}
-	if (g_cpClip1.bSet && g_cpClip2.bSet)
-	{
-		std::vector<Brush*> *brList = (d_bClipSwitch) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
+		std::vector<Brush*> *brList = (backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
 
 		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
 		{
@@ -679,4 +788,23 @@ void Clip_Draw ()
 		}
 	}
 }
+
+
+
+
+
+
+/*
+==================
+SnapToPoint
+
+TODO: find me a real home
+==================
+*/
+void SnapToPoint(vec3 &point)
+{
+	for (int i = 0; i < 3; i++)
+		point[i] = floor(point[i] / g_qeglobals.d_nGridSize + 0.5f) * g_qeglobals.d_nGridSize;
+}
+
 

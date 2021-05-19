@@ -20,6 +20,7 @@ UINT	g_unMouseWheel;
 #endif
 // <---sikk
 */
+double	g_deltaTime;
 int		g_nUpdateBits;
 int		g_nScreenWidth;
 int		g_nScreenHeight;
@@ -30,6 +31,17 @@ HANDLE	g_hBSP_Process;
 HCURSOR	g_hcursorWait;
 
 //===========================================
+
+void Sys_DeltaTime()
+{
+	static double oldtime, curtime;
+
+	curtime = Sys_DoubleTime();
+	g_deltaTime = curtime - oldtime;
+	oldtime = curtime;
+
+	g_deltaTime = fmin(0.2, fmax(0.001, g_deltaTime));
+}
 
 /*
 ==================

@@ -29,6 +29,13 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int		fwKeys, xPos, yPos;
 
+	if (Tool::HandleInput1D(uMsg, wParam, lParam, *zv, *this))
+	{
+		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
+			Focus();
+		return 1;
+	}
+
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:

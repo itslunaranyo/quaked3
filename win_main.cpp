@@ -432,6 +432,7 @@ void QE_SetInspectorMode(int nType)
 	}
 
 	to->Swap(*from);
+	to->Focus();
 	g_qeglobals.d_nInspectorMode = nType;
 }
 
@@ -772,7 +773,7 @@ void Sys_UpdateGridStatusBar ()
 	sprintf(gridstatus, "Grid Size: %d  Grid Snap: %s  Clip Mode: %s  Texture Lock: %s  Cubic Clip: %d", 
 			g_qeglobals.d_nGridSize, 
 			g_qeglobals.d_savedinfo.bNoClamp ? "OFF" : "On", 
-			g_qeglobals.d_bClipMode ? "On" : "Off", 
+			g_qeglobals.d_clipTool ? "On" : "Off",	// TODO: reference any modal tool
 			g_qeglobals.d_bTextureLock ? "On" : "Off",
 			g_qeglobals.d_savedinfo.nCubicScale);	// sikk - Cubic Clipping
 	Sys_Status(gridstatus, 1);
@@ -1212,15 +1213,19 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_ALL);
 			break;
 
-		// lunaran FIXME: cut/copy/paste need to work in the console and in entity edit fields
+		// lunaran cut/copy/paste need to work in entity edit fields and console
 		case ID_EDIT_CUT:
-			g_map.Cut();
+			if (!g_qeglobals.d_wndEntity->TryCut())
+				g_map.Cut();
 			break;
 		case ID_EDIT_COPY:
+			if (g_qeglobals.d_wndEntity->TryCopy()) break;
+			if (g_qeglobals.d_wndConsole->TryCopy()) break;
 			g_map.Copy();
 			break;
 		case ID_EDIT_PASTE:
-			g_map.Paste();
+			if (!g_qeglobals.d_wndEntity->TryPaste())
+				g_map.Paste();
 			break;
 
 		case ID_EDIT_FINDBRUSH:
@@ -1647,7 +1652,8 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
-				Clip_UnsetMode();
+				if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
+					delete g_qeglobals.d_clipTool;
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_edge;
@@ -1661,7 +1667,8 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
-				Clip_UnsetMode();
+				if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
+					delete g_qeglobals.d_clipTool;
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_vertex;
@@ -1672,8 +1679,8 @@ LONG WINAPI CommandHandler (
 			Select_Clone();
 			break;
 		case ID_SELECTION_DESELECT:
-			if (g_qeglobals.d_bClipMode)
-				Clip_UnsetMode();
+			if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
+				delete g_qeglobals.d_clipTool;
 			else
 				Select_DeselectAll(true);
 			break;
@@ -1771,8 +1778,12 @@ LONG WINAPI CommandHandler (
 				g_qeglobals.d_selSelectMode = sel_brush;
 				Sys_UpdateWindows(W_ALL);
 			}
-			Clip_SetMode();
+			if (g_qeglobals.d_clipTool)
+				delete g_qeglobals.d_clipTool;
+			else
+				g_qeglobals.d_clipTool = new ClipTool();
 			break;
+			/*
 		// lunaran - moved undo into the actual clip & split actions
 		case ID_SELECTION_CLIPSELECTED:
 			Clip_Clip();
@@ -1783,7 +1794,7 @@ LONG WINAPI CommandHandler (
 		case ID_SELECTION_FLIPCLIP:
 			Clip_Flip();
 			break;
-
+			*/
 		// lunaran - back and forth face<->brush conversion
 		case ID_SELECTION_FACESTOBRUSHESPARTIAL:
 			Select_FacesToBrushes(true);
@@ -2400,9 +2411,6 @@ LONG WINAPI WMain_WndProc (
 		MoveWindow(g_qeglobals.d_hwndStatus, -100, 100, 10, 10, true);
 		return 0;
 
-	case WM_KEYDOWN:
-		return QE_KeyDown(wParam);
-
 	case WM_CLOSE:
 		// call destroy window to cleanup and go away
 		if (!ConfirmModified())
@@ -2447,9 +2455,6 @@ LONG WINAPI WMain_WndProc (
 		DestroyWindow(hWnd);
 		return 0;
 
-	case WM_COMMAND:
-		return CommandHandler(hWnd, wParam, lParam);
-
 	case WM_INITMENUPOPUP:
 		QE_UpdateCommandUI();	// sikk - Update Menu & Toolbar Items
 		return 0;
@@ -2482,9 +2487,23 @@ LONG WINAPI WMain_WndProc (
 			break;
 		}
 		return 0;
+
+	// lunaran: give tools a last chance to interpret key/menu inputs
+	case WM_KEYDOWN:
+		if (Tool::HandleInput(uMsg, wParam, lParam))
+			return 0;
+		return QE_KeyDown(wParam);
+
+	case WM_COMMAND:
+		if (Tool::HandleInput(uMsg, wParam, lParam))
+			return 0;
+		return CommandHandler(hWnd, wParam, lParam);
+
 	default:
 		break;
 	}
+
+
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -2717,7 +2736,6 @@ int WINAPI WinMain (
 	)
 {
     MSG		msg;
-	double	curtime, oldtime, delta;
 	HACCEL	accelerators;
 	char	szProject[_MAX_PATH];	// sikk - Load Last Project
     time_t	lTime;
@@ -2809,7 +2827,8 @@ int WINAPI WinMain (
 
 	Sys_Printf("MSG: Entering message loop...\n");
 
-	oldtime = Sys_DoubleTime();
+//	oldtime = Sys_DoubleTime();
+	Sys_DeltaTime();
 
 	// sikk - Load Last Map if option is set in Preferences
 	if (g_qeglobals.d_savedinfo.bLoadLastMap && strcmp(g_qeglobals.d_savedinfo.szLastMap, "unnamed.map"))
@@ -2822,6 +2841,7 @@ int WINAPI WinMain (
 		try
 		{
 #endif
+			Sys_DeltaTime();
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
 				WMain_HandleMWheel(msg);
@@ -2846,12 +2866,6 @@ int WINAPI WinMain (
 
 			Sys_CheckBspProcess();
 
-			curtime = Sys_DoubleTime();
-			delta = curtime - oldtime;
-			oldtime = curtime;
-			if (delta > 0.2)
-				delta = 0.2;
-
 			// sikk---> Quickly made Splash Screen
 #ifndef _DEBUG
 			if (hwndSplash)
@@ -2860,8 +2874,8 @@ int WINAPI WinMain (
 #endif
 			// <---sikk
 
-					// run time dependant behavior
-			g_qeglobals.d_vCamera.MouseControl(delta);
+			// run time dependant behavior
+			g_qeglobals.d_vCamera.MouseControl(g_deltaTime);
 
 			// update any windows now
 			Sys_ForceUpdateWindows(g_nUpdateBits);

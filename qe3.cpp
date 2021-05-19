@@ -56,6 +56,7 @@ void QE_Init ()
 	g_qeglobals.d_bShowGrid = true;
 	g_qeglobals.d_vXYZ[0].dViewType = XY;
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
+	g_qeglobals.d_clipTool = nullptr;
 
 	// set maximium undo levels
 	Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
@@ -94,7 +95,7 @@ void QE_Init ()
 	//for (int i = 0; i < 4;i++)
 	//	XYZ_Init(&g_qeglobals.d_vXYZ[i]);
 	//Z_Init();
-	g_pcmdBC = nullptr;
+	//g_pcmdBC = nullptr;
 	g_map.RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface
@@ -721,12 +722,13 @@ void QE_UpdateCommandUI ()
 //===================================
 // Edit Menu
 //===================================
+	// lunaran - leave cut/copy/paste always enabled, so they work in the console and other text fields
 	// Cut
-	EnableMenuItem(hMenu, ID_EDIT_CUT, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	EnableMenuItem(hMenu, ID_EDIT_CUT, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
+//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Copy
-	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
+//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Paste
 //	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
 //	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
@@ -790,8 +792,8 @@ void QE_UpdateCommandUI ()
 // Selection Menu
 //===================================
 	// Clipper Mode
-	CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (g_qeglobals.d_bClipMode ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (g_qeglobals.d_bClipMode ? (LPARAM)TRUE : (LPARAM)FALSE));
+	CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (g_qeglobals.d_clipTool ? MF_CHECKED : MF_UNCHECKED));
+	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (g_qeglobals.d_clipTool ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Drag Edge Mode 
 	CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge) ? MF_CHECKED : MF_UNCHECKED);
 	SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (g_qeglobals.d_selSelectMode == sel_edge ? (LPARAM)TRUE : (LPARAM)FALSE));

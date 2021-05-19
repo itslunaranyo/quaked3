@@ -202,6 +202,17 @@ void WndView::Swap(WndView &other)
 	else Hide();
 }
 
+/*
+==================
+WndView::GetMsgXY
+==================
+*/
+void WndView::GetMsgXY(LPARAM l, int &x, int &y)
+{
+	x = (short)LOWORD(l);	// horizontal position of cursor 
+	y = (int)clientRect.bottom - 1 - (short)HIWORD(l);	// vertical position of cursor 
+}
+
 
 /*
 ========================================================================

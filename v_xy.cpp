@@ -287,182 +287,168 @@ void XYZView::MouseDown (int x, int y, int buttons)
 
 	buttonstate = buttons;
 
-	// clipper
-	if ((buttonstate & MK_LBUTTON) && g_qeglobals.d_bClipMode)
+	pressx = x;
+	pressy = y;
+
+	pressdelta = vec3(0);
+
+	ToPoint(x, y, point);
+
+	orgLocal = point;
+
+	dir = vec3(0);
+	// TODO: simplify this
+	if (this->dViewType == XY)
 	{
-		// lunaran - alt quick clip
-		if (GetKeyState(VK_MENU) < 0)
-			Clip_StartQuickClip(this, x, y);
-		else
-			Clip_DropPoint(this, x, y);
-		Sys_UpdateWindows(W_ALL);
+		orgLocal[2] = 8192;
+		dir[2] = -1;
+
+		right[0] = 1 / this->scale;
+		right[1] = 0;
+		right[2] = 0;
+
+		up[0] = 0;
+		up[1] = 1 / this->scale;
+		up[2] = 0;
+	}
+	else if (this->dViewType == YZ)
+	{
+		orgLocal[0] = 8192;
+		dir[0] = -1;
+
+		right[0] = 0;
+		right[1] = 1 / this->scale;
+		right[2] = 0; 
+			
+	   	up[0] = 0; 
+		up[1] = 0;
+		up[2] = 1 / this->scale;
 	}
 	else
 	{
-		pressx = x;
-		pressy = y;
+		orgLocal[1] = 8192;
+		dir[1] = -1;
 
-		pressdelta = vec3(0);
+		right[0] = 1 / this->scale;
+		right[1] = 0;
+		right[2] = 0; 
 
-		ToPoint(x, y, point);
+		up[0] = 0; 
+		up[1] = 0;
+		up[2] = 1 / this->scale;
+	}
 
-		orgLocal = point;
+	press_selection = (Select_HasBrushes());
 
-		dir[0] = 0; 
-		dir[1] = 0; 
-		dir[2] = 0;
-		if (this->dViewType == XY)
+	Sys_GetCursorPos(&cursorX, &cursorY);
+
+	// LMB = manipulate selection
+	// Shift+LMB = select
+	if (buttonstate & MK_LBUTTON)
+	{
+// sikk---> Quick Move Selection (Ctrl+Alt+LMB)
+		if (GetKeyState(VK_MENU) < 0 && GetKeyState(VK_CONTROL) < 0)
 		{
-			orgLocal[2] = 8192;
-			dir[2] = -1;
+			Brush	*b;
+			vec3	v1, v2;
+	
+			SnapToPoint( x, y, v1);
 
-			right[0] = 1 / this->scale;
-			right[1] = 0;
-			right[2] = 0;
+			b = g_brSelectedBrushes.next;
+			v2 = v1 - b->basis.mins;
 
-			up[0] = 0;
-			up[1] = 1 / this->scale;
-			up[2] = 0;
+			/*
+			if (this->dViewType == XY)
+				v2[2] = 0;
+			if (this->dViewType == XZ)
+				v2[1] = 0;
+			if (this->dViewType == YZ)
+				v2[0] = 0;
+			*/
+			v2[this->dViewType] = 0;
+
+			// this is so we don't drag faces when faces were previously dragged
+			g_qeglobals.d_nNumMovePoints = 0;
+				
+			MoveSelection(v2);
+
+			// update g_v3RotateOrigin to selection
+			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 		}
-		else if (this->dViewType == YZ)
-		{
-			orgLocal[0] = 8192;
-			dir[0] = -1;
-
-			right[0] = 0;
-			right[1] = 1 / this->scale;
-			right[2] = 0; 
-			
-	   		up[0] = 0; 
-			up[1] = 0;
-			up[2] = 1 / this->scale;
-		}
+// <---sikk
 		else
 		{
-			orgLocal[1] = 8192;
-			dir[1] = -1;
+			Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
 
-			right[0] = 1 / this->scale;
-			right[1] = 0;
-			right[2] = 0; 
-
-			up[0] = 0; 
-			up[1] = 0;
-			up[2] = 1 / this->scale;
+			// update g_v3RotateOrigin to selection
+			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 		}
+		return;
+	}
 
-		press_selection = (Select_HasBrushes());
-
-		Sys_GetCursorPos(&cursorX, &cursorY);
-
-		// LMB = manipulate selection
-		// Shift+LMB = select
-		if (buttonstate & MK_LBUTTON)
-		{
-// sikk---> Quick Move Selection (Ctrl+Alt+LMB)
-			if (GetKeyState(VK_MENU) < 0 && GetKeyState(VK_CONTROL) < 0)
-			{
-				Brush	*b;
-				vec3	v1, v2;
-	
-				SnapToPoint( x, y, v1);
-
-				b = g_brSelectedBrushes.next;
-				v2 = v1 - b->basis.mins;
-
-				/*
-				if (this->dViewType == XY)
-					v2[2] = 0;
-				if (this->dViewType == XZ)
-					v2[1] = 0;
-				if (this->dViewType == YZ)
-					v2[0] = 0;
-				*/
-				v2[this->dViewType] = 0;
-
-				// this is so we don't drag faces when faces were previously dragged
-				g_qeglobals.d_nNumMovePoints = 0;
-				
-				MoveSelection(v2);
-
-				// update g_v3RotateOrigin to selection
-				Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
-			}
-// <---sikk
-			else
-			{
-				Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
-
-				// update g_v3RotateOrigin to selection
-				Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
-			}
-			return;
-		}
-
-		// Ctrl+MMB = move camera
-		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
-		{	
+	// Ctrl+MMB = move camera
+	if (buttonstate == (MK_CONTROL | MK_MBUTTON))
+	{	
 //			g_qeglobals.d_vCamera.origin[0] = point[0];
 //			g_qeglobals.d_vCamera.origin[1] = point[1];
-			CopyVector(point, g_qeglobals.d_vCamera.origin);
+		CopyVector(point, g_qeglobals.d_vCamera.origin);
 
-			Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
-		}
+		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+	}
 
-		// MMB = angle camera
-		if (buttonstate == MK_MBUTTON)
-		{	
+	// MMB = angle camera
+	if (buttonstate == MK_MBUTTON)
+	{	
 // sikk---> Free Rotate: Pivot Icon
-			if (GetKeyState(VK_MENU) < 0)
-			{
-				SnapToPoint( x, y, point);
-				CopyVector(point, g_v3RotateOrigin);
-				Sys_UpdateWindows(W_XY);
-				return;
-			}
-// <---sikk
-			else
-			{
-				point = point - g_qeglobals.d_vCamera.origin;
-
-				n1 = (this->dViewType == XY) ? 1 : 2;
-				n2 = (this->dViewType == YZ) ? 1 : 0;
-				nAngle = (this->dViewType == XY) ? YAW : PITCH;
-
-				if (point[n1] || point[n2])
-				{
-					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					g_qeglobals.d_vCamera.BoundAngles();
-					Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
-				}
-			}
-		}
-
-		// Shift+MMB = move z checker
-		if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+		if (GetKeyState(VK_MENU) < 0)
 		{
 			SnapToPoint( x, y, point);
-			CopyVector(point, g_qeglobals.d_vZ.origin);
-			Sys_UpdateWindows(W_XY | W_Z);
+			CopyVector(point, g_v3RotateOrigin);
+			Sys_UpdateWindows(W_XY);
 			return;
 		}
-
-// sikk - Undo/Redo for Free Rotate & Free Scale
-		if (buttonstate & MK_RBUTTON)
+// <---sikk
+		else
 		{
-			if (GetKeyState(VK_SHIFT) < 0)
+			point = point - g_qeglobals.d_vCamera.origin;
+
+			n1 = (this->dViewType == XY) ? 1 : 2;
+			n2 = (this->dViewType == YZ) ? 1 : 0;
+			nAngle = (this->dViewType == XY) ? YAW : PITCH;
+
+			if (point[n1] || point[n2])
 			{
-				Undo::Start("Free Scale");
-				Undo::AddBrushList(&g_brSelectedBrushes);
-			}	
-			if (GetKeyState(VK_MENU) < 0)
-			{
-				Undo::Start("Free Rotate");
-				Undo::AddBrushList(&g_brSelectedBrushes);
+				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+				g_qeglobals.d_vCamera.BoundAngles();
+				Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 			}
 		}
-// <---sikk
 	}
+
+	// Shift+MMB = move z checker
+	if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+	{
+		SnapToPoint( x, y, point);
+		CopyVector(point, g_qeglobals.d_vZ.origin);
+		Sys_UpdateWindows(W_XY | W_Z);
+		return;
+	}
+
+// sikk - Undo/Redo for Free Rotate & Free Scale
+	if (buttonstate & MK_RBUTTON)
+	{
+		if (GetKeyState(VK_SHIFT) < 0)
+		{
+			Undo::Start("Free Scale");
+			Undo::AddBrushList(&g_brSelectedBrushes);
+		}	
+		if (GetKeyState(VK_MENU) < 0)
+		{
+			Undo::Start("Free Rotate");
+			Undo::AddBrushList(&g_brSelectedBrushes);
+		}
+	}
+// <---sikk
 }
 
 /*
@@ -472,23 +458,10 @@ XYZView::MouseUp
 */
 void XYZView::MouseUp (int x, int y, int buttons)
 {
-	// clipper
-	if (g_qeglobals.d_bClipMode)
-	{
-		// lunaran - alt quick clip
-		if (GetKeyState(VK_MENU) < 0)
-			Clip_EndQuickClip();
-		else
-			Clip_EndPoint();
-		Sys_UpdateWindows(W_ALL);
-	}
-	else
-	{
-		Drag_MouseUp();
+	Drag_MouseUp();
 
-		if (!press_selection)
-			Sys_UpdateWindows(W_ALL);
-	}
+	if (!press_selection)
+		Sys_UpdateWindows(W_SCENE);
 
 // sikk--->	Free Rotate & Free Scaling
 	if (g_bRotateCheck || g_bScaleCheck)
@@ -540,266 +513,257 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		Sys_Status(xystring, 0);
 	}
 
-	// clipper
-	if ((!buttonstate || buttonstate & MK_LBUTTON) && g_qeglobals.d_bClipMode)
+	if (!buttonstate)
+		return;
+
+	// LMB without selection = drag new brush
+	if (buttonstate == MK_LBUTTON && !press_selection)
 	{
-		Clip_MovePoint(this, x, y);
-		Sys_UpdateWindows(W_ALL);
+		DragNewBrush(x, y);
+
+		// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
+		Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		return;
 	}
-	else
+
+	// LMB (possibly with control and or shift)
+	// with selection = drag selection
+	if (buttonstate & MK_LBUTTON)
 	{
-		if (!buttonstate)
-			return;
-
-		// LMB without selection = drag new brush
-		if (buttonstate == MK_LBUTTON && !press_selection)
-		{
-			DragNewBrush(x, y);
-
-			// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
-			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
-			return;
-		}
-
-		// LMB (possibly with control and or shift)
-		// with selection = drag selection
-		if (buttonstate & MK_LBUTTON)
-		{
-			Drag_MouseMoved(x, y, buttons);
+		Drag_MouseMoved(x, y, buttons);
 		
-			// update g_v3RotateOrigin to new brush
-			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		// update g_v3RotateOrigin to new brush
+		Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 
-			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-			return;
-		}
+		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+		return;
+	}
 
-		// Ctrl+MMB = move camera
-		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
-		{
-			SnapToPoint( x, y, point);
-			CopyVector(point, g_qeglobals.d_vCamera.origin);
+	// Ctrl+MMB = move camera
+	if (buttonstate == (MK_CONTROL | MK_MBUTTON))
+	{
+		SnapToPoint( x, y, point);
+		CopyVector(point, g_qeglobals.d_vCamera.origin);
 
-			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-			return;
-		}
+		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+		return;
+	}
 
-		// Shift+MMB = move z checker
-		if (buttonstate == (MK_SHIFT | MK_MBUTTON))
-		{
-			SnapToPoint( x, y, point);
+	// Shift+MMB = move z checker
+	if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+	{
+		SnapToPoint( x, y, point);
 
-			CopyVector(point, g_qeglobals.d_vZ.origin);
+		CopyVector(point, g_qeglobals.d_vZ.origin);
 /*			if (this->dViewType == XY)
-			{
-				g_qeglobals.d_vZ.origin[0] = point[0];
-				g_qeglobals.d_vZ.origin[1] = point[1];
-			}
-			else if (this->dViewType == YZ)
-			{
-				g_qeglobals.d_vZ.origin[0] = point[1];
-				g_qeglobals.d_vZ.origin[1] = point[2];
-			}
-			else
-			{
-				g_qeglobals.d_vZ.origin[0] = point[0];
-				g_qeglobals.d_vZ.origin[1] = point[2];
-			}*/
-			Sys_UpdateWindows(W_XY | W_Z);
-			return;
-		}
-
-		// MMB = angle camera
-		if (buttonstate == MK_MBUTTON)
 		{
+			g_qeglobals.d_vZ.origin[0] = point[0];
+			g_qeglobals.d_vZ.origin[1] = point[1];
+		}
+		else if (this->dViewType == YZ)
+		{
+			g_qeglobals.d_vZ.origin[0] = point[1];
+			g_qeglobals.d_vZ.origin[1] = point[2];
+		}
+		else
+		{
+			g_qeglobals.d_vZ.origin[0] = point[0];
+			g_qeglobals.d_vZ.origin[1] = point[2];
+		}*/
+		Sys_UpdateWindows(W_XY | W_Z);
+		return;
+	}
+
+	// MMB = angle camera
+	if (buttonstate == MK_MBUTTON)
+	{
 // sikk---> Free Rotate: Pivot Icon
-			// Alt+MMB = move free rotate pivot icon
-			if (GetKeyState(VK_MENU) < 0)
+		// Alt+MMB = move free rotate pivot icon
+		if (GetKeyState(VK_MENU) < 0)
+		{
+			SnapToPoint( x, y, point);
+			CopyVector(point, g_v3RotateOrigin);
+			/*
+			if (this->dViewType == XY)
 			{
-				SnapToPoint( x, y, point);
-				CopyVector(point, g_v3RotateOrigin);
-				/*
-				if (this->dViewType == XY)
-				{
-					g_v3RotateOrigin[0] = point[0];
-					g_v3RotateOrigin[1] = point[1];
-				}
-				else if (this->dViewType == XZ)
-				{
-					g_v3RotateOrigin[0] = point[0];
-					g_v3RotateOrigin[2] = point[2];
-				}
-				else
-				{
-					g_v3RotateOrigin[1] = point[1];
-					g_v3RotateOrigin[2] = point[2];
-				}*/
-				Sys_UpdateWindows(W_XY);
-				return;
+				g_v3RotateOrigin[0] = point[0];
+				g_v3RotateOrigin[1] = point[1];
 			}
-// <---sikk
+			else if (this->dViewType == XZ)
+			{
+				g_v3RotateOrigin[0] = point[0];
+				g_v3RotateOrigin[2] = point[2];
+			}
 			else
 			{
-				SnapToPoint( x, y, point);
-				point = point - g_qeglobals.d_vCamera.origin;
-
-				n1 = (this->dViewType == XY) ? 1 : 2;
-				n2 = (this->dViewType == YZ) ? 1 : 0;
-				nAngle = (this->dViewType == XY) ? YAW : PITCH;
-
-				if (point[n1] || point[n2])
-				{
-					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					g_qeglobals.d_vCamera.BoundAngles();
-					Sys_UpdateWindows(W_XY | W_CAMERA);
-				}
-			}
+				g_v3RotateOrigin[1] = point[1];
+				g_v3RotateOrigin[2] = point[2];
+			}*/
+			Sys_UpdateWindows(W_XY);
 			return;
 		}
-
-		// RMB = drag xy origin
-		if (buttonstate == MK_RBUTTON)
+// <---sikk
+		else
 		{
-			SetCursor(NULL); // sikk - Remove Cursor
-			Sys_GetCursorPos(&x, &y);
+			SnapToPoint( x, y, point);
+			point = point - g_qeglobals.d_vCamera.origin;
+
+			n1 = (this->dViewType == XY) ? 1 : 2;
+			n2 = (this->dViewType == YZ) ? 1 : 0;
+			nAngle = (this->dViewType == XY) ? YAW : PITCH;
+
+			if (point[n1] || point[n2])
+			{
+				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+				g_qeglobals.d_vCamera.BoundAngles();
+				Sys_UpdateWindows(W_XY | W_CAMERA);
+			}
+		}
+		return;
+	}
+
+	// RMB = drag xy origin
+	if (buttonstate == MK_RBUTTON)
+	{
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&x, &y);
 
 // sikk---> Free Rotate
-			// Alt+RMB = free rotate selected brush
-			if (GetKeyState(VK_MENU) < 0)
-			{
-				g_bRotateCheck = true;
-
-				if (!g_qeglobals.d_savedinfo.bNoClamp)
-				{
-					g_qeglobals.d_savedinfo.bNoClamp = true;
-					g_bSnapCheck = true;
-				}
-				
-				switch (this->dViewType)
-				{
-				case XY:
-					x -= cursorX;
-					nRotate += x;
-					Select_RotateAxis(2, x, true);
-					break;
-				case XZ:
-					x = cursorX - x;
-					nRotate += -x;
-					Select_RotateAxis(1, x, true);
-					break;
-				case YZ:
-					x -= cursorX;
-					nRotate += x;
-					Select_RotateAxis(0, x, true);
-					break;
-				}
-
-				if (nRotate >= 360)
-					nRotate -= 360;
-				if (nRotate < -360)
-					nRotate += 360;
-
-				Sys_SetCursorPos(cursorX, cursorY);
-
-				// sikk - this ensures that the windows are updated in realtime
-				Sys_ForceUpdateWindows(W_SCENE);
-
-				sprintf(szRotate, "Rotate: %d°", nRotate);
-				Sys_Status(szRotate, 0);
-			}
-// <---sikk
-			else
-			{
-				if (x != cursorX || y != cursorY)
-				{
-					nDim1 = (dViewType == YZ) ? 1 : 0;
-					nDim2 = (dViewType == XY) ? 1 : 2;
-
-					origin[nDim1] -= (x - cursorX) / scale;
-					origin[nDim2] += (y - cursorY) / scale;
-
-					Sys_SetCursorPos(cursorX, cursorY);
-					Sys_UpdateWindows(W_XY| W_Z);
-
-					sprintf(xystring, "this Origin: (%d %d %d)", (int)this->origin[0], (int)this->origin[1], (int)this->origin[2]);
-					Sys_Status(xystring, 0);
-				}
-			}
-			return;
-		}
-		
-// sikk---> Free Scaling
-		// Shift+RMB = free scale selected brush
-		if (buttonstate == (MK_SHIFT | MK_RBUTTON))
+		// Alt+RMB = free rotate selected brush
+		if (GetKeyState(VK_MENU) < 0)
 		{
-			int i;
-
-			g_bScaleCheck = true;
+			g_bRotateCheck = true;
 
 			if (!g_qeglobals.d_savedinfo.bNoClamp)
 			{
 				g_qeglobals.d_savedinfo.bNoClamp = true;
 				g_bSnapCheck = true;
 			}
-			
-			SetCursor(NULL); // sikk - Remove Cursor
-			Sys_GetCursorPos(&x, &y);
-
-			i = cursorY - y;
-
-			if (i < 0)
+				
+			switch (this->dViewType)
 			{
-				if (g_qeglobals.d_savedinfo.bScaleLockX)
-					Select_Scale(0.9f, 1.0f, 1.0f);
-				if (g_qeglobals.d_savedinfo.bScaleLockY)
-					Select_Scale(1.0f, 0.9f, 1.0f);
-				if (g_qeglobals.d_savedinfo.bScaleLockZ)
-					Select_Scale(1.0f, 1.0f, 0.9f);
+			case XY:
+				x -= cursorX;
+				nRotate += x;
+				Select_RotateAxis(2, x, true);
+				break;
+			case XZ:
+				x = cursorX - x;
+				nRotate += -x;
+				Select_RotateAxis(1, x, true);
+				break;
+			case YZ:
+				x -= cursorX;
+				nRotate += x;
+				Select_RotateAxis(0, x, true);
+				break;
 			}
-			if (i > 0)
-			{
-				if (g_qeglobals.d_savedinfo.bScaleLockX)
-					Select_Scale(1.1f, 1.0f, 1.0f);
-				if (g_qeglobals.d_savedinfo.bScaleLockY)
-					Select_Scale(1.0f, 1.1f, 1.0f);
-				if (g_qeglobals.d_savedinfo.bScaleLockZ)
-					Select_Scale(1.0f, 1.0f, 1.1f);
-			}
-			
+
+			if (nRotate >= 360)
+				nRotate -= 360;
+			if (nRotate < -360)
+				nRotate += 360;
+
 			Sys_SetCursorPos(cursorX, cursorY);
-//			cursorY = y;
 
 			// sikk - this ensures that the windows are updated in realtime
 			Sys_ForceUpdateWindows(W_SCENE);
 
-			return;
+			sprintf(szRotate, "Rotate: %d°", nRotate);
+			Sys_Status(szRotate, 0);
 		}
+// <---sikk
+		else
+		{
+			if (x != cursorX || y != cursorY)
+			{
+				nDim1 = (dViewType == YZ) ? 1 : 0;
+				nDim2 = (dViewType == XY) ? 1 : 2;
+
+				origin[nDim1] -= (x - cursorX) / scale;
+				origin[nDim2] += (y - cursorY) / scale;
+
+				Sys_SetCursorPos(cursorX, cursorY);
+				Sys_UpdateWindows(W_XY| W_Z);
+
+				sprintf(xystring, "this Origin: (%d %d %d)", (int)this->origin[0], (int)this->origin[1], (int)this->origin[2]);
+				Sys_Status(xystring, 0);
+			}
+		}
+		return;
+	}
+		
+// sikk---> Free Scaling
+	// Shift+RMB = free scale selected brush
+	if (buttonstate == (MK_SHIFT | MK_RBUTTON))
+	{
+		int i;
+
+		g_bScaleCheck = true;
+
+		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		{
+			g_qeglobals.d_savedinfo.bNoClamp = true;
+			g_bSnapCheck = true;
+		}
+			
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&x, &y);
+
+		i = cursorY - y;
+
+		if (i < 0)
+		{
+			if (g_qeglobals.d_savedinfo.bScaleLockX)
+				Select_Scale(0.9f, 1.0f, 1.0f);
+			if (g_qeglobals.d_savedinfo.bScaleLockY)
+				Select_Scale(1.0f, 0.9f, 1.0f);
+			if (g_qeglobals.d_savedinfo.bScaleLockZ)
+				Select_Scale(1.0f, 1.0f, 0.9f);
+		}
+		if (i > 0)
+		{
+			if (g_qeglobals.d_savedinfo.bScaleLockX)
+				Select_Scale(1.1f, 1.0f, 1.0f);
+			if (g_qeglobals.d_savedinfo.bScaleLockY)
+				Select_Scale(1.0f, 1.1f, 1.0f);
+			if (g_qeglobals.d_savedinfo.bScaleLockZ)
+				Select_Scale(1.0f, 1.0f, 1.1f);
+		}
+			
+		Sys_SetCursorPos(cursorX, cursorY);
+//			cursorY = y;
+
+		// sikk - this ensures that the windows are updated in realtime
+		Sys_ForceUpdateWindows(W_SCENE);
+
+		return;
+	}
 // <---sikk
 
 // sikk---> Mouse Zoom
-		// Ctrl+RMB = zoom xy view
-		if (buttonstate == (MK_CONTROL | MK_RBUTTON))
-		{
-			SetCursor(NULL); // sikk - Remove Cursor
-			Sys_GetCursorPos(&x, &y);
+	// Ctrl+RMB = zoom xy view
+	if (buttonstate == (MK_CONTROL | MK_RBUTTON))
+	{
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&x, &y);
 			
-			if (y != cursorY)
-			{
-				if (y > cursorY)
-					scale *= powf(1.01f, fabs(y - cursorY));
-				else
-					scale *= powf(0.99f, fabs(y - cursorY));
+		if (y != cursorY)
+		{
+			if (y > cursorY)
+				scale *= powf(1.01f, fabs(y - cursorY));
+			else
+				scale *= powf(0.99f, fabs(y - cursorY));
 
-				scale = max(0.05f, min(scale, 32.0f));
+			scale = max(0.05f, min(scale, 32.0f));
 
 
-				Sys_SetCursorPos(cursorX, cursorY);
-				Sys_UpdateWindows(W_XY);
-			}
-			return;
+			Sys_SetCursorPos(cursorX, cursorY);
+			Sys_UpdateWindows(W_XY);
 		}
-// <---sikk
+		return;
 	}
+// <---sikk
 }
 
 
@@ -1770,8 +1734,7 @@ void XYZView::Draw ()
 		         -g_qeglobals.d_v3SelectTranslate[1], 
 				 -g_qeglobals.d_v3SelectTranslate[2]);
 
-	// clipper
-	Clip_Draw();
+	DrawTools();
 
 	if (!(dViewType == XY))
 		glPopMatrix();

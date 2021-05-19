@@ -126,3 +126,9 @@ void View::DrawPathLines()
 		}
 	}
 }
+
+void View::DrawTools()
+{
+	for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
+		(*tIt)->Draw();
+}

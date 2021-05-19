@@ -24,6 +24,7 @@ public:
 	virtual void Draw();
 
 	void	DrawPathLines();
+	void	DrawTools();
 
 	int	cursorX, cursorY;
 private:
