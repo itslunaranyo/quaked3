@@ -48,6 +48,7 @@ public:
 	void	RegionApply();
 
 	bool	IsBrushFiltered(Brush *b);
+	void	Read(const char* data, Brush& blist, Entity& elist);
 private:
 	void	RegionAdd();
 	void	RegionRemove();
@@ -58,7 +59,6 @@ private:
 
 	bool	ParseBufferMerge(const char *data);
 	bool	ParseBufferReplace(const char *data);
-	void	Read(const char* data, Brush& blist, Entity& elist);
 	void	WriteSelected(std::ostream &out);
 	void	WriteAll(std::ostream &out, bool use_region);
 

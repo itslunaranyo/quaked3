@@ -6,6 +6,8 @@
 
 CmdDelete::CmdDelete(Brush* brList)
 {
+	selectOnUndo = true;
+
 	Delete(brList);
 	state = LIVE;
 }

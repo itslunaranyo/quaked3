@@ -147,7 +147,7 @@ void Clip_Clip ()
 		return;
 
 	g_cmdQueue.Complete(g_pcmdBC);
-	g_pcmdBC->Select();
+	//g_pcmdBC->Select();
 	g_pcmdBC = nullptr;
 	Clip_ResetMode();
 
@@ -166,7 +166,7 @@ void Clip_Split ()
 
 	g_pcmdBC->SetSide(CmdBrushClip::clipside::CLIP_BOTH);
 	g_cmdQueue.Complete(g_pcmdBC);
-	g_pcmdBC->Select();
+	//g_pcmdBC->Select();
 	g_pcmdBC = nullptr;
 	Clip_ResetMode();
 	Sys_UpdateWindows(W_SCENE);

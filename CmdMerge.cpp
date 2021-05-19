@@ -4,6 +4,12 @@
 
 #include "qe3.h"
 
+CmdMerge::CmdMerge() : convex(false)
+{
+	selectOnDo = true;
+	selectOnUndo = true;
+}
+
 void CmdMerge::UseBrush(Brush *br)
 {
 	assert(br);

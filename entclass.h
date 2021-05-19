@@ -6,8 +6,6 @@
 
 #define	MAX_FLAGS	8
 
-#include <vector>
-
 class EntClass
 {
 public:

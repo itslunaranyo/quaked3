@@ -730,6 +730,10 @@ void Entity::SetOriginFromMember()
 {
 	if (IsBrush()) return;
 
+	origin[0] = floorf(origin[0] + 0.5f);
+	origin[1] = floorf(origin[1] + 0.5f);
+	origin[2] = floorf(origin[2] + 0.5f);
+
 	SetKeyValueIVector("origin", origin);
 	MakeBrush();
 }
@@ -757,6 +761,12 @@ void Entity::SetOriginFromBrush()
 void Entity::Move(const vec3 trans)
 {
 	origin = trans + origin;
+	SetOriginFromMember();
+}
+
+void Entity::Transform(glm::mat4 mat)
+{
+	origin = mat * glm::vec4(origin, 1);
 	SetOriginFromMember();
 }
 
@@ -847,9 +857,9 @@ bool Entity::Create (EntClass *ecIn)
 		{
 			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);
 			cmd->AddBrushes(&g_brSelectedBrushes);
+			//Select_DeselectAll(true);
 			g_cmdQueue.Complete(cmd);
-			Select_DeselectAll(true);
-			cmd->Select();
+			//cmd->Select();
 		}
 		catch (...)
 		{
@@ -879,10 +889,9 @@ bool Entity::Create (EntClass *ecIn)
 	{
 		// TODO: pass the location of the right-click via an appropriate method
 		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.basis.mins);
-
+		//Select_DeselectAll(true);
 		g_cmdQueue.Complete(cmd);
-		Select_DeselectAll(true);
-		cmd->Select();
+		//cmd->Select();
 		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
 	}
 

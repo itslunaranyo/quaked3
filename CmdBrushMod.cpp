@@ -55,6 +55,39 @@ void CmdBrushMod::ModifyBrushes(Brush *brList)
 		ModifyBrush(b);
 }
 
+void CmdBrushMod::RestoreBrush(Brush *br)
+{
+	assert(state == LIVE || state == NOOP);
+
+	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	{
+		if (brbIt->br == br)
+		{
+			br->basis.clear();	// delete modified geometry
+			br->basis = brbIt->br_basis.clone();	// recopy backup geometry
+			break;
+		}
+	}
+}
+
+void CmdBrushMod::RestoreBrushes(Brush *brList)
+{
+	for (Brush* b = brList->next; b != brList; b = brList->next)
+		RestoreBrush(b);
+}
+
+void CmdBrushMod::RestoreAll()
+{
+	assert(state == LIVE || state == NOOP);
+
+	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	{
+		brbIt->br->basis.clear();	// delete modified geometry
+		brbIt->br->basis = brbIt->br_basis.clone();	// recopy backup geometry
+	}
+	state = NOOP;
+}
+
 // only call if the brush hasn't been changed after all and you don't need the backup
 void CmdBrushMod::UnmodifyBrush(Brush *br)
 {
@@ -79,6 +112,16 @@ void CmdBrushMod::UnmodifyBrushes(Brush *brList)
 		UnmodifyBrush(b);
 }
 
+void CmdBrushMod::UnmodifyAll()
+{
+	assert(state == LIVE || state == NOOP);
+
+	// deletes entry as well as the cloned geometry in the basis
+	brbasisCache.clear();
+
+	state = NOOP;
+}
+
 // call if you screwed up a brush and you want things to go back to the way they were
 void CmdBrushMod::RevertBrush(Brush *br)
 {
@@ -101,6 +144,18 @@ void CmdBrushMod::RevertBrushes(Brush *brList)
 {
 	for (Brush* b = brList->next; b != brList; b = brList->next)
 		RevertBrush(b);
+}
+
+void CmdBrushMod::RevertAll()
+{
+	assert(state == LIVE || state == NOOP);
+
+	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+		brbIt->swap();	// switch old geometry back into the scene first
+
+	brbasisCache.clear();
+
+	state = NOOP;
 }
 
 //==============================

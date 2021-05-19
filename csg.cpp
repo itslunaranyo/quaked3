@@ -633,7 +633,7 @@ void CSG::Hollow()
 	CmdHollow *cmdH = new CmdHollow();
 	cmdH->UseBrushes(&g_brSelectedBrushes);
 	g_cmdQueue.Complete(cmdH);
-	cmdH->Select();
+	//cmdH->Select();
 
 	Sys_UpdateWindows(W_SCENE);
 }
@@ -653,7 +653,7 @@ void CSG::Merge ()
 	CmdMerge *cmdM = new CmdMerge();
 	cmdM->UseBrushes(&g_brSelectedBrushes);
 	g_cmdQueue.Complete(cmdM);
-	cmdM->Select();
+	//cmdM->Select();
 
 	Sys_Printf("MSG: Merge done.\n");
 	Sys_UpdateWindows(W_SCENE);

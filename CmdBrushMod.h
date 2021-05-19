@@ -5,8 +5,6 @@
 #ifndef __COMMAND_BRUSHMOD_H__
 #define __COMMAND_BRUSHMOD_H__
 
-#include <vector>
-
 class CmdBrushMod : public Command
 {
 public:
@@ -19,21 +17,28 @@ public:
 		void swap();
 	} brbasis_pair_t;
 
-	std::vector<brbasis_pair_t> brbasisCache;
-
 	// clone off the geometry of these brushes and keep it
 	void ModifyBrush(Brush* br);
 	void ModifyBrushes(Brush* brList);
 
-	// throw away cloned geometry from these brushes and stop tracking
+	// restore cloned geometry from these brushes
+	void RestoreBrush(Brush* br);
+	void RestoreBrushes(Brush* brList);
+	void RestoreAll();
+
+	// throw away cloned geometry from these brushes and stop tracking - does NOT restore
 	void UnmodifyBrush(Brush* br);
 	void UnmodifyBrushes(Brush* brList);
+	void UnmodifyAll();
 
 	// restore cloned geometry from these brushes and stop tracking
 	void RevertBrush(Brush* br);
 	void RevertBrushes(Brush* brList);
+	void RevertAll();
 
 private:
+	std::vector<brbasis_pair_t> brbasisCache;
+
 	void Swap();
 
 	void Do_Impl();

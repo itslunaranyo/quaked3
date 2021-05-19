@@ -6,12 +6,12 @@
 
 const vec3 g_v3BaseAxis[18] =
 {
-	{ 0, 0, 1}, {1, 0, 0}, {0,-1, 0},	// floor
-	{ 0, 0,-1}, {1, 0, 0}, {0,-1, 0},	// ceiling
-	{ 1, 0, 0}, {0, 1, 0}, {0, 0,-1},	// west wall
-	{-1, 0, 0}, {0, 1, 0}, {0, 0,-1},	// east wall
-	{ 0, 1, 0}, {1, 0, 0}, {0, 0,-1},	// south wall
-	{ 0,-1, 0}, {1, 0, 0}, {0, 0,-1}	// north wall
+	vec3( 0, 0, 1), vec3(1, 0, 0), vec3(0,-1, 0),	// floor
+	vec3( 0, 0,-1), vec3(1, 0, 0), vec3(0,-1, 0),	// ceiling
+	vec3( 1, 0, 0), vec3(0, 1, 0), vec3(0, 0,-1),	// west wall
+	vec3(-1, 0, 0), vec3(0, 1, 0), vec3(0, 0,-1),	// east wall
+	vec3( 0, 1, 0), vec3(1, 0, 0), vec3(0, 0,-1),	// south wall
+	vec3( 0,-1, 0), vec3(1, 0, 0), vec3(0, 0,-1)	// north wall
 };
 
 const float g_fLightAxis[3] = {0.8f, 0.9f, 1.0f};	// lunaran: lightened a bit
@@ -42,17 +42,11 @@ bool Plane::EqualTo(Plane *b, int flip)
 	if (flip)
 	{
 		tnormal = -b->normal;
-//		tnormal[0] = -b->normal[0];
-//		tnormal[1] = -b->normal[1];
-//		tnormal[2] = -b->normal[2];
 		tdist = -b->dist;
 	}
 	else
 	{
 		tnormal = b->normal;
-//		tnormal[0] = b->normal[0];
-//		tnormal[1] = b->normal[1];
-//		tnormal[2] = b->normal[2];
 		tdist = b->dist;
 	}
 

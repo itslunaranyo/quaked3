@@ -5,6 +5,12 @@
 #include "qe3.h"
 
 
+CmdHollow::CmdHollow()
+{
+	selectOnDo = true;
+	selectOnUndo = true;
+}
+
 void CmdHollow::UseBrush(Brush *br)
 {
 	assert(br);

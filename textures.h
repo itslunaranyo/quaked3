@@ -93,7 +93,6 @@ typedef struct texdef_s
 
 //========================================================================
 
-#include <vector>
 #include <map>
 
 namespace Textures

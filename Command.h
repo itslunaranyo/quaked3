@@ -27,6 +27,8 @@ public:
 	void Select();
 
 protected:
+	bool selectOnDo;
+	bool selectOnUndo;
 	virtual void Do_Impl() { return; }
 	virtual void Undo_Impl() { return; }
 	virtual void Redo_Impl() { return; }

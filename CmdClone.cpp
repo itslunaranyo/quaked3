@@ -6,6 +6,7 @@
 
 CmdClone::CmdClone(Brush *brList, const vec3 offset)
 {
+	selectOnDo = true;
 	Clone(brList, offset);
 	state = LIVE;
 }

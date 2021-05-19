@@ -6,6 +6,8 @@
 
 CmdBrushClip::CmdBrushClip() : side(CLIP_FRONT), pointsSet(false)
 {
+	selectOnDo = true;
+	selectOnUndo = true;
 }
 
 CmdBrushClip::~CmdBrushClip()

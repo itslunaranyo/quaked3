@@ -71,12 +71,6 @@ void CmdAddRemove::AddedBrush(Brush *br)
 	state = LIVE;
 }
 
-void CmdAddRemove::AddedBrushes(Brush *brList)
-{
-	for (Brush *br = brList->next; br != brList; br = br->next)
-		AddedBrush(br);
-}
-
 void CmdAddRemove::AddedBrushes(std::vector<Brush*>& brList)
 {
 	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
@@ -102,6 +96,14 @@ void CmdAddRemove::AddedEntity(Entity *ent)
 	state = LIVE;
 }
 
+void CmdAddRemove::AddedEntities(std::vector<Entity*>& entList)
+{
+	for (auto eIt = entList.begin(); eIt != entList.end(); ++eIt)
+		AddedEntity(*eIt);
+}
+
+// ========================================================================
+
 void CmdAddRemove::Do_Impl()
 {
 	Sequester(brRemoved);
@@ -123,7 +125,6 @@ void CmdAddRemove::Do_Impl()
 	Restore(brAdded);
 }
 
-// ========================================================================
 
 void CmdAddRemove::Sequester(std::vector<Brush*>& brList)
 {

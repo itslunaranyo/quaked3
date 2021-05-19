@@ -8,7 +8,7 @@
 class CmdMerge : public Command
 {
 public:
-	CmdMerge() : convex(false) {};
+	CmdMerge();
 	~CmdMerge() {};
 
 	void UseBrush(Brush* br);

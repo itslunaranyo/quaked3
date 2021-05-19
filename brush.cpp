@@ -47,6 +47,7 @@ Brush::brbasis_s Brush::brbasis_s::clone() const
 	Brush::brbasis_s out;
 	Face	*f, *nf;
 
+	assert(!out.faces);
 	out.mins = mins;
 	out.maxs = maxs;
 	for (f = faces; f; f = f->fnext)
@@ -413,6 +414,22 @@ void Brush::Move(const vec3 move)
 		// lunaran TODO: update only once at the end of a drag or the window flickers too much
 		//EntWnd_UpdateUI();
 	}
+}
+
+void Brush::Transform(const glm::mat4 mat, bool textureLock)
+{
+	int i;
+	Face *f;
+	for (f = basis.faces; f; f = f->fnext)
+	{
+		//if (owner->IsBrush() && textureLock)
+		//	f->MoveTexture(move);
+
+		for (i = 0; i < 3; i++)
+			f->planepts[i] = mat * glm::vec4(f->planepts[i], 1);
+	}
+
+	Build();
 }
 
 /*

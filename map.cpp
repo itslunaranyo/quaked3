@@ -7,9 +7,8 @@
 #include <sstream>
 #include <string>
 
-Map	g_map;
-
-Brush	   *g_pbrRegionSides[4];
+Map		g_map;
+Brush	*g_pbrRegionSides[4];
 
 Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr), regionMins(-99999), regionMaxs(99999)
 {
@@ -387,6 +386,17 @@ void Map::ImportFromFile(const char *filename)
 
 	Sys_BeginWait();
 
+	InspWnd_SetMode(W_CONSOLE);
+
+	QE_ConvertDOSToUnixName(temp, filename);
+	Sys_Printf("CMD: Map::ImportFromFile: %s\n", temp);
+
+	CmdImportMap* cmdIM = new CmdImportMap();
+	cmdIM->File(filename);
+	g_cmdQueue.Complete(cmdIM);
+	//cmdIM->Select();
+
+	/*
 	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
 	if (!g_qeglobals.d_savedinfo.bNoClamp)
 	{
@@ -394,12 +404,6 @@ void Map::ImportFromFile(const char *filename)
 		bSnapCheck = true;
 	}
 	// <---sikk
-
-	InspWnd_SetMode(W_CONSOLE);
-
-	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: Map::ImportFromFile: %s\n", temp);
-
 	g_qeglobals.d_nParsedBrushes = 0;
 
 	qeBuffer buf;
@@ -413,7 +417,7 @@ void Map::ImportFromFile(const char *filename)
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
 		g_qeglobals.d_savedinfo.bNoClamp = false;
-
+	*/
 	Sys_EndWait();
 	Sys_UpdateWindows(W_ALL);
 }
@@ -562,13 +566,18 @@ merge the contents of the windows clipboard into the current map data
 */
 void Map::Paste()
 {
-	HGLOBAL hglb;
-	char*	cbdata;
+	Sys_BeginWait();
 
+	CmdPaste *cmdP = new CmdPaste();
+	g_cmdQueue.Complete(cmdP);
+
+	/*
 	if (!IsClipboardFormatAvailable(CF_TEXT)) return;
 	if (!OpenClipboard(g_qeglobals.d_hwndMain)) return;
 
-	Sys_BeginWait();
+	HGLOBAL hglb;
+	char*	cbdata;
+
 	hglb = GetClipboardData(CF_TEXT);
 	if (hglb != nullptr)
 	{
@@ -602,6 +611,7 @@ void Map::Paste()
 		GlobalUnlock(hglb);
 	}
 	CloseClipboard();
+	*/
 	Sys_EndWait();
 }
 
@@ -618,6 +628,7 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 {
 	int numEntities;
 	Entity* ent;
+	Brush* next;
 	StartTokenParsing(data);
 	bool foundWorld = false;
 
@@ -636,24 +647,27 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 			foundWorld = true;
 
 			// add the worldspawn to the beginning of the entity list so it's easy to find
-			ent->prev = &elist;
-			ent->next = elist.next;
-			elist.next->prev = ent;
-			elist.next = ent;
+			ent->AddToList(&elist, false);
+		//	ent->prev = &elist;
+		//	ent->next = elist.next;
+		//	elist.next->prev = ent;
+		//	elist.next = ent;
 		}
 		else
 		{
 			// add the entity to the end of the entity list
-			ent->next = &elist;
-			ent->prev = elist.prev;
-			elist.prev->next = ent;
-			elist.prev = ent;
+			ent->AddToList(&elist, true);
+		//	ent->next = &elist;
+		//	ent->prev = elist.prev;
+		//	elist.prev->next = ent;
+		//	elist.prev = ent;
 			numEntities++;
 		}
 
 		// add all the brushes to the brush list
-		for (Brush* b = ent->brushes.onext; b != &ent->brushes; b = b->onext)
+		for (Brush* b = ent->brushes.onext; b != &ent->brushes; b = next)
 		{
+			next = b->onext;
 			b->next = blist.next;
 			blist.next->prev = b;
 			b->prev = &blist;

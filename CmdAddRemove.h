@@ -5,7 +5,6 @@
 #ifndef __COMMAND_ADDREMOVE_H__
 #define __COMMAND_ADDREMOVE_H__
 
-#include <vector>
 
 class CmdAddRemove : public Command
 {
@@ -18,11 +17,15 @@ public:
 	void RemovedBrushes(std::vector<Brush*> &brList);
 
 	void AddedBrush(Brush* br);			// mark brush as contributed to the scene
-	void AddedBrushes(Brush* brList);	// mark brushes as contributed to the scene
 	void AddedBrushes(std::vector<Brush*> &brList);
+	//void AddedBrushes(Brush* brList);	// a brush list cannot be added because brushes in the limbo 
+										// not-added state are assumed not to be in a list
 
 	void RemovedEntity(Entity* ent);	// mark entity as sequestered from the scene
+
 	void AddedEntity(Entity* ent);		// mark entity as contributed to the scene
+	void AddedEntities(std::vector<Entity*> &entList);
+	//void AddedEntities(Entity* entList);	// same as above
 
 private:
 	void Do_Impl();

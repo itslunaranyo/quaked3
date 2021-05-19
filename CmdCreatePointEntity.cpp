@@ -10,6 +10,8 @@
 
 CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 origin) : ent(nullptr)
 {
+	selectOnDo = true;
+
 	if (!strcmp(classname, "worldspawn"))
 		Error("Cannot create a new worldspawn entity.");
 

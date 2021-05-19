@@ -56,6 +56,7 @@ public:
 	void	SetOriginFromKeyvalue();
 	void	SetOriginFromBrush();
 	void	Move(const vec3 trans);
+	void	Transform(glm::mat4 mat);
 
 	void	SetSpawnFlag(int flag, bool on);
 

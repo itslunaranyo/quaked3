@@ -48,6 +48,7 @@ public:
 	void	CopyBasis(brbasis_s &brb);
 	void	ClearFaces();
 	void	Move(const vec3 move);
+	void	Transform(const glm::mat4 mat, bool textureLock);
 
 	void	Build();
 	void	MakeFacePlanes();

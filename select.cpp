@@ -843,7 +843,8 @@ void Select_Invert()
 ===============
 Select_AllType
 ===============
-*/void Select_AllType()
+*/
+void Select_AllType()
 {
 	Brush	*b, *next, *selected;
 
@@ -1179,9 +1180,9 @@ void Select_Clone ()
 	}
 
 	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
-	g_cmdQueue.Complete(cmd);
 	Select_DeselectAll(true);
-	cmd->Select();
+	g_cmdQueue.Complete(cmd);
+	//cmd->Select();
 
 	/*
 	Entity	*e;
@@ -1320,7 +1321,7 @@ void Select_ApplyMatrix ()
 		}
 		b->Build();
 	}
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -1342,7 +1343,7 @@ void Select_FlipAxis (int axis)
 
 	g_bSelectFlipOrder = true;
 	Select_ApplyMatrix();
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 
@@ -1481,7 +1482,7 @@ void Select_RotateAxis (int axis, float deg, bool bMouse)
 		Surf_RotateForTransform(axis, deg, g_v3SelectOrigin);
 
 	Select_ApplyMatrix();
-	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 // sikk---> Brush Scaling
@@ -1524,7 +1525,7 @@ void Select_Scale (float x, float y, float z)
 		b->Build();
 	}
 
-	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
+	Sys_UpdateWindows(W_SCENE);
 }
 // <---sikk
 

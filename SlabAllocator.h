@@ -2,7 +2,6 @@
 #define __H_SLAB_ALLOCATOR
 
 #include <stack>
-#include <vector>
 
 // this is that CRTP hunk chunk slab block lump heap allocator that's good for cache coherence
 

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <cassert>	// lunaran - for my own sanity
 #include <string>
+#include <vector>
 
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "cmdlib.h"

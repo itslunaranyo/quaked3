@@ -10,9 +10,16 @@
 #include "CmdReparentBrush.h"
 #include "CmdBrushMod.h"
 
+// scene
+#include "CmdPaste.h"
+#include "CmdImportMap.h"
+
 // general edits
 #include "CmdClone.h"
 #include "CmdDelete.h"
+#include "CmdTranslate.h"
+#include "CmdRotate.h"
+#include "CmdScale.h"
 
 // entity edits
 #include "CmdCreatePointEntity.h"

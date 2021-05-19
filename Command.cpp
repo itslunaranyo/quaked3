@@ -27,7 +27,7 @@ map data agnostic, are not Commands, and cannot be undone.
 
 CommandQueue g_cmdQueue;
 
-Command::Command() : state(NOOP) {}
+Command::Command() : selectOnDo(false), selectOnUndo(false), state(NOOP) {}
 Command::~Command() {}
 
 /*
@@ -46,6 +46,8 @@ void Command::Do()
 	assert(state == LIVE);
 	Do_Impl();
 	state = DONE;
+	if (selectOnDo)
+		Select();
 }
 
 /*
@@ -66,8 +68,8 @@ void Command::Undo()
 	Undo_Impl();
 	state = UNDONE;
 
-	g_bSelectionChanged = true;
-	Sys_UpdateWindows(W_ALL);
+	if (selectOnUndo)
+		Select();
 }
 
 /*
@@ -84,8 +86,8 @@ void Command::Redo()
 	Redo_Impl();
 	state = DONE;
 
-	g_bSelectionChanged = true;
-	Sys_UpdateWindows(W_ALL);
+	if (selectOnDo)
+		Select();
 }
 
 /*
@@ -101,6 +103,7 @@ void Command::Select()
 {
 	assert(state == DONE || state == UNDONE);
 	Select_Impl();
+	g_bSelectionChanged = true;
 }
 
 
@@ -124,13 +127,20 @@ void CommandQueue::Complete(Command *cmd)
 	}
 
 	ClearAllRedos();
-	cmd->Do();
+	try {
+		cmd->Do();
+	}
+	catch (...)	{
+		delete cmd;
+		return;
+	}
 	undoQueue.push_back(cmd);
 
 	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)
 		ClearOldestUndo();
 
 	g_map.modified = true;
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -155,6 +165,7 @@ void CommandQueue::Undo()
 	// lunaran TODO: remember on what step the map was last saved, and clear the
 	//	modified flag if we undo/redo back to that exact step
 	g_map.modified = true;
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -176,6 +187,7 @@ void CommandQueue::Redo()
 	cmd->Redo();
 	undoQueue.push_back(cmd);
 	g_map.modified = true;
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -211,8 +223,8 @@ void CommandQueue::ClearAllRedos()
 	Command* cmd;
 	while (redoQueue.size())
 	{
-		cmd = redoQueue.front();
-		redoQueue.pop_front();
+		cmd = redoQueue.back();
+		redoQueue.pop_back();
 		delete cmd;
 	}
 }
@@ -224,7 +236,12 @@ CommandQueue::ClearAllUndos
 */
 void CommandQueue::ClearAllUndos()
 {
+	Command* cmd;
 	while (undoQueue.size())
-		ClearOldestUndo();
+	{
+		cmd = undoQueue.back();
+		undoQueue.pop_back();
+		delete cmd;
+	}
 }
 

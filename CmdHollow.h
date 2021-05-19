@@ -8,7 +8,7 @@
 class CmdHollow : public Command
 {
 public:
-	CmdHollow() {};
+	CmdHollow();
 	~CmdHollow() {};
 
 	void UseBrush(Brush* br);
