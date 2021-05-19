@@ -156,7 +156,7 @@ void Drag_Setup(int x, int y, int buttons,
 
 	if (!Selection::HasBrushes())
 	{
-		Undo::Start("Create Brush");	// sikk - Undo/Redo
+		//Undo::Start("Create Brush");	// sikk - Undo/Redo
 //		Sys_Printf("MSG: No selection to drag.\n");	// sikk - Pointless Message
 		return;
 	}
@@ -176,8 +176,6 @@ void Drag_Setup(int x, int y, int buttons,
 		if (g_qeglobals.d_nNumMovePoints)
 		{
 			g_bDragOK = true;
-			Undo::Start("Drag Vertex");	// sikk - Undo/Redo
-			Undo::AddBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
 			return;
 		}
 	}
@@ -187,8 +185,6 @@ void Drag_Setup(int x, int y, int buttons,
 		if (g_qeglobals.d_nNumMovePoints)
 		{
 			g_bDragOK = true;
-			Undo::Start("Drag Edge");	// sikk - Undo/Redo
-			Undo::AddBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
 			return;
 		}
 	}
@@ -198,8 +194,8 @@ void Drag_Setup(int x, int y, int buttons,
 	if (t.selected)
 	{
 		g_bDragOK = true;
-		Undo::Start("Drag Selection");	// sikk - Undo/Redo
-		Undo::AddBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
+	//	Undo::Start("Drag Selection");	// sikk - Undo/Redo
+	//	Undo::AddBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
 
 		if (buttons == (MK_LBUTTON | MK_CONTROL))
 		{
@@ -248,8 +244,6 @@ void Drag_Setup(int x, int y, int buttons,
 	else
 		Sys_Printf("CMD: Side stretch.\n");
 	g_bDragOK = true;
-	Undo::Start("Side Stretch");	// sikk - Undo/Redo
-	Undo::AddBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
 }
 
 /*
@@ -310,7 +304,7 @@ void Drag_Begin(int x, int y, int buttons,
 		Drag_Setup(x, y, buttons, xaxis, yaxis, origin, dir);
 		return;
 	}
-
+	/*
 	// MBUTTON = grab texture
 	if (buttons & MK_MBUTTON)
 	{
@@ -321,8 +315,9 @@ void Drag_Begin(int x, int y, int buttons,
 			{
 				UpdateWorkzone(t.brush);
 
-				g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, true);
-				SurfWnd_UpdateUI();
+				g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
+				Sys_UpdateWindows(W_SURF);
+				//SurfWnd_UpdateUI();
 			}
 			else
 				Sys_Printf("MSG: Did not select a texture.\n");
@@ -339,11 +334,7 @@ void Drag_Begin(int x, int y, int buttons,
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
-					Undo::Start("Set Brush Texture");
-					Undo::AddBrush(t.brush);
 					t.brush->SetTexture(&g_qeglobals.d_workTexDef, 0);
-					Undo::EndBrush(t.brush);
-					Undo::End();
 					Sys_UpdateWindows(W_SCENE);
 				}
 			}
@@ -363,12 +354,9 @@ void Drag_Begin(int x, int y, int buttons,
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
-					Undo::Start("Set Face Texture");
-					Undo::AddBrush(t.brush);
-					strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
+					//strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
+					t.face->texdef.Set(g_qeglobals.d_workTexDef.tex);
 					t.brush->Build();
-					Undo::EndBrush(t.brush);
-					Undo::End();
 					Sys_UpdateWindows(W_SCENE);
 				}
 			}
@@ -388,12 +376,8 @@ void Drag_Begin(int x, int y, int buttons,
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
-					Undo::Start("Set Face Texture");
-					Undo::AddBrush(t.brush);
 					t.face->texdef = g_qeglobals.d_workTexDef;
 					t.brush->Build();
-					Undo::EndBrush(t.brush);
-					Undo::End();
 					Sys_UpdateWindows(W_SCENE);
 				}
 			}
@@ -402,6 +386,7 @@ void Drag_Begin(int x, int y, int buttons,
 			return;
 		}
 	}
+	*/
 }
 
 /*
@@ -464,6 +449,4 @@ void Drag_MouseUp ()
 		g_qeglobals.d_v3SelectTranslate = vec3(0);
 		Sys_UpdateWindows(W_CAMERA);
 	}
-	Undo::EndBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
-	Undo::End();	// sikk - Undo/Redo
 }

@@ -5,24 +5,41 @@
 #include "qe3.h"
 
 /*
-============================================================
+================================================================
 
 TOOLS
 
-- the existence of the tool object should be all that is necessary to be
-in that tool's "mode". a tool instance should be safe to delete from anywhere
-and not leave any residual editor state associated with its use.
+- tools translate user input into commands that modify the scene. they can
+build the commands up front, on completion, actively reconfigure them, and
+in some cases modify them after completion.
 
-- a tool returns 1 if the input was handled, 0 if it was ignored (note that
-this is the opposite of the windows paradigm, where an input handler returns
-true if the input *wasn't* handled and should continue to be processed)
+- multiple tools exist at once on a stack, receiving input in descending
+order until one of them reports that it handled it. tools can block input
+to lower tools by falsely reporting, which is mainly exploited during mouse
+drags (when a tool is "hot") to enforce one-command-at-a-time editing and
+ensure that the context a command was created in doesn't change before its
+completion.
 
-- tools should not capture any input they don't use, to ensure lower tools
-aren't starved for their expected inputs. this especially includes unused
-shift/ctrl/alt modifier combos. as a rule, every tool should return false on
-any mousemove or mouseup if the tool isn't hot, regardless of side effects.
+- a tool returns true if an input was handled, false if it was ignored. note
+that this is the opposite of the windows paradigm, where an input returns
+true if the input *wasn't* handled and should continue to be processed.
 
-============================================================
+- tools should otherwise not capture any input they don't use, to ensure 
+lower tools aren't starved for their expected inputs. this especially 
+includes unused shift/ctrl/alt modifier combos. as a rule, every tool should
+return false on any mousemove or mouseup if the tool isn't hot, regardless
+of side effects.
+
+- the existence of the tool object should be all that is necessary to be in
+that tool's "mode". a tool instance should be safe to delete from anywhere
+and not leave any residual editor state associated with its use. 
+
+- 'modal' tools are mutually exclusive with each other, and represent
+entering an editing mode where the normal set of inputs doesn't apply (for
+example, clicking and dragging in the camera view moves the selection or
+drag planes, but in clip mode it places and moves clip points instead.)
+
+================================================================
 */
 
 Tool::Tool(const char* n, bool isModal = false) : name(n), modal(isModal), hot(false)

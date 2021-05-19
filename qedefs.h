@@ -84,9 +84,11 @@
 #define	W_TEXTURE		0x0010
 #define W_CONSOLE		0x0020
 #define W_ENTITY		0x0040
-#define W_TITLE			0x0080
-
+#define W_SURF			0x0080
+#define W_TITLE			0x0100
 #define	W_ALL			0xFFFF
+
+
 
 #define WM_BENCHMARK	(WM_USER + 267)
 
@@ -118,6 +120,25 @@
 // used in some Drawing routines
 enum VIEWTYPE {YZ, XZ, XY};
 // XY = x0, y1; XZ = x0, y2; YZ = x1, y2.
+
+enum texModType_t {
+	TM_NOTSET,	// not chosen yet
+	TM_SHIFT,
+	TM_SCALE,
+	TM_ROTATE,
+};
+
+enum surfIgnoreFlags_t
+{
+	SFI_NAME = 0x01,
+	SFI_SHIFTX = 0x02,
+	SFI_SHIFTY = 0x04,
+	SFI_SCALEX = 0x08,
+	SFI_SCALEY = 0x10,
+	SFI_ROTATE = 0x20,
+
+	SFI_ALL = 0x3F
+};
 
 enum entitymask_t
 {

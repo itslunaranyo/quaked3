@@ -34,6 +34,8 @@ public:
 	void RevertFaces(Face *fList);
 	void RevertAll();
 
+	void RebuildAll();
+
 private:
 	typedef struct fBasis_s {
 		fBasis_s() {};
@@ -52,8 +54,6 @@ private:
 	void Do_Impl();
 	void Undo_Impl();
 	void Redo_Impl();
-	void Select_Impl();
-
 };
 
 #endif	// __COMMAND_FACE_MOD_H__

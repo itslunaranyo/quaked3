@@ -189,12 +189,13 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 	Brush* b;
 
 	// faces selected: always go for a plane drag
-	if (Selection::FaceCount())
+	if (Selection::NumFaces())
 	{
-		for (int i = 0; i < Selection::FaceCount(); i++)
-		{
-			fSides.push_back(g_vfSelectedFaces[i]);
-		}
+		//for (int i = 0; i < Selection::NumFaces(); i++)
+		//{
+		//	fSides.push_back(g_vfSelectedFaces[i]);
+		//}
+		fSides = Selection::faces;
 	}
 	else
 	{
@@ -284,27 +285,28 @@ void ManipTool::DragStart(const mouseContext_t &mc)
 	ClearBounds(selmins, selmaxs);
 
 	// faces selected: always go for a plane drag
-	if (Selection::FaceCount())
+	if (Selection::NumFaces())
 	{
 		t = Selection::TestRay(mc.org, mc.ray, SF_FACES);
 		if (t.face && Selection::IsFaceSelected(t.face))
 		{
 			tpoint = mc.org + mc.ray * t.dist;
 
-			for (int i = 0; i < Selection::FaceCount(); i++)
-			{
-				fSides.push_back(g_vfSelectedFaces[i]);
-			}
+			//for (int i = 0; i < Selection::NumFaces(); i++)
+			//{
+			//	fSides.push_back(g_vfSelectedFaces[i]);
+			//}
 		}
 		else
 		{
-			for (int i = 0; i < Selection::FaceCount(); i++)
+			for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
 			{
-				g_vfSelectedFaces[i]->AddBounds(selmins, selmaxs);
-				fSides.push_back(g_vfSelectedFaces[i]);
+				(*fIt)->AddBounds(selmins, selmaxs);
+				//fSides.push_back(g_vfSelectedFaces[i]);
 			}
 			tpoint = (selmins + selmaxs) * 0.5f;
 		}
+		fSides = Selection::faces;
 	}
 	else	// ----------------
 	{

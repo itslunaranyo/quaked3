@@ -75,7 +75,7 @@ public:
 	void	FitTexture(float fHeight, float fWidth);
 	void	MoveTexture(const vec3 delta);
 	void	ColorAndTexture();
-	void	SetTexture(TexDef *texdef, int nSkipFlags);
+	void	SetTexture(TexDef *texdef, unsigned flags);
 
 	void	MakePlane();
 	void	Draw();

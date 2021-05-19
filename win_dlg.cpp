@@ -1644,8 +1644,9 @@ BOOL CALLBACK PreferencesDlgProc (
 			GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 2);
 			g_qeglobals.d_savedinfo.nAutosave = atoi(sz);
 			GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 2);
-			g_qeglobals.d_savedinfo.nUndoLevels = atoi(sz);
-			Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
+			g_cmdQueue.SetSize(atoi(sz));
+			//g_qeglobals.d_savedinfo.nUndoLevels = atoi(sz);
+			//Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
 
 			GetDlgItemText(hwndDlg, IDC_COMBO_MAPSIZE, sz, 8);
 			g_qeglobals.d_savedinfo.nMapSize = atoi(sz);

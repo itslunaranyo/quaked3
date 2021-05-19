@@ -110,7 +110,7 @@ namespace Textures
 class TexDef
 {
 public:
-	TexDef() : tex(nullptr), shift(), scale(), rotate(0) { name[0] = 0; };
+	TexDef();
 
 	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, MAX_TEXNAME); stx->used = true; }
 	void	Set(const char* txn) { strncpy(name, txn, MAX_TEXNAME); tex = Textures::ForName(name); }

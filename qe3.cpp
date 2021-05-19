@@ -103,11 +103,13 @@ void QE_Init ()
 	g_qeglobals.d_v3WorkMax = vec3(8);
 	g_qeglobals.d_savedinfo.nExclude |= BFL_HIDDEN;	// hidden things are always filtered
 
+	// create tools - creation order determines which tools get first chance to handle inputs
 	new SelectTool();
+	new TextureTool();
 	new ManipTool();
 
 	// set maximium undo levels
-	Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
+	//Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
 
 	Sys_UpdateGridStatusBar();
 
@@ -150,70 +152,77 @@ QE_KeyDown
 */
 bool QE_KeyDown (int key)
 {
-// sikk---> Keyboard Texture Manipulation
+	bool shift, ctrl;
+	shift = (GetKeyState(VK_SHIFT) < 0);
+	ctrl = (GetKeyState(VK_CONTROL) < 0);
+
 	switch (key)
 	{
 	case VK_UP:
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (shift || ctrl)
 		{
-			if (GetKeyState(VK_CONTROL) < 0)	
-				Surf_RotateTexture(1);
-			else
-				Surf_ShiftTexture(0, g_qeglobals.d_nGridSize);
+			if (shift && ctrl)
+				g_qeglobals.d_texTool->RotateTexture(1);
+			else if (shift)
+				g_qeglobals.d_texTool->ShiftTexture(0, g_qeglobals.d_nGridSize);
+			else if (ctrl)
+				g_qeglobals.d_texTool->ScaleTexture(0, 0.05f);
+			Sys_UpdateWindows(W_SURF);
 		}
-		else if (GetKeyState(VK_CONTROL) < 0)
-			Surf_ScaleTexture(0, 5);
 		else
 			g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + SPEED_MOVE * g_qeglobals.d_vCamera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_DOWN:
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (shift || ctrl)
 		{
-			if (GetKeyState(VK_CONTROL) < 0)
-				Surf_RotateTexture(-1);
-			else
-				Surf_ShiftTexture(0, -g_qeglobals.d_nGridSize);
+			if (shift && ctrl)
+				g_qeglobals.d_texTool->RotateTexture(-1);
+			else if (shift)
+				g_qeglobals.d_texTool->ShiftTexture(0, -g_qeglobals.d_nGridSize);
+			else if (ctrl)
+				g_qeglobals.d_texTool->ScaleTexture(0, -0.05f);
+			Sys_UpdateWindows(W_SURF);
 		}
-		else if (GetKeyState(VK_CONTROL) < 0)
-			Surf_ScaleTexture(0, -5);
 		else
 			g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + -SPEED_MOVE * g_qeglobals.d_vCamera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_LEFT:
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (shift || ctrl)
 		{
-			if (GetKeyState(VK_CONTROL) < 0)
-				Surf_RotateTexture(15);
-			else
-				Surf_ShiftTexture(g_qeglobals.d_nGridSize, 0);
+			if (shift && ctrl)
+				g_qeglobals.d_texTool->RotateTexture(15);
+			else if (shift)
+				g_qeglobals.d_texTool->ShiftTexture(g_qeglobals.d_nGridSize, 0);
+			else if (ctrl)
+				g_qeglobals.d_texTool->ScaleTexture(0.05f, 0);
+			Sys_UpdateWindows(W_SURF);
 		}
-		else if (GetKeyState(VK_CONTROL) < 0)
-			Surf_ScaleTexture(-5, 0);
 		else
 			g_qeglobals.d_vCamera.angles[1] += SPEED_TURN;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_RIGHT:
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (shift || ctrl)
 		{
-			if (GetKeyState(VK_CONTROL) < 0)
-				Surf_RotateTexture(-15);
-			else
-				Surf_ShiftTexture(-g_qeglobals.d_nGridSize, 0);
+			if (shift && ctrl)
+				g_qeglobals.d_texTool->RotateTexture(-15);
+			else if (shift)
+				g_qeglobals.d_texTool->ShiftTexture(-g_qeglobals.d_nGridSize, 0);
+			else if (ctrl)
+				g_qeglobals.d_texTool->ScaleTexture(-0.05f, 0);
+			Sys_UpdateWindows(W_SURF);
 		}
-		else if (GetKeyState(VK_CONTROL) < 0)
-			Surf_ScaleTexture(5, 0);
 		else
 			g_qeglobals.d_vCamera.angles[1] -= SPEED_TURN;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
-// <---sikk
+
 	case 'D':
 		g_qeglobals.d_vCamera.origin[2] += SPEED_MOVE;
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
@@ -342,7 +351,7 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLIPSELECTED, 0);
 		break;
 	case VK_TAB:
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (shift)
 			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_SWAPGRIDCAM, 0);
 		else
 			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_NEXTVIEW, 0);
@@ -795,12 +804,13 @@ void QE_UpdateCommandUI ()
 	// Paste
 //	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
 //	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+
 	// Undo
-	EnableMenuItem(hMenu, ID_EDIT_UNDO, Undo::UndoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo::UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	EnableMenuItem(hMenu, ID_EDIT_UNDO, g_cmdQueue.CanUndo() ? MF_ENABLED : MF_GRAYED);
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, g_cmdQueue.CanUndo() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 	// Redo
-	EnableMenuItem(hMenu, ID_EDIT_REDO, Undo::RedoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_REDO, Undo::RedoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	EnableMenuItem(hMenu, ID_EDIT_REDO, g_cmdQueue.CanRedo() ? MF_ENABLED : MF_GRAYED);
+	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_REDO, g_cmdQueue.CanRedo() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 
 //===================================
 // View Menu

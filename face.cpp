@@ -638,9 +638,9 @@ void Face::ColorAndTexture()
 Face::SetTexture
 =================
 */
-void Face::SetTexture(TexDef *texdefIn, int nSkipFlags)
+void Face::SetTexture(TexDef *texdefIn, unsigned flags)
 {
-	Surf_ApplyTexdef(&texdef, texdefIn, nSkipFlags);
+	Surf_ApplyTexdef(texdef, *texdefIn, flags);
 	//DEPtexture = Textures::ForName(texdefIn->name);
 	owner->Build();
 }

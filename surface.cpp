@@ -196,32 +196,99 @@ Surf_FindReplace
 */
 void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 {
-	Brush	*pBrush, *pList;
-	Face	*pFace;
-	Texture *txFind, *txRepl;
+	Brush	*br;
+	Face	*f;
+	Texture *txFind;
+	TexDef	tdRepl;
 
 	txFind = Textures::ForName(pFind);
-	txRepl = Textures::ForName(pReplace);
+	tdRepl.Set(pReplace);
 
-	pList = (bSelected) ? &g_brSelectedBrushes : &g_map.brActive;
-	if (!bSelected)
-		Selection::DeselectAll();
+	CmdTextureApply *cmdTA = new CmdTextureApply();
 
-	for (pBrush = pList->next; pBrush != pList; pBrush = pBrush->next)
+	if (bForce)
 	{
-		for (pFace = pBrush->basis.faces; pFace; pFace = pFace->fnext)
+		if (bSelected)
 		{
-			//if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
-			if (bForce || pFace->texdef.tex == txFind)
+			if (Selection::HasBrushes())
+				cmdTA->UseBrushes(&g_brSelectedBrushes);
+			else if (Selection::NumFaces())
+				cmdTA->UseFaces(Selection::faces);
+			else
 			{
-				//pFace->DEPtexture = Textures::ForName(pFace->texdef.name);
-				pFace->texdef.tex = txRepl;
-				strcpy(pFace->texdef.name, pReplace);
+				Sys_Printf("Couldn't replace; nothing selected\n");
+				delete cmdTA;
+				return;
 			}
 		}
-		pBrush->Build();
+		else
+		{
+			if (MessageBox(g_qeglobals.d_hwndMain,
+				"This will indiscriminately apply the chosen texture to every visible brush face in the entire map.\n\nAre you sure you want to do this?\n",
+				"QuakeEd 3: Really?", MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
+			{
+				delete cmdTA;
+				return;
+			}
+			cmdTA->UseBrushes(&g_brSelectedBrushes);
+			for (br = g_map.brActive.next; br != &g_map.brActive; br = br->next)
+			{
+				if (!br->IsFiltered())
+					cmdTA->UseBrush(br);
+			}
+		}
 	}
-	Sys_UpdateWindows(W_CAMERA);
+	else
+	{
+		if (Selection::HasBrushes())
+		{
+			for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+			{
+				for (f = br->basis.faces; f; f = f->fnext)
+				{
+					if (f->texdef.tex == txFind)
+						cmdTA->UseFace(f);
+				}
+			}
+		}
+
+		if (bSelected)
+		{
+			if (Selection::NumFaces())
+			{
+				for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
+				{
+					if ((*fIt)->texdef.tex == txFind)
+						cmdTA->UseFace((*fIt));
+				}
+			}
+			else if (!Selection::HasBrushes())
+			{
+				Sys_Printf("Couldn't replace; nothing selected\n");
+				delete cmdTA;
+				return;
+			}
+		}
+		else
+		{
+			for (br = g_map.brActive.next; br != &g_map.brActive; br = br->next)
+			{
+				if (!br->IsFiltered())
+				{
+					for (f = br->basis.faces; f; f = f->fnext)
+					{
+						if (f->texdef.tex == txFind)
+							cmdTA->UseFace(f);
+					}
+				}
+			}
+		}
+	}
+	cmdTA->Apply(tdRepl, SFI_ALL - SFI_NAME);
+	g_cmdQueue.Complete(cmdTA);
+
+	// while f&r dialog is modal, forcibly redraw the camera view so we can see the result immediately
+	Sys_ForceUpdateWindows(W_CAMERA);
 }
 
 /*
@@ -229,29 +296,29 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 Surf_ApplyTexdef
 =================
 */
-void Surf_ApplyTexdef(TexDef *dst, TexDef *src, int nSkipFlags)
+void Surf_ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags)
 {
-	if (nSkipFlags)
+	if (flags)
 	{
-		if (!(nSkipFlags & SURF_MIXEDNAME))
+		if (!(flags & SFI_NAME))
 		{
-			strncpy(dst->name, src->name, MAX_TEXNAME);
-			dst->tex = src->tex;
+			strncpy(dst.name, src.name, MAX_TEXNAME);
+			dst.tex = src.tex;
 		}
-		if (!(nSkipFlags & SURF_MIXEDSHIFTX))
-			dst->shift[0] = src->shift[0];
-		if (!(nSkipFlags & SURF_MIXEDSHIFTY))
-			dst->shift[1] = src->shift[1];
-		if (!(nSkipFlags & SURF_MIXEDSCALEX))
-			dst->scale[0] = src->scale[0];
-		if (!(nSkipFlags & SURF_MIXEDSCALEY))
-			dst->scale[1] = src->scale[1];
-		if (!(nSkipFlags & SURF_MIXEDROTATE))
-			dst->rotate = src->rotate;
+		if (!(flags & SFI_SHIFTX))
+			dst.shift[0] = src.shift[0];
+		if (!(flags & SFI_SHIFTY))
+			dst.shift[1] = src.shift[1];
+		if (!(flags & SFI_SCALEX))
+			dst.scale[0] = src.scale[0];
+		if (!(flags & SFI_SCALEY))
+			dst.scale[1] = src.scale[1];
+		if (!(flags & SFI_ROTATE))
+			dst.rotate = src.rotate;
 	}
 	else
 	{
-		*dst = *src;
+		dst = src;
 	}
 }
 
@@ -260,62 +327,44 @@ void Surf_ApplyTexdef(TexDef *dst, TexDef *src, int nSkipFlags)
 Surf_SetTexdef
 ================
 */
-void Surf_SetTexdef(TexDef *texdef, int nSkipFlags)
+void Surf_SetTexdef(TexDef &texdef, unsigned flags)
 {
-	Brush	*b;
-
 	if (Selection::IsEmpty())
 	{
-		Surf_ApplyTexdef(&g_qeglobals.d_workTexDef, texdef, nSkipFlags);
+		Surf_ApplyTexdef(g_qeglobals.d_workTexDef, texdef, flags);
 		return;
 	}
 
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
+	CmdTextureApply *cmdTA = new CmdTextureApply();
+
+	if (Selection::NumFaces())
+		cmdTA->UseFaces(Selection::faces);
+	else if (Selection::HasBrushes())
+		cmdTA->UseBrushes(&g_brSelectedBrushes);
+
+	cmdTA->Apply(texdef, flags);
+	g_cmdQueue.Complete(cmdTA);
+
+	/*
+	if (Selection::NumFaces())
 	{
-		int i, nBrushCount = 0;
-		Brush	*pbrArray[MAX_MAP_BRUSHES];
-
-		for (i = 0; i < Selection::FaceCount(); i++)
-		{
-			// this check makes sure that brushes are only added to undo once 
-			// and not once per selected face on brush
-			if (!OnBrushList(g_vfSelectedFaces[i]->owner, pbrArray, nBrushCount))
-			{
-				pbrArray[nBrushCount] = g_vfSelectedFaces[i]->owner;
-				nBrushCount++;
-			}
-		}
-
-		// sikk - TODO: Set Face Texture Undo bug
-		Undo::Start("Set Face Textures");	// sikk - Undo/Redo
-		for (i = 0; i < nBrushCount; i++)
-			Undo::AddBrush(pbrArray[i]);	// sikk - Undo/Redo
-
-		for (i = 0; i < Selection::FaceCount(); i++)
-			g_vfSelectedFaces[i]->SetTexture(texdef, nSkipFlags);
-
-		for (i = 0; i < nBrushCount; i++)
-			Undo::EndBrush(pbrArray[i]);	// sikk - Undo/Redo
+		for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
+			(*fIt)->SetTexture(texdef, flags);
 	}
-	// <---sikk
 	else if (Selection::HasBrushes())
 	{
-		Undo::Start("Set Brush Textures");	// sikk - Undo/Redo
+		Brush *b;
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
 			if (b->owner->IsBrush())
 			{
-				Undo::AddBrush(b);	// sikk - Undo/Redo
-				b->SetTexture(texdef, nSkipFlags);
-				Undo::EndBrush(b);	// sikk - Undo/Redo
+				b->SetTexture(texdef, flags);
 			}
 		}
 	}
-
-	Undo::End();	// sikk - Undo/Redo
-	SurfWnd_UpdateUI();
-	Sys_UpdateWindows(W_SCENE|W_TEXTURE);
+	//SurfWnd_UpdateUI();
+	Sys_UpdateWindows(W_SCENE|W_TEXTURE|W_SURF);
+	*/
 }
 
 
@@ -374,166 +423,3 @@ void Surf_RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 	}
 }
 
-
-/*
-===============
-Surf_FitTexture
-===============
-*/
-void Surf_FitTexture(float nHeight, float nWidth)
-{
-	Brush	*b;
-
-	if (Selection::IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		b->FitTexture(nHeight, nWidth);
-		b->Build();
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
-	{
-		int i;
-		for (i = 0; i < Selection::FaceCount(); i++)
-		{
-			g_vfSelectedFaces[i]->FitTexture(nHeight, nWidth);
-			g_vfSelectedFaces[i]->owner->Build();
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-// sikk---> Texture Manipulation Functions (Mouse & Keyboard)
-/*
-===========
-Surf_ShiftTexture
-===========
-*/
-void Surf_ShiftTexture(int x, int y)
-{
-	Brush	*b;
-	Face	*f;
-
-	if (Selection::IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->basis.faces; f; f = f->fnext)
-		{
-			f->texdef.shift[0] += x;
-			f->texdef.shift[1] += y;
-		}
-
-		b->Build();
-	}
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
-	{
-		int i;
-		for (i = 0; i < Selection::FaceCount(); i++)
-		{
-			g_vfSelectedFaces[i]->texdef.shift[0] += x;
-			g_vfSelectedFaces[i]->texdef.shift[1] += y;
-		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
-			g_vfSelectedFaces[i]->owner->Build();
-		}
-	}
-	// <--sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-/*
-===========
-Surf_ScaleTexture
-===========
-*/
-void Surf_ScaleTexture(int x, int y)
-{
-	Brush	*b;
-	Face	*f;
-
-	if (Selection::IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->basis.faces; f; f = f->fnext)
-		{
-			f->texdef.scale[0] += x / 100.0f;
-			f->texdef.scale[1] += y / 100.0f;
-		}
-
-		b->Build();
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
-	{
-		int i;
-		for (i = 0; i < Selection::FaceCount(); i++)
-		{
-			g_vfSelectedFaces[i]->texdef.scale[0] += x / 100.0f;
-			g_vfSelectedFaces[i]->texdef.scale[1] += y / 100.0f;
-		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
-			g_vfSelectedFaces[i]->owner->Build();
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-/*
-===========
-Surf_RotateTexture
-===========
-*/
-void Surf_RotateTexture(int deg)
-{
-	Brush	*b;
-	Face	*f;
-
-	if (Selection::IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->basis.faces; f; f = f->fnext)
-		{
-			f->texdef.rotate += deg;
-			if (f->texdef.rotate >180)
-				f->texdef.rotate -= 360;
-			if (f->texdef.rotate <= -180)
-				f->texdef.rotate += 360;
-
-		}
-		b->Build();
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
-	{
-		int i;
-		for (i = 0; i < Selection::FaceCount(); i++)
-		{
-			g_vfSelectedFaces[i]->texdef.rotate += deg;
-			if (g_vfSelectedFaces[i]->texdef.rotate > 180)
-				g_vfSelectedFaces[i]->texdef.rotate -= 360;
-			if (g_vfSelectedFaces[i]->texdef.rotate <= -180)
-				g_vfSelectedFaces[i]->texdef.rotate += 360;
-		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
-			g_vfSelectedFaces[i]->owner->Build();
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-// <---sikk

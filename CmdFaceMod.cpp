@@ -158,6 +158,22 @@ void CmdFaceMod::RevertAll()
 	state = NOOP;
 }
 
+void CmdFaceMod::RebuildAll()
+{
+	Brush *last;
+	last = nullptr;
+	for (auto fbIt = faceCache.begin(); fbIt != faceCache.end(); ++fbIt)
+	{
+		assert(fbIt->f);
+		if (last != fbIt->f->owner)
+		{
+			if (last) last->Build();
+			last = fbIt->f->owner;
+		}
+	}
+	last->Build();
+}
+
 //==============================
 
 void CmdFaceMod::Swap(fBasis &fb)
@@ -215,8 +231,3 @@ void CmdFaceMod::Do_Impl()
 
 void CmdFaceMod::Undo_Impl() { SwapAll(); }
 void CmdFaceMod::Redo_Impl() { SwapAll(); }
-
-void CmdFaceMod::Select_Impl()
-{
-	
-}

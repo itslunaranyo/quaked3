@@ -13,16 +13,11 @@ Modify_Delete
 */
 void Modify_Delete()
 {
-	//	Brush	*brush;
-	//	Entity	*e;
+	if (!Selection::HasBrushes())
+		return;
 
-	if (!Selection::HasBrushes()) return;
-
-	//	g_pfaceSelectedFace = NULL;
-	// sikk---> Multiple Face Selection
-	if (Selection::FaceCount())
-		Selection::DeselectAllFaces();
-	// <---sikk
+	Selection::DeselectAllFaces();
+	
 	g_qeglobals.d_selSelectMode = sel_brush;
 	g_qeglobals.d_nNumMovePoints = 0;
 

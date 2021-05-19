@@ -12,8 +12,8 @@ SURFACE INSPECTOR
 =====================================================================
 */
 
-TexDef	g_texdefEdit;
-int			g_nEditSurfMixed;
+TexDef		g_texdefEdit;
+unsigned	g_nEditSurfMixed;
 
 
 /*
@@ -35,21 +35,21 @@ SurfWnd_AddToEditTexdef
 void SurfWnd_AddToEditTexdef(Face* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
-	if (!(g_nEditSurfMixed & SURF_MIXEDNAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
-		g_nEditSurfMixed |= SURF_MIXEDNAME;
+	if (!(g_nEditSurfMixed & SFI_NAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
+		g_nEditSurfMixed |= SFI_NAME;
 
-	if (!(g_nEditSurfMixed & SURF_MIXEDSHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
-		g_nEditSurfMixed |= SURF_MIXEDSHIFTX;
-	if (!(g_nEditSurfMixed & SURF_MIXEDSHIFTY) && f->texdef.shift[1] != g_texdefEdit.shift[1])
-		g_nEditSurfMixed |= SURF_MIXEDSHIFTY;
+	if (!(g_nEditSurfMixed & SFI_SHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
+		g_nEditSurfMixed |= SFI_SHIFTX;
+	if (!(g_nEditSurfMixed & SFI_SHIFTY) && f->texdef.shift[1] != g_texdefEdit.shift[1])
+		g_nEditSurfMixed |= SFI_SHIFTY;
 
-	if (!(g_nEditSurfMixed & SURF_MIXEDSCALEX) && f->texdef.scale[0] != g_texdefEdit.scale[0])
-		g_nEditSurfMixed |= SURF_MIXEDSCALEX;
-	if (!(g_nEditSurfMixed & SURF_MIXEDSCALEY) && f->texdef.scale[1] != g_texdefEdit.scale[1])
-		g_nEditSurfMixed |= SURF_MIXEDSCALEY;
+	if (!(g_nEditSurfMixed & SFI_SCALEX) && f->texdef.scale[0] != g_texdefEdit.scale[0])
+		g_nEditSurfMixed |= SFI_SCALEX;
+	if (!(g_nEditSurfMixed & SFI_SCALEY) && f->texdef.scale[1] != g_texdefEdit.scale[1])
+		g_nEditSurfMixed |= SFI_SCALEY;
 
-	if (!(g_nEditSurfMixed & SURF_MIXEDROTATE) && f->texdef.rotate != g_texdefEdit.rotate)
-		g_nEditSurfMixed |= SURF_MIXEDROTATE;
+	if (!(g_nEditSurfMixed & SFI_ROTATE) && f->texdef.rotate != g_texdefEdit.rotate)
+		g_nEditSurfMixed |= SFI_ROTATE;
 }
 
 /*
@@ -66,14 +66,14 @@ void SurfWnd_RefreshEditTexdef()
 
 	SurfWnd_ClearEditTexdef();
 
-	if (Selection::FaceCount())
+	if (Selection::NumFaces())
 	{
-		for (int i = 0; i < Selection::FaceCount(); i++)
+		for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
 		{
-			if (i == 0)
-				g_texdefEdit = g_vfSelectedFaces[i]->texdef;
+			if (fIt == Selection::faces.begin())
+				g_texdefEdit = (*fIt)->texdef;
 			else
-				SurfWnd_AddToEditTexdef(g_vfSelectedFaces[i]);
+				SurfWnd_AddToEditTexdef((*fIt));
 		}
 		return;
 	}
@@ -127,9 +127,9 @@ Set the window fields to mirror the edit texdef
 */
 void SurfWnd_FromEditTexdef()
 {
-	char		sz[MAX_TEXNAME];
-	TexDef   *texdef;
-	float shiftxp, shiftyp, rotp;
+	char	sz[MAX_TEXNAME];
+	TexDef  *texdef;
+	float	shiftxp, shiftyp, rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
@@ -137,7 +137,7 @@ void SurfWnd_FromEditTexdef()
 
 	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
-	if (g_nEditSurfMixed & SURF_MIXEDNAME)
+	if (g_nEditSurfMixed & SFI_NAME)
 		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
 	else
 		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
@@ -147,31 +147,31 @@ void SurfWnd_FromEditTexdef()
 	shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
 	rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
-	if (g_nEditSurfMixed & SURF_MIXEDSHIFTX)
+	if (g_nEditSurfMixed & SFI_SHIFTX)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)shiftxp);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
 
-	if (g_nEditSurfMixed & SURF_MIXEDSHIFTY)
+	if (g_nEditSurfMixed & SFI_SHIFTY)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)shiftyp);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
-	if (g_nEditSurfMixed & SURF_MIXEDSCALEX)
+	if (g_nEditSurfMixed & SFI_SCALEX)
 		sz[0] = 0;
 	else
 		prettyftoa(sz, texdef->scale[0]);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
 
-	if (g_nEditSurfMixed & SURF_MIXEDSCALEY)
+	if (g_nEditSurfMixed & SFI_SCALEY)
 		sz[0] = 0;
 	else
 		prettyftoa(sz, texdef->scale[1]);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
-	if (g_nEditSurfMixed & SURF_MIXEDROTATE)
+	if (g_nEditSurfMixed & SFI_ROTATE)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)rotp);
@@ -193,7 +193,7 @@ void SurfWnd_Apply()
 {
 	char		sz[MAX_TEXNAME];
 	TexDef		texdef;
-	int			mixed = 0;
+	unsigned		mixed = 0;
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
 	strncpy(texdef.name, sz, MAX_TEXNAME);// -1);
@@ -201,7 +201,7 @@ void SurfWnd_Apply()
 	if (texdef.name[0] <= ' ')
 	{
 		texdef.tex = nullptr;
-		mixed |= SURF_MIXEDNAME;
+		mixed |= SFI_NAME;
 	}
 	else
 	{
@@ -210,36 +210,36 @@ void SurfWnd_Apply()
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SURF_MIXEDSHIFTX;
+		mixed |= SFI_SHIFTX;
 	texdef.shift[0] = atof(sz);
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SURF_MIXEDSHIFTY;
+		mixed |= SFI_SHIFTY;
 	texdef.shift[1] = atof(sz);
 
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SURF_MIXEDSCALEX;
+		mixed |= SFI_SCALEX;
 	texdef.scale[0] = atof(sz);
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz, 127);
 	if (sz[0] <= ' ')
-		mixed |= SURF_MIXEDSCALEX;
+		mixed |= SFI_SCALEX;
 	texdef.scale[1] = atof(sz);
 
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SURF_MIXEDROTATE;
+		mixed |= SFI_ROTATE;
 	texdef.rotate = atof(sz);
 
 	// every field in the inspector is mixed (blank), so this won't do anything anyway
-	if (mixed == SURF_MIXEDALL)
+	if (mixed == SFI_ALL)
 		return;
 
-	Surf_SetTexdef(&texdef, mixed);
+	Surf_SetTexdef(texdef, mixed);
 }
 
 /*
@@ -298,7 +298,8 @@ void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
 				i *= -1;
 		
-			Surf_ShiftTexture(i, 0);
+			//Surf_ShiftTexture(i, 0);
+			g_qeglobals.d_texTool->ShiftTexture(i, 0);
 			break;
 
 		case IDC_SPIN_VSHIFT:
@@ -311,33 +312,36 @@ void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
 				i *= -1;
 
-			Surf_ShiftTexture(0, i);
+			//Surf_ShiftTexture(0, i);
+			g_qeglobals.d_texTool->ShiftTexture(0, i);
 			break;
 
 		case IDC_SPIN_HSCALE:
 			if (GetKeyState(VK_SHIFT) < 0)
-				i = 25;
+				f = 0.25f;
 			else if (GetKeyState(VK_CONTROL) < 0)
-				i = 1;
+				f = 0.01f;
 			else
-				i = 5;
+				f = 0.05f;
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
-				i *= -1;
+				f *= -1.0f;
 
-			Surf_ScaleTexture(i, 0);
+			//Surf_ScaleTexture(i, 0);
+			g_qeglobals.d_texTool->ScaleTexture(f, 0);
 			break;
 
 		case IDC_SPIN_VSCALE:
 			if (GetKeyState(VK_SHIFT) < 0)
-				i = 25;
+				f = 0.25f;
 			else if (GetKeyState(VK_CONTROL) < 0)
-				i = 1;
+				f = 0.01f;
 			else
-				i = 5;
+				f = 0.05f;
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
-				i *= -1;
+				f *= -1.0f;
 
-			Surf_ScaleTexture(0,i);
+			//Surf_ScaleTexture(0,i);
+			g_qeglobals.d_texTool->ScaleTexture(0, f);
 			break;
 
 		case IDC_SPIN_ROTATE:
@@ -350,7 +354,8 @@ void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
 				i *= -1;
 
-			Surf_RotateTexture(i);
+			//Surf_RotateTexture(i);
+			g_qeglobals.d_texTool->RotateTexture(i);
 			break;
 
 		case IDC_SPIN_HFIT:
@@ -430,9 +435,9 @@ BOOL CALLBACK SurfaceDlgProc(
 				GetDlgItemText(hwndDlg, IDC_EDIT_WFIT, sz, 8);
 				nWidth = atof(sz);
 
-				Surf_FitTexture(nHeight, nWidth);
-				SurfWnd_UpdateUI();
-				Sys_UpdateWindows(W_CAMERA);
+				g_qeglobals.d_texTool->FitTexture(nHeight, nWidth);
+				//SurfWnd_UpdateUI();
+				Sys_UpdateWindows(W_CAMERA|W_SURF);
 			}
 			break;
 		}
@@ -440,8 +445,8 @@ BOOL CALLBACK SurfaceDlgProc(
 
 	case WM_NOTIFY:
 		SurfWnd_UpdateSpinners(wParam, lParam);
-		SurfWnd_UpdateUI();
-		Sys_UpdateWindows(W_CAMERA);
+		//SurfWnd_UpdateUI();
+		Sys_UpdateWindows(W_CAMERA | W_SURF);
 		return 0;
 	}
 	return FALSE; // eerie

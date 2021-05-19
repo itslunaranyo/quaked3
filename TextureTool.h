@@ -13,12 +13,18 @@ public:
 
 	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-	bool Draw3D(CameraView &v);
-	bool Draw2D(XYZView &v);
 
 	void SelectionChanged();
+
+	void FitTexture(float x, float y);
+	void ShiftTexture(int x, int y);
+	void ScaleTexture(float x, float y);
+	void RotateTexture(float r);
+private:
+	CmdTextureMod *lastTexMod;
+	clock_t lastTexModTime;
+
+	void GetTexModCommand(texModType_t tm);
 };
 
 #endif

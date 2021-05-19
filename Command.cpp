@@ -133,7 +133,7 @@ void CommandQueue::Complete(Command *cmd)
 	if (cmd->state == Command::NOOP)
 	{
 		// dead command that produces no changes in the scene, throw it away
-		Sys_Printf("already noop command, deleting\n");
+		//Sys_Printf("already noop command, deleting\n");
 		delete cmd;
 		return;
 	}
@@ -149,7 +149,7 @@ void CommandQueue::Complete(Command *cmd)
 
 	if (cmd->state == Command::NOOP)
 	{
-		Sys_Printf("noop command after do, deleting\n");
+		//Sys_Printf("noop command after do, deleting\n");
 		delete cmd;
 		return;
 	}
@@ -163,6 +163,15 @@ void CommandQueue::Complete(Command *cmd)
 		ClearOldestUndo();
 
 	Sys_UpdateWindows(W_ALL);
+}
+
+void CommandQueue::SetSize(int size)
+{
+	g_qeglobals.d_savedinfo.nUndoLevels = size;
+	while ((unsigned)size > undoQueue.size())
+	{
+		ClearOldestUndo();
+	}
 }
 
 /*

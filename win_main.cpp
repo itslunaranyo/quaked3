@@ -1699,54 +1699,26 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_FLIPX:
-			Undo::Start("Flip X");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_FlipAxis(0);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_SELECTION_FLIPY:
-			Undo::Start("Flip Y");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_FlipAxis(1);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_SELECTION_FLIPZ:
-			Undo::Start("Flip Z");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_FlipAxis(2);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 
 		case ID_SELECTION_ROTATEX:
-			Undo::Start("Rotate X");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_RotateAxis(0, RotateAngleForModifiers(), false);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEY:
-			Undo::Start("Rotate Y");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_RotateAxis(1, RotateAngleForModifiers(), false);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEZ:
-			Undo::Start("Rotate Z");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			Transform_RotateAxis(2, RotateAngleForModifiers(), false);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_SELECTION_ARBITRARYROTATION:
-			Undo::Start("Arbitrary Rotation");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoRotate();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 
 		case ID_SELECTION_SCALELOCKX:	// sikk - Brush Scaling Axis Lock
@@ -1762,11 +1734,7 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
 			break;
 		case ID_SELECTION_SCALE:	// sikk - Brush Scaling Dialog
-			Undo::Start("Scale");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoScale();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 
 		case ID_SELECTION_CSGHOLLOW:
@@ -1904,19 +1872,19 @@ LONG WINAPI CommandHandler (
 // Texture menu
 //===================================
 		case ID_TEXTURES_UPDATEMENU:
-			Sys_BeginWait();
+			//Sys_BeginWait();
 			FillTextureMenu();
 			QE_SetInspectorMode(W_CONSOLE);
 			break;
 
 		case ID_TEXTURES_FLUSH_ALL:
-			Sys_BeginWait();
+			//Sys_BeginWait();
 			Textures::Flush();
 			QE_SetInspectorMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 		case ID_TEXTURES_FLUSH_UNUSED:
-			Sys_BeginWait();
+			//Sys_BeginWait();
 			Textures::FlushUnused();
 			QE_SetInspectorMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
@@ -2802,7 +2770,7 @@ int WINAPI WinMain (
 #endif
 			// <---sikk
 
-			// run time dependant behavior
+			// run time dependent behavior
 			g_qeglobals.d_vCamera.MouseControl(g_deltaTime);
 
 			// update any windows now

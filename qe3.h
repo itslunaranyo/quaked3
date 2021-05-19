@@ -60,7 +60,7 @@
 #include "v_xy.h"
 #include "v_z.h"
 #include "mru.h"
-#include "undo.h"
+//#include "undo.h"
 
 #include "commands.h"
 
@@ -220,6 +220,7 @@ typedef struct
 	std::vector<Tool*> d_tools;
 	//bool	    d_bClipMode;
 	ClipTool	*d_clipTool;
+	TextureTool	*d_texTool;
 
 	// handle to the console log file
 	// we use low level I/O to get rid of buffering and have everything on file if we crash

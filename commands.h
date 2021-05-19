@@ -36,7 +36,12 @@
 #include "CmdSphere.h"
 #include "CmdHollow.h"
 #include "CmdMerge.h"
+
+// face edits
 #include "CmdPlaneShift.h"
+#include "CmdTextureMod.h"
+#include "CmdTextureFit.h"
+#include "CmdTextureApply.h"
 
 //#include "Cmd.h"
 

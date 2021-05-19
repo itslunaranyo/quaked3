@@ -300,7 +300,7 @@ void Textures::SelectFirstTexture()
 		return;
 	//strcpy(g_qeglobals.d_workTexDef.name, groups.front()->first->name);
 	g_qeglobals.d_workTexDef.Set(groups.front()->first);
-	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef, false);
+	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
 }
 
 /*
@@ -932,6 +932,12 @@ void FillTextureMenu ()
 
 		_findclose(handle);
 	}
+}
+
+TexDef::TexDef() : tex(nullptr), shift(), rotate(0)
+{
+	name[0] = 0;
+	scale[0] = scale[1] = g_qeglobals.d_fDefaultTexScale;
 }
 
 void TexDef::Clamp()

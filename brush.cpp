@@ -628,12 +628,12 @@ void Brush::FitTexture(int nHeight, int nWidth)
 Brush::SetTexture
 =================
 */
-void Brush::SetTexture(TexDef *texdef, int nSkipFlags)
+void Brush::SetTexture(TexDef *texdef, unsigned flags)
 {
 	Face *f;
 
 	for (f = basis.faces; f; f = f->fnext)
-		f->SetTexture(texdef, nSkipFlags);
+		f->SetTexture(texdef, flags);
 
 	Build();
 }

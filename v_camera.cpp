@@ -237,13 +237,14 @@ void CameraView::PositionRotate ()
 		}
 		sorigin = (mins + maxs) / 2.0f;
 	}
-	else if (Selection::FaceCount())
+	else if (Selection::NumFaces())
 	{
 		ClearBounds(mins, maxs);
 
 		//		f = g_pfaceSelectedFace;
 		// rotate around last selected face
-		f = g_vfSelectedFaces[Selection::FaceCount() - 1];	// sikk - Multiple Face Selection
+		//f = g_vfSelectedFaces[Selection::NumFaces() - 1];	// sikk - Multiple Face Selection
+		f = Selection::faces.back();
 		for (j = 0; j < f->face_winding->numpoints; j++)
 		{
 			for (i = 0; i < 3; i++)
@@ -781,8 +782,8 @@ void CameraView::DrawSelected(Brush	*pList)
 		for (face = brush->basis.faces; face; face = face->fnext)
 			face->Draw();
 
-	for (int i = 0; i < Selection::FaceCount(); i++)
-		g_vfSelectedFaces[i]->Draw();
+	for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
+		(*fIt)->Draw();
 
 	// non-zbuffered outline
 	glDisable(GL_BLEND);

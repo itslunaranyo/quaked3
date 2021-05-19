@@ -42,7 +42,7 @@ extern Brush		g_brSelectedBrushes;
 
 // sikk - Multiple Face Selection
 // lunaran TODO: make this a std vector
-extern Face		*g_vfSelectedFaces[MAX_MAP_FACES];
+//extern Face		*g_vfSelectedFaces[MAX_MAP_FACES];
 // <-- sikk
 
 extern vec3		g_v3RotateOrigin;	// sikk - Free Rotate
@@ -51,11 +51,12 @@ extern vec3		g_v3RotateOrigin;	// sikk - Free Rotate
 
 namespace Selection
 {
+	extern std::vector<Face*> faces;
+
 	void	Changed();
 	void	HandleChange();
 
 	bool	HasBrushes();
-	int		FaceCount();
 	bool	IsEmpty();
 	bool	OnlyPointEntities();
 	int		NumBrushes();

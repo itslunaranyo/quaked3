@@ -45,15 +45,16 @@ public:
 	~CommandQueue() {}
 
 	void Complete(Command* cmd);
+	void SetSize(int size);
 	void Undo();
 	void Redo();
 	void Clear();
 	void SetSaved();
 	bool IsModified();
 
-	Command* LastUndo() { return undoQueue.back(); }
-	bool UndoAvailable() { return (undoQueue.size() != 0); }
-	bool RedoAvailable() { return (redoQueue.size() != 0); }
+	Command* LastUndo() { return CanUndo() ? undoQueue.back() : nullptr; }
+	bool CanUndo() { return (undoQueue.size() != 0); }
+	bool CanRedo() { return (redoQueue.size() != 0); }
 
 private:
 	void ClearOldestUndo();

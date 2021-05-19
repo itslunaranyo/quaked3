@@ -22,3 +22,4 @@ void CmdDelete::Delete(Brush *brList)
 void CmdDelete::Do_Impl() { cmdAR.Do(); }
 void CmdDelete::Undo_Impl() { cmdAR.Undo(); }
 void CmdDelete::Redo_Impl() { cmdAR.Redo(); }
+void CmdDelete::Select_Impl() { cmdAR.Select(); }

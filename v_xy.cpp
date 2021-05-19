@@ -435,7 +435,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		Sys_UpdateWindows(W_XY | W_Z);
 		return;
 	}
-
+	/*
 // sikk - Undo/Redo for Free Rotate & Free Scale
 	if (buttonstate & MK_RBUTTON)
 	{
@@ -451,6 +451,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		}
 	}
 // <---sikk
+*/
 }
 
 /*
@@ -480,8 +481,8 @@ void XYZView::MouseUp (int x, int y, int buttons)
 		g_bScaleCheck = false;
 
 // sikk - Undo/Redo for Free Rotate & Free Scale
-		Undo::EndBrushList(&g_brSelectedBrushes);
-		Undo::End();
+		//Undo::EndBrushList(&g_brSelectedBrushes);
+		//Undo::End();
 // <---sikk
 
 		Sys_UpdateWindows(W_XY | W_Z);
@@ -1558,9 +1559,9 @@ void XYZView::DrawSelection()
 
 	if (g_qeglobals.d_selSelectMode == sel_face)
 	{
-		for (int i = 0; i < Selection::FaceCount(); i++)
+		for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
 		{
-			g_vfSelectedFaces[i]->DrawWire();
+			(*fIt)->DrawWire();
 		}
 		EndDrawSelection();
 		return;

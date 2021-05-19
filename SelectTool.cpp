@@ -31,8 +31,8 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 
 	switch (uMsg)
 	{
-	case WM_COMMAND:
-		return InputCommand(wParam);
+	//case WM_COMMAND:
+	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
 		if (!(wParam & MK_SHIFT)) return false;
 		hot = true;
@@ -82,8 +82,8 @@ bool SelectTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wn
 
 	switch (uMsg)
 	{
-	case WM_COMMAND:
-		return InputCommand(wParam);
+	//case WM_COMMAND:
+	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
 		if (!(wParam & MK_SHIFT)) return false;
 		SetCapture(vWnd.w_hwnd);
@@ -132,8 +132,8 @@ bool SelectTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndV
 
 	switch (uMsg)
 	{
-	case WM_COMMAND:
-		return InputCommand(wParam);
+	//case WM_COMMAND:
+	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
 		if (!(wParam & MK_SHIFT)) return false;
 		hot = true;

@@ -40,10 +40,25 @@ void TextureView::MouseDown(int x, int y, int buttons)
 	cy = height - 1 - y;
 
 	// lbutton = select texture
-	if (buttons == MK_LBUTTON)
+	if (buttons == MK_LBUTTON || buttons == MK_MBUTTON)
 	{
-		SelectTexture(cx, cy);
-		return;
+	//	SelectTexture(cx, cy);
+	//	return;
+
+		TexDef texdef;
+		Texture* tw;
+
+		tw = TexAtPos(cx, cy);
+		if (tw)
+		{
+			texdef.Set(tw);
+			ChooseTexture(&texdef);
+			if (buttons == MK_MBUTTON)
+				Surf_SetTexdef(texdef, SFI_ALL - SFI_NAME);
+			else
+				Surf_SetTexdef(texdef, 0);
+			return;
+		}
 	}
 }
 
@@ -358,7 +373,7 @@ void TextureView::UpdateStatus(TexDef* texdef)
 TextureView::ChooseTexture
 ============
 */
-void TextureView::ChooseTexture(TexDef *texdef, bool bSetSelection)
+void TextureView::ChooseTexture(TexDef *texdef)
 {
 	//int			x, y;
 	//qtexture_t *q;
@@ -372,12 +387,6 @@ void TextureView::ChooseTexture(TexDef *texdef, bool bSetSelection)
 	g_qeglobals.d_workTexDef = *texdef;
 
 	Sys_UpdateWindows(W_TEXTURE);
-	//	sprintf(sz, "Selected texture: %s\n", texdef->name);
-	//	Sys_Status(sz, 0);
-	// sikk---> Multiple Face Selection
-	// Check if we want to set current selection's texture
-	if (bSetSelection)
-		Surf_SetTexdef(texdef, 0);
 
 	// scroll origin so the texture is completely on screen
 	for (int i = 0; i < count; i++)
@@ -413,27 +422,27 @@ TextureView::SelectTexture
 By mouse click
 ==============
 */
+/*
 void TextureView::SelectTexture(int x, int y)
 {
-	TexDef	texdef;
-	Texture*	tw;
+	TexDef texdef;
+	Texture* tw;
 
 	tw = TexAtPos(x, y);
 	if (tw)
 	{
-		memset(&texdef, 0, sizeof(texdef));
 		texdef.scale[0] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 		texdef.scale[1] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 
-		//strcpy(texdef.name, tw->name);
 		texdef.Set(tw);
-		ChooseTexture(&texdef, true);
+		ChooseTexture(&texdef);
+		Surf_SetTexdef(texdef, 0);
 		return;
 	}
 
 	Sys_Printf("WARNING: Did not select a texture.\n");
 }
-
+*/
 
 
 /*

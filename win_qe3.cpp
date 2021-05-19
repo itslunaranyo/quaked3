@@ -138,6 +138,8 @@ void Sys_ForceUpdateWindows(int bits)
 
 	if (g_nUpdateBits & W_TITLE)
 		QE_UpdateTitle();
+	if (g_nUpdateBits & W_SURF)
+		SurfWnd_UpdateUI();
 
 	g_nUpdateBits = 0;
 }

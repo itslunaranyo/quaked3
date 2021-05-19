@@ -38,8 +38,8 @@ public:
 	void	SetScale(float inscale);
 	void	Scroll(int dist, bool fast);
 	Texture* TexAtPos(int x, int y);
-	void	SelectTexture(int x, int y);
-	void	ChooseTexture(TexDef *texdef, bool bSetSelection);
+	//void	SelectTexture(int x, int y);
+	void	ChooseTexture(TexDef *texdef);
 	void	SortTextures();
 	void	UpdateStatus(TexDef* texdef);
 

@@ -5,10 +5,11 @@
 #include "qe3.h"
 
 Brush	g_brSelectedBrushes;	// highlighted
-Face	*g_vfSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
-int		g_nSelFaceCount;
+//Face	*g_vfSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
+//int	g_nSelFaceCount;
 bool	g_bSelectionChanged;
 
+std::vector<Face*> Selection::faces;
 
 void Selection::Changed() { g_bSelectionChanged = true;  }
 
@@ -48,8 +49,8 @@ void Selection::HandleChange()
 		(*tIt)->SelectionChanged();
 	}
 
-	SurfWnd_UpdateUI();
-	Sys_UpdateWindows(W_SCENE|W_ENTITY);
+	//SurfWnd_UpdateUI();
+	Sys_UpdateWindows(W_SCENE|W_ENTITY|W_SURF);
 	g_bSelectionChanged = false;
 }
 
@@ -62,13 +63,13 @@ bool Selection::HasBrushes()
 {
 	return (g_brSelectedBrushes.next && (g_brSelectedBrushes.next != &g_brSelectedBrushes));
 }
-int Selection::FaceCount()
+int Selection::NumFaces()
 {
-	return g_nSelFaceCount;
+	return faces.size();
 }
 bool Selection::IsEmpty()
 {
-	return !( HasBrushes() || FaceCount() );
+	return !( HasBrushes() || faces.size() );
 }
 bool Selection::OnlyPointEntities()
 {
@@ -83,10 +84,6 @@ int Selection::NumBrushes()
 	int i = 0;
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next) i++;
 	return i;
-}
-int Selection::NumFaces()
-{
-	return g_nSelFaceCount;
 }
 
 /*
@@ -203,10 +200,11 @@ Selection::DeselectAllFaces
 */
 bool Selection::DeselectAllFaces()
 {
-	if (!g_nSelFaceCount) return false;
+	if (faces.empty()) return false;
 
-	g_vfSelectedFaces[0] = NULL;
-	g_nSelFaceCount = 0;
+	faces.clear();
+	//g_vfSelectedFaces[0] = NULL;
+	//g_nSelFaceCount = 0;
 	g_qeglobals.d_selSelectMode = sel_brush;
 
 	Selection::Changed();
@@ -220,11 +218,12 @@ Selection::IsFaceSelected
 */
 bool Selection::IsFaceSelected (Face *face)
 {
-	for (int i = 0; i < g_nSelFaceCount; i++)
-		if (face == g_vfSelectedFaces[i])
-			return true;
+	//for (int i = 0; i < g_nSelFaceCount; i++)
+	//	if (face == g_vfSelectedFaces[i])
+	//		return true;
+	//return false;
 
-	return false;
+	return (std::find(faces.begin(), faces.end(), face) != faces.end());
 }
 
 
@@ -238,8 +237,9 @@ void Selection::SelectFace(Face* f)
 	assert(!IsFaceSelected(f));
 	if (!f->face_winding)
 		return;
-	g_vfSelectedFaces[g_nSelFaceCount++] = f;
-	g_vfSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
+	//g_vfSelectedFaces[g_nSelFaceCount++] = f;
+	//g_vfSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
+	faces.push_back(f);
 
 	Selection::Changed();
 }
@@ -253,6 +253,16 @@ returns true or false if face could be deselected or not
 */
 bool Selection::DeselectFace(Face* f)
 {
+	std::vector<Face*>::iterator fIdx;
+	fIdx = std::find(faces.begin(), faces.end(), f);
+	if (fIdx == faces.end())
+		return false;
+
+	faces.erase(fIdx);
+	Selection::Changed();
+	return true;
+
+	/*
 	for (int i = 0; i < g_nSelFaceCount; i++)
 	{
 		if (f == g_vfSelectedFaces[i])
@@ -270,6 +280,7 @@ bool Selection::DeselectFace(Face* f)
 		}
 	}
 	return false;
+	*/
 }
 
 /*
@@ -282,11 +293,18 @@ int Selection::NumBrushFacesSelected(Brush* b)
 	int sum;
 	sum = 0;
 
+	for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
+	{
+		if ((*fIt)->owner == b)
+			sum++;
+	}
+	/*
 	for (int i = 0; i < g_nSelFaceCount; i++)
 	{
 		if (g_vfSelectedFaces[i]->owner == b)
 			sum++;
 	}
+	*/
 	return sum;
 }
 
@@ -299,16 +317,16 @@ void Selection::FacesToBrushes(bool partial)
 {
 	Brush *b;
 
-	if (!FaceCount())
+	if (faces.empty())
 		return;
 
-	b = NULL;
-	for (int i = 0; i < FaceCount(); i++)
+	b = nullptr;
+	for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
 	{
-		if (b == g_vfSelectedFaces[i]->owner)
+		if ((*fIt)->owner == b)
 			continue;
 
-		b = g_vfSelectedFaces[i]->owner;
+		b = (*fIt)->owner;
 		if (partial || NumBrushFacesSelected(b) == b->NumFaces())
 		{
 			SelectBrushSorted(b);
@@ -494,7 +512,7 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_SELECTED) return 0;
 			out |= SF_UNSELECTED;
 			SelectFace(t.face);
-			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, false);
+			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
 		}
 	}
 	else
@@ -821,8 +839,8 @@ void Selection::MatchingTextures()
 	TexDef	*texdef;
 	Texture	*txfind;
 
-	if (g_nSelFaceCount)
-		texdef = &g_vfSelectedFaces[0]->texdef;
+	if (!faces.empty())
+		texdef = &(*faces.begin())->texdef;
 	else
 		texdef = &g_qeglobals.d_workTexDef;
 

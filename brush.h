@@ -62,7 +62,7 @@ public:
 
 	void	CheckTexdef(Face *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 	void	FitTexture(int nHeight, int nWidth);
-	void	SetTexture(TexDef *texdef, int nSkipFlags);
+	void	SetTexture(TexDef *texdef, unsigned flags);
 	void	RefreshTexdefs();
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
