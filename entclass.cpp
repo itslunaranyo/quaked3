@@ -93,7 +93,7 @@ EntClass *EntClass::InitFromText(char *text)
 	r = sscanf(text, " (%f %f %f)", &e->color[0], &e->color[1], &e->color[2]);
 	if (r != 3)
 	{
-		printf("Error parsing: %s\n", e->name);
+		Sys_Printf("Error parsing: %s\n", e->name);
 		delete e;
 		return nullptr;
 	}
@@ -106,7 +106,7 @@ EntClass *EntClass::InitFromText(char *text)
 	{
 		if (!*text)
 		{
-			printf("Error parsing: %s\n", e->name);
+			Sys_Printf("Error parsing: %s\n", e->name);
 			delete e;
 			return nullptr;
 		}
@@ -125,7 +125,7 @@ EntClass *EntClass::InitFromText(char *text)
 			&e->maxs[0], &e->maxs[1], &e->maxs[2]);
 		if (r != 6)
 		{
-			printf("Error parsing: %s\n", e->name);
+			Sys_Printf("Error parsing: %s\n", e->name);
 			delete e;
 			return nullptr;
 		}
@@ -136,7 +136,7 @@ EntClass *EntClass::InitFromText(char *text)
 			{
 				if (!*text)
 				{
-					printf("Error parsing: %s\n", e->name);
+					Sys_Printf("Error parsing: %s\n", e->name);
 					delete e;
 					return nullptr;
 				}
@@ -373,7 +373,10 @@ void EntClass::InitForSourceDirectory(const char *path)
 
 	worldspawn = ForName("worldspawn", true, true);
 	if (!worldspawn)
-		Error("No worldspawn definition found in source!\n");
+	{
+		Sys_Printf("WARNING: No worldspawn definition found in source! Creating a default worldspawn ...\n");
+		worldspawn = EntClass::InitFromText("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
+	}
 
 	badclass = EntClass::InitFromText("/*QUAKED UNKNOWN_CLASS (0 0.5 0) ?");
 }

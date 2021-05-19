@@ -96,7 +96,7 @@ typedef struct
 			bShow_CameraGrid,	// sikk - Show Camera Grid
 			bShow_Coordinates,
 			bShow_LightRadius,	// sikk - Show Light Radius
-			bShow_MapBoundry,	// sikk - Show Map Boundry Box
+			bShow_MapBoundary,	// sikk - Show Map Boundary Box
 			bShow_Names,
 			bShow_SizeInfo,
 			bShow_Viewname,		// sikk - Show View Name

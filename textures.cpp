@@ -43,6 +43,8 @@ Textures::Init
 */
 void Textures::Init()
 {
+	Sys_Printf("Initializing textures\n");
+
 	// load palette
 	texpal.LoadFromFile("palette.lmp");	// TODO: specify name in project
 

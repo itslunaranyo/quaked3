@@ -612,11 +612,12 @@ bool CmdGeoMod::Polygon::Resolve()
 			}
 		}
 		else break;	// polygon solved, we're done
-		i++;
 	}
 
+#ifdef _DEBUG
 	if (i == (int)mesh->polies.size())
 		return false;	// we looped too many times, something went wrong
+#endif
 
 	// make all our nice new totally valid faces
 	Face *f;

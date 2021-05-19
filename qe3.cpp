@@ -100,37 +100,45 @@ QE_InitProject
 void QE_InitProject()
 {
 	char	szProject[_MAX_PATH];	// sikk - Load Last Project
+	szProject[0] = 0;
+	Sys_Printf("Initializing project settings ...\n");
 
-	// sikk - If 'Load Last Project' is checked, load that file,
-	// else load default file
-	if (g_qeglobals.d_savedinfo.bLoadLastProject)
+	if (g_pszArgV[1])
 	{
+		// the project file can be specified on the command line (must be first parameter)
+		strcpy(szProject, g_pszArgV[1]);
+		Sys_Printf("Loading project from command line: %s\n", szProject);
+	}
+	else if (g_qeglobals.d_savedinfo.bLoadLastProject)
+	{
+		// if 'Load Last Project' is checked, load that file
 		if (strlen(g_qeglobals.d_savedinfo.szLastProject) > 0)
+		{
 			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
+			Sys_Printf("Loading last project: %s\n", szProject);
+		}
 		else
 		{
-			strcpy(g_qeglobals.d_savedinfo.szLastProject, "scripts/quake.qe3");
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
+			Sys_Printf("'Load Last Project' specified, but no last project found!\n");
+			strcpy(szProject, "scripts/quake.qe3");
+			strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
+			Sys_Printf("Loading default project: %s\n", szProject);
 		}
 	}
 	else
 	{
+		// default
 		strcpy(szProject, "scripts/quake.qe3");
 		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
+		Sys_Printf("Loading default project: %s\n", szProject);
 	}
 
-	// the project file can be specified on the command line, (must be first parameter)
-	// or implicitly found in the scripts directory
-	if (g_pszArgV[1])
+	if (!QE_LoadProject(szProject))
 	{
-		if (!QE_LoadProject(g_pszArgV[1]))
-			Error("Could not load %s project file.", g_pszArgV[1]);
-	}
-	else if (!QE_LoadProject(szProject))
-	{
-		DoProject(true);	// sikk - Manually create project file if none is found
-		if (!QE_LoadProject("scripts/quake.qe3"))
-			Error("Could not load scripts/quake.qe3 project file.");
+		//DoProject(true);	// sikk - Manually create project file if none is found
+		ProjectDialog();	// lunaran - i know it's down there somewhere just let me have a look
+		//if (!QE_LoadProject("scripts/quake.qe3"))
+		//	Error("Could not load scripts/quake.qe3 project file.");
 	}
 }
 
@@ -142,6 +150,8 @@ QE_Init
 void QE_Init ()
 {
 	int i;	// sikk - Save Rebar Band Info
+
+	Sys_Printf("Initializing QuakeEd\n");
 
 	QE_InitProject();
 
@@ -156,6 +166,7 @@ void QE_Init ()
 	g_qeglobals.d_savedinfo.nExclude |= BFL_HIDDEN;	// hidden things are always filtered
 
 	// create tools - creation order determines which tools get first chance to handle inputs
+	Sys_Printf("Creating base tools\n");
 	new SelectTool();
 	new TextureTool();
 	new ManipTool();
@@ -843,7 +854,7 @@ void QE_UpdateCommandUI ()
 	CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID,	(g_qeglobals.d_savedinfo.bShow_CameraGrid ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES,	(g_qeglobals.d_savedinfo.bShow_Coordinates ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS,	(g_qeglobals.d_savedinfo.bShow_LightRadius ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDRY,	(g_qeglobals.d_savedinfo.bShow_MapBoundry ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY,	(g_qeglobals.d_savedinfo.bShow_MapBoundary ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES,			(g_qeglobals.d_savedinfo.bShow_Names ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO,		(g_qeglobals.d_savedinfo.bShow_SizeInfo ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME,		(g_qeglobals.d_savedinfo.bShow_Viewname ? MF_CHECKED : MF_UNCHECKED));

@@ -922,7 +922,7 @@ void CameraView::Draw ()
 		break;
 	}
 
-// sikk---> Camera Grid/Axis/Map Boundry Box
+// sikk---> Camera Grid/Axis/Map Boundary Box
 	DrawGrid();
 
 	// TODO: Display Axis in lower left corner of window and rotate with camera orientation (e.g. blender)
@@ -948,9 +948,9 @@ void CameraView::Draw ()
 		glEnd();
 	}
 
-	if (g_qeglobals.d_savedinfo.bShow_MapBoundry)
+	if (g_qeglobals.d_savedinfo.bShow_MapBoundary)
 	{
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY].r);
+		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY].r);
 		glBegin(GL_LINE_LOOP);
 		glVertex3f(-bound, -bound, -bound);
 		glVertex3f(bound, -bound, -bound);

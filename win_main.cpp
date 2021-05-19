@@ -243,9 +243,9 @@ void DoTheme (vec3 v[])
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][1] = v[7][1];
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][2] = v[7][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY][0] = v[8][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY][1] = v[8][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY][2] = v[8][2];
+	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][0] = v[8][0];
+	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][1] = v[8][1];
+	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][2] = v[8][2];
 
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][0] = v[9][0];
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][1] = v[9][1];
@@ -1563,8 +1563,8 @@ LONG WINAPI CommandHandler (
 			g_qeglobals.d_savedinfo.bShow_LightRadius ^= true;
 			Sys_UpdateWindows(W_XY);
 			break;
-		case ID_VIEW_SHOWMAPBOUNDRY:	// sikk - Show Map Boundry Box
-			g_qeglobals.d_savedinfo.bShow_MapBoundry ^= true;
+		case ID_VIEW_SHOWMAPBOUNDARY:	// sikk - Show Map Boundary Box
+			g_qeglobals.d_savedinfo.bShow_MapBoundary ^= true;
 			Sys_UpdateWindows(W_CAMERA);
 			break;
 		case ID_VIEW_SHOWNAMES:
@@ -2065,7 +2065,7 @@ LONG WINAPI CommandHandler (
 			break;
 // <---sikk
 //								{COLOR_BRUSHES},	{COLOR_CAMERABACK},	   {COLOR_CAMERAGRID}, {COLOR_GRIDBACK},   {COLOR_GRIDBLOCK},
-//								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDRY}, {COLOR_VIEWNAME}
+//								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDARY}, {COLOR_VIEWNAME}
 		case ID_THEMES_BLUEGRAY:
 			{
 				vec3 v[] = {	{0.75f,0.75f,0.75f},  {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, {0.25f, 0.25f, 0.25f}, {0.4f, 0.4f, 0.4f},
@@ -2114,8 +2114,8 @@ LONG WINAPI CommandHandler (
 			DoColor(COLOR_GRIDTEXT);
 			Sys_UpdateWindows(W_XY | W_Z);
 			break;
-		case ID_COLORS_MAPBOUNDRY:
-			DoColor(COLOR_MAPBOUNDRY);
+		case ID_COLORS_MAPBOUNDARY:
+			DoColor(COLOR_MAPBOUNDARY);
 			Sys_UpdateWindows(W_CAMERA);
 			break;
 		case ID_COLORS_SELECTEDBRUSH:
@@ -2336,7 +2336,7 @@ LONG WINAPI WMain_WndProc (
 		for (i = 0; i < 11; i++)
 		{
 			nBandIndex = SendMessage(g_qeglobals.d_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-			Sys_Printf("Band %d\n", nBandIndex);
+			//Sys_Printf("Band %d\n", nBandIndex);
 			g_qeglobals.d_savedinfo.rbiSettings[i].cbSize = sizeof(REBARBANDINFO);
 			g_qeglobals.d_savedinfo.rbiSettings[i].fMask = RBBIM_CHILDSIZE | RBBIM_STYLE;
 			SendMessage(g_qeglobals.d_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);
@@ -2357,7 +2357,7 @@ LONG WINAPI WMain_WndProc (
 		*/
 		// <---sikk
 
-				// FIXME: is this right?
+		// FIXME: is this right?
 		strcpy(g_qeglobals.d_savedinfo.szLastMap, g_map.name); // sikk - save current map name for Load Last Map option
 		SaveRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, sizeof(g_qeglobals.d_savedinfo));
 
@@ -2511,7 +2511,7 @@ void WMain_Create ()
 		g_qeglobals.d_savedinfo.bShow_CameraGrid	= true;		// sikk - Show Camera Grid
 		g_qeglobals.d_savedinfo.bShow_Coordinates	= true;
 		g_qeglobals.d_savedinfo.bShow_LightRadius	= false;	// sikk - Show Light Radius
-		g_qeglobals.d_savedinfo.bShow_MapBoundry	= true;		// sikk - Show Map Boundry Box
+		g_qeglobals.d_savedinfo.bShow_MapBoundary	= true;		// sikk - Show Map Boundary Box
 		g_qeglobals.d_savedinfo.bShow_Names			= true;
 		g_qeglobals.d_savedinfo.bShow_SizeInfo		= true;
 		g_qeglobals.d_savedinfo.bShow_Viewname		= true;		// sikk - Show View Name
@@ -2525,6 +2525,7 @@ void WMain_Create ()
 		g_qeglobals.d_savedinfo.nCameraSpeed		= 1024;		// sikk - Camera Speed Trackbar
 // sikk---> Preferences Dialog
 		g_qeglobals.d_savedinfo.bAutosave			= true;
+		g_qeglobals.d_savedinfo.bLogConsole			= true;
 		g_qeglobals.d_savedinfo.bRadiantLights		= true;
 		g_qeglobals.d_savedinfo.bVFEModesExclusive	= true;
 		g_qeglobals.d_savedinfo.nAutosave			= 5;
@@ -2543,7 +2544,7 @@ void WMain_Create ()
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR][i]	= 0.5f;
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR][i]	= 0.75f;
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][i]		= 0.0f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY][i]	= 0.0f;
+			g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][i]	= 0.0f;
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][i]	= 0.25f;
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT][i]	= 0.0f;
 		}
@@ -2583,8 +2584,8 @@ void WMain_Create ()
 			CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, MF_UNCHECKED);
 		if (g_qeglobals.d_savedinfo.bShow_LightRadius)	// sikk - Show Light Radius
 			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, MF_CHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_MapBoundry)	// sikk - Show Map Boundry
-			CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDRY, MF_UNCHECKED);
+		if (!g_qeglobals.d_savedinfo.bShow_MapBoundary)	// sikk - Show Map Boundary
+			CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, MF_UNCHECKED);
 		if (!g_qeglobals.d_savedinfo.bShow_Names)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, MF_UNCHECKED);
 		if (!g_qeglobals.d_savedinfo.bShow_SizeInfo)
@@ -2692,13 +2693,13 @@ int WINAPI WinMain (
     time_t	lTime;
 
 	g_qeglobals.d_hInstance = hInstance;
-
+	/*
 // sikk - Quickly made Splash Screen
 #ifndef _DEBUG
 	HWND	hwndSplash;
 	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
 #endif
-
+*/
 	InitCommonControls ();
 
 	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
@@ -2714,8 +2715,14 @@ int WINAPI WinMain (
 
 	WMain_Create();
 
+#ifndef _DEBUG
+	try
+	{
+#endif
+
 	Sys_LogFile();
 
+	Sys_Printf("Creating windows\n");
 	g_qeglobals.d_wndConsole = new WndConsole();
 	g_qeglobals.d_wndConsole->Initialize();
 
@@ -2760,13 +2767,30 @@ int WINAPI WinMain (
 	if (g_qeglobals.d_savedinfo.bLoadLastMap && strcmp(g_qeglobals.d_savedinfo.szLastMap, "unnamed.map"))
 		g_map.LoadFromFile(g_qeglobals.d_savedinfo.szLastMap);
 
+#ifndef _DEBUG
+	}
+	catch (std::exception &ex)
+	{
+		//DestroyWindow(hwndSplash);
+		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Initialization Exception", MB_OK | MB_ICONEXCLAMATION);
+
+		// close logging if necessary
+		g_qeglobals.d_savedinfo.bLogConsole = false;
+		Sys_LogFile();
+
+		exit(1);
+	}
+#endif
+
 	while (!g_bHaveQuit)
 	{
 		Sys_EndWait();	// remove wait cursor if active
+		
 #ifndef _DEBUG
 		try
 		{
 #endif
+
 			Sys_DeltaTime();
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -2791,13 +2815,14 @@ int WINAPI WinMain (
 			Selection::HandleChange();
 
 			Sys_CheckBspProcess();
-
+			/*
 			// sikk---> Quickly made Splash Screen
 #ifndef _DEBUG
 			if (hwndSplash)
 				if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
 					DestroyWindow(hwndSplash);
 #endif
+*/
 			// <---sikk
 
 			// run time dependent behavior
