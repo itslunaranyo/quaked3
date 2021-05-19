@@ -4,6 +4,7 @@
 
 #include "qe3.h"
 
+#pragma warning(disable: 4800)	// 'LRESULT': forcing value to bool 'true' or 'false' (performance warning)
 
 /*
 =====================================================================
@@ -100,7 +101,7 @@ FindBrush
 void FindBrush (int entitynum, int brushnum)
 {
 	int			i;
-	brush_t	   *b;
+	Brush	   *b;
 	entity_t   *e;
 
 	if (entitynum == 0)
@@ -151,7 +152,7 @@ GetSelectionIndex
 */
 void GetSelectionIndex (int *entity, int *brush)
 {
-	brush_t		*b, *b2;
+	Brush		*b, *b2;
 	entity_t	*e;
 
 	*entity = *brush = 0;
@@ -529,16 +530,16 @@ BOOL CALLBACK SidesDlgProc (
 			switch (g_nType)
 			{
 			case (1):
-				Brush_MakeSidedCone(atoi(sz));
+				Brush::MakeSidedCone(atoi(sz));
 				break;
 			case (2):
-				Brush_MakeSidedSphere(atoi(sz));
+				Brush::MakeSidedSphere(atoi(sz));
 				break;
 //			case (3):
 //				Brush_MakeSidedTorus(atoi(sz));
 //				break;
 			default:
-				Brush_MakeSided(atoi(sz));
+				Brush::MakeSided(atoi(sz));
 			}
 // <---sikk
 // sikk--->	For more precision
@@ -1076,8 +1077,8 @@ BOOL CALLBACK MapInfoDlgProc (
 				nSkyBrushes = 0,
 				nWaterBrushes = 0,
 				nClipBrushes = 0;
-	brush_t    *pBrush;
-	face_t	   *pFace;
+	Brush    *pBrush;
+	Face	   *pFace;
 	entity_t   *pEntity;
 	eclass_t   *pEClass;
 	char		sz[256];
@@ -1311,8 +1312,8 @@ void OnSelect (HWND hTree)
 	}
 
 	// Center on selected entity and update the windows
-	XYZ_PositionAllViews();
-	Cam_PositionView();
+	XYZView::PositionAllViews();
+	g_qeglobals.d_camera.PositionCenter();
 	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);

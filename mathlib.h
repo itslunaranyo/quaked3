@@ -60,4 +60,7 @@ void	AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs);
 void	AngleVectors (vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 void	VectorToAngles (vec3_t vec, vec3_t angles);
 
+bool	Point_Equal(vec3_t p1, vec3_t p2, float epsilon); // returns true if the points are equal
+
+
 #endif

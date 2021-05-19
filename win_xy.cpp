@@ -32,7 +32,7 @@ vec3_t	g_v3Origin;
 int		g_dXYZcurrent;	// ugh come on
 
 
-xyz_t* XYZWnd_WinFromHandle(HWND xyzwin)
+XYZView* XYZWnd_WinFromHandle(HWND xyzwin)
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -43,7 +43,7 @@ xyz_t* XYZWnd_WinFromHandle(HWND xyzwin)
 		return &g_qeglobals.d_xyz[g_dXYZcurrent];
 	return NULL;
 }
-HWND XYZWnd_HandleFromWin(xyz_t* xyz)
+HWND XYZWnd_HandleFromWin(XYZView* xyz)
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -60,7 +60,7 @@ XYZWnd_SetViewAxis
 */
 void XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis)
 {
-	xyz_t* xyz = XYZWnd_WinFromHandle(xyzwin);
+	XYZView* xyz = XYZWnd_WinFromHandle(xyzwin);
 	xyz->dViewType = viewAxis;
 
 	if (xyz->dViewType == YZ)
@@ -70,7 +70,7 @@ void XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis)
 	else
 		SetWindowText(xyzwin, "XY View: Top");
 
-	XYZ_PositionView(xyz);
+	xyz->PositionView();
 	Sys_UpdateWindows(W_XY);
 }
 
@@ -81,7 +81,7 @@ XYZWnd_CycleViewAxis
 */
 void XYZWnd_CycleViewAxis(HWND xyzwin)
 {
-	xyz_t* xyz = XYZWnd_WinFromHandle(xyzwin);
+	XYZView* xyz = XYZWnd_WinFromHandle(xyzwin);
 	XYZWnd_SetViewAxis(xyzwin, (xyz->dViewType + 1) % 3);
 }
 
@@ -93,7 +93,7 @@ GetSelectionInfo
 int GetSelectionInfo ()
 {
 	int		 retval = 0;
-	brush_t	*b;
+	Brush	*b;
 
 	// lunaran TODO: what the fuck
 	for(b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -114,7 +114,7 @@ int GetSelectionInfo ()
 XYZWnd_DoPopupMenu
 ============
 */
-void XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y)
+void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 {
 	HMENU	hMenu;
 	POINT	point;
@@ -197,7 +197,7 @@ void XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y)
 		DoCreateEntity(false, true, true, g_v3Origin);
 		break;
 	case ID_MENU_CREATEPOINTENTITY:
-		XYZ_ToGridPoint(xyz, x, y, g_v3Origin);
+		xyz->ToGridPoint(x, y, g_v3Origin);
 		g_v3Origin[xyz->dViewType] = g_qeglobals.d_v3WorkMin[xyz->dViewType];
 
 		DoCreateEntity(true, false, false, g_v3Origin);
@@ -227,7 +227,7 @@ LONG WINAPI XYZWnd_Proc (
     PAINTSTRUCT	ps;
 
     GetClientRect(hWnd, &rect);
-	xyz_t* xyz = XYZWnd_WinFromHandle(hWnd);
+	XYZView* xyz = XYZWnd_WinFromHandle(hWnd);
 
     switch (uMsg)
     {
@@ -260,7 +260,7 @@ LONG WINAPI XYZWnd_Proc (
 			Error("wglMakeCurrent: Failed.");
 
 		QE_CheckOpenGLForErrors();
-		XYZ_Draw(xyz);
+		xyz->Draw();
 		QE_CheckOpenGLForErrors();
 
 		SwapBuffers(xyz->hdc);
@@ -282,7 +282,7 @@ LONG WINAPI XYZWnd_Proc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XYZ_MouseDown(xyz, xPos, yPos, fwKeys);
+		xyz->MouseDown(xPos, yPos, fwKeys);
 // sikk---> Context Menu
 		if(uMsg == WM_RBUTTONDOWN)
 		{
@@ -300,7 +300,7 @@ LONG WINAPI XYZWnd_Proc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XYZ_MouseUp(xyz, xPos, yPos, fwKeys);
+		xyz->MouseUp(xPos, yPos, fwKeys);
 		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 // sikk---> Context Menu
@@ -323,7 +323,7 @@ LONG WINAPI XYZWnd_Proc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XYZ_MouseMoved(xyz, xPos, yPos, fwKeys);
+		xyz->MouseMoved(xPos, yPos, fwKeys);
 // sikk---> Context Menu
 		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
 			g_bMoved = true;

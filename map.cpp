@@ -10,19 +10,19 @@ BOOL		g_bModified;		// for quit confirmation (0 = clean, 1 = unsaved,
 
 char		g_szCurrentMap[MAX_PATH];
 
-brush_t		g_brActiveBrushes;		// brushes currently being displayed
-brush_t		g_brFilteredBrushes;	// brushes that have been filtered or regioned
+Brush		g_brActiveBrushes;		// brushes currently being displayed
+Brush		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
 entity_t	g_entEntities;			// head/tail of doubly linked list
 entity_t   *g_peWorldEntity;
 
-brush_t		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
+Brush		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
 entity_t	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 
 
 // Cross map selection saving
 // this could fuck up if you have only part of a complex entity selected...
-brush_t		g_brBetweenBrushes;
+Brush		g_brBetweenBrushes;
 entity_t	g_entBetweenEntities;
 
 int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
@@ -35,7 +35,7 @@ Map_SaveBetween
 */
 void Map_SaveBetween ()
 {
-	brush_t		*b;
+	Brush		*b;
 	entity_t	*e, *e2;
 
 	g_brBetweenBrushes.next = g_brSelectedBrushes.next;
@@ -77,7 +77,7 @@ Map_RestoreBetween
 void Map_RestoreBetween ()
 {
 	entity_t	*head, *tail;
-	brush_t		*b;
+	Brush		*b;
 
 	if (!g_brBetweenBrushes.next)
 		return;
@@ -123,24 +123,28 @@ Map_BuildBrushData
 */
 void Map_BuildBrushData ()
 {
-	brush_t	*b, *next;
+	Brush	*b, *next;
+	double time;
 
 	if (g_brActiveBrushes.next == NULL)
 		return;
 
 	Sys_BeginWait();	// this could take a while
+	time = Sys_DoubleTime();
 
 	for (b = g_brActiveBrushes.next; b != NULL && b != &g_brActiveBrushes; b = next)
 	{
 		next = b->next;
-		Brush_Build(b);
+		b->Build();
 		if (!b->brush_faces)
 		{
-			Brush_Free(b);
+			delete b;
 			Sys_Printf("MSG: Removed degenerate brush.\n");
 		}
 	}
 
+	time = Sys_DoubleTime() - time;
+	Sys_Printf("Brush data built in %f seconds\n", time);
 	Sys_EndWait();
 }
 
@@ -187,16 +191,18 @@ void Map_Free ()
 	else
 	{
 		while (g_brActiveBrushes.next != &g_brActiveBrushes)
-			Brush_Free(g_brActiveBrushes.next);
+			delete g_brActiveBrushes.next;
 		while (g_brSelectedBrushes.next != &g_brSelectedBrushes)
-			Brush_Free(g_brSelectedBrushes.next);
+			delete g_brSelectedBrushes.next;
 		while (g_brFilteredBrushes.next != &g_brFilteredBrushes)
-			Brush_Free(g_brFilteredBrushes.next);
+			delete g_brFilteredBrushes.next;
 		while (g_entEntities.next != &g_entEntities)
 			Entity_Free(g_entEntities.next);
 	}
 
 	g_peWorldEntity = NULL;
+
+	Winding::Clear();
 }
 
 /*
@@ -479,7 +485,7 @@ void Map_New ()
 bool		g_bRegionActive;
 vec3_t		g_v3RegionMins = {-4096, -4096, -4096};
 vec3_t		g_v3RegionMaxs = {4096, 4096, 4096};
-brush_t	   *g_pbrRegionSides[4];
+Brush	   *g_pbrRegionSides[4];
 
 /*
 ===========
@@ -506,27 +512,27 @@ void Map_AddRegionBrushes ()
 	maxs[1] = g_v3RegionMaxs[1] + 16;
 	mins[2] = -2048;
 	maxs[2] = 2048;
-	g_pbrRegionSides[0] = Brush_Create(mins, maxs, &texdef);
+	g_pbrRegionSides[0] = Brush::Create(mins, maxs, &texdef);
 
 	mins[0] = g_v3RegionMaxs[0] - 1;
 	maxs[0] = g_v3RegionMaxs[0] + 16;
-	g_pbrRegionSides[1] = Brush_Create(mins, maxs, &texdef);
+	g_pbrRegionSides[1] = Brush::Create(mins, maxs, &texdef);
 
 	mins[0] = g_v3RegionMins[0] - 16;
 	maxs[0] = g_v3RegionMaxs[0] + 16;
 	mins[1] = g_v3RegionMins[1] - 16;
 	maxs[1] = g_v3RegionMins[1] + 1;
-	g_pbrRegionSides[2] = Brush_Create(mins, maxs, &texdef);
+	g_pbrRegionSides[2] = Brush::Create(mins, maxs, &texdef);
 
 	mins[1] = g_v3RegionMaxs[1] - 1;
 	maxs[1] = g_v3RegionMaxs[1] + 16;
-	g_pbrRegionSides[3] = Brush_Create(mins, maxs, &texdef);
+	g_pbrRegionSides[3] = Brush::Create(mins, maxs, &texdef);
 
 	for (i = 0; i < 4; i++)
 	{
-		Brush_AddToList(g_pbrRegionSides[i], &g_brSelectedBrushes);
+		g_pbrRegionSides[i]->AddToList(&g_brSelectedBrushes);
 		Entity_LinkBrush(g_peWorldEntity, g_pbrRegionSides[i]);
-		Brush_Build(g_pbrRegionSides[i]);
+		g_pbrRegionSides[i]->Build();
 	}
 }
 
@@ -542,7 +548,7 @@ void Map_RemoveRegionBrushes ()
 	if (!g_bRegionActive)
 		return;
 	for (i = 0; i < 4; i++)
-		Brush_Free(g_pbrRegionSides[i]);
+		delete g_pbrRegionSides[i];
 }
 
 /*
@@ -550,7 +556,7 @@ void Map_RemoveRegionBrushes ()
 Map_IsBrushFiltered
 ==================
 */
-bool Map_IsBrushFiltered (brush_t *b)
+bool Map_IsBrushFiltered (Brush *b)
 {
 	int	i;
 
@@ -574,7 +580,7 @@ Other filtering options may still be on
 void Map_RegionOff ()
 {
 	int			i;
-	brush_t	   *b, *next;
+	Brush	   *b, *next;
 
 	g_bRegionActive = false;
 	for (i = 0; i < 3; i++)
@@ -588,8 +594,8 @@ void Map_RegionOff ()
 		next = b->next;
 		if (Map_IsBrushFiltered(b))
 			continue;		// still filtered
-		Brush_RemoveFromList(b);
-		Brush_AddToList(b, &g_brActiveBrushes);
+		b->RemoveFromList();
+		b->AddToList(&g_brActiveBrushes);
 	}
 
 	Sys_UpdateWindows(W_ALL);
@@ -602,7 +608,7 @@ Map_ApplyRegion
 */
 void Map_ApplyRegion ()
 {
-	brush_t	*b, *next;
+	Brush	*b, *next;
 
 	g_bRegionActive = true;
 	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
@@ -610,8 +616,8 @@ void Map_ApplyRegion ()
 		next = b->next;
 		if (!Map_IsBrushFiltered(b))
 			continue;		// still filtered
-		Brush_RemoveFromList(b);
-		Brush_AddToList(b, &g_brFilteredBrushes);
+		b->RemoveFromList();
+		b->AddToList(&g_brFilteredBrushes);
 	}
 
 	Sys_UpdateWindows(W_ALL);
@@ -738,7 +744,7 @@ Map_RegionTallBrush
 */
 void Map_RegionTallBrush ()
 {
-	brush_t	*b;
+	Brush	*b;
 
 	if (!QE_SingleBrush())
 		return;
@@ -763,7 +769,7 @@ Map_RegionBrush
 */
 void Map_RegionBrush ()
 {
-	brush_t	*b;
+	Brush	*b;
 
 	if (!QE_SingleBrush())
 		return;
@@ -793,8 +799,8 @@ void Map_ImportFile (char *filename, bool bCheck)
 	char	   *buf;
 	char		temp[1024];
 	char	   *tempwad, wadkey[1024];
-	brush_t	   *b = NULL, *bNext;
-	brush_t    *brArray[MAX_MAP_BRUSHES];
+	Brush	   *b = NULL, *bNext;
+	Brush    *brArray[MAX_MAP_BRUSHES];
 	entity_t   *ent;
 	bool		bSnapCheck = false;	// sikk
 
@@ -844,11 +850,11 @@ void Map_ImportFile (char *filename, bool bCheck)
 			while (b && b != &ent->brushes)
 			{
 				bNext = b->onext;
-				Brush_RemoveFromList(b);
-				Brush_AddToList(b, &g_brActiveBrushes);
+				b->RemoveFromList();
+				b->AddToList(&g_brActiveBrushes);
 				Entity_UnlinkBrush(b);
 				Entity_LinkBrush(g_peWorldEntity, b);
-				Brush_Build(b);
+				b->Build();
 				brArray[nCount] = b;
 				nCount++;
 				b = bNext;
@@ -873,7 +879,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 
 	for (i = 0; i < nCount; i++)
 	{
-		Brush_Build(brArray[i]);
+		brArray[i]->Build();
 		Select_HandleBrush(brArray[i], true);
 	}
 

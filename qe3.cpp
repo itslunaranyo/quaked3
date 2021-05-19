@@ -91,10 +91,12 @@ void QE_Init ()
 	** other stuff
 	*/
 	Texture_Init();
-	Cam_Init();
-	for (int i = 0; i < 4;i++)
-		XYZ_Init(&g_qeglobals.d_xyz[i]);
-	Z_Init();
+	//Cam_Init();
+	//for (int i = 0; i < 4;i++)
+	//	XYZ_Init(&g_qeglobals.d_xyz[i]);
+	//Z_Init();
+
+	Map_RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface
 	QE_UpdateCommandUI();
@@ -206,12 +208,12 @@ bool QE_KeyDown (int key)
 		break;
 	case 'A':
 		g_qeglobals.d_camera.angles[0] += SPEED_TURN;
-		Cam_BoundAngles();
+		g_qeglobals.d_camera.BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case 'Z':
 		g_qeglobals.d_camera.angles[0] -= SPEED_TURN;
-		Cam_BoundAngles();
+		g_qeglobals.d_camera.BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
@@ -663,7 +665,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 	static bool	s_didonce;
 	
 //	entity_t	*e;
-	brush_t		*b, *next;
+	Brush		*b, *next;
 	qtexture_t	*q;
 
 	g_nNumBrushes = 0;

@@ -48,7 +48,7 @@ ComputeScale
 using scale[0] and scale[1]
 ===============
 */
-void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, face_t *f)
+void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, Face *f)
 {
 	float px = DotProduct(rex, p);
 	float py = DotProduct(rey, p);
@@ -68,14 +68,14 @@ void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, face_t *f)
 ComputeAbsolute
 ===============
 */
-void ComputeAbsolute(face_t *f, vec3_t p1, vec3_t p2, vec3_t p3)
+void ComputeAbsolute(Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
 {
 	vec3_t	ex, ey, ez;	        // local axis base
 	vec3_t	aux;
 	vec3_t	rex, rey;
 
 	// compute first local axis base
-	TextureAxisFromPlane(&f->plane, ex, ey);
+	f->plane.GetTextureAxis(ex, ey);
 	CrossProduct(ex, ey, ez);
 
 	VectorCopy(ex, aux);
@@ -127,7 +127,7 @@ void Clamp(float *f, int nClamp)
 AbsoluteToLocal
 ===============
 */
-void AbsoluteToLocal(plane_t normal2, face_t *f, vec3_t p1, vec3_t p2, vec3_t p3)
+void AbsoluteToLocal(Plane normal2, Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
 {
 	vec3_t	ex, ey, ez;
 	vec3_t	aux;
@@ -136,7 +136,7 @@ void AbsoluteToLocal(plane_t normal2, face_t *f, vec3_t p1, vec3_t p2, vec3_t p3
 	vec_t	y;
 
 	// computing new local axis base
-	TextureAxisFromPlane(&normal2, ex, ey);
+	normal2.GetTextureAxis(ex, ey);
 	CrossProduct(ex, ey, ez);
 
 	// projecting back on (ex, ey)
@@ -219,8 +219,8 @@ Surf_FindReplace
 */
 void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 {
-	brush_t	*pBrush, *pList;
-	face_t	*pFace;
+	Brush	*pBrush, *pList;
+	Face	*pFace;
 
 	pList = (bSelected) ? &g_brSelectedBrushes : &g_brActiveBrushes;
 	if (!bSelected)
@@ -236,7 +236,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 				strcpy(pFace->texdef.name, pReplace);
 			}
 		}
-		Brush_Build(pBrush);
+		pBrush->Build();
 	}
 	Sys_UpdateWindows(W_CAMERA);
 }
@@ -276,7 +276,7 @@ Surf_SetTexdef
 */
 void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 {
-	brush_t	*b;
+	Brush	*b;
 
 	if (Select_IsEmpty())
 	{
@@ -288,7 +288,7 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 	if (Select_FaceCount())
 	{
 		int i, nBrushCount = 0;
-		brush_t	*pbrArray[MAX_MAP_BRUSHES];
+		Brush	*pbrArray[MAX_MAP_BRUSHES];
 
 		for (i = 0; i < Select_FaceCount(); i++)
 		{
@@ -307,7 +307,7 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 			Undo_AddBrush(pbrArray[i]);	// sikk - Undo/Redo
 
 		for (i = 0; i < Select_FaceCount(); i++)
-			Face_SetTexture(g_pfaceSelectedFaces[i], texdef, nSkipFlags);
+			g_pfaceSelectedFaces[i]->SetTexture(texdef, nSkipFlags);
 
 		for (i = 0; i < nBrushCount; i++)
 			Undo_EndBrush(pbrArray[i]);	// sikk - Undo/Redo
@@ -321,7 +321,7 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 			if (!b->owner->eclass->fixedsize)
 			{
 				Undo_AddBrush(b);	// sikk - Undo/Redo
-				Brush_SetTexture(b, texdef, nSkipFlags);
+				b->SetTexture(texdef, nSkipFlags);
 				Undo_EndBrush(b);	// sikk - Undo/Redo
 			}
 		}
@@ -340,11 +340,11 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 RotateFaceTexture
 ===============
 */
-void RotateFaceTexture(face_t* f, int nAxis, float fDeg, vec3_t vOrigin)
+void RotateFaceTexture(Face* f, int nAxis, float fDeg, vec3_t vOrigin)
 {
 	vec3_t	p1, p2, p3, rota;
 	vec3_t	vNormal;
-	plane_t	normal2;
+	Plane	normal2;
 
 	p1[0] = p1[1] = p1[2] = 0;
 	VectorCopy(p1, p2);
@@ -374,17 +374,17 @@ Surf_RotateForTransform
 */
 void Surf_RotateForTransform(int nAxis, float fDeg, vec3_t vOrigin)
 {
-	brush_t *b;
-	face_t	*f;
+	Brush *b;
+	Face	*f;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
 		for (f = b->brush_faces; f; f = f->next)
 		{
 			RotateFaceTexture(f, nAxis, fDeg, vOrigin);
-			Brush_Build(b);
+			b->Build();
 		}
-		Brush_Build(b);
+		b->Build();
 	}
 }
 
@@ -396,15 +396,15 @@ Surf_FitTexture
 */
 void Surf_FitTexture(float nHeight, float nWidth)
 {
-	brush_t	*b;
+	Brush	*b;
 
 	if (Select_IsEmpty())
 		return;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		Brush_FitTexture(b, nHeight, nWidth);
-		Brush_Build(b);
+		b->FitTexture(nHeight, nWidth);
+		b->Build();
 	}
 
 	// sikk---> Multiple Face Selection
@@ -413,8 +413,8 @@ void Surf_FitTexture(float nHeight, float nWidth)
 		int i;
 		for (i = 0; i < Select_FaceCount(); i++)
 		{
-			Face_FitTexture(g_pfaceSelectedFaces[i], nHeight, nWidth);
-			Brush_Build(g_pfaceSelectedFaces[i]->owner);
+			g_pfaceSelectedFaces[i]->FitTexture(nHeight, nWidth);
+			g_pfaceSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk
@@ -430,8 +430,8 @@ Surf_ShiftTexture
 */
 void Surf_ShiftTexture(int x, int y)
 {
-	brush_t	*b;
-	face_t	*f;
+	Brush	*b;
+	Face	*f;
 
 	if (Select_IsEmpty())
 		return;
@@ -444,7 +444,7 @@ void Surf_ShiftTexture(int x, int y)
 			f->texdef.shift[1] += y;
 		}
 
-		Brush_Build(b);
+		b->Build();
 	}
 	// sikk---> Multiple Face Selection
 	if (Select_FaceCount())
@@ -455,7 +455,7 @@ void Surf_ShiftTexture(int x, int y)
 			g_pfaceSelectedFaces[i]->texdef.shift[0] += x;
 			g_pfaceSelectedFaces[i]->texdef.shift[1] += y;
 		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			Brush_Build(g_pfaceSelectedFaces[i]->owner);
+			g_pfaceSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <--sikk
@@ -470,8 +470,8 @@ Surf_ScaleTexture
 */
 void Surf_ScaleTexture(int x, int y)
 {
-	brush_t	*b;
-	face_t	*f;
+	Brush	*b;
+	Face	*f;
 
 	if (Select_IsEmpty())
 		return;
@@ -484,7 +484,7 @@ void Surf_ScaleTexture(int x, int y)
 			f->texdef.scale[1] += y / 100.0f;
 		}
 
-		Brush_Build(b);
+		b->Build();
 	}
 
 	// sikk---> Multiple Face Selection
@@ -496,7 +496,7 @@ void Surf_ScaleTexture(int x, int y)
 			g_pfaceSelectedFaces[i]->texdef.scale[0] += x / 100.0f;
 			g_pfaceSelectedFaces[i]->texdef.scale[1] += y / 100.0f;
 		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			Brush_Build(g_pfaceSelectedFaces[i]->owner);
+			g_pfaceSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk
@@ -511,8 +511,8 @@ Surf_RotateTexture
 */
 void Surf_RotateTexture(int deg)
 {
-	brush_t	*b;
-	face_t	*f;
+	Brush	*b;
+	Face	*f;
 
 	if (Select_IsEmpty())
 		return;
@@ -528,7 +528,7 @@ void Surf_RotateTexture(int deg)
 				f->texdef.rotate += 360;
 
 		}
-		Brush_Build(b);
+		b->Build();
 	}
 
 	// sikk---> Multiple Face Selection
@@ -543,7 +543,7 @@ void Surf_RotateTexture(int deg)
 			if (g_pfaceSelectedFaces[i]->texdef.rotate <= -180)
 				g_pfaceSelectedFaces[i]->texdef.rotate += 360;
 		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			Brush_Build(g_pfaceSelectedFaces[i]->owner);
+			g_pfaceSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk

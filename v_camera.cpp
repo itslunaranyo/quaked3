@@ -4,119 +4,108 @@
 
 #include "qe3.h"
 
-#define	PAGEFLIPS	2
-
-static int	buttonx, buttony;
-static int	cursorx, cursory;
-
-int		g_nCullv1[3], g_nCullv2[3];
-vec3_t	g_v3Cull1, g_v3Cull2;
 
 // sikk---> Transparent Brushes
-brush_t    *g_pbrTransBrushes[MAX_MAP_BRUSHES];
+Brush		*g_pbrTransBrushes[MAX_MAP_BRUSHES];
 int			g_nNumTransBrushes;
 // <---sikk
 
-int g_nCamButtonState;
 
 /*
 ============
-Cam_Init
+CameraView::Init
 ============
 */
-void Cam_Init ()
+void CameraView::Init ()
 {
-//	g_qeglobals.d_camera.draw_mode = cd_texture;
-//	g_qeglobals.d_camera.draw_mode = cd_solid;
-//	g_qeglobals.d_camera.draw_mode = cd_wire;
-	g_qeglobals.d_camera.timing = false;
-	g_qeglobals.d_camera.origin[0] = 0;
-	g_qeglobals.d_camera.origin[1] = 0;	// sikk - changed from "20"
-	g_qeglobals.d_camera.origin[2] = 0;	// sikk - changed from "46"	
-	g_qeglobals.d_camera.viewdistance = 256;
+	timing = false;
+	origin[0] = 0;
+	origin[1] = 0;	// sikk - changed from "20"
+	origin[2] = 0;	// sikk - changed from "46"	
+	viewdistance = 256;
 }
 
 // sikk---> Center Camera on Selection. Same as PositionView() for XY View
 /*
 ==================
-Cam_PositionView
+CameraView::PositionCenter
 ==================
 */
-void Cam_PositionView ()
+void CameraView::PositionCenter ()
 {
-	brush_t *b;
+	Brush *b;
 
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		g_qeglobals.d_camera.origin[0] = b->mins[0] - 64;
-		g_qeglobals.d_camera.origin[1] = b->mins[1] - 64;
-		g_qeglobals.d_camera.origin[2] = b->mins[2] + 64;
-		g_qeglobals.d_camera.angles[0] = -22.5;
-		g_qeglobals.d_camera.angles[1] = 45;
-		g_qeglobals.d_camera.angles[2] = 0;
+		origin[0] = b->mins[0] - 64;
+		origin[1] = b->mins[1] - 64;
+		origin[2] = b->mins[2] + 64;
+		angles[0] = -22.5;
+		angles[1] = 45;
+		angles[2] = 0;
 	}
 	else
 	{
-		g_qeglobals.d_camera.origin[0] = g_qeglobals.d_camera.origin[0];
-		g_qeglobals.d_camera.origin[1] = g_qeglobals.d_camera.origin[1];
-		g_qeglobals.d_camera.origin[2] = g_qeglobals.d_camera.origin[2];
+		origin[0] = origin[0];
+		origin[1] = origin[1];
+		origin[2] = origin[2];
 	}
 }
 // <---sikk
 
 /*
 ===============
-Cam_BuildMatrix
+CameraView::BuildMatrix
 ===============
 */
-void Cam_BuildMatrix ()
+void CameraView::BuildMatrix ()
 {
 	int		i;
 	float	xa, ya;
 	float	matrix[4][4];
 
-	xa = g_qeglobals.d_camera.angles[0] / 180 * Q_PI;
-	ya = g_qeglobals.d_camera.angles[1] / 180 * Q_PI;
+	xa = angles[0] / 180 * Q_PI;
+	ya = angles[1] / 180 * Q_PI;
 
 	// the movement matrix is kept 2d
-    g_qeglobals.d_camera.forward[0] = cos(ya);
-    g_qeglobals.d_camera.forward[1] = sin(ya);
-    g_qeglobals.d_camera.right[0] = g_qeglobals.d_camera.forward[1];
-    g_qeglobals.d_camera.right[1] = -g_qeglobals.d_camera.forward[0];
+    forward[0] = cos(ya);
+    forward[1] = sin(ya);
+    right[0] = forward[1];
+    right[1] = -forward[0];
 
 	glGetFloatv(GL_PROJECTION_MATRIX, &matrix[0][0]);
 
 	for (i = 0; i < 3; i++)
 	{
-		g_qeglobals.d_camera.vright[i] = matrix[i][0];
-		g_qeglobals.d_camera.vup[i] = matrix[i][1];
-		g_qeglobals.d_camera.vpn[i] = matrix[i][2];
+		vright[i] = matrix[i][0];
+		vup[i] = matrix[i][1];
+		vpn[i] = matrix[i][2];
 	}
 
-	VectorNormalize(g_qeglobals.d_camera.vright);
-	VectorNormalize(g_qeglobals.d_camera.vup);
-	VectorNormalize(g_qeglobals.d_camera.vpn);
+	VectorNormalize(vright);
+	VectorNormalize(vup);
+	VectorNormalize(vpn);
 }
 
 /*
 ===============
-Cam_ChangeFloor
+CameraView::ChangeFloor
 ===============
 */
-void Cam_ChangeFloor (bool up)
+void CameraView::ChangeFloor (bool up)
 {
 	float		d, bestd, current;
 	vec3_t		start, dir;
-	brush_t	   *b;
+	Brush	   *b;
 
-	start[0] = g_qeglobals.d_camera.origin[0];
-	start[1] = g_qeglobals.d_camera.origin[1];
+	start[0] = origin[0];
+	start[1] = origin[1];
 	start[2] = 8192;
 	dir[0] = dir[1] = 0;
 	dir[2] = -1;
 
-	current = 8192 - (g_qeglobals.d_camera.origin[2] - 48);
+	current = 8192 - (origin[2] - 48);
 	if (up)
 		bestd = 0;
 	else
@@ -124,7 +113,7 @@ void Cam_ChangeFloor (bool up)
 
 	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = b->next)
 	{
-		if (!Brush_Ray(start, dir, b, &d))
+		if (!b->RayTest(start, dir, &d))
 			continue;
 		if (up && d < current && d > bestd)
 			bestd = d;
@@ -135,7 +124,7 @@ void Cam_ChangeFloor (bool up)
 	if (bestd == 0 || bestd == 16384)
 		return;
 
-	g_qeglobals.d_camera.origin[2] += current - bestd;
+	origin[2] += current - bestd;
 
 	Sys_UpdateWindows(W_CAMERA | W_Z);
 }
@@ -145,34 +134,34 @@ void Cam_ChangeFloor (bool up)
 
 /*
 ================
-Cam_PositionDrag
+CameraView::PositionDrag
 ================
 */
-void Cam_PositionDrag ()
+void CameraView::PositionDrag ()
 {
 	int	x, y;
 
 	SetCursor(NULL); // sikk - Remove Cursor
 	Sys_GetCursorPos(&x, &y);
 
-	if (x != cursorx || y != cursory)
+	if (x != cursorX || y != cursorY)
 	{
-		x -= cursorx;
-		VectorMA(g_qeglobals.d_camera.origin, x, g_qeglobals.d_camera.vright, g_qeglobals.d_camera.origin);
-		y -= cursory;
-		g_qeglobals.d_camera.origin[2] -= y;
+		x -= cursorX;
+		VectorMA(origin, x, vright, origin);
+		y -= cursorY;
+		origin[2] -= y;
 
-		Sys_SetCursorPos(cursorx, cursory);
+		Sys_SetCursorPos(cursorX, cursorY);
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 	}
 }
 
 /*
 ================
-Cam_Rotate
+CameraView::Rotate
 ================
 */
-void Cam_Rotate (int x, int y, vec3_t origin)
+void CameraView::Rotate (int yaw, int pitch, vec3_t org)
 {
 	int		i;
 	vec_t	distance;
@@ -180,62 +169,61 @@ void Cam_Rotate (int x, int y, vec3_t origin)
 
 	for (i = 0; i < 3; i++)
 	{
-		vecdist[i] = fabs((g_qeglobals.d_camera.origin[i] - origin[i]));
+		vecdist[i] = fabs((origin[i] - org[i]));
 		vecdist[i] *= vecdist[i];
 	}
 
-	g_qeglobals.d_camera.viewdistance = distance = sqrt(vecdist[0] + vecdist[1] + vecdist[2]);
-	VectorSubtract(g_qeglobals.d_camera.origin, origin, work);
-	VectorToAngles(work, g_qeglobals.d_camera.angles);
+	viewdistance = distance = sqrt(vecdist[0] + vecdist[1] + vecdist[2]);
+	VectorSubtract(origin, org, work);
+	VectorToAngles(work, angles);
 
-	if(g_qeglobals.d_camera.angles[PITCH] > 100)
-		g_qeglobals.d_camera.angles[PITCH] -= 360;
+	if(angles[PITCH] > 100)
+		angles[PITCH] -= 360;
 
-	g_qeglobals.d_camera.angles[PITCH] -= y;
-	g_qeglobals.d_camera.angles[YAW] -= x;
-	Cam_BoundAngles();
+	angles[PITCH] -= pitch;
+	angles[YAW] -= yaw;
+	BoundAngles();
 
-	AngleVectors(g_qeglobals.d_camera.angles, forward, NULL, NULL);
+	AngleVectors(angles, forward, NULL, NULL);
 	forward[2] = -forward[2];
-	VectorMA(origin, distance, forward, g_qeglobals.d_camera.origin);
+	VectorMA(org, distance, forward, origin);
 
-	VectorSubtract(origin, g_qeglobals.d_camera.origin, dir);
+	VectorSubtract(org, origin, dir);
 	VectorNormalize(dir);
-	g_qeglobals.d_camera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	g_qeglobals.d_camera.angles[0] = asin(dir[2]) * 180 / Q_PI;
+	angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
+	angles[0] = asin(dir[2]) * 180 / Q_PI;
 
-	Cam_BuildMatrix();
+	BuildMatrix();
 
-	Sys_SetCursorPos(cursorx, cursory);
+	Sys_SetCursorPos(cursorX, cursorY);
 	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 }
 
 /*
 ==================
-Cam_PositionRotate
+CameraView::PositionRotate
 ==================
 */
-void Cam_PositionRotate ()
+void CameraView::PositionRotate ()
 {
 	int			x, y, i, j;
 	vec3_t		mins, maxs, forward, vecdist;
-	vec3_t		origin;
-	brush_t	   *b;
-	face_t	   *f;
+	vec3_t		sorigin;
+	Brush	   *b;
+	Face	   *f;
 
 	SetCursor(NULL); // sikk - Remove Cursor
 	Sys_GetCursorPos(&x, &y);
 
-	if (x == cursorx && y == cursory)
+	if (x == g_qeglobals.d_camera.cursorX && y == g_qeglobals.d_camera.cursorY)
 		return;
-	
-	x -= cursorx;
-	y -= cursory;
+
+	x -= g_qeglobals.d_camera.cursorX;
+	y -= g_qeglobals.d_camera.cursorY;
 
 	if (Select_HasBrushes())
 	{
-		mins[0] = mins[1] = mins[2] = 99999;
-		maxs[0] = maxs[1] = maxs[2] = -99999;
+		ClearBounds(mins, maxs);
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
 			for (i = 0; i < 3; i++)
@@ -246,16 +234,15 @@ void Cam_PositionRotate ()
 					mins[i] = b->mins[i];
 			}
 		}
-		origin[0] = (mins[0] + maxs[0]) / 2;
-		origin[1] = (mins[1] + maxs[1]) / 2;
-		origin[2] = (mins[2] + maxs[2]) / 2;
+		sorigin[0] = (mins[0] + maxs[0]) / 2;
+		sorigin[1] = (mins[1] + maxs[1]) / 2;
+		sorigin[2] = (mins[2] + maxs[2]) / 2;
 	}
 	else if (Select_FaceCount())
 	{
-		mins[0] = mins[1] = mins[2] = 99999;
-		maxs[0] = maxs[1] = maxs[2] = -99999;
+		ClearBounds(mins, maxs);
 
-//		f = g_pfaceSelectedFace;
+		//		f = g_pfaceSelectedFace;
 		// rotate around last selected face
 		f = g_pfaceSelectedFaces[Select_FaceCount() - 1];	// sikk - Multiple Face Selection
 		for (j = 0; j < f->face_winding->numpoints; j++)
@@ -269,95 +256,98 @@ void Cam_PositionRotate ()
 			}
 		}
 
-		origin[0] = (mins[0] + maxs[0]) / 2;
-		origin[1] = (mins[1] + maxs[1]) / 2;
-		origin[2] = (mins[2] + maxs[2]) / 2;
+		sorigin[0] = (mins[0] + maxs[0]) / 2;
+		sorigin[1] = (mins[1] + maxs[1]) / 2;
+		sorigin[2] = (mins[2] + maxs[2]) / 2;
 	}
 	else
 	{
 		AngleVectors(g_qeglobals.d_camera.angles, forward, NULL, NULL);
 		forward[2] = -forward[2];
-		VectorMA(g_qeglobals.d_camera.origin, g_qeglobals.d_camera.viewdistance, forward, origin);
+		VectorMA(g_qeglobals.d_camera.origin, g_qeglobals.d_camera.viewdistance, forward, sorigin);
 	}
 
 	for (i = 0; i < 3; i++)
 	{
-		vecdist[i] = fabs((g_qeglobals.d_camera.origin[i] - origin[i]));
+		vecdist[i] = fabs((g_qeglobals.d_camera.origin[i] - sorigin[i]));
 		vecdist[i] *= vecdist[i];
 	}
 
-	Cam_Rotate(x, y, origin);
+	Rotate(x, y, sorigin);
 }
 
 /*
 ================
-Cam_BoundAngles
+CameraView::BoundAngles
 ================
 */
-void Cam_BoundAngles()
+void CameraView::BoundAngles()
 {
-//	g_qeglobals.d_camera.angles[YAW] = fmod(g_qeglobals.d_camera.angles[YAW], 360.0f);
+//	angles[YAW] = fmod(angles[YAW], 360.0f);
 
-	g_qeglobals.d_camera.angles[PITCH] = fmin(g_qeglobals.d_camera.angles[PITCH], 90);
-	g_qeglobals.d_camera.angles[PITCH] = fmax(g_qeglobals.d_camera.angles[PITCH], -90);
+	angles[PITCH] = fmin(angles[PITCH], 90);
+	angles[PITCH] = fmax(angles[PITCH], -90);
 }
 
 /*
 ================
-Cam_FreeLook
+CameraView::FreeLook
 ================
 */
-void Cam_FreeLook ()
+void CameraView::FreeLook ()
 {
 	int	x, y;
 
 	SetCursor(NULL); // sikk - Remove Cursor
 	Sys_GetCursorPos (&x, &y);
 
-	if (x == cursorx && y == cursory)
+	if (x == cursorX && y == cursorY)
 		return;
 	
-	x -= cursorx;
-	y -= cursory;
+	x -= cursorX;
+	y -= cursorY;
 
-	if (g_qeglobals.d_camera.angles[PITCH] > 100)
-		g_qeglobals.d_camera.angles[PITCH] -= 360;
+	if (angles[PITCH] > 100)
+		angles[PITCH] -= 360;
 
-	g_qeglobals.d_camera.angles[PITCH] -= y;
-	g_qeglobals.d_camera.angles[YAW] -= x;
+	angles[PITCH] -= y;
+	angles[YAW] -= x;
 
-	Cam_BoundAngles();
+	BoundAngles();
 
-	Sys_SetCursorPos(cursorx, cursory);
+	Sys_SetCursorPos(cursorX, cursorY);
 	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 }
 
+
+
+
 /*
 ================
-Cam_MouseControl
+CameraView::MouseControl
 ================
 */
-void Cam_MouseControl (float dtime)
+void CameraView::MouseControl (float dtime)
 {
 	int		xl, xh;
 	int		yl, yh;
 	float	xf, yf;
 
-	if (g_nCamButtonState != MK_RBUTTON)
+	if (nCamButtonState != MK_RBUTTON)
 		return;
 
-	xf = (float)(buttonx - g_qeglobals.d_camera.width / 2) / (g_qeglobals.d_camera.width / 2);
-	yf = (float)(buttony - g_qeglobals.d_camera.height / 2) / (g_qeglobals.d_camera.height / 2);
+	xf = (float)(buttonX - width / 2) / (width / 2);
+	yf = (float)(buttonY - height / 2) / (height / 2);
 
-	xl = g_qeglobals.d_camera.width / 3;
+	xl = width / 3;
 	xh = xl * 2;
-	yl = g_qeglobals.d_camera.height / 3;
+	yl = height / 3;
 	yh = yl * 2;
 
 #if 0
 	// strafe
-	if (buttony < yl && (buttonx < xl || buttonx > xh))
-		VectorMA(g_qeglobals.d_camera.origin, xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, g_qeglobals.d_camera.right, g_qeglobals.d_camera.origin);
+	if (buttonY < yl && (buttonX < xl || buttonX > xh))
+		VectorMA(origin, xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, right, origin);
 	else
 #endif
 	{
@@ -375,51 +365,51 @@ void Cam_MouseControl (float dtime)
 				xf = 0;
 		}
 		
-		VectorMA(g_qeglobals.d_camera.origin, yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
-		g_qeglobals.d_camera.angles[YAW] += xf * -dtime * (g_qeglobals.d_savedinfo.nCameraSpeed * 0.5);
+		VectorMA(origin, yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, forward, origin);
+		angles[YAW] += xf * -dtime * (g_qeglobals.d_savedinfo.nCameraSpeed * 0.5);
 	}
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
 ==============
-Cam_PointToRay
+CameraView::PointToRay
 ==============
 */
-void Cam_PointToRay(int x, int y, vec3_t rayOut)
+void CameraView::PointToRay(int x, int y, vec3_t rayOut)
 {
 	float	f, r, u;
 
 	// calc ray direction
-	u = (float)(y - g_qeglobals.d_camera.height / 2) / (g_qeglobals.d_camera.width / 2);
-	r = (float)(x - g_qeglobals.d_camera.width / 2) / (g_qeglobals.d_camera.width / 2);
+	u = (float)(y - height / 2) / (width / 2);
+	r = (float)(x - width / 2) / (width / 2);
 	f = 1;
 
 	for (int i = 0; i < 3; i++)
-		rayOut[i] = g_qeglobals.d_camera.vpn[i] * f + g_qeglobals.d_camera.vright[i] * r + g_qeglobals.d_camera.vup[i] * u;
+		rayOut[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
 	VectorNormalize(rayOut);
 }
 
 /*
 ==============
-Cam_MouseDown
+CameraView::MouseDown
 ==============
 */
-void Cam_MouseDown (int x, int y, int buttons)
+void CameraView::MouseDown (int x, int y, int buttons)
 {
 	vec3_t	dir;
-	Cam_PointToRay(x, y, dir);
+	PointToRay(x, y, dir);
 
-	Sys_GetCursorPos(&cursorx, &cursory);
+	Sys_GetCursorPos(&cursorX, &cursorY);
 
-	g_nCamButtonState = buttons;
-	buttonx = x;
-	buttony = y;
+	nCamButtonState = buttons;
+	buttonX = x;
+	buttonY = y;
 
 	// clipper
 	if ((buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
-		if (Drag_TrySelect(buttons, g_qeglobals.d_camera.origin, dir))
+		if (Drag_TrySelect(buttons, origin, dir))
 			return;
 
 		// lunaran - alt quick clip
@@ -444,23 +434,23 @@ void Cam_MouseDown (int x, int y, int buttons)
 		(buttons == (MK_MBUTTON | MK_CONTROL)) || 
 		(buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT)))
 	{
-		Drag_Begin(x, y, buttons, g_qeglobals.d_camera.vright, g_qeglobals.d_camera.vup, g_qeglobals.d_camera.origin, dir);
+		Drag_Begin(x, y, buttons, vright, vup, origin, dir);
 		return;
 	}
 
 	if ((buttons == MK_RBUTTON))
 	{
-		Cam_MouseControl(0.1f);
+		MouseControl(0.1f);
 		return;
 	}
 }
 
 /*
 ==============
-Cam_MouseUp
+CameraView::MouseUp
 ==============
 */
-void Cam_MouseUp (int x, int y, int buttons)
+void CameraView::MouseUp (int x, int y, int buttons)
 {
 	// clipper
 	if (g_qeglobals.d_bClipMode)
@@ -476,15 +466,15 @@ void Cam_MouseUp (int x, int y, int buttons)
 		Drag_MouseUp();
 	}
 	Sys_UpdateWindows(W_ALL);
-	g_nCamButtonState = 0;
+	nCamButtonState = 0;
 }
 
 /*
 ==============
-Cam_MouseMoved
+CameraView::MouseMoved
 ==============
 */
-void Cam_MouseMoved (int x, int y, int buttons)
+void CameraView::MouseMoved (int x, int y, int buttons)
 {
 	int			i;
 	float		f, r, u;
@@ -492,7 +482,7 @@ void Cam_MouseMoved (int x, int y, int buttons)
 	vec3_t		dir;
 	trace_t		t;
 
-	g_nCamButtonState = buttons;
+	nCamButtonState = buttons;
 
 	if ((!buttons || buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
@@ -503,26 +493,22 @@ void Cam_MouseMoved (int x, int y, int buttons)
 		//
 		// calc ray direction
 		//
-		u = (float)(y - g_qeglobals.d_camera.height / 2) / (g_qeglobals.d_camera.width / 2);
-		r = (float)(x - g_qeglobals.d_camera.width / 2) / (g_qeglobals.d_camera.width / 2);
+		u = (float)(y - height / 2) / (width / 2);
+		r = (float)(x - width / 2) / (width / 2);
 		f = 1;
 
 		for (i = 0; i < 3; i++)
-			dir[i] = g_qeglobals.d_camera.vpn[i] * f + g_qeglobals.d_camera.vright[i] * r + g_qeglobals.d_camera.vup[i] * u;
+			dir[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
 		VectorNormalize(dir);
-		t = Test_Ray(g_qeglobals.d_camera.origin, dir, false);
+		t = Test_Ray(origin, dir, false);
 
 		if (t.brush)
 		{
-			brush_t	   *b;
+			Brush	   *b;
 			int			i;
 			vec3_t		mins, maxs, size;
 
-			for (i = 0; i < 3; i++)
-			{
-				mins[i] = 99999;
-				maxs[i] = -99999;
-			}
+			ClearBounds(mins, maxs);
 
 			b = t.brush;
 			for (i = 0; i < 3; i++)
@@ -547,26 +533,26 @@ void Cam_MouseMoved (int x, int y, int buttons)
 		return;
 	}
 
-	buttonx = x;
-	buttony = y;
+	buttonX = x;
+	buttonY = y;
 
 	if (buttons == (MK_RBUTTON | MK_CONTROL))
 	{
-		Cam_PositionDrag();
+		PositionDrag();
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
 
 	if (buttons == (MK_RBUTTON | MK_SHIFT))
 	{
-		Cam_PositionRotate();
+		PositionRotate();
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
 
 	if (buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT))
 	{
-		Cam_FreeLook();
+		FreeLook();
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
@@ -581,21 +567,21 @@ void Cam_MouseMoved (int x, int y, int buttons)
 			if (GetKeyState(VK_SHIFT) < 0)
 			{
 				if (GetKeyState(VK_CONTROL) < 0)
-					Surf_RotateTexture(cursorx - x);
+					Surf_RotateTexture(cursorX - x);
 			}
 			else if (GetKeyState(VK_CONTROL) < 0)
-				Surf_ScaleTexture(x - cursorx, cursory - y);
+				Surf_ScaleTexture(x - cursorX, cursorY - y);
 
 			else
-				Surf_ShiftTexture(cursorx - x, cursory - y);
+				Surf_ShiftTexture(cursorX - x, cursorY - y);
 			*/
-			cursorx = x;
-			cursory = y;
+			cursorX = x;
+			cursorY = y;
 		}
 // <---sikk
 		else
 		{
-			Sys_GetCursorPos(&cursorx, &cursory);
+			Sys_GetCursorPos(&cursorX, &cursorY);
 			Drag_MouseMoved(x, y, buttons);
 			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		}
@@ -604,36 +590,36 @@ void Cam_MouseMoved (int x, int y, int buttons)
 
 /*
 ============
-Cam_InitCull
+CameraView::InitCull
 ============
 */
-void Cam_InitCull ()
+void CameraView::InitCull ()
 {
 	int	i;
 
-	VectorSubtract(g_qeglobals.d_camera.vpn, g_qeglobals.d_camera.vright, g_v3Cull1);
-	VectorAdd(g_qeglobals.d_camera.vpn, g_qeglobals.d_camera.vright, g_v3Cull2);
+	VectorSubtract(vpn, vright, v3Cull1);
+	VectorAdd(vpn, vright, v3Cull2);
 
 	for (i = 0; i < 3; i++)
 	{
-		if (g_v3Cull1[i] > 0)
-			g_nCullv1[i] = 3 + i;
+		if (v3Cull1[i] > 0)
+			nCullv1[i] = 3 + i;
 		else
-			g_nCullv1[i] = i;
+			nCullv1[i] = i;
 
-		if (g_v3Cull2[i] > 0)
-			g_nCullv2[i] = 3 + i;
+		if (v3Cull2[i] > 0)
+			nCullv2[i] = 3 + i;
 		else
-			g_nCullv2[i] = i;
+			nCullv2[i] = i;
 	}
 }
 
 /*
 ================
-Cam_CullBrush
+CameraView::CullBrush
 ================
 */
-bool Cam_CullBrush (brush_t *b)
+bool CameraView::CullBrush (Brush *b)
 {
 	int		i;
 	float	d;
@@ -644,17 +630,17 @@ bool Cam_CullBrush (brush_t *b)
 	{
 		float fLevel = g_qeglobals.d_savedinfo.nCubicScale * 64;
 
-		point[0] = g_qeglobals.d_camera.origin[0] - fLevel;
-		point[1] = g_qeglobals.d_camera.origin[1] - fLevel;
-		point[2] = g_qeglobals.d_camera.origin[2] - fLevel;
+		point[0] = origin[0] - fLevel;
+		point[1] = origin[1] - fLevel;
+		point[2] = origin[2] - fLevel;
 
 		for (i = 0; i < 3; i++)
 			if (b->mins[i] < point[i] && b->maxs[i] < point[i])
 				return true;
 
-		point[0] = g_qeglobals.d_camera.origin[0] + fLevel;
-		point[1] = g_qeglobals.d_camera.origin[1] + fLevel;
-		point[2] = g_qeglobals.d_camera.origin[2] + fLevel;
+		point[0] = origin[0] + fLevel;
+		point[1] = origin[1] + fLevel;
+		point[2] = origin[2] + fLevel;
 	
 		for (i = 0; i < 3; i++)
 			if (b->mins[i] > point[i] && b->maxs[i] > point[i])
@@ -663,16 +649,16 @@ bool Cam_CullBrush (brush_t *b)
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->mins[g_nCullv1[i]] - g_qeglobals.d_camera.origin[i];
+		point[i] = b->mins[nCullv1[i]] - origin[i];
 
-	d = DotProduct(point, g_v3Cull1);
+	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->mins[g_nCullv2[i]] - g_qeglobals.d_camera.origin[i];
+		point[i] = b->mins[nCullv2[i]] - origin[i];
 
-	d = DotProduct(point, g_v3Cull2);
+	d = DotProduct(point, v3Cull2);
 	if (d < -1)
 		return true;
 
@@ -681,10 +667,10 @@ bool Cam_CullBrush (brush_t *b)
 
 /*
 ================
-Cam_DrawClipSplits
+CameraView::DrawClipSplits
 ================
 */
-void Cam_DrawClipSplits ()
+void CameraView::DrawClipSplits ()
 {
 	g_qeglobals.d_pbrSplitList = NULL;
 
@@ -697,11 +683,14 @@ void Cam_DrawClipSplits ()
 // sikk---> Camera Grid
 /*
 ==============
-Cam_DrawGrid
+CameraView::DrawGrid
 ==============
 */
-void Cam_DrawGrid ()
+void CameraView::DrawGrid ()
 {
+	if (!g_qeglobals.d_savedinfo.bShow_CameraGrid)
+		return;
+
 	int x, y, i;
 
 	i = g_qeglobals.d_savedinfo.nMapSize * 0.5;
@@ -725,88 +714,55 @@ void Cam_DrawGrid ()
 
 /*
 ==============
-Cam_Draw
+CameraView::Draw
 ==============
 */
-void Cam_Draw ()
+void CameraView::Draw ()
 {
 	int			i;
 	double		start, end;
 	float		screenaspect;
 	float		yfov;
-	brush_t    *pList;
-	brush_t	   *brush;
-	face_t	   *face;
+	Brush    *pList;
+	Brush	   *brush;
+	Face	   *face;
 
 	if (!g_brActiveBrushes.next)
 		return;	// not valid yet
 
-	if (g_qeglobals.d_camera.timing)
+	if (timing)
 		start = Sys_DoubleTime();
 
-	//
 	// clear
-	//
 	QE_CheckOpenGLForErrors();
 
-	glViewport(0, 0, g_qeglobals.d_camera.width, g_qeglobals.d_camera.height);
-	glScissor(0, 0, g_qeglobals.d_camera.width, g_qeglobals.d_camera.height);
+	glViewport(0, 0, width, height);
+	glScissor(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][0],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][1],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][2],
 				 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//
 	// set up viewpoint
-	//
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-/*
-	// one directional light source directly behind the viewer
-	{
-		GLfloat inverse_cam_dir[4], ambient[4], diffuse[4];//, material[4];
 
-		ambient[0] = ambient[1] = ambient[2] = 0.4f;
-		ambient[3] = 1.0f;
-		diffuse[0] = diffuse[1] = diffuse[2] = 0.4f;
-		diffuse[3] = 1.0f;
-//		material[0] = material[1] = material[2] = 0.8f;
-//		material[3] = 1.0f;
-    
-		inverse_cam_dir[0] = g_qeglobals.d_camera.vpn[0];
-		inverse_cam_dir[1] = g_qeglobals.d_camera.vpn[1];
-		inverse_cam_dir[2] = g_qeglobals.d_camera.vpn[2];
-		inverse_cam_dir[3] = 0;
-
-		glLightfv(GL_LIGHT0, GL_POSITION, inverse_cam_dir);
-
-		glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-		glEnable(GL_LIGHT0);
-
-		glEnable(GL_LIGHTING);
-		glEnable(GL_COLOR_MATERIAL);
-		glEnableClientState(GL_NORMAL_ARRAY);
-	}
-*/
-	screenaspect = (float)g_qeglobals.d_camera.width / g_qeglobals.d_camera.height;
-	yfov = 2 * atan((float)g_qeglobals.d_camera.height / g_qeglobals.d_camera.width) * 180 / Q_PI;
+	screenaspect = (float)width / height;
+	yfov = 2 * atan((float)height / width) * 180 / Q_PI;
     gluPerspective(yfov, screenaspect, 2, g_qeglobals.d_savedinfo.nMapSize);//8192);
 
     glRotatef(-90, 1, 0, 0);	// put Z going up
     glRotatef(90, 0, 0, 1);		// put Z going up
-    glRotatef(g_qeglobals.d_camera.angles[0], 0, 1, 0);
-    glRotatef(-g_qeglobals.d_camera.angles[1], 0, 0, 1);
-    glTranslatef(-g_qeglobals.d_camera.origin[0], -g_qeglobals.d_camera.origin[1], -g_qeglobals.d_camera.origin[2]);
+    glRotatef(angles[0], 0, 1, 0);
+    glRotatef(-angles[1], 0, 0, 1);
+    glTranslatef(-origin[0], -origin[1], -origin[2]);
 
-	Cam_BuildMatrix();
-	Cam_InitCull();
+	BuildMatrix();
+	InitCull();
 
-	//
 	// draw stuff
-	//
-	switch (g_qeglobals.d_camera.draw_mode)
+	switch (draw_mode)
 	{
 	case cd_wire:
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -872,8 +828,7 @@ void Cam_Draw ()
 	}
 
 // sikk---> Camera Grid
-	if (g_qeglobals.d_savedinfo.bShow_CameraGrid)
-		Cam_DrawGrid();
+	DrawGrid();
 // <---sikk
 
 	glMatrixMode(GL_TEXTURE);
@@ -882,25 +837,28 @@ void Cam_Draw ()
 
 	for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
 	{
-		if (Cam_CullBrush(brush))
+		if (CullBrush(brush))
 			continue;
-		if (FilterBrush(brush))
+		if (brush->IsFiltered())
 			continue;
 // sikk---> Transparent Brushes
-		// TODO: Make toggle via Preferences Option.   
+		// TODO: Make toggle via Preferences Option. 
+		assert(brush->brush_faces->d_texture);
 		if (!strncmp(brush->brush_faces->d_texture->name, "*", 1) ||
 			!strcmp(brush->brush_faces->d_texture->name, "clip") ||
 			!strncmp(brush->brush_faces->d_texture->name, "hint", 4) ||
 			!strcmp(brush->brush_faces->d_texture->name, "trigger"))
 			g_pbrTransBrushes[g_nNumTransBrushes++] = brush;
-		else 
-			Brush_Draw(brush);
+		else
+		{
+			brush->Draw();
+		}
 	}
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	for (i = 0; i < g_nNumTransBrushes; i++ )
-		Brush_Draw(g_pbrTransBrushes[i]);
+		g_pbrTransBrushes[i]->Draw();
 	glDisable(GL_BLEND);
 // <---sikk
 
@@ -961,9 +919,7 @@ void Cam_Draw ()
 	}
 // <---sikk
 
-	//
 	// now draw selected brushes
-	//
 	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
 				 g_qeglobals.d_v3SelectTranslate[1], 
 				 g_qeglobals.d_v3SelectTranslate[2]);
@@ -975,7 +931,7 @@ void Cam_Draw ()
 
 	// draw normally
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		Brush_Draw(brush);
+		brush->Draw();
 
 	// blend on top
 	glMatrixMode(GL_PROJECTION);
@@ -995,7 +951,7 @@ void Cam_Draw ()
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
 		for (face = brush->brush_faces; face; face = face->next)
-			Face_Draw(face);
+			face->Draw();
 
 //	if (g_pfaceSelectedFace)
 //		Face_Draw(g_pfaceSelectedFace);
@@ -1003,7 +959,7 @@ void Cam_Draw ()
 //	if (Select_FaceCount())
 //	{
 		for (int i = 0; i < Select_FaceCount(); i++)
-			Face_Draw(g_pfaceSelectedFaces[i]);
+			g_pfaceSelectedFaces[i]->Draw();
 //	}
 // <---sikk
 
@@ -1015,7 +971,7 @@ void Cam_Draw ()
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
 		for (face = brush->brush_faces; face; face = face->next)
-			Face_Draw(face);
+			face->Draw();
 
 	// edge / vertex flags
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
@@ -1045,8 +1001,7 @@ void Cam_Draw ()
 		glPointSize(1);
 	}
 
-	if (g_qeglobals.d_bClipMode)
-		Clip_DrawPoints();
+	Clip_DrawPoints();
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -1062,7 +1017,7 @@ void Cam_Draw ()
     glFinish();
 	QE_CheckOpenGLForErrors();
 //	Sys_EndWait();
-	if (g_qeglobals.d_camera.timing)
+	if (timing)
 	{
 		end = Sys_DoubleTime();
 		Sys_Printf("MSG: Camera: %d ms\n", (int)(1000 * (end - start)));

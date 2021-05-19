@@ -1460,17 +1460,16 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_CAMERA|W_XY);
 			break;
 		case ID_VIEW_UPFLOOR:
-			Cam_ChangeFloor(true);
+			g_qeglobals.d_camera.ChangeFloor(true);
 			break;
 		case ID_VIEW_DOWNFLOOR:
-			Cam_ChangeFloor(false);
+			g_qeglobals.d_camera.ChangeFloor(false);
 			break;
 
 		case ID_VIEW_CENTERONSELECTION:	// sikk - Center Views on Selection
-			XYZ_PositionView(&g_qeglobals.d_xyz[0]);
-			XYZ_PositionView(&g_qeglobals.d_xyz[1]);	// sikk - Multiple Orthographic Views
-			XYZ_PositionView(&g_qeglobals.d_xyz[2]);	// sikk - Multiple Orthographic Views
-			Cam_PositionView();
+			for (int i = 0; i < 4; i++)
+				g_qeglobals.d_xyz[i].PositionView();
+			g_qeglobals.d_camera.PositionCenter();
 			Sys_UpdateWindows(W_ALL);
 			break;
 
@@ -1697,7 +1696,7 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_SELECTION_DELETE:
 			{	// sikk - TODO: Undo doesn't function properly with mixed selection  
-				brush_t *brush;
+				Brush *brush;
 
 				Undo_Start("Delete");
 				Undo_AddBrushList(&g_brSelectedBrushes);
@@ -2022,7 +2021,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_TEXTURES_RESETSCALE:	// sikk - Reset Texture View Scale
-			TexWnd_SetScale(1.0f);
+			g_qeglobals.d_texturewin.SetScale(1.0f);
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 
@@ -2619,9 +2618,9 @@ LONG WINAPI WMain_WndProc (
 		}
 		return 0;
 
-// sikk---> Mousewheel Handling (All Windows)
+	// sikk---> Mousewheel Handling (All Windows)
 	default:
-		if (uMsg == g_unMouseWheel)
+		if (uMsg == WM_MOUSEWHEEL)
 		{
 			int		fwKeys = LOWORD(wParam);
 			short	zDelta = (short)HIWORD(wParam);
@@ -2635,12 +2634,12 @@ LONG WINAPI WMain_WndProc (
 			if (hwndTarget == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_TEXTURE)
 			{
 				if (zDelta < 0)
-					g_qeglobals.d_texturewin.originy -= 64;
+					g_qeglobals.d_texturewin.origin[1] -= 64;
 				else
-					g_qeglobals.d_texturewin.originy += 64;
+					g_qeglobals.d_texturewin.origin[1] += 64;
 
-				if (g_qeglobals.d_texturewin.originy > 0)
-					g_qeglobals.d_texturewin.originy = 0;
+				if (g_qeglobals.d_texturewin.origin[1] > 0)
+					g_qeglobals.d_texturewin.origin[1] = 0;
 
 				Sys_UpdateWindows(W_TEXTURE);
 			}
@@ -2722,7 +2721,7 @@ LONG WINAPI WMain_WndProc (
 				}
 			}
 		}
-// <---sikk
+	// <---sikk
 
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);

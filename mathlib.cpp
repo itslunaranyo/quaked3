@@ -7,7 +7,7 @@
 #include "cmdlib.h"
 #include "mathlib.h"
 #include "qedefs.h"
-
+#include <assert.h>
 
 vec3_t g_v3VecOrigin = {0.0f, 0.0f, 0.0f};
 
@@ -342,3 +342,20 @@ void VectorToAngles (vec3_t vec, vec3_t angles)
 	angles[1] = yaw;
 	angles[2] = 0;
 }
+
+/*
+=================
+Point_Equal
+=================
+*/
+bool Point_Equal(vec3_t p1, vec3_t p2, float epsilon)
+{
+	int i;
+
+	for (i = 0; i < 3; i++)
+		if (fabs(p1[i] - p2[i]) > epsilon)
+			return false;
+
+	return true;
+}
+

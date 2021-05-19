@@ -30,7 +30,7 @@ typedef struct epair_s
 typedef struct entity_s
 {
 	struct entity_s	   *prev, *next;
-	brush_t				brushes;	// head/tail of list
+	Brush				brushes;	// head/tail of list
 	vec3_t				origin;
 	eclass_t		   *eclass;
 	epair_t			   *epairs;
@@ -73,8 +73,8 @@ void		Entity_Write (entity_t *e, FILE *f, bool use_region);
 void		Entity_WriteSelected (entity_t *e, FILE *f);	// sikk - Export Selection (Map/Prefab)
 entity_t   *Entity_Create (eclass_t *c);
 entity_t   *Entity_Clone (entity_t *e);
-void		Entity_LinkBrush (entity_t *e, brush_t *b);
-void		Entity_UnlinkBrush (brush_t *b);
+void		Entity_LinkBrush (entity_t *e, Brush *b);
+void		Entity_UnlinkBrush (Brush *b);
 // sikk---> Undo/Redo
 int			Entity_MemorySize (entity_t *e);
 void		Entity_AddToList (entity_t *e, entity_t *list);
@@ -94,7 +94,7 @@ int			GetUniqueTargetId (int iHint);
 
 void		FillEntityListbox (HWND hwnd, int pointbased, int brushbased);	// sikk - Create Entity Dialog
 
-bool		IsBrushSelected (brush_t* bSel);	// sikk - Export Selection (Map/Prefab)
+bool		IsBrushSelected (Brush* bSel);	// sikk - Export Selection (Map/Prefab)
 
 
 #endif

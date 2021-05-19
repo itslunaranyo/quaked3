@@ -57,7 +57,7 @@ LONG WINAPI WZ_WndProc (
 				Error("wglMakeCurrent: Failed.");
 			QE_CheckOpenGLForErrors();
 
-			Z_Draw();
+			g_qeglobals.d_z.Draw();
 		    SwapBuffers(s_hdcZ);
 
 			EndPaint(hWnd, &ps);
@@ -81,7 +81,7 @@ LONG WINAPI WZ_WndProc (
 		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Z_MouseDown(xPos, yPos, fwKeys);
+		g_qeglobals.d_z.MouseDown(xPos, yPos, fwKeys);
 		return 0;
 
 	case WM_MBUTTONUP:
@@ -91,7 +91,7 @@ LONG WINAPI WZ_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Z_MouseUp(xPos, yPos, fwKeys);
+		g_qeglobals.d_z.MouseUp(xPos, yPos, fwKeys);
 		if (!(fwKeys & (MK_LBUTTON|MK_RBUTTON|MK_MBUTTON)))
 			ReleaseCapture();
 		return 0;
@@ -108,7 +108,7 @@ LONG WINAPI WZ_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Z_MouseMoved(xPos, yPos, fwKeys);
+		g_qeglobals.d_z.MouseMoved(xPos, yPos, fwKeys);
 		return 0;
 
 	case WM_SIZE:

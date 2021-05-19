@@ -1,141 +1,275 @@
 //==============================
-//	winding.c
+//	winding.cpp
 //==============================
 
 #include "qe3.h"
+#include <list>
 
+#define WINDINGS_CHUNK 512
 
-/*
-=============
-Plane_Equal
-=============
-*/
-bool Plane_Equal (plane_t *a, plane_t *b, int flip)
-{
-	float	dist;
-	vec3_t	normal;
-
-	if (flip) 
-	{
-		normal[0] = - b->normal[0];
-		normal[1] = - b->normal[1];
-		normal[2] = - b->normal[2];
-		dist = - b->dist;
-	}
-	else 
-	{
-		normal[0] = b->normal[0];
-		normal[1] = b->normal[1];
-		normal[2] = b->normal[2];
-		dist = b->dist;
-	}
-	
-	if (fabs(a->normal[0] - normal[0]) < NORMAL_EPSILON	&& 
-		fabs(a->normal[1] - normal[1]) < NORMAL_EPSILON	&& 
-		fabs(a->normal[2] - normal[2]) < NORMAL_EPSILON	&& 
-		fabs(a->dist - dist) < DIST_EPSILON)
-		return true;
-
-	return false;
-}
-
-/*
-============
-Plane_FromPoints
-============
-*/
-bool Plane_FromPoints (vec3_t p1, vec3_t p2, vec3_t p3, plane_t *plane)
-{
-	vec3_t	v1, v2;
-
-	VectorSubtract(p2, p1, v1);
-	VectorSubtract(p3, p1, v2);
-//	CrossProduct(v2, v1, plane->normal);
-	CrossProduct(v1, v2, plane->normal);
-
-	if (VectorNormalize(plane->normal) < 0.1) 
-		return false;
-
-	plane->dist = DotProduct(p1, plane->normal);
-
-	return true;
-}
-
-/*
-=================
-Point_Equal
-=================
-*/
-bool Point_Equal (vec3_t p1, vec3_t p2, float epsilon)
-{
-	int i;
-
-	for (i = 0; i < 3; i++)
-		if (fabs(p1[i] - p2[i]) > epsilon) 
-			return false;
-
-	return true;
-}
+free_winding_t *first;
+std::list<free_winding_t*> windingChunks;
 
 //===============================================================================
 
 /*
 ==================
-Winding_Alloc
+Winding::Clear
 ==================
 */
-winding_t *Winding_Alloc (int points)
+void Winding::Clear()
 {
-	int			size;
-	winding_t  *w;
-	
-	if (points > MAX_POINTS_ON_WINDING)
-		Error("Winding_Alloc: %d points.", points);
-	
-	size = (int)((winding_t *)0)->points[points];
-	w = (winding_t *)malloc(size);
-	memset(w, 0, size);
-	w->maxpoints = points;
-	
+	first = nullptr;
+	for (auto wcIt = windingChunks.begin(); wcIt != windingChunks.end(); wcIt++)
+	{
+		free(*wcIt);
+	}
+	windingChunks.clear();
+}
+
+void Winding::Test()
+{
+	winding_t *w, *x, *y;
+	w = Alloc(4);
+	x = Alloc(8);
+	Free(w);
+	y = Alloc(8);
+	Free(x);
+}
+
+/*
+==================
+Winding::AllocPage
+==================
+*/
+free_winding_t* Winding::AllocPage()
+{
+	// allocate a new page of windingSize * chunkCount
+	free_winding_t* newChunk = (free_winding_t*)malloc(sizeof(winding_t) * WINDINGS_CHUNK);
+	memset(newChunk, 0xEF, sizeof(winding_t) * WINDINGS_CHUNK);
+	// add it to the chunklist
+	windingChunks.push_back(newChunk);
+
+	// format as free_winding_t with chunkCount * 6 points
+	newChunk->maxWindings = WINDINGS_CHUNK;
+	newChunk->prev = newChunk->next = nullptr;
+
+	return newChunk;
+}
+
+/*
+==================
+Winding::Alloc
+
+lunaran - qe3 already exploited lack of array overrun protection to treat winding_t 
+as variably sized. 
+
+i allocate them from a global pool in increments of 6 points, because 6 winding points
+equals 120 + 8 bytes, and higher multiples still fit nicely just under multiples of 128.
+having six points for a 4-point winding is wasteful, but it allows a cleaner allocation 
+strategy. (the original code was always greedy by 4 points so we're technically already 
+doing better than that anyway.)
+==================
+*/
+winding_t *Winding::Alloc(int points)
+{
+	winding_t	*w;
+	int			pts;
+	free_winding_t* chunk;
+
+	if (points > MAX_POINTS_ON_WINDING 	// MUST be less than WINDINGS_CHUNK * 6
+		|| points < 3)
+		Error("Winding::Alloc: %d points.", points);
+
+	pts = (points - 1) / 6 + 1;
+	w = nullptr;
+
+	// guarantee we're pointing at a chunk big enough to accomodate our new winding
+
+	if (!first)	// no free allocations
+	{
+		chunk = AllocPage();
+		first = chunk;
+	}
+	else
+	{
+		chunk = first;
+		// if first free has fewer points than needed, cycle them all to find one that's big enough
+		while (chunk->maxWindings < pts)
+		{
+			if (!chunk->next)	// couldn't find any, add a whole new page to make room
+			{
+				// put it at the end so smaller chunks are still claimed first
+				chunk->next = AllocPage();
+				chunk->next->prev = chunk;
+			}
+			chunk = chunk->next;
+		}
+	}
+
+	w = (winding_t*)chunk;
+	// chosen winding chunk has as many points as needed
+	if (pts == chunk->maxWindings)
+	{
+		// change first to point to the free_winding_t's next
+		if (chunk == first)
+		{
+			first = chunk->next;
+			if (first)
+				first->prev = nullptr;
+			//CheckFreeChain();
+		}
+		else
+		{
+			if (chunk->prev)
+				chunk->prev->next = chunk->next;
+			if (chunk->next)
+				chunk->next->prev = chunk->prev;
+			//CheckFreeChain();
+		}
+	}
+	// has more points than needed, divide it
+	else if (pts < chunk->maxWindings)
+	{
+		winding_t* wtp = w + pts;
+		free_winding_t* end = (free_winding_t*)wtp;
+		end->maxWindings = chunk->maxWindings - pts;
+		end->next = chunk->next;
+		end->prev = chunk->prev;
+
+		if (end->prev)
+			end->prev->next = end;
+		if (end->next)
+			end->next->prev = end;
+
+		if (chunk == first)
+			first = end;
+		//CheckFreeChain();
+	}
+	else
+	{
+		assert(0);
+	}
+	memset(w, 0xBB, sizeof(winding_t)*pts);
+	w->numpoints = 0;
+	w->maxpoints = pts * 6;
+
+	//CheckFreeChain();
+	assert(w->maxpoints != 64);
 	return w;
 }
 
 /*
-=============
-Winding_Free
-=============
-*/
-void Winding_Free (winding_t *w)
+winding_t *Winding::Alloc (int points)
 {
-	free(w);
+	int			size;
+	winding_t	*w = nullptr;
+
+	if (points+2 > MAX_POINTS_ON_WINDING)	// MUST be less than WINDINGS_CHUNK * 6
+		Error("Winding::Alloc: %d points.", points+2);
+
+	size = (int)((winding_t *)0)->points[points+2];
+	w = (winding_t *)malloc(size);
+	memset(w, 0, size);
+	w->maxpoints = points+2;
+
+	return w;
 }
+*/
 
 /*
 ==================
-Winding_Clone
+Winding::CheckFreeChain
 ==================
 */
-winding_t *Winding_Clone (winding_t *w)
+void Winding::CheckFreeChain()
 {
-	int size;
+	if (!first)
+		return;
+	assert(first->prev == NULL);
+	assert((int)first->next != 0x45400000);
+	free_winding_t* chunk;
+	chunk = first;
+	while (chunk->next)
+	{
+		assert(chunk->next->prev = chunk);
+		chunk = chunk->next;
+	}
+}
+
+/*
+=============
+Winding::Free
+=============
+*/
+void Winding::Free(winding_t *w)
+{
+	int maxW = w->maxpoints / 6;
+
+	memset(w, 0xEF, sizeof(winding_t) * maxW);
+	free_winding_t* fw = (free_winding_t*)w;
+
+	fw->maxWindings = maxW;
+	fw->next = first;
+	if (first)
+		first->prev = fw;
+	fw->prev = nullptr;
+	first = fw;
+
+//	CheckFreeChain();
+}
+/*
+void Winding::Free(winding_t *w)
+{
+	free(w);
+}
+*/
+
+
+/*
+==================
+Winding::Clone
+==================
+*/
+winding_t *Winding::Clone (winding_t *w)
+{
 	winding_t *c;
 	
+	c = Winding::Alloc(w->numpoints);
+	Winding::Copy(w, c);
+	/*
+	int size;
 	size = (int)((winding_t *)0)->points[w->numpoints];
 	c = (winding_t*)qmalloc(size);
 	memcpy(c, w, size);
-
+	*/
 	return c;
 }
 
 /*
+==================
+Winding::Copy
+==================
+*/
+void Winding::Copy(winding_t *src, winding_t *dest)
+{
+	assert(dest->maxpoints >= src->numpoints);
+
+	int size;
+	size = sizeof(float) * 5 * src->numpoints;
+	memcpy(dest->points, src->points, size);
+	dest->numpoints = src->numpoints;
+}
+
+/*
 ==============
-Winding_RemovePoint
+Winding::RemovePoint
 ==============
 */
-void Winding_RemovePoint (winding_t *w, int point)
+void Winding::RemovePoint (winding_t *w, int point)
 {
 	if (point < 0 || point >= w->numpoints)
-		Error("Winding_RemovePoint: Point out of range.");
+		Error("Winding::RemovePoint: Point out of range.");
 
 	if (point < w->numpoints-1)
 		memmove(&w->points[point], &w->points[point + 1], (int)((winding_t *)0)->points[w->numpoints - point - 1]);
@@ -145,7 +279,7 @@ void Winding_RemovePoint (winding_t *w, int point)
 
 /*
 ==================
-Winding_Clip
+Winding::Clip
 
 Clips the winding to the plane, returning the new winding on the positive side
 Frees the input winding.
@@ -153,19 +287,28 @@ If keepon is true, an exactly on-plane winding will be saved, otherwise
 it will be clipped away.
 ==================
 */
-winding_t *Winding_Clip (winding_t *in, plane_t *split, bool keepon)
+winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 {
 	int			i, j;
 	int			counts[3];
-	int			maxpts;
+//	int			maxpts;
 	int			sides[MAX_POINTS_ON_WINDING];
 	vec_t		dists[MAX_POINTS_ON_WINDING];
 	vec_t		dot;
 	vec_t	   *p1, *p2;
 	vec3_t		mid;
-	winding_t  *neww;
+
+	// lunaran - scratch max-size winding for working in place, to reduce constant winding alloc/free
+	struct {
+		int		numpoints;
+		int		maxpoints;
+		float 	points[MAX_POINTS_ON_WINDING][5];
+	} neww;
+
+	neww.numpoints = 0;
+	neww.maxpoints = MAX_POINTS_ON_WINDING;
 	
-	counts[0] = counts[1] = counts[2] = 0;
+	counts[SIDE_FRONT] = counts[SIDE_BACK] = counts[SIDE_ON] = 0;
 
 	// determine sides for each point
 	for (i = 0; i < in->numpoints; i++)
@@ -187,20 +330,20 @@ winding_t *Winding_Clip (winding_t *in, plane_t *split, bool keepon)
 	sides[i] = sides[0];
 	dists[i] = dists[0];
 	
-	if (keepon && !counts[0] && !counts[1])
+	if (keepon && !counts[SIDE_FRONT] && !counts[SIDE_BACK])
 		return in;
 		
-	if (!counts[0])
+	if (!counts[SIDE_FRONT])
 	{
-		Winding_Free(in);
+		Winding::Free(in);
 		return NULL;
 	}
 
-	if (!counts[1])
+	if (!counts[SIDE_BACK])
 		return in;
 	
-	maxpts = in->numpoints + 4;	// can't use counts[0] + 2 because of fp grouping errors
-	neww = Winding_Alloc(maxpts);
+	//maxpts = in->numpoints + 4;	// can't use counts[SIDE_FRONT] + 2 because of fp grouping errors
+	//neww = Winding::Alloc(maxpts);
 		
 	for (i = 0; i < in->numpoints; i++)
 	{
@@ -208,15 +351,15 @@ winding_t *Winding_Clip (winding_t *in, plane_t *split, bool keepon)
 		
 		if (sides[i] == SIDE_ON)
 		{
-			VectorCopy(p1, neww->points[neww->numpoints]);
-			neww->numpoints++;
+			VectorCopy(p1, neww.points[neww.numpoints]);
+			neww.numpoints++;
 			continue;
 		}
 	
 		if (sides[i] == SIDE_FRONT)
 		{
-			VectorCopy(p1, neww->points[neww->numpoints]);
-			neww->numpoints++;
+			VectorCopy(p1, neww.points[neww.numpoints]);
+			neww.numpoints++;
 		}
 		
 		if (sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i])
@@ -237,25 +380,30 @@ winding_t *Winding_Clip (winding_t *in, plane_t *split, bool keepon)
 				mid[j] = p1[j] + dot * (p2[j] - p1[j]);
 		}
 			
-		VectorCopy(mid, neww->points[neww->numpoints]);
-		neww->numpoints++;
+		VectorCopy(mid, neww.points[neww.numpoints]);
+		neww.numpoints++;
 	}
 	
-	if (neww->numpoints > maxpts)
-		Error("Winding_Clip: Points exceeded estimate.");
+	winding_t* out;
+	if (neww.numpoints > in->maxpoints)
+	{
+		// we need a bigger boat
+		Winding::Free(in);
+		out = Winding::Alloc(neww.numpoints);
+	}
+	else
+		out = in;
 		
-	// free the original winding
-	Winding_Free(in);
-	
-	return neww;
+	Winding::Copy((winding_t*)&neww, out);
+	return out;
 }
 
 /*
 =============
-Winding_PlanesConcave
+Winding::PlanesConcave
 =============
 */
-bool Winding_PlanesConcave (winding_t *w1, winding_t *w2,
+bool Winding::PlanesConcave(winding_t *w1, winding_t *w2,
 							vec3_t normal1, vec3_t normal2,
 							float dist1, float dist2)
 {
@@ -279,7 +427,7 @@ bool Winding_PlanesConcave (winding_t *w1, winding_t *w2,
 
 /*
 =============
-Winding_TryMerge
+Winding::TryMerge
 
 If two windings share a common edge and the edges that meet at the
 common points are both inside the other polygons, merge them
@@ -290,7 +438,7 @@ The originals will NOT be freed.
 if keep is true no points are ever removed
 =============
 */
-winding_t *Winding_TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, int keep)
+winding_t *Winding::TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, int keep)
 {
 	int			i, j, k, l;
 	bool		keep1, keep2;
@@ -362,7 +510,7 @@ winding_t *Winding_TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, i
 	keep2 = (bool)(dot < -CONTINUOUS_EPSILON);
 
 	// build the new polygon
-	newf = Winding_Alloc(f1->numpoints + f2->numpoints);
+	newf = Winding::Alloc(f1->numpoints + f2->numpoints);
 	
 	// copy first polygon
 	for (k = (i + 1) % f1->numpoints; k != i; k = (k + 1) % f1->numpoints)
@@ -385,4 +533,59 @@ winding_t *Winding_TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, i
 	}
 
 	return newf;
+}
+
+
+/*
+==================
+Winding::TextureCoordinates
+==================
+*/
+void Winding::TextureCoordinates(winding_t *w, qtexture_t *q, Face *f)
+{
+	float		s, t, ns, nt;
+	float		ang, sinv, cosv;
+	vec3_t		vecs[2];
+	texdef_t	*texdef;
+	float		*xyzst;
+
+	for (int i = 0; i < w->numpoints; i++)
+	{
+		xyzst = w->points[i];
+
+		// get natural texture axis
+		f->plane.GetTextureAxis(vecs[0], vecs[1]);
+
+		texdef = &f->texdef;
+
+		ang = texdef->rotate / 180 * Q_PI;
+		sinv = sin(ang);
+		cosv = cos(ang);
+
+		if (!texdef->scale[0])
+			texdef->scale[0] = 1;
+		if (!texdef->scale[1])
+			texdef->scale[1] = 1;
+
+		s = DotProduct(xyzst, vecs[0]);
+		t = DotProduct(xyzst, vecs[1]);
+
+		ns = cosv * s - sinv * t;
+		nt = sinv * s + cosv * t;
+
+		s = ns / texdef->scale[0] + texdef->shift[0];
+		t = nt / texdef->scale[1] + texdef->shift[1];
+
+		// gl scales everything from 0 to 1
+		s /= q->width;
+		t /= q->height;
+
+		xyzst[3] = s;
+		xyzst[4] = t;
+	}
+}
+
+int Winding::MemorySize(winding_t * w)
+{
+	return sizeof(winding_t);
 }

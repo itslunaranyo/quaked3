@@ -27,16 +27,6 @@ lunaran: matches function of TextureAxisFromPlane now, used to fail on diagonal 
 */
 void AxializeVector (vec3_t v)
 {
-	vec3_t axes[6] =
-	{
-		{ 0, 0, 1 },
-		{ 0, 0,-1 },
-		{ 1, 0, 0 },
-		{ -1, 0, 0 },
-		{ 0, 1, 0 },
-		{ 0,-1, 0 },
-	};
-
 	int		i, bestaxis;
 	float	dot, best;
 
@@ -45,7 +35,7 @@ void AxializeVector (vec3_t v)
 
 	for (i = 0; i < 6; i++)
 	{
-		dot = DotProduct(v, axes[i]);
+		dot = DotProduct(v, g_v3BaseAxis[i*3]);
 		if (dot > best)
 		{
 			best = dot;
@@ -55,7 +45,7 @@ void AxializeVector (vec3_t v)
 
 	for (i = 0; i < 3; i++)
 	{
-		v[i] = fabs(v[i]) * axes[bestaxis][i];
+		v[i] = fabs(v[i]) * g_v3BaseAxis[bestaxis*3][i];
 	}
 }
 
@@ -68,7 +58,7 @@ void MoveSelection (vec3_t move)
 {
 	int			i;
 	bool		success;
-	brush_t	   *b;
+	Brush	   *b;
 	vec3_t		end;
 
 	if (!move[0] && !move[1] && !move[2])
@@ -84,7 +74,7 @@ void MoveSelection (vec3_t move)
 		{
 			success = true;
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-				success &= Brush_MoveVertex(g_brSelectedBrushes.next, g_qeglobals.d_fMovePoints[0], move, end);
+				success &= g_brSelectedBrushes.next->MoveVertex(g_qeglobals.d_fMovePoints[0], move, end);
 
 			VectorCopy(end, g_qeglobals.d_fMovePoints[0]);
 			return;
@@ -97,7 +87,7 @@ void MoveSelection (vec3_t move)
 
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			Brush_Build(b);
+			b->Build();
 			for (i = 0; i < 3; i++)
 				if (b->mins[i] > b->maxs[i]	|| b->maxs[i] - b->mins[i] > MAX_BRUSH_SIZE)
 					break;	// dragged backwards or fucked up
@@ -114,7 +104,7 @@ void MoveSelection (vec3_t move)
 				VectorSubtract(g_qeglobals.d_fMovePoints[i], move, g_qeglobals.d_fMovePoints[i]);
 
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-				Brush_Build(b);
+				b->Build();
 		}
 	}
 	else
@@ -124,7 +114,7 @@ void MoveSelection (vec3_t move)
 		// this is dirty, but unfortunately necessary because 
 		// Brush_Build can remove windings
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			Brush_ResetFaceOriginals(b);
+			b->ResetFaceOriginals();
 // <---sikk
 
 		// if there are lots of brushes selected, just translate instead
@@ -194,7 +184,7 @@ void Drag_Setup(int x, int y, int buttons,
 	vec3_t xaxis, vec3_t yaxis,
 	vec3_t origin, vec3_t dir)
 {
-	face_t *f;
+	Face *f;
 	trace_t	t;
 
 	if (!Select_HasBrushes())
@@ -249,7 +239,7 @@ void Drag_Setup(int x, int y, int buttons,
 		if (buttons == (MK_LBUTTON | MK_CONTROL))
 		{
 			Sys_Printf("CMD: Shear dragging face.\n");
-			Brush_SelectFaceForDragging(t.brush, t.face, true);
+			t.brush->SelectFaceForDragging(t.face, true);
 		}
 		else if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
 		{
@@ -259,7 +249,7 @@ void Drag_Setup(int x, int y, int buttons,
 			// But it is a useful command to leave hidden as it is.  
 			Sys_Printf("CMD: Sticky dragging brush.\n");
 			for (f = t.brush->brush_faces; f; f = f->next)
-				Brush_SelectFaceForDragging(t.brush, f, false);
+				t.brush->SelectFaceForDragging(f, false);
 		}
 		else
 			Sys_Printf("CMD: Dragging entire selection.\n");
@@ -273,20 +263,20 @@ void Drag_Setup(int x, int y, int buttons,
 	// check for side hit
 	if (g_brSelectedBrushes.next->next != &g_brSelectedBrushes)
 	{
-		for (brush_t* pBrush = g_brSelectedBrushes.next; pBrush != &g_brSelectedBrushes; pBrush = pBrush->next)
+		for (Brush* pBrush = g_brSelectedBrushes.next; pBrush != &g_brSelectedBrushes; pBrush = pBrush->next)
 		{
 			if (buttons & MK_CONTROL)
-				Brush_SideSelect(pBrush, origin, dir, true);
+				pBrush->SideSelect(origin, dir, true);
 			else
-				Brush_SideSelect(pBrush, origin, dir, false);
+				pBrush->SideSelect(origin, dir, false);
 		}
 	}
 	else
 	{
 		if (buttons & MK_CONTROL)
-			Brush_SideSelect(g_brSelectedBrushes.next, origin, dir, true);
+			g_brSelectedBrushes.next->SideSelect(origin, dir, true);
 		else
-			Brush_SideSelect(g_brSelectedBrushes.next, origin, dir, false);
+			g_brSelectedBrushes.next->SideSelect(origin, dir, false);
 	}
 	if (g_brSelectedBrushes.next->owner->eclass->fixedsize)
 		Sys_Printf("CMD: Dragging entire selection.\n");
@@ -337,7 +327,7 @@ void Drag_Begin (int x, int y, int buttons,
 				 vec3_t xaxis, vec3_t yaxis, 
 				 vec3_t origin, vec3_t dir)
 {
-	int		nDim1, nDim2;
+//	int		nDim1, nDim2;
 //	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
 	trace_t	t;
 
@@ -365,17 +355,9 @@ void Drag_Begin (int x, int y, int buttons,
 			t = Test_Ray(origin, dir, false);
 			if (t.face)
 			{
-				nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
-				nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
-
-				g_qeglobals.d_v3WorkMin[nDim1] = t.brush->mins[nDim1];
-				g_qeglobals.d_v3WorkMax[nDim1] = t.brush->maxs[nDim1];
-				g_qeglobals.d_v3WorkMin[nDim2] = t.brush->mins[nDim2];
-				g_qeglobals.d_v3WorkMax[nDim2] = t.brush->maxs[nDim2];
-
 				UpdateWorkzone(t.brush);
 
-				Texture_ChooseTexture(&t.face->texdef, true);
+				g_qeglobals.d_texturewin.ChooseTexture(&t.face->texdef, true);
 				SurfWnd_UpdateUI();
 			}
 			else
@@ -395,7 +377,7 @@ void Drag_Begin (int x, int y, int buttons,
 				{
 					Undo_Start("Set Brush Texture");
 					Undo_AddBrush(t.brush);
-					Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef, 0);
+					t.brush->SetTexture(&g_qeglobals.d_workTexDef, 0);
 					Undo_EndBrush(t.brush);
 					Undo_End();
 					Sys_UpdateWindows(W_ALL);
@@ -420,7 +402,7 @@ void Drag_Begin (int x, int y, int buttons,
 					Undo_Start("Set Face Texture");
 					Undo_AddBrush(t.brush);
 					strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
-					Brush_Build(t.brush);
+					t.brush->Build();
 					Undo_EndBrush(t.brush);
 					Undo_End();
 					Sys_UpdateWindows(W_ALL);
@@ -445,7 +427,7 @@ void Drag_Begin (int x, int y, int buttons,
 					Undo_Start("Set Face Texture");
 					Undo_AddBrush(t.brush);
 					t.face->texdef = g_qeglobals.d_workTexDef;
-					Brush_Build(t.brush);
+					t.brush->Build();
 					Undo_EndBrush(t.brush);
 					Undo_End();
 					Sys_UpdateWindows(W_ALL);

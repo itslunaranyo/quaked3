@@ -8,7 +8,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
+/*
 // sikk---> Mousewheel Handling
 #include <zmouse.h>
 
@@ -17,7 +17,7 @@ UINT	g_unMouseWheel;
 #define WM_MOUSEWHEEL 0x020A
 #endif
 // <---sikk
-
+*/
 int		g_nUpdateBits;
 int		g_nScreenWidth;
 int		g_nScreenHeight;
@@ -833,6 +833,7 @@ GetMouseWheelMsg
 taken from QE5
 ============
 */
+/*
 UINT GetMouseWheelMsg ()
 {
 	OSVERSIONINFO osvi;
@@ -861,6 +862,7 @@ UINT GetMouseWheelMsg ()
     return RegisterWindowMessage("MSWHEEL_ROLLMSG");
 }
 // <---sikk
+*/
 
 // sikk---> Quickly made Splash Screen
 clock_t	g_clSplashTimer;
@@ -910,7 +912,6 @@ int WINAPI WinMain (
     MSG		msg;
 	double	curtime, oldtime, delta;
 	HACCEL	accelerators;
-	HWND	hwndSplash;
 	char	szProject[_MAX_PATH];	// sikk - Load Last Project
     time_t	lTime;
 
@@ -918,6 +919,7 @@ int WINAPI WinMain (
 
 // sikk - Quickly made Splash Screen
 #ifndef _DEBUG
+	HWND	hwndSplash;
 	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
 #endif
 
@@ -983,7 +985,7 @@ int WINAPI WinMain (
 
 	QE_Init();
 
-	g_unMouseWheel = GetMouseWheelMsg();	// sikk - Mousewheel Handling
+	//g_unMouseWheel = GetMouseWheelMsg();	// sikk - Mousewheel Handling
 
 	Sys_Printf("MSG: Entering message loop...\n");
 
@@ -1035,7 +1037,7 @@ int WINAPI WinMain (
 // <---sikk
 
 		// run time dependant behavior
-		Cam_MouseControl(delta);
+		g_qeglobals.d_camera.MouseControl(delta);
 
 		// update any windows now
 		if (g_nUpdateBits & W_CAMERA)
@@ -1074,7 +1076,7 @@ int WINAPI WinMain (
 		g_nUpdateBits = 0;
 
 		// if not driving in the camera view, block
-		if (!g_nCamButtonState && !g_bHaveQuit)
+		if (!g_qeglobals.d_camera.nCamButtonState && !g_bHaveQuit)
 			WaitMessage();
 	}
 

@@ -9,13 +9,13 @@
 extern char			g_szCurrentMap[MAX_PATH];
 
 // head/tail of doubly linked lists
-extern brush_t		g_brActiveBrushes;		// brushes currently being displayed
-extern brush_t		g_brFilteredBrushes;	// brushes that have been filtered or regioned
+extern Brush		g_brActiveBrushes;		// brushes currently being displayed
+extern Brush		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
 extern entity_t		g_entEntities;
 extern entity_t	   *g_peWorldEntity;		// the world entity is NOT included in the entities chain
 
-extern brush_t		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
+extern Brush		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
 extern entity_t		g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 
 extern BOOL			g_bModified;			// for quit confirmations
@@ -47,7 +47,7 @@ void Map_RegionSelectedBrushes ();
 void Map_ApplyRegion ();
 void Map_AddRegionBrushes ();
 void Map_RemoveRegionBrushes ();
-bool Map_IsBrushFiltered (brush_t *b);
+bool Map_IsBrushFiltered (Brush *b);
 
 entity_t *Map_FindClass (char *cname);
 

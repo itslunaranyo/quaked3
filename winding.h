@@ -11,28 +11,41 @@
 #define	NORMAL_EPSILON		0.0001
 #define	BOGUS_RANGE			18000
 
+
 //====================================================================
 
-// returns true if the planes are equal
-bool Plane_Equal (plane_t *a, plane_t *b, int flip);
-// returns false if the points are colinear
-bool Plane_FromPoints (vec3_t p1, vec3_t p2, vec3_t p3, plane_t *plane);
-// returns true if the points are equal
-bool Point_Equal (vec3_t p1, vec3_t p2, float epsilon);
+typedef struct winding_s
+{
+	int		numpoints;
+	int		maxpoints;
+	float 	points[6][5];	// variable sized
+} winding_t;
 
-// allocate a winding
-winding_t *Winding_Alloc (int points);
-// make a winding clone
-winding_t *Winding_Clone (winding_t *w);
-// clip the winding with the plane
-winding_t *Winding_Clip (winding_t *in, plane_t *split, bool keepon);
-// try to merge the windings, returns the new merged winding or NULL
-winding_t *Winding_TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, int keep);
-// free the winding
-void Winding_Free (winding_t *w);
-// remove a point from the winding
-void Winding_RemovePoint (winding_t *w, int point);
-// returns true if the planes are concave
-bool Winding_PlanesConcave (winding_t *w1, winding_t *w2, vec3_t normal1, vec3_t normal2, float dist1, float dist2);
+typedef struct free_winding_s {
+	int maxWindings;	// winding points / 6
+	free_winding_s* next;
+	free_winding_s* prev;
+} free_winding_t;
 
+namespace Winding
+{
+	void Clear();	// mass reset of the winding pool
+	void Test();	// test
+
+	void		CheckFreeChain();	// run over the chain of free windings and make sure nothing's fucky
+
+	free_winding_t* AllocPage();	// actually grab memory for new windings
+	winding_t	*Alloc(int points);	// allocate a winding from the pool
+	void		Free(winding_t *w);	// free the winding
+	winding_t	*Clone(winding_t *w);	// make a winding clone
+	void		Copy(winding_t *src, winding_t *dest);	// copy one winding into another
+
+	winding_t	*Clip(winding_t *in, Plane *split, bool keepon);	// clip the winding with the plane
+	winding_t	*TryMerge(winding_t *f1, winding_t *f2, vec3_t planenormal, int keep);	// try to merge the windings, returns the new merged winding or NULL
+	void		RemovePoint(winding_t *w, int point);	// remove a point from the winding
+	void		TextureCoordinates(winding_t *w, qtexture_t *q, Face *f);	// compute s/t coords for textured face winding
+
+	bool		PlanesConcave(winding_t *w1, winding_t *w2, vec3_t normal1, vec3_t normal2, float dist1, float dist2);	// returns true if the planes are concave
+	int			MemorySize(winding_t *w);	//dum
+}
 #endif

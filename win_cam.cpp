@@ -6,7 +6,6 @@
 
 #include "qe3.h"
 
-
 /*
 ============
 CameraWndProc
@@ -91,7 +90,7 @@ LONG WINAPI WCam_WndProc (
 			if (BeginPaint(hWnd, &ps))
 			{
 				QE_CheckOpenGLForErrors();
-				Cam_Draw();
+				g_qeglobals.d_camera.Draw();
 				QE_CheckOpenGLForErrors();
 
 				EndPaint(hWnd, &ps);
@@ -122,7 +121,7 @@ LONG WINAPI WCam_WndProc (
 			for (i = 0; i < 100; i++)
 			{
 				g_qeglobals.d_camera.angles[YAW] = i * 4;
-				Cam_Draw();
+				g_qeglobals.d_camera.Draw();
 			}
 			SwapBuffers(g_qeglobals.d_hdcBase);
 			glDrawBuffer(GL_BACK);
@@ -152,7 +151,7 @@ LONG WINAPI WCam_WndProc (
 		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Cam_MouseDown(xPos, yPos, fwKeys);
+		g_qeglobals.d_camera.MouseDown(xPos, yPos, fwKeys);
 		return 0;
 		
 	case WM_MBUTTONUP:
@@ -162,7 +161,7 @@ LONG WINAPI WCam_WndProc (
 		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Cam_MouseUp(xPos, yPos, fwKeys);
+		g_qeglobals.d_camera.MouseUp(xPos, yPos, fwKeys);
 		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return 0;
@@ -181,7 +180,7 @@ LONG WINAPI WCam_WndProc (
 		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		Cam_MouseMoved(xPos, yPos, fwKeys);
+		g_qeglobals.d_camera.MouseMoved(xPos, yPos, fwKeys);
 		return 0;
 		
 	case WM_SIZE:
@@ -262,7 +261,7 @@ void WCam_Create (HINSTANCE hInstance)
 // <---sikk
 
 	if (!g_qeglobals.d_hwndCamera)
-		Error("Could not create Camera Window.");
+		Error("Could not create CameraView Window.");
 
 	LoadWindowState(g_qeglobals.d_hwndCamera, "CameraWindow");
     ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOWDEFAULT);

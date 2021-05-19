@@ -34,6 +34,7 @@
 #include "qfiles.h"
 
 #include "textures.h"
+#include "face.h"
 #include "brush.h"
 #include "clip.h"
 #include "csg.h"
@@ -46,9 +47,11 @@
 #include "vertsel.h"
 #include "winding.h"
 
-#include "camera.h"
-#include "xy.h"
-#include "z.h"
+#include "v_view.h"
+#include "v_tex.h"
+#include "v_camera.h"
+#include "v_xy.h"
+#include "v_z.h"
 #include "mru.h"
 #include "undo.h"
 
@@ -168,13 +171,13 @@ typedef struct
 	float      *d_fMovePoints[1024];
 
 	qtexture_t *d_qtextures;
-	texturewin_t d_texturewin;
+	TextureView d_texturewin;
 
 	int			d_nPointfileDisplayList;
 
-	camera_t	d_camera;				// sikk - moved camera object here
-	xyz_t		d_xyz[4];				// lunaran - grid view reunification
-	z_t         d_z;
+	CameraView	d_camera;				// sikk - moved camera object here
+	XYZView		d_xyz[4];				// lunaran - grid view reunification
+	ZView         d_z;
 
 	int         d_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
 
@@ -195,9 +198,9 @@ typedef struct
 
 	bool	    d_bClipMode;
 	bool	    d_bClipSwitch;
-	brush_t     d_brFrontSplits;
-	brush_t     d_brBackSplits;
-	brush_t    *d_pbrSplitList;
+	Brush     d_brFrontSplits;
+	Brush     d_brBackSplits;
+	Brush    *d_pbrSplitList;
 
 	// handle to the console log file
 	// we use low level I/O to get rid of buffering and have everything on file if we crash
@@ -219,7 +222,7 @@ extern int		g_nScreenHeight;
 extern char    *g_szBSP_Commands[256];
 extern HANDLE	g_hBSP_Process;
 
-extern UINT		g_unMouseWheel;	// sikk - Mousewheel Handling
+//extern UINT		g_unMouseWheel;	// sikk - Mousewheel Handling
 
 /*
 ** global declarations
@@ -318,8 +321,8 @@ LONG	WINAPI XYZWnd_Proc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
 void	WXY_Print ();
 int		GetSelectionInfo ();	// sikk - Contex Menu
-void	XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y);	// sikk - Contex Menu
-xyz_t*	XYZWnd_WinFromHandle(HWND xyzwin);
+void	XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y);	// sikk - Contex Menu
+XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 void	XYZWnd_CycleViewAxis(HWND xyzwin);
 void	XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis);
 

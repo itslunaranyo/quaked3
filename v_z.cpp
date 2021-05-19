@@ -4,18 +4,32 @@
 
 #include "qe3.h"
 
+#define CAM_HEIGHT	48	// height of main part
+#define CAM_GIZMO	8	// height of the gizmo
+
+
+ZView::ZView()
+{
+	Init();
+}
+
+ZView::~ZView()
+{
+
+}
 
 /*
 ============
-Z_Init
+ZView::Init
 ============
 */
-void Z_Init ()
+void ZView::Init()
 {
-	g_qeglobals.d_z.origin[0] = 0;
-	g_qeglobals.d_z.origin[1] = 0;	// sikk - changed from "20"
-	g_qeglobals.d_z.origin[2] = 0;	// sikk - changed from "46"
-	g_qeglobals.d_z.scale = 1;
+	origin[0] = 0;
+	origin[1] = 0;	// sikk - changed from "20"
+	origin[2] = 0;	// sikk - changed from "46"
+	scale = 1;
+
 	if (!g_qeglobals.d_savedinfo.bShow_Z)
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
 
@@ -30,26 +44,24 @@ void Z_Init ()
 ============================================================================
 */
 
-static int	cursorx, cursory;
-
 /*
 ==============
 Z_MouseDown
 ==============
 */
-void Z_MouseDown (int x, int y, int buttons)
+void ZView::MouseDown(int x, int y, int buttons) 
 {
 	vec3_t		org, dir, vup, vright;
-	brush_t	   *b;
+	Brush	   *b;
 
-	Sys_GetCursorPos(&cursorx, &cursory);
+	Sys_GetCursorPos(&cursorX, &cursorY);
 
 	vup[0] = 0; 
 	vup[1] = 0; 
-	vup[2] = 1 / g_qeglobals.d_z.scale;
+	vup[2] = 1 / scale;
 
-	VectorCopy(g_qeglobals.d_z.origin, org);
-	org[2] += (y - (g_qeglobals.d_z.height / 2)) / g_qeglobals.d_z.scale;
+	VectorCopy(origin, org);
+	org[2] += (y - (height / 2)) / scale;
 	org[1] = -8192;
 
 	b = g_brSelectedBrushes.next;
@@ -92,7 +104,7 @@ void Z_MouseDown (int x, int y, int buttons)
 Z_MouseUp
 ==============
 */
-void Z_MouseUp (int x, int y, int buttons)
+void ZView::MouseUp(int x, int y, int buttons) 
 {
 	Drag_MouseUp();
 }
@@ -102,16 +114,14 @@ void Z_MouseUp (int x, int y, int buttons)
 Z_MouseMoved
 ==============
 */
-void Z_MouseMoved (int x, int y, int buttons)
+void ZView::MouseMoved(int x, int y, int buttons) 
 {
 	char	zstring[256];
 	float	fz;
-	int		i;		// sikk - Mouse Zoom
-	float	scale;	// sikk - Mouse Zoom
 
 	if (!buttons)
 	{
-		fz = g_qeglobals.d_z.origin[2] + (y - (g_qeglobals.d_z.height / 2)) / g_qeglobals.d_z.scale;
+		fz = origin[2] + (y - (height / 2)) / scale;
 		fz = floor(fz / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
 		sprintf(zstring, "z Coordinate: (%d)", (int)fz);
@@ -131,14 +141,14 @@ void Z_MouseMoved (int x, int y, int buttons)
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
 		Sys_GetCursorPos(&x, &y);
-		if (y != cursory)
+		if (y != cursorY)
 		{
-			g_qeglobals.d_z.origin[2] += (y - cursory) / g_qeglobals.d_z.scale;
+			origin[2] += (y - cursorY) / scale;
 
-			Sys_SetCursorPos(cursorx, cursory);
+			Sys_GetCursorPos(&cursorX, &cursorY);
 			Sys_UpdateWindows(W_Z);
 
-			sprintf(zstring, "z Origin: (%d)", (int)g_qeglobals.d_z.origin[2]);
+			sprintf(zstring, "z Origin: (%d)", (int)origin[2]);
 			Sys_Status(zstring, 0);
 		}
 		return;
@@ -148,7 +158,7 @@ void Z_MouseMoved (int x, int y, int buttons)
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) ||
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
-		g_qeglobals.d_camera.origin[2] = (y - (g_qeglobals.d_z.height / 2)) / g_qeglobals.d_z.scale;
+		g_qeglobals.d_camera.origin[2] = (y - (height / 2)) / scale;
 		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 
@@ -158,20 +168,19 @@ void Z_MouseMoved (int x, int y, int buttons)
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
 		Sys_GetCursorPos(&x, &y);
-		if (y != cursory)
+
+		if (y != cursorY)
 		{
-			scale = 1;
-			for(i = abs(y - cursory); i > 0; i--)
-				scale *= y > cursory ? 1.01 : 0.99;
+			if (y > cursorY)
+				scale *= powf(1.01f, fabs(y - cursorY));
+			else
+				scale *= powf(0.99f, fabs(y - cursorY));
 
-			g_qeglobals.d_z.scale *= scale;
-			if (g_qeglobals.d_z.scale > 16)
-				g_qeglobals.d_z.scale = 16;
-			else if (g_qeglobals.d_z.scale < 0.1)
-				g_qeglobals.d_z.scale = (float)0.1;
+			scale = max(0.1f, min(scale, 16));
 
-			Sys_SetCursorPos(cursorx, cursory);
-			Sys_UpdateWindows(W_Z | W_XY);
+
+			Sys_SetCursorPos(cursorX, cursorY);
+			Sys_UpdateWindows(W_Z);
 		}
 		return;
 	}
@@ -189,10 +198,10 @@ void Z_MouseMoved (int x, int y, int buttons)
 
 /*
 ==============
-Z_DrawGrid
+ZView::DrawGrid
 ==============
 */
-void Z_DrawGrid ()
+void ZView::DrawGrid ()
 {
 	int		w, h;
 	float	zz, zb, ze;
@@ -205,15 +214,15 @@ void Z_DrawGrid ()
 	else
 		nSize = 64;
 
-	w = g_qeglobals.d_z.width / 2 / g_qeglobals.d_z.scale;
-	h = g_qeglobals.d_z.height / 2 / g_qeglobals.d_z.scale;
+	w = width / 2;// / scale;
+	h = height / 2 / scale;
 
-	zb = g_qeglobals.d_z.origin[2] - h;
+	zb = origin[2] - h;
 	if (zb < g_v3RegionMins[2])
 		zb = g_v3RegionMins[2];
 	zb = nSize * floor(zb / nSize);
 
-	ze = g_qeglobals.d_z.origin[2] + h;
+	ze = origin[2] + h;
 	if (ze > g_v3RegionMaxs[2])
 		ze = g_v3RegionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
@@ -232,7 +241,7 @@ void Z_DrawGrid ()
 	glEnd();
 
 	// draw minor blocks
-	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * g_qeglobals.d_z.scale >= 4)
+	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
 	{
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR]);
 
@@ -250,10 +259,10 @@ void Z_DrawGrid ()
 
 /*
 ==============
-Z_DrawCoords
+ZView::DrawCoords
 ==============
 */
-void Z_DrawCoords ()
+void ZView::DrawCoords ()
 {
 	int		w, h;
 	float	z, zb, ze;
@@ -267,15 +276,15 @@ void Z_DrawCoords ()
 	else
 		nSize = 64;
 
-	w = g_qeglobals.d_z.width / 2 / g_qeglobals.d_z.scale;
-	h = g_qeglobals.d_z.height / 2 / g_qeglobals.d_z.scale;
+	w = width / 2;// / scale;
+	h = height / 2 / scale;
 
-	zb = g_qeglobals.d_z.origin[2] - h;
+	zb = origin[2] - h;
 	if (zb < g_v3RegionMins[2])
 		zb = g_v3RegionMins[2];
 	zb = nSize * floor(zb / nSize);
 
-	ze = g_qeglobals.d_z.origin[2] + h;
+	ze = origin[2] + h;
 	if (ze > g_v3RegionMaxs[2])
 		ze = g_v3RegionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
@@ -292,13 +301,13 @@ void Z_DrawCoords ()
 
 /*
 ==============
-Z_DrawCameraIcon
+ZView::DrawCameraIcon
 ==============
 */
-void Z_DrawCameraIcon ()
+void ZView::DrawCameraIcon ()
 {
 	float	x, y;
-	int		xCam = g_qeglobals.d_z.width / 4;
+	int		xCam = width / 4;
 
 	x = 0;
 	y = g_qeglobals.d_camera.origin[2];
@@ -322,30 +331,30 @@ GLbitfield g_glbitClear = GL_COLOR_BUFFER_BIT; // HACK
 
 /*
 ==============
-Z_Draw
+ZView::Draw
 ==============
 */
-void Z_Draw ()
+void ZView::Draw ()
 {
-    brush_t	   *brush;
+    Brush	   *brush;
 	float		w, h;
 	float		top, bottom;
 	double		start, end;
 	qtexture_t *q;
 	vec3_t		org_top, org_bottom, dir_up, dir_down;
 
-	int xCam = g_qeglobals.d_z.width / 3;
+	int xCam = width / 3;
 
 	if (!g_brActiveBrushes.next)
 		return;	// not valid yet
 
-	if (g_qeglobals.d_z.timing)
+	if (timing)
 		start = Sys_DoubleTime();
 
 	//
 	// clear
 	//
-	glViewport(0, 0, g_qeglobals.d_z.width, g_qeglobals.d_z.height);
+	glViewport(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2],
@@ -360,10 +369,10 @@ void Z_Draw ()
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-	w = g_qeglobals.d_z.width / 2 / g_qeglobals.d_z.scale;
-	h = g_qeglobals.d_z.height / 2 / g_qeglobals.d_z.scale;
+	w = width / 2;// / scale;
+	h = height / 2 / scale;
 	
-	glOrtho(-w, w, g_qeglobals.d_z.origin[2] - h, g_qeglobals.d_z.origin[2] + h, -8, 8);
+	glOrtho(-w, w, origin[2] - h, origin[2] + h, -8, 8);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_1D);
 	glDisable(GL_DEPTH_TEST);
@@ -372,7 +381,7 @@ void Z_Draw ()
 	//
 	// now draw the grid
 	//
-	Z_DrawGrid();
+	DrawGrid();
 
 	//
 	// draw stuff
@@ -391,24 +400,24 @@ void Z_Draw ()
 	dir_down[0] = 0; 
 	dir_down[1] = 0; 
 	dir_down[2] = -1;
-	VectorCopy(g_qeglobals.d_z.origin, org_top);
+	VectorCopy(origin, org_top);
 	org_top[2] = 4096;
-	VectorCopy(g_qeglobals.d_z.origin, org_bottom);
+	VectorCopy(origin, org_bottom);
 	org_bottom[2] = -4096;
 
 	for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
 	{
-		if (brush->mins[0] >= g_qeglobals.d_z.origin[0] || 
-			brush->maxs[0] <= g_qeglobals.d_z.origin[0]	|| 
-			brush->mins[1] >= g_qeglobals.d_z.origin[1]	|| 
-			brush->maxs[1] <= g_qeglobals.d_z.origin[1])
+		if (brush->mins[0] >= origin[0] || 
+			brush->maxs[0] <= origin[0]	|| 
+			brush->mins[1] >= origin[1]	|| 
+			brush->maxs[1] <= origin[1])
 			continue;
 
-		if (!Brush_Ray(org_top, dir_down, brush, &top))
+		if (!brush->RayTest(org_top, dir_down, &top))
 			continue;
 		top = org_top[2] - top;
 
-		if (!Brush_Ray(org_bottom, dir_up, brush, &bottom))
+		if (!brush->RayTest(org_bottom, dir_up, &bottom))
 			continue;
 		bottom = org_bottom[2] + bottom;
 
@@ -436,15 +445,15 @@ void Z_Draw ()
 	//
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if (!(brush->mins[0] >= g_qeglobals.d_z.origin[0] || 
-			  brush->maxs[0] <= g_qeglobals.d_z.origin[0] || 
-			  brush->mins[1] >= g_qeglobals.d_z.origin[1] || 
-			  brush->maxs[1] <= g_qeglobals.d_z.origin[1]))
+		if (!(brush->mins[0] >= origin[0] || 
+			  brush->maxs[0] <= origin[0] || 
+			  brush->mins[1] >= origin[1] || 
+			  brush->maxs[1] <= origin[1]))
 		{
-			if (Brush_Ray(org_top, dir_down, brush, &top))
+			if (brush->RayTest(org_top, dir_down, &top))
 			{
 				top = org_top[2] - top;
-				if (Brush_Ray(org_bottom, dir_up, brush, &bottom))
+				if (brush->RayTest(org_bottom, dir_up, &bottom))
 				{
 					bottom = org_bottom[2] + bottom;
 					q = Texture_ForName(brush->brush_faces->texdef.name);
@@ -469,16 +478,16 @@ void Z_Draw ()
 		glEnd();
 	}
 
-	Z_DrawCameraIcon();
+	DrawCameraIcon();
 
 	// draw coordinate text if needed
 	if (g_qeglobals.d_savedinfo.bShow_Coordinates)	// sikk - Toggle By Menu Command
-		Z_DrawCoords();	// sikk - Draw Coords last so they are on top
+		DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
 
 	QE_CheckOpenGLForErrors();
 
-	if (g_qeglobals.d_z.timing)
+	if (timing)
 	{
 		end = Sys_DoubleTime();
 		Sys_Printf("MSG: Z: %d ms\n", (int)(1000 * (end - start)));

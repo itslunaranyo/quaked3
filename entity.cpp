@@ -483,7 +483,7 @@ void Entity_Free (entity_t *e)
 	epair_t	*ep, *next;
 
 	while (e->brushes.onext != &e->brushes)
-		Brush_Free(e->brushes.onext);
+		delete e->brushes.onext;
 
 	if (e->next)
 	{
@@ -605,7 +605,7 @@ entity_t *Entity_Parse (bool onlypairs)
 {
 	entity_t   *ent;
 	eclass_t   *e;
-	brush_t	   *b;
+	Brush	   *b;
 	vec3_t		mins, maxs;
 	epair_t	   *ep;
 	bool		has_brushes;
@@ -628,7 +628,7 @@ entity_t *Entity_Parse (bool onlypairs)
 			break;
 		if (!strcmp(g_szToken, "{"))
 		{
-			b = Brush_Parse();
+			b = Brush::Parse();
 			b->owner = ent;
 
 			// add to the end of the entity chain
@@ -665,7 +665,7 @@ entity_t *Entity_Parse (bool onlypairs)
 #if 0
 			while (ent->brushes.onext != &ent->brushes)
 			{	// FIXME: this will free the entity and crash!
-				Brush_Free(b);
+				delete b;
 			}
 #endif
 			ent->brushes.next = ent->brushes.prev = &ent->brushes;
@@ -674,7 +674,7 @@ entity_t *Entity_Parse (bool onlypairs)
 		// create a custom brush
 		VectorAdd(e->mins, ent->origin, mins);
 		VectorAdd(e->maxs, ent->origin, maxs);
-		b = Brush_Create(mins, maxs, &e->texdef);
+		b = Brush::Create(mins, maxs, &e->texdef);
 		b->owner = ent;
 
 		b->onext = ent->brushes.onext;
@@ -696,7 +696,7 @@ entity_t *Entity_Parse (bool onlypairs)
 			// create a custom brush
 			VectorAdd(e->mins, ent->origin, mins);
 			VectorAdd(e->maxs, ent->origin, maxs);
-			b = Brush_Create(mins, maxs, &e->texdef);
+			b = Brush::Create(mins, maxs, &e->texdef);
 			b->owner = ent;
 
 			b->onext = ent->brushes.onext;
@@ -727,7 +727,7 @@ Entity_Write
 void Entity_Write (entity_t *e, FILE *f, bool use_region)
 {
 	epair_t	   *ep;
-	brush_t	   *b;
+	Brush	   *b;
 	vec3_t		origin;
 	int			count;
 
@@ -779,7 +779,7 @@ void Entity_Write (entity_t *e, FILE *f, bool use_region)
 				{
 					fprintf(f, "// brush %d\n", count);
 					count++;
-					Brush_Write(b, f);
+					b->Write(f);
 				}
 			}
 		}
@@ -793,9 +793,9 @@ void Entity_Write (entity_t *e, FILE *f, bool use_region)
 IsBrushSelected
 =================
 */
-bool IsBrushSelected (brush_t* bSel)
+bool IsBrushSelected (Brush* bSel)
 {
-	brush_t* b;
+	Brush* b;
 
 	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
 		if (b == bSel)
@@ -811,7 +811,7 @@ Entity_WriteSelected
 */
 void Entity_WriteSelected (entity_t *e, FILE *f)
 {
-	brush_t	   *b;
+	Brush	   *b;
 	epair_t	   *ep;
 	vec3_t		origin;
 	char		text[128];
@@ -845,7 +845,7 @@ void Entity_WriteSelected (entity_t *e, FILE *f)
 			{
 				fprintf(f, "// brush %d\n", count);
 				count++;
-				Brush_Write(b, f);
+				b->Write(f);
 			}
 		}
 	}
@@ -858,15 +858,14 @@ void Entity_WriteSelected (entity_t *e, FILE *f)
 Entity_Create
 
 Creates a new entity out of the selected_brushes list.
-If the entity class is fixed size, the brushes are only
-used to find a midpoint.  Otherwise, the brushes have
-their ownership transfered to the new entity.
+If the entity class is fixed size, the brushes are only used to find a midpoint. 
+Otherwise, the brushes have their ownership transfered to the new entity.
 ============
 */
 entity_t *Entity_Create (eclass_t *c)
 {
 	entity_t   *e;
-	brush_t	   *b;
+	Brush	   *b;
 	vec3_t		mins, maxs;
 	int			i;
 
@@ -902,7 +901,7 @@ entity_t *Entity_Create (eclass_t *c)
 		// create a custom brush
 		VectorAdd(c->mins, e->origin, mins);
 		VectorAdd(c->maxs, e->origin, maxs);
-		b = Brush_Create(mins, maxs, &c->texdef);
+		b = Brush::Create(mins, maxs, &c->texdef);
 
 		Entity_LinkBrush(e, b);
 
@@ -913,7 +912,7 @@ entity_t *Entity_Create (eclass_t *c)
 		b->next = b->prev = &g_brSelectedBrushes;
 		g_brSelectedBrushes.next = g_brSelectedBrushes.prev = b;
 
-		Brush_Build(b);
+		b->Build();
 	}
 	else
 	{
@@ -922,7 +921,7 @@ entity_t *Entity_Create (eclass_t *c)
 		{
 			Entity_UnlinkBrush(b);
 			Entity_LinkBrush(e, b);
-			Brush_Build(b);	// so the key brush gets a name
+			b->Build();	// so the key brush gets a name
 		}
 	}
 
@@ -937,7 +936,7 @@ entity_t *Entity_Create (eclass_t *c)
 Entity_LinkBrush
 ===========
 */
-void Entity_LinkBrush (entity_t *e, brush_t *b)
+void Entity_LinkBrush (entity_t *e, Brush *b)
 {
 	if (b->oprev || b->onext)
 		Error("Entity_LinkBrush: Already linked.");
@@ -953,7 +952,7 @@ void Entity_LinkBrush (entity_t *e, brush_t *b)
 Entity_UnlinkBrush
 ===========
 */
-void Entity_UnlinkBrush (brush_t *b)
+void Entity_UnlinkBrush (Brush *b)
 {
 	if (!b->owner || !b->onext || !b->oprev)
 		Error("Entity_UnlinkBrush: Not currently linked.");

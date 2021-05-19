@@ -9,12 +9,12 @@ void CSG_Hollow ();
 void CSG_Merge();
 void CSG_ConvexMerge();
 void CSG_Subtract ();
-void CSG_SplitBrushByFace (brush_t *in, face_t *f, brush_t **front, brush_t **back);
+void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back);
 
-brush_t* Brush_ConvexMerge(brush_t *bList);
-brush_t *Brush_Merge (brush_t *brush1, brush_t *brush2, int onlyshape);
-brush_t *Brush_MergeListPairs (brush_t *brushlist, int onlyshape);
-brush_t *Brush_MergeList (brush_t *brushlist, int onlyshape);
-brush_t *Brush_Subtract (brush_t *a, brush_t *b);
+Brush* Brush_ConvexMerge(Brush *bList);
+Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape);
+Brush *Brush_MergeListPairs (Brush *brushlist, int onlyshape);
+Brush *Brush_MergeList (Brush *brushlist, int onlyshape);
+Brush *Brush_Subtract (Brush *a, Brush *b);
 
 #endif

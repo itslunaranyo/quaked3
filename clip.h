@@ -6,7 +6,7 @@
 
 // 3-Point Clipping Tool
 
-#include "xy.h"
+#include "v_xy.h"
 
 typedef struct
 {
@@ -37,10 +37,10 @@ void Clip_CamDropPoint(int x, int y);
 void Clip_CamMovePoint(int x, int y);
 void Clip_CamEndPoint();
 
-void Clip_StartQuickClip(xyz_t* xyz, int x, int y);
+void Clip_StartQuickClip(XYZView* xyz, int x, int y);
 void Clip_EndQuickClip();
-void Clip_DropPoint (xyz_t* xyz, int x, int y);
-void Clip_MovePoint (xyz_t* xyz, int x, int y);
+void Clip_DropPoint (XYZView* xyz, int x, int y);
+void Clip_MovePoint (XYZView* xyz, int x, int y);
 void Clip_EndPoint ();
 void Clip_DrawPoints ();
 

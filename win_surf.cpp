@@ -32,7 +32,7 @@ void SurfWnd_ClearEditTexdef()
 SurfWnd_AddToEditTexdef
 ===============
 */
-void SurfWnd_AddToEditTexdef(face_t* f)
+void SurfWnd_AddToEditTexdef(Face* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
 	if (!(g_nEditSurfMixed & SURF_MIXEDNAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
@@ -81,9 +81,9 @@ void SurfWnd_RefreshEditTexdef()
 	if (Select_HasBrushes())
 	{
 		bool first = true;
-		for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			for (face_t *f = b->brush_faces; f; f = f->next)
+			for (Face *f = b->brush_faces; f; f = f->next)
 			{
 				if (first)
 				{

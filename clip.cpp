@@ -69,8 +69,8 @@ void Clip_ResetMode ()
 		g_cpClip3.ptClip[0] = g_cpClip3.ptClip[1] = g_cpClip3.ptClip[2] = 0.0;
 		g_cpClip3.bSet = false;
 
-		Brush_FreeList(&g_qeglobals.d_brFrontSplits);
-		Brush_FreeList(&g_qeglobals.d_brBackSplits);
+		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
+		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 	
 		g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
 		g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
@@ -82,8 +82,8 @@ void Clip_ResetMode ()
 			ReleaseCapture();
 			g_pcpMovingClip = NULL;
 		}
-		Brush_FreeList(&g_qeglobals.d_brFrontSplits);
-		Brush_FreeList(&g_qeglobals.d_brBackSplits);
+		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
+		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 	
 	    g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
 		g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
@@ -99,13 +99,13 @@ Clip_ProduceSplitLists
 */
 void Clip_ProduceSplitLists ()
 {
-	brush_t	   *pBrush;
-	brush_t	   *pFront;
-	brush_t	   *pBack;
-	face_t		face;
+	Brush	   *pBrush;
+	Brush	   *pFront;
+	Brush	   *pBack;
+	Face		face;
 
-	Brush_FreeList(&g_qeglobals.d_brFrontSplits);
-	Brush_FreeList(&g_qeglobals.d_brBackSplits);
+	Brush::FreeList(&g_qeglobals.d_brFrontSplits);
+	Brush::FreeList(&g_qeglobals.d_brBackSplits);
 
 	g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
 	g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
@@ -151,9 +151,9 @@ void Clip_ProduceSplitLists ()
 
 			CSG_SplitBrushByFace(pBrush, &face, &pFront, &pBack);
 			if (pBack)
-				Brush_AddToList(pBack, &g_qeglobals.d_brBackSplits);
+				pBack->AddToList(&g_qeglobals.d_brBackSplits);
 			if (pFront)
-				Brush_AddToList(pFront, &g_qeglobals.d_brFrontSplits);
+				pFront->AddToList(&g_qeglobals.d_brFrontSplits);
 		}
 	}
 }
@@ -167,8 +167,8 @@ Clip_Clip
 */
 void Clip_Clip ()
 {
-	brush_t	   *pList;
-	brush_t		hold_brushes;
+	Brush	   *pList;
+	Brush		hold_brushes;
 
 	if (!g_qeglobals.d_bClipMode)
 		return;
@@ -176,18 +176,18 @@ void Clip_Clip ()
 	Undo_Start("Clip Selected");
 	Undo_AddBrushList(&g_brSelectedBrushes);
 
-	hold_brushes.next = &hold_brushes;
+	hold_brushes.next = hold_brushes.prev = &hold_brushes;
 	Clip_ProduceSplitLists();
 
 	pList = (g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
     
 	if (pList->next != pList)
 	{
-		Brush_CopyList(pList, &hold_brushes);
-		Brush_FreeList(&g_qeglobals.d_brFrontSplits);
-		Brush_FreeList(&g_qeglobals.d_brBackSplits);
+		Brush::CopyList(pList, &hold_brushes);
+		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
+		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 		Select_Delete();
-		Brush_CopyList(&hold_brushes, &g_brSelectedBrushes);
+		Brush::CopyList(&hold_brushes, &g_brSelectedBrushes);
 	}
 	Clip_ResetMode();
 
@@ -215,10 +215,10 @@ void Clip_Split ()
 		(g_qeglobals.d_brBackSplits.next != &g_qeglobals.d_brBackSplits))
 	{
 		Select_Delete();
-		Brush_CopyList(&g_qeglobals.d_brFrontSplits, &g_brSelectedBrushes);
-		Brush_CopyList(&g_qeglobals.d_brBackSplits, &g_brSelectedBrushes);
-		Brush_FreeList(&g_qeglobals.d_brFrontSplits);
-		Brush_FreeList(&g_qeglobals.d_brBackSplits);
+		Brush::CopyList(&g_qeglobals.d_brFrontSplits, &g_brSelectedBrushes);
+		Brush::CopyList(&g_qeglobals.d_brBackSplits, &g_brSelectedBrushes);
+		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
+		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 	}
 	Clip_ResetMode();
 
@@ -329,7 +329,7 @@ void Clip_CamPointOnSelection(int x, int y, vec3_t out, int* outAxis)
 {
 	vec3_t		dir, pn, pt;
 	trace_t		t;
-	Cam_PointToRay(x, y, dir);
+	g_qeglobals.d_camera.PointToRay(x, y, dir);
 	t = Test_Ray(g_qeglobals.d_camera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
@@ -385,7 +385,7 @@ Clip_CamGetNearestClipPoint
 clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 {
 	vec3_t dir, cPt;
-	Cam_PointToRay(x, y, dir);
+	g_qeglobals.d_camera.PointToRay(x, y, dir);
 
 	if (g_cpClip1.bSet)
 	{
@@ -473,7 +473,7 @@ Clip_StartQuickClip
 lunaran: puts point 1 and 2 in the same place and immediately begins dragging point 2
 ==============
 */
-void Clip_StartQuickClip(xyz_t* xyz, int x, int y)
+void Clip_StartQuickClip(XYZView* xyz, int x, int y)
 {
 	Clip_ResetMode();
 
@@ -501,7 +501,7 @@ void Clip_EndQuickClip()
 Clip_DropPoint
 ==============
 */
-void Clip_DropPoint (xyz_t* xyz, int x, int y)
+void Clip_DropPoint (XYZView* xyz, int x, int y)
 {
 	int nDim;
 
@@ -511,7 +511,7 @@ void Clip_DropPoint (xyz_t* xyz, int x, int y)
 	{
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			XYZ_SnapToPoint(xyz, x, y, g_pcpMovingClip->ptClip);
+			xyz->SnapToPoint(x, y, g_pcpMovingClip->ptClip);
 	}
 	else // <-- if a new point is dropped in space
 	{
@@ -520,7 +520,7 @@ void Clip_DropPoint (xyz_t* xyz, int x, int y)
 
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			XYZ_SnapToPoint(xyz, x, y, pPt->ptClip);
+			xyz->SnapToPoint(x, y, pPt->ptClip);
 
 		// third coordinates for clip point: use d_v3WorkMax
 		nDim = (xyz->dViewType == YZ ) ? 0 : ((xyz->dViewType == XZ) ? 1 : 2);
@@ -543,9 +543,9 @@ void Clip_GetCoordXY(int x, int y, vec3_t pt)
 {
 	int nDim;
 	// lunaran - grid view reunification
-	xyz_t* xyz = XYZWnd_WinFromHandle(GetCapture());
+	XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
 	if (xyz)
-		XYZ_SnapToPoint(xyz, x, y, pt);
+		xyz->SnapToPoint(x, y, pt);
 	nDim = (xyz->dViewType == YZ) ? 0 : ((xyz->dViewType == XZ) ? 1 : 2);
 
 	pt[nDim] = g_qeglobals.d_v3WorkMax[nDim];
@@ -556,14 +556,14 @@ void Clip_GetCoordXY(int x, int y, vec3_t pt)
 Clip_XYGetNearestClipPoint
 ==============
 */
-clippoint_t* Clip_XYGetNearestClipPoint(xyz_t* xyz, int x, int y)
+clippoint_t* Clip_XYGetNearestClipPoint(XYZView* xyz, int x, int y)
 {
 	int nDim1, nDim2;
 	vec3_t	tdp;
 
 	tdp[0] = tdp[1] = tdp[2] = 256;
 
-	XYZ_SnapToPoint(xyz, x, y, tdp);
+	xyz->SnapToPoint(x, y, tdp);
 	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
 	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
 
@@ -602,7 +602,7 @@ Clip_MovePoint
 should be named Clip_MoveMouse
 ==============
 */
-void Clip_MovePoint (xyz_t* xyz, int x, int y)
+void Clip_MovePoint (XYZView* xyz, int x, int y)
 {
 	bool	bCrossHair = false;
 
@@ -611,7 +611,7 @@ void Clip_MovePoint (xyz_t* xyz, int x, int y)
 	{
 		// lunaran - grid view reunification
 		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			XYZ_SnapToPoint(xyz, x, y, g_pcpMovingClip->ptClip);
+			xyz->SnapToPoint(x, y, g_pcpMovingClip->ptClip);
 		bCrossHair = true;
 	}
 	else
@@ -635,7 +635,7 @@ void Clip_EndPoint ()
 {
 	if (g_pcpMovingClip && GetCapture())
 	{
-		xyz_t* xyz = XYZWnd_WinFromHandle(GetCapture());
+		XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
 		if (xyz)
 			g_nClipAxis = xyz->dViewType;
 		else
@@ -654,10 +654,13 @@ Clip_DrawPoints
 */
 void Clip_DrawPoints ()
 {
+	if (!g_qeglobals.d_bClipMode)
+		return;
+	
 	char		strMsg[8];
-	brush_t    *pBrush;
-	brush_t    *pList;
-	face_t	   *face;
+	Brush    *pBrush;
+	Brush    *pList;
+	Face	   *face;
 	winding_t  *w;
 	int			order;
 	int			i;

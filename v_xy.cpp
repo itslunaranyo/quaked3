@@ -4,75 +4,89 @@
 
 #include "qe3.h"
 
-
-#define	PAGEFLIPS	2
-
 const char *g_pszDimStrings[] = {"x:%.f", "y:%.f", "z:%.f"};
 const char *g_pszOrgStrings[] = {"(x:%.f  y:%.f)", "(x:%.f  z:%.f)", "(y:%.f  z:%.f)"};
 
 // sikk - Free Rotate & Free Scale
 bool	g_bSnapCheck, g_bRotateCheck, g_bScaleCheck;
-int		g_nRotate = 0;
+// TODO: this is a tool, not an attribute of a view
 	
+
+XYZView::XYZView()
+{
+	Init();
+}
+
+XYZView::~XYZView()
+{
+}
+
+
 /*
 ============
-XY_Init
+XYZView::Init
 ============
 */
-void XYZ_Init(xyz_t* xyz)
+void XYZView::Init()
 {
-	xyz->origin[0] = 0;
-	xyz->origin[1] = 0;	// sikk - changed from "20"
-	xyz->origin[2] = 0;	// sikk - changed from "46"
-	xyz->scale = 1;
-	Map_RegionOff();	// sikk - For initiating Map Size change
+	origin[0] = 0;
+	origin[1] = 0;	// sikk - changed from "20"
+	origin[2] = 0;	// sikk - changed from "46"
+
+	nRotate = 0;
+	scale = 1;
 }
 
 /*
 ==================
-XY_PositionView
+XYZView::PositionView
 ==================
 */
-void XYZ_PositionView(xyz_t* xyz)
+void XYZView::PositionView()
 {
 	int			nDim1, nDim2;
-	brush_t	   *b;
+	Brush	   *b;
 
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (dViewType == YZ) ? 1 : 0;
+	nDim2 = (dViewType == XY) ? 1 : 2;
 
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		xyz->origin[nDim1] = b->mins[nDim1];
-		xyz->origin[nDim2] = b->mins[nDim2];
+		origin[nDim1] = b->mins[nDim1];
+		origin[nDim2] = b->mins[nDim2];
 	}
 	else
 	{
-		xyz->origin[nDim1] = g_qeglobals.d_camera.origin[nDim1];
-		xyz->origin[nDim2] = g_qeglobals.d_camera.origin[nDim2];
+		origin[nDim1] = g_qeglobals.d_camera.origin[nDim1];
+		origin[nDim2] = g_qeglobals.d_camera.origin[nDim2];
 	}
-}
-
-void XYZ_PositionAllViews()
-{
-	for (int i = 0; i < 4; i++)
-		XYZ_PositionView(&g_qeglobals.d_xyz[i]);
 }
 
 /*
 ==================
-XYZ_VectorCopy
+XYZView::PositionAllViews
 ==================
 */
-void XYZ_VectorCopy (xyz_t* xyz, vec3_t in, vec3_t out)
+void XYZView::PositionAllViews()
 {
-	if (xyz->dViewType == XY)
+	for (int i = 0; i < 4; i++)
+		g_qeglobals.d_xyz[i].PositionView();
+}
+
+/*
+==================
+XYZView::CopyVector
+==================
+*/
+void XYZView::CopyVector (vec3_t in, vec3_t out)
+{
+	if (dViewType == XY)
 	{
 		out[0] = in[0];
 		out[1] = in[1];
 	}
-	else if (xyz->dViewType == XZ)
+	else if (dViewType == XZ)
 	{
 		out[0] = in[0];
 		out[2] = in[2];
@@ -94,7 +108,6 @@ void XYZ_VectorCopy (xyz_t* xyz, vec3_t in, vec3_t out)
 ============================================================================
 */
 
-static int		cursorx, cursory;
 static int		buttonstate;
 static int		pressx, pressy;
 static bool		press_selection;
@@ -102,47 +115,47 @@ static vec3_t	pressdelta;
 
 /*
 ==================
-XYZ_ToPoint
+XYZView::ToPoint
 ==================
 */
-void XYZ_ToPoint (xyz_t* xyz, int x, int y, vec3_t point)
+void XYZView::ToPoint (int x, int y, vec3_t point)
 {
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
-		point[0] = xyz->origin[0] + (x - xyz->width / 2) / xyz->scale;
-		point[1] = xyz->origin[1] + (y - xyz->height / 2) / xyz->scale;
+		point[0] = origin[0] + (x - width / 2) / scale;
+		point[1] = origin[1] + (y - height / 2) / scale;
 	}
-	else if (xyz->dViewType == YZ)
+	else if (dViewType == YZ)
 	{
-		point[1] = xyz->origin[1] + (x - xyz->width / 2) / xyz->scale;
-		point[2] = xyz->origin[2] + (y - xyz->height / 2) / xyz->scale;
+		point[1] = origin[1] + (x - width / 2) / scale;
+		point[2] = origin[2] + (y - height / 2) / scale;
 	}
 	else
 	{
-		point[0] = xyz->origin[0] + (x - xyz->width / 2) / xyz->scale;
-		point[2] = xyz->origin[2] + (y - xyz->height / 2) / xyz->scale;
+		point[0] = origin[0] + (x - width / 2) / scale;
+		point[2] = origin[2] + (y - height / 2) / scale;
 	}
 }
 
 /*
 ==================
-XYZ_ToGridPoint
+XYZView::ToGridPoint
 ==================
 */
-void XYZ_ToGridPoint (xyz_t* xyz, int x, int y, vec3_t point)
+void XYZView::ToGridPoint (int x, int y, vec3_t point)
 {
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
-		point[0] = xyz->origin[0] + (x - xyz->width / 2) / xyz->scale;
-		point[1] = xyz->origin[1] + (y - xyz->height / 2) / xyz->scale;
+		point[0] = origin[0] + (x - width / 2) / scale;
+		point[1] = origin[1] + (y - height / 2) / scale;
 
 		point[0] = floor(point[0] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 		point[1] = floor(point[1] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 	}
-	else if (xyz->dViewType == YZ)
+	else if (dViewType == YZ)
 	{
-		point[1] = xyz->origin[1] + (x - xyz->width / 2) / xyz->scale;
-		point[2] = xyz->origin[2] + (y - xyz->height / 2) / xyz->scale;
+		point[1] = origin[1] + (x - width / 2) / scale;
+		point[2] = origin[2] + (y - height / 2) / scale;
 		
 		point[1] = floor(point[1] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 		point[2] = floor(point[2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
@@ -150,8 +163,8 @@ void XYZ_ToGridPoint (xyz_t* xyz, int x, int y, vec3_t point)
 	}
 	else
 	{
-		point[0] = xyz->origin[0] + (x - xyz->width / 2) / xyz->scale;
-		point[2] = xyz->origin[2] + (y - xyz->height / 2) / xyz->scale;
+		point[0] = origin[0] + (x - width / 2) / scale;
+		point[2] = origin[2] + (y - height / 2) / scale;
 		
 		point[0] = floor(point[0] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 		point[2] = floor(point[2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
@@ -160,30 +173,30 @@ void XYZ_ToGridPoint (xyz_t* xyz, int x, int y, vec3_t point)
 
 /*
 ==================
-XYZ_SnapToPoint
+XYZView::SnapToPoint
 ==================
 */
-void XYZ_SnapToPoint (xyz_t* xyz, int x, int y, vec3_t point)
+void XYZView::SnapToPoint (int x, int y, vec3_t point)
 {
 	if (g_qeglobals.d_savedinfo.bNoClamp)
-		XYZ_ToPoint(xyz, x, y, point);
+		ToPoint(x, y, point);
 	else
-		XYZ_ToGridPoint(xyz, x, y, point);
+		ToGridPoint(x, y, point);
 }
 
 /*
 ==================
-XYZ_DragDelta
+XYZView::DragDelta
 ==================
 */
-bool XYZ_DragDelta (xyz_t* xyz, int x, int y, vec3_t move)
+bool XYZView::DragDelta (int x, int y, vec3_t move)
 {
 	vec3_t	xvec, yvec, delta;
 	int		i;
 
-	xvec[0] = 1 / xyz->scale;
+	xvec[0] = 1 / scale;
 	xvec[1] = xvec[2] = 0;
-	yvec[1] = 1 / xyz->scale;
+	yvec[1] = 1 / scale;
 	yvec[0] = yvec[2] = 0;
 
 	for (i = 0; i < 3; i++)
@@ -204,31 +217,31 @@ bool XYZ_DragDelta (xyz_t* xyz, int x, int y, vec3_t move)
 
 /*
 ==============
-XYZ_DragNewBrush
+XYZView::DragNewBrush
 ==============
 */
-void XYZ_DragNewBrush (xyz_t* xyz, int x, int y)
+void XYZView::DragNewBrush (int x, int y)
 {
 	vec3_t		mins, maxs, junk;
 	int			i;
 	float		temp;
-	brush_t	   *n;
+	Brush	   *n;
 	int			nDim;
 
-	if (!XYZ_DragDelta(xyz, x, y, junk))
+	if (!DragDelta(x, y, junk))
 		return;
 
 	// delete the current selection
 	if (Select_HasBrushes())
-		Brush_Free(g_brSelectedBrushes.next);
+		delete g_brSelectedBrushes.next;
 
-	XYZ_SnapToPoint(xyz, pressx, pressy, mins);
+	SnapToPoint( pressx, pressy, mins);
 
-	nDim = (xyz->dViewType == XY) ? 2 : (xyz->dViewType == YZ) ? 0 : 1;
+	nDim = (dViewType == XY) ? 2 : (dViewType == YZ) ? 0 : 1;
 
 	mins[nDim] = g_qeglobals.d_nGridSize * ((int)(g_qeglobals.d_v3WorkMin[nDim] / g_qeglobals.d_nGridSize));
 
-	XYZ_SnapToPoint(xyz, x, y, maxs);
+	SnapToPoint( x, y, maxs);
 
 	maxs[nDim] = g_qeglobals.d_nGridSize * ((int)(g_qeglobals.d_v3WorkMax[nDim] / g_qeglobals.d_nGridSize));
 
@@ -248,26 +261,26 @@ void XYZ_DragNewBrush (xyz_t* xyz, int x, int y)
 		}
 	}
 
-	n = Brush_Create(mins, maxs, &g_qeglobals.d_workTexDef);
+	n = Brush::Create(mins, maxs, &g_qeglobals.d_workTexDef);
 	if (!n)
 		return;
 
-	Brush_AddToList(n, &g_brSelectedBrushes);
+	n->AddToList(&g_brSelectedBrushes);
 	Entity_LinkBrush(g_peWorldEntity, n);
-	Brush_Build(n);
+	n->Build();
 
 	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
 }
 
 /*
 ==============
-XY_MouseDown
+XYZView::MouseDown
 ==============
 */
-void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
+void XYZView::MouseDown (int x, int y, int buttons)
 {
 	vec3_t	point;
-	vec3_t	origin, dir, right, up;
+	vec3_t	orgLocal, dir, right, up;
 
 	int n1, n2;
 	int nAngle;
@@ -279,9 +292,9 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 	{
 		// lunaran - alt quick clip
 		if (GetKeyState(VK_MENU) < 0)
-			Clip_StartQuickClip(xyz, x, y);
+			Clip_StartQuickClip(this, x, y);
 		else
-			Clip_DropPoint(xyz, x, y);
+			Clip_DropPoint(this, x, y);
 		Sys_UpdateWindows(W_ALL);
 	}
 	else
@@ -291,56 +304,56 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 
 		VectorCopy(g_v3VecOrigin, pressdelta);
 
-		XYZ_ToPoint(xyz, x, y, point);
+		ToPoint(x, y, point);
 
-		VectorCopy(point, origin);
+		VectorCopy(point, orgLocal);
 
 		dir[0] = 0; 
 		dir[1] = 0; 
 		dir[2] = 0;
-		if (xyz->dViewType == XY)
+		if (this->dViewType == XY)
 		{
-			origin[2] = 8192;
+			orgLocal[2] = 8192;
 			dir[2] = -1;
 
-			right[0] = 1 / xyz->scale;
+			right[0] = 1 / this->scale;
 			right[1] = 0;
 			right[2] = 0;
 
 			up[0] = 0;
-			up[1] = 1 / xyz->scale;
+			up[1] = 1 / this->scale;
 			up[2] = 0;
 		}
-		else if (xyz->dViewType == YZ)
+		else if (this->dViewType == YZ)
 		{
-			origin[0] = 8192;
+			orgLocal[0] = 8192;
 			dir[0] = -1;
 
 			right[0] = 0;
-			right[1] = 1 / xyz->scale;
+			right[1] = 1 / this->scale;
 			right[2] = 0; 
 			
 	   		up[0] = 0; 
 			up[1] = 0;
-			up[2] = 1 / xyz->scale;
+			up[2] = 1 / this->scale;
 		}
 		else
 		{
-			origin[1] = 8192;
+			orgLocal[1] = 8192;
 			dir[1] = -1;
 
-			right[0] = 1 / xyz->scale;
+			right[0] = 1 / this->scale;
 			right[1] = 0;
 			right[2] = 0; 
 
 			up[0] = 0; 
 			up[1] = 0;
-			up[2] = 1 / xyz->scale;
+			up[2] = 1 / this->scale;
 		}
 
 		press_selection = (Select_HasBrushes());
 
-		Sys_GetCursorPos(&cursorx, &cursory);
+		Sys_GetCursorPos(&cursorX, &cursorY);
 
 		// LMB = manipulate selection
 		// Shift+LMB = select
@@ -349,23 +362,23 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 // sikk---> Quick Move Selection (Ctrl+Alt+LMB)
 			if (GetKeyState(VK_MENU) < 0 && GetKeyState(VK_CONTROL) < 0)
 			{
-				brush_t    *b;
+				Brush    *b;
 				vec3_t		v1, v2;
 	
-				XYZ_SnapToPoint(xyz, x, y, v1);
+				SnapToPoint( x, y, v1);
 
 				b = g_brSelectedBrushes.next;
 				VectorSubtract(v1, b->mins, v2);
 
 				/*
-				if (xyz->dViewType == XY)
+				if (this->dViewType == XY)
 					v2[2] = 0;
-				if (xyz->dViewType == XZ)
+				if (this->dViewType == XZ)
 					v2[1] = 0;
-				if (xyz->dViewType == YZ)
+				if (this->dViewType == YZ)
 					v2[0] = 0;
 				*/
-				v2[xyz->dViewType] = 0;
+				v2[this->dViewType] = 0;
 
 				// this is so we don't drag faces when faces were previously dragged
 				g_qeglobals.d_nNumMovePoints = 0;
@@ -378,7 +391,7 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 // <---sikk
 			else
 			{
-				Drag_Begin(x, y, buttons, right, up, origin, dir);
+				Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
 
 				// update g_v3RotateOrigin to selection
 				Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
@@ -391,7 +404,7 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 		{	
 //			g_qeglobals.d_camera.origin[0] = point[0];
 //			g_qeglobals.d_camera.origin[1] = point[1];
-			XYZ_VectorCopy(xyz, point, g_qeglobals.d_camera.origin);
+			CopyVector(point, g_qeglobals.d_camera.origin);
 
 			Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		}
@@ -402,8 +415,8 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 // sikk---> Free Rotate: Pivot Icon
 			if (GetKeyState(VK_MENU) < 0)
 			{
-				XYZ_SnapToPoint(xyz, x, y, point);
-				XYZ_VectorCopy(xyz, point, g_v3RotateOrigin);
+				SnapToPoint( x, y, point);
+				CopyVector(point, g_v3RotateOrigin);
 				Sys_UpdateWindows(W_XY);
 				return;
 			}
@@ -412,14 +425,14 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 			{
 				VectorSubtract(point, g_qeglobals.d_camera.origin, point);
 
-				n1 = (xyz->dViewType == XY) ? 1 : 2;
-				n2 = (xyz->dViewType == YZ) ? 1 : 0;
-				nAngle = (xyz->dViewType == XY) ? YAW : PITCH;
+				n1 = (this->dViewType == XY) ? 1 : 2;
+				n2 = (this->dViewType == YZ) ? 1 : 0;
+				nAngle = (this->dViewType == XY) ? YAW : PITCH;
 
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					Cam_BoundAngles();
+					g_qeglobals.d_camera.BoundAngles();
 					Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 				}
 			}
@@ -428,8 +441,8 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 		// Shift+MMB = move z checker
 		if (buttonstate == (MK_SHIFT | MK_MBUTTON))
 		{
-			XYZ_SnapToPoint(xyz, x, y, point);
-			XYZ_VectorCopy(xyz, point, g_qeglobals.d_z.origin);
+			SnapToPoint( x, y, point);
+			CopyVector(point, g_qeglobals.d_z.origin);
 			Sys_UpdateWindows(W_XY | W_Z);
 			return;
 		}
@@ -454,10 +467,10 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 
 /*
 ==============
-XY_MouseUp
+XYZView::MouseUp
 ==============
 */
-void XYZ_MouseUp (xyz_t* xyz, int x, int y, int buttons)
+void XYZView::MouseUp (int x, int y, int buttons)
 {
 	// clipper
 	if (g_qeglobals.d_bClipMode)
@@ -480,7 +493,7 @@ void XYZ_MouseUp (xyz_t* xyz, int x, int y, int buttons)
 // sikk--->	Free Rotate & Free Scaling
 	if (g_bRotateCheck || g_bScaleCheck)
 	{
-		g_nRotate = 0;
+		nRotate = 0;
 
 		if (g_bSnapCheck)
 		{
@@ -506,10 +519,10 @@ void XYZ_MouseUp (xyz_t* xyz, int x, int y, int buttons)
 
 /*
 ==============
-XY_MouseMoved
+XYZView::MouseMoved
 ==============
 */
-void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
+void XYZView::MouseMoved (int x, int y, int buttons)
 {
 	vec3_t	point;
     int		n1, n2;
@@ -520,13 +533,9 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 
 	char	szRotate[16];	// sikk - Free Rotate
 
-	int		i;		// sikk - Mouse Zoom
-	float	scale;	// sikk - Mouse Zoom
-
-
 	if (!buttonstate || buttonstate ^ MK_RBUTTON)
 	{
-		XYZ_SnapToPoint(xyz, x, y, tdp);
+		SnapToPoint( x, y, tdp);
 		sprintf(xystring, "xyz Coordinates: (%d %d %d)", (int)tdp[0], (int)tdp[1], (int)tdp[2]);
 		Sys_Status(xystring, 0);
 	}
@@ -534,7 +543,7 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 	// clipper
 	if ((!buttonstate || buttonstate & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
-		Clip_MovePoint(xyz, x, y);
+		Clip_MovePoint(this, x, y);
 		Sys_UpdateWindows(W_ALL);
 	}
 	else
@@ -545,7 +554,7 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 		// LMB without selection = drag new brush
 		if (buttonstate == MK_LBUTTON && !press_selection)
 		{
-			XYZ_DragNewBrush(xyz, x, y);
+			DragNewBrush(x, y);
 
 			// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
 			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
@@ -568,8 +577,8 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 		// Ctrl+MMB = move camera
 		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
 		{
-			XYZ_SnapToPoint(xyz, x, y, point);
-			XYZ_VectorCopy(xyz, point, g_qeglobals.d_camera.origin);
+			SnapToPoint( x, y, point);
+			CopyVector(point, g_qeglobals.d_camera.origin);
 
 			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 			return;
@@ -578,15 +587,15 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 		// Shift+MMB = move z checker
 		if (buttonstate == (MK_SHIFT | MK_MBUTTON))
 		{
-			XYZ_SnapToPoint(xyz, x, y, point);
+			SnapToPoint( x, y, point);
 
-			XYZ_VectorCopy(xyz, point, g_qeglobals.d_z.origin);
-/*			if (xyz->dViewType == XY)
+			CopyVector(point, g_qeglobals.d_z.origin);
+/*			if (this->dViewType == XY)
 			{
 				g_qeglobals.d_z.origin[0] = point[0];
 				g_qeglobals.d_z.origin[1] = point[1];
 			}
-			else if (xyz->dViewType == YZ)
+			else if (this->dViewType == YZ)
 			{
 				g_qeglobals.d_z.origin[0] = point[1];
 				g_qeglobals.d_z.origin[1] = point[2];
@@ -607,15 +616,15 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 			// Alt+MMB = move free rotate pivot icon
 			if (GetKeyState(VK_MENU) < 0)
 			{
-				XYZ_SnapToPoint(xyz, x, y, point);
-				XYZ_VectorCopy(xyz, point, g_v3RotateOrigin);
+				SnapToPoint( x, y, point);
+				CopyVector(point, g_v3RotateOrigin);
 				/*
-				if (xyz->dViewType == XY)
+				if (this->dViewType == XY)
 				{
 					g_v3RotateOrigin[0] = point[0];
 					g_v3RotateOrigin[1] = point[1];
 				}
-				else if (xyz->dViewType == XZ)
+				else if (this->dViewType == XZ)
 				{
 					g_v3RotateOrigin[0] = point[0];
 					g_v3RotateOrigin[2] = point[2];
@@ -631,17 +640,17 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 // <---sikk
 			else
 			{
-				XYZ_SnapToPoint(xyz, x, y, point);
+				SnapToPoint( x, y, point);
 				VectorSubtract(point, g_qeglobals.d_camera.origin, point);
 
-				n1 = (xyz->dViewType == XY) ? 1 : 2;
-				n2 = (xyz->dViewType == YZ) ? 1 : 0;
-				nAngle = (xyz->dViewType == XY) ? YAW : PITCH;
+				n1 = (this->dViewType == XY) ? 1 : 2;
+				n2 = (this->dViewType == YZ) ? 1 : 0;
+				nAngle = (this->dViewType == XY) ? YAW : PITCH;
 
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					Cam_BoundAngles();
+					g_qeglobals.d_camera.BoundAngles();
 					Sys_UpdateWindows(W_XY | W_CAMERA);
 				}
 			}
@@ -666,31 +675,31 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 					g_bSnapCheck = true;
 				}
 				
-				switch (xyz->dViewType)
+				switch (this->dViewType)
 				{
 				case XY:
-					x -= cursorx;
-					g_nRotate += x;
+					x -= cursorX;
+					nRotate += x;
 					Select_RotateAxis(2, x, true);
 					break;
 				case XZ:
-					x = cursorx - x;
-					g_nRotate += -x;
+					x = cursorX - x;
+					nRotate += -x;
 					Select_RotateAxis(1, x, true);
 					break;
 				case YZ:
-					x -= cursorx;
-					g_nRotate += x;
+					x -= cursorX;
+					nRotate += x;
 					Select_RotateAxis(0, x, true);
 					break;
 				}
 
-				if (g_nRotate >= 360)
-					g_nRotate -= 360;
-				if (g_nRotate < -360)
-					g_nRotate += 360;
+				if (nRotate >= 360)
+					nRotate -= 360;
+				if (nRotate < -360)
+					nRotate += 360;
 
-				Sys_SetCursorPos(cursorx, cursory);
+				Sys_SetCursorPos(cursorX, cursorY);
 
 				// sikk - this ensures that the windows are updated in realtime
 				InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
@@ -704,24 +713,24 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 				UpdateWindow(g_qeglobals.d_hwndXYZ[1]);					
 				UpdateWindow(g_qeglobals.d_hwndZ);					
 
-				sprintf(szRotate, "Rotate: %d°", g_nRotate);
+				sprintf(szRotate, "Rotate: %d°", nRotate);
 				Sys_Status(szRotate, 0);
 			}
 // <---sikk
 			else
 			{
-				if (x != cursorx || y != cursory)
+				if (x != cursorX || y != cursorY)
 				{
-					nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-					nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+					nDim1 = (dViewType == YZ) ? 1 : 0;
+					nDim2 = (dViewType == XY) ? 1 : 2;
 
-					xyz->origin[nDim1] -= (x - cursorx) / xyz->scale;
-					xyz->origin[nDim2] += (y - cursory) / xyz->scale;
+					origin[nDim1] -= (x - cursorX) / scale;
+					origin[nDim2] += (y - cursorY) / scale;
 
-					Sys_SetCursorPos(cursorx, cursory);
+					Sys_SetCursorPos(cursorX, cursorY);
 					Sys_UpdateWindows(W_XY| W_Z);
 
-					sprintf(xystring, "xyz Origin: (%d %d %d)", (int)xyz->origin[0], (int)xyz->origin[1], (int)xyz->origin[2]);
+					sprintf(xystring, "this Origin: (%d %d %d)", (int)this->origin[0], (int)this->origin[1], (int)this->origin[2]);
 					Sys_Status(xystring, 0);
 				}
 			}
@@ -745,7 +754,7 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 			SetCursor(NULL); // sikk - Remove Cursor
 			Sys_GetCursorPos(&x, &y);
 
-			i = cursory - y;
+			i = cursorY - y;
 
 			if (i < 0)
 			{
@@ -766,8 +775,8 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 					Select_Scale(1.0f, 1.0f, 1.1f);
 			}
 			
-			Sys_SetCursorPos(cursorx, cursory);
-//			cursory = y;
+			Sys_SetCursorPos(cursorX, cursorY);
+//			cursorY = y;
 
 			// sikk - this ensures that the windows are updated in realtime
 			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
@@ -791,21 +800,17 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 			SetCursor(NULL); // sikk - Remove Cursor
 			Sys_GetCursorPos(&x, &y);
 			
-			if (y != cursory)
+			if (y != cursorY)
 			{
-				scale = 1;
+				if (y > cursorY)
+					scale *= powf(1.01f, fabs(y - cursorY));
+				else
+					scale *= powf(0.99f, fabs(y - cursorY));
 
-				for (i = abs(y-cursory); i > 0; i--)
-					scale *=  y > cursory ? 1.01f : 0.99f;
+				scale = max(0.05f, min(scale, 32));
 
-				xyz->scale *= scale;
 
-				if (xyz->scale > 32)
-					xyz->scale = 32;
-				else if (xyz->scale < 0.05f)
-					xyz->scale = 0.05f;
-
-				Sys_SetCursorPos(cursorx, cursory);
+				Sys_SetCursorPos(cursorX, cursorY);
 				Sys_UpdateWindows(W_XY);
 			}
 			return;
@@ -822,112 +827,6 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 =============================================================
 */
 
-/*
-==================
-DrawPathLines
-
-Draws connections between entities.
-Needs to consider all entities, not just ones on screen,
-because the lines can be visible when neither end is.
-Called for both camera view and xy view.
-==================
-*/
-void DrawPathLines ()
-{
-	int			i, j, k;
-	vec3_t		mid, mid1;
-	entity_t   *se, *te;
-	brush_t	   *sb, *tb;
-	char	   *psz;
-	vec3_t		dir, s1, s2;
-	vec_t		len, f;
-	int			arrows;
-	int			num_entities;
-	char	   *ent_target[MAX_MAP_ENTITIES];
-	entity_t   *ent_entity[MAX_MAP_ENTITIES];
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
-		return;
-
-	num_entities = 0;
-	for (te = g_entEntities.next; te != &g_entEntities && num_entities != MAX_MAP_ENTITIES; te = te->next)
-	{
-		ent_target[num_entities] = ValueForKey(te, "target");
-		if (ent_target[num_entities][0])
-		{
-			ent_entity[num_entities] = te;
-			num_entities++;
-		}
-	}
-
-	for (se = g_entEntities.next; se != &g_entEntities; se = se->next)
-	{
-
-		psz = ValueForKey(se, "targetname");
-	
-		if (psz == NULL || psz[0] == '\0')
-			continue;
-		
-		sb = se->brushes.onext;
-		if (sb == &se->brushes)
-			continue;
-
-		for (k = 0; k < num_entities; k++)
-		{
-			if (strcmp(ent_target[k], psz))
-				continue;
-
-			te = ent_entity[k];
-			tb = te->brushes.onext;
-			if (tb == &te->brushes)
-				continue;
-
-// sikk---> Don't Draw Path Line if entity on either side is hidden/filtered/regioned off
-			if (FilterBrush(tb) || FilterBrush(se->brushes.onext))
-				continue;
-			if (Map_IsBrushFiltered(tb) || Map_IsBrushFiltered(se->brushes.onext))
-				continue;
-// <---sikk
-
-			for (i = 0; i < 3; i++)
-				mid[i] = (sb->mins[i] + sb->maxs[i]) * 0.5; 
-
-			for (i = 0; i < 3; i++)
-				mid1[i] = (tb->mins[i] + tb->maxs[i]) * 0.5; 
-
-			VectorSubtract(mid1, mid, dir);
-			len = VectorNormalize(dir);
-			s1[0] = -dir[1] * 8 + dir[0] * 8;
-			s2[0] =  dir[1] * 8 + dir[0] * 8;
-			s1[1] =  dir[0] * 8 + dir[1] * 8;
-			s2[1] = -dir[0] * 8 + dir[1] * 8;
-
-			glColor3f(se->eclass->color[0], se->eclass->color[1], se->eclass->color[2]);
-
-			glBegin(GL_LINES);
-			glVertex3fv(mid);
-			glVertex3fv(mid1);
-
-			arrows = (int)(len / 256) + 1;
-
-			for (i = 0; i < arrows; i++)
-			{
-				f = len * (i + 0.5) / arrows;
-
-				for (j = 0; j < 3; j++)
-					mid1[j] = mid[j] + f * dir[j];
-				glVertex3fv(mid1);
-				glVertex3f(mid1[0] + s1[0], mid1[1] + s1[1], mid1[2]);
-				glVertex3fv(mid1);
-				glVertex3f(mid1[0] + s2[0], mid1[1] + s2[1], mid1[2]);
-			}
-
-			glEnd();
-		}
-	}
-
-	return;
-}
 
 
 /*
@@ -939,66 +838,11 @@ void DrawPathLines ()
 */
 
 /*
-==================
-FilterBrush
-==================
-*/
-bool FilterBrush (brush_t *b)
-{
-	if (!b->owner)
-		return true;		// during construction
-
-	if (b->hiddenBrush)
-		return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_CLIP)
-		if (!strncmp(b->brush_faces->texdef.name, "clip", 4))
-			return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_HINT)
-		if (!strncmp(b->brush_faces->texdef.name, "hint", 4))	// catches hint and hintskip
-			return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WATER)
-		if (b->brush_faces->texdef.name[0] == '*')
-			return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_SKY)
-		if (!strncmp(b->brush_faces->texdef.name, "sky", 3))
-			return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_FUNC_WALL)
-		if (!strncmp(b->owner->eclass->name, "func_wall", 9))
-			return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_DETAIL)
-		if (!strncmp(b->owner->eclass->name, "func_detail", 11))
-			return true;
-
-	if (b->owner == g_peWorldEntity)
-	{
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD)
-			return true;
-		return false;
-	}
-	else if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ENT)
-		return true;
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_LIGHTS)
-		return (b->owner->eclass->nShowFlags & ECLASS_LIGHT);
-
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
-		return ((b->owner->eclass->nShowFlags & ECLASS_PATH) != 0);
-
-	return false;
-}
-
-/*
 ==============
-XY_DrawGrid
+XYZView::DrawGrid
 ==============
 */
-void XYZ_DrawGrid (xyz_t* xyz)
+void XYZView::DrawGrid ()
 {
 	float	x, y, xb, xe, yb, ye;
 	int		w, h;
@@ -1017,28 +861,28 @@ void XYZ_DrawGrid (xyz_t* xyz)
 	else
 		nSize = 64;
 
-	w = xyz->width / 2 / xyz->scale;
-	h = xyz->height / 2 / xyz->scale;
+	w = width / 2 / scale;
+	h = height / 2 / scale;
 
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (dViewType == YZ) ? 1 : 0;
+	nDim2 = (dViewType == XY) ? 1 : 2;
 
-	xb = xyz->origin[nDim1] - w;
+	xb = origin[nDim1] - w;
 	if (xb < g_v3RegionMins[nDim1])
 		xb = g_v3RegionMins[nDim1];
 	xb = nSize * floor(xb / nSize);
 
-	xe = xyz->origin[nDim1] + w;
+	xe = origin[nDim1] + w;
 	if (xe > g_v3RegionMaxs[nDim1])
 		xe = g_v3RegionMaxs[nDim1];
 	xe = nSize * ceil(xe / nSize);
 
-	yb = xyz->origin[nDim2] - h;
+	yb = origin[nDim2] - h;
 	if (yb < g_v3RegionMins[nDim2])
 		yb = g_v3RegionMins[nDim2];
 	yb = nSize * floor(yb / nSize);
 
-	ye = xyz->origin[nDim2] + h;
+	ye = origin[nDim2] + h;
 	if (ye > g_v3RegionMaxs[nDim2])
 		ye = g_v3RegionMaxs[nDim2];
 	ye = nSize * ceil(ye / nSize);
@@ -1064,7 +908,7 @@ void XYZ_DrawGrid (xyz_t* xyz)
 	}
 
 	// draw minor blocks
-	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * xyz->scale >= 4)
+	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
 	{
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR]);
 
@@ -1117,15 +961,20 @@ void XYZ_DrawGrid (xyz_t* xyz)
 		glVertex2f(g_qeglobals.d_v3WorkMax[nDim1], ye);
 		glEnd();
 	}
+
+	DrawBlockGrid();
 }
 
 /*
 ==============
-XY_DrawBlockGrid
+XYZView::DrawBlockGrid
 ==============
 */
-void XYZ_DrawBlockGrid (xyz_t* xyz)
+void XYZView::DrawBlockGrid ()
 {
+	if (!g_qeglobals.d_savedinfo.bShow_Blocks)
+		return;
+	
 	float	x, y, xb, xe, yb, ye;
 	int		w, h;
 	char	text[32];
@@ -1136,28 +985,28 @@ void XYZ_DrawBlockGrid (xyz_t* xyz)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	w = xyz->width / 2 / xyz->scale;
-	h = xyz->height / 2 / xyz->scale;
+	w = width / 2 / scale;
+	h = height / 2 / scale;
 
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (dViewType == YZ) ? 1 : 0;
+	nDim2 = (dViewType == XY) ? 1 : 2;
 	
-	xb = xyz->origin[nDim1] - w;
+	xb = origin[nDim1] - w;
 	if (xb < g_v3RegionMins[nDim1])
 		xb = g_v3RegionMins[nDim1];
 	xb = 1024 * floor(xb / 1024);
 
-	xe = xyz->origin[nDim1] + w;
+	xe = origin[nDim1] + w;
 	if (xe > g_v3RegionMaxs[nDim1])
 		xe = g_v3RegionMaxs[nDim1];
 	xe = 1024 * ceil(xe / 1024);
 
-	yb = xyz->origin[nDim2] - h;
+	yb = origin[nDim2] - h;
 	if (yb < g_v3RegionMins[nDim2])
 		yb = g_v3RegionMins[nDim2];
 	yb = 1024 * floor(yb / 1024);
 
-	ye = xyz->origin[nDim2] + h;
+	ye = origin[nDim2] + h;
 	if (ye > g_v3RegionMaxs[nDim2])
 		ye = g_v3RegionMaxs[nDim2];
 	ye = 1024 * ceil(ye / 1024);
@@ -1195,10 +1044,10 @@ void XYZ_DrawBlockGrid (xyz_t* xyz)
 
 /*
 ==============
-XY_DrawCoords
+XYZView::DrawCoords
 ==============
 */
-void XYZ_DrawCoords (xyz_t* xyz)
+void XYZView::DrawCoords()
 {
 	float	x, y, xb, xe, yb, ye;
 	int		w, h;
@@ -1220,28 +1069,28 @@ void XYZ_DrawCoords (xyz_t* xyz)
 	else
 		nSize = 64;
 
-	w = xyz->width / 2 / xyz->scale;
-	h = xyz->height / 2 / xyz->scale;
+	w = width / 2 / scale;
+	h = height / 2 / scale;
 
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (dViewType == YZ) ? 1 : 0;
+	nDim2 = (dViewType == XY) ? 1 : 2;
 
-	xb = xyz->origin[nDim1] - w;
+	xb = origin[nDim1] - w;
 	if (xb < g_v3RegionMins[nDim1])
 		xb = g_v3RegionMins[nDim1];
 	xb = nSize * floor(xb / nSize);
 
-	xe = xyz->origin[nDim1] + w;
+	xe = origin[nDim1] + w;
 	if (xe > g_v3RegionMaxs[nDim1])
 		xe = g_v3RegionMaxs[nDim1];
 	xe = nSize * ceil(xe / nSize);
 
-	yb = xyz->origin[nDim2] - h;
+	yb = origin[nDim2] - h;
 	if (yb < g_v3RegionMins[nDim2])
 		yb = g_v3RegionMins[nDim2];
 	yb = nSize * floor(yb / nSize);
 
-	ye = xyz->origin[nDim2] + h;
+	ye = origin[nDim2] + h;
 	if (ye > g_v3RegionMaxs[nDim2])
 		ye = g_v3RegionMaxs[nDim2];
 	ye = nSize * ceil(ye / nSize);
@@ -1254,44 +1103,44 @@ void XYZ_DrawCoords (xyz_t* xyz)
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT]);
 
 		nSize = 64;
-		if (xyz->scale <= 0.6)
+		if (scale <= 0.6)
 			nSize = 128;
-		if (xyz->scale <= 0.3)
+		if (scale <= 0.3)
 			nSize = 256;
-		if (xyz->scale <= 0.15)
+		if (scale <= 0.15)
 			nSize = 512;
-		if (xyz->scale <= 0.075)
+		if (scale <= 0.075)
 			nSize = 1024;
 
-		xb = xyz->origin[nDim1] - w;
+		xb = origin[nDim1] - w;
 		if (xb < g_v3RegionMins[nDim1])
 			xb = g_v3RegionMins[nDim1];
 		xb = nSize * floor(xb / nSize);
 
-		xe = xyz->origin[nDim1] + w;
+		xe = origin[nDim1] + w;
 		if (xe > g_v3RegionMaxs[nDim1])
 			xe = g_v3RegionMaxs[nDim1];
 		xe = nSize * ceil(xe / nSize);
 
-		yb = xyz->origin[nDim2] - h;
+		yb = origin[nDim2] - h;
 		if (yb < g_v3RegionMins[nDim2])
 			yb = g_v3RegionMins[nDim2];
 		yb = nSize * floor(yb / nSize);
 
-		ye = xyz->origin[nDim2] + h;
+		ye = origin[nDim2] + h;
 		if (ye > g_v3RegionMaxs[nDim2])
 			ye = g_v3RegionMaxs[nDim2];
 		ye = nSize * ceil(ye / nSize);
 
 		for (x = xb; x <= xe; x += nSize)	// sikk - 'x <= xe' instead of 'x < xe' so last coord is drawn 
 		{
-			glRasterPos2f(x, xyz->origin[nDim2] + h - 6 / xyz->scale);
+			glRasterPos2f(x, origin[nDim2] + h - 6 / scale);
 			sprintf(text, "%d",(int)x);
 			glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
 		}
 		for (y = yb; y <= ye; y += nSize)	// sikk - 'y <= ye' instead of 'y < ye' so last coord is drawn
 		{
-			glRasterPos2f(xyz->origin[nDim1] - w + 1, y);
+			glRasterPos2f(origin[nDim1] - w + 1, y);
 			sprintf(text, "%d",(int)y);
 			glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
 		}
@@ -1303,13 +1152,13 @@ void XYZ_DrawCoords (xyz_t* xyz)
 	{
 		float *p1, *p2;
 
-		if (xyz->dViewType == XY)
+		if (dViewType == XY)
 		{
 			p1 = fColor[0];
 			p2 = fColor[1];
 			szView = "XY";
 		}
-		else if (xyz->dViewType == XZ)
+		else if (dViewType == XZ)
 		{
 			p1 = fColor[0];
 			p2 = fColor[2];
@@ -1323,30 +1172,30 @@ void XYZ_DrawCoords (xyz_t* xyz)
 		}
 
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME]);
-		glRasterPos2f(xyz->origin[nDim1] - w + 68 / xyz->scale, 
-					  xyz->origin[nDim2] + h - 51 / xyz->scale);
+		glRasterPos2f(origin[nDim1] - w + 68 / scale, 
+					  origin[nDim2] + h - 51 / scale);
 		glCallLists(1, GL_UNSIGNED_BYTE, &szView[0]);
 
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME]);
-		glRasterPos2f(xyz->origin[nDim1] - w + 44 / xyz->scale, 
-				      xyz->origin[nDim2] + h - 28 / xyz->scale);
+		glRasterPos2f(origin[nDim1] - w + 44 / scale, 
+				      origin[nDim2] + h - 28 / scale);
 		glCallLists(1, GL_UNSIGNED_BYTE, &szView[1]);
 
 		glLineWidth(2);
 		glColor3fv(p1);
 		glBegin(GL_LINES);
-		glVertex2f(xyz->origin[nDim1] - w + 48 / xyz->scale, 
-				   xyz->origin[nDim2] + h - 48 / xyz->scale);
-		glVertex2f(xyz->origin[nDim1] - w + 64 / xyz->scale, 
-				   xyz->origin[nDim2] + h - 48 / xyz->scale);
+		glVertex2f(origin[nDim1] - w + 48 / scale, 
+				   origin[nDim2] + h - 48 / scale);
+		glVertex2f(origin[nDim1] - w + 64 / scale, 
+				   origin[nDim2] + h - 48 / scale);
 		glEnd();
 
 		glColor3fv(p2);
 		glBegin(GL_LINES);
-		glVertex2f(xyz->origin[nDim1] - w + 48 / xyz->scale, 
-				   xyz->origin[nDim2] + h - 48 / xyz->scale);
-		glVertex2f(xyz->origin[nDim1] - w + 48 / xyz->scale, 
-				   xyz->origin[nDim2] + h - 32 / xyz->scale);
+		glVertex2f(origin[nDim1] - w + 48 / scale, 
+				   origin[nDim2] + h - 48 / scale);
+		glVertex2f(origin[nDim1] - w + 48 / scale, 
+				   origin[nDim2] + h - 32 / scale);
 		glEnd();
 		glLineWidth(1);
 	}
@@ -1357,9 +1206,9 @@ void XYZ_DrawCoords (xyz_t* xyz)
 	if (g_qeglobals.d_savedinfo.bShow_Axis)
 	{
 		glLineWidth(2);
-		if (xyz->dViewType == XY)
+		if (dViewType == XY)
 			glColor3f(1.0, 0.0, 0.0);	
-		else if (xyz->dViewType == XZ)
+		else if (dViewType == XZ)
 			glColor3f(1.0, 0.0, 0.0);
 		else
 			glColor3f(0.0, 1.0, 0.0);
@@ -1368,9 +1217,9 @@ void XYZ_DrawCoords (xyz_t* xyz)
 		glVertex2f(64,0);
 		glEnd();
 			
-		if (xyz->dViewType == XY)
+		if (dViewType == XY)
 			glColor3f(0.0, 1.0, 0.0);
-		else if (xyz->dViewType == XZ)
+		else if (dViewType == XZ)
 			glColor3f(0.0, 0.0, 1.0);
 		else
 			glColor3f(0.0, 0.0, 1.0);
@@ -1386,21 +1235,21 @@ void XYZ_DrawCoords (xyz_t* xyz)
 
 /*
 ==================
-XY_DrawCameraIcon
+XYZView::DrawCameraIcon
 ==================
 */
-void XYZ_DrawCameraIcon (xyz_t* xyz)
+void XYZView::DrawCameraIcon ()
 {
 	float	x, y, a;
 //	char	text[128];
 
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
 		x = g_qeglobals.d_camera.origin[0];
 		y = g_qeglobals.d_camera.origin[1];
 		a = g_qeglobals.d_camera.angles[YAW] / 180 * Q_PI;
 	}
-	else if (xyz->dViewType == YZ)
+	else if (dViewType == YZ)
 	{
 		x = g_qeglobals.d_camera.origin[1];
 		y = g_qeglobals.d_camera.origin[2];
@@ -1436,14 +1285,14 @@ void XYZ_DrawCameraIcon (xyz_t* xyz)
 
 /*
 ==================
-XY_DrawZIcon
+XYZView::DrawZIcon
 ==================
 */
-void XYZ_DrawZIcon (xyz_t* xyz)
+void XYZView::DrawZIcon ()
 {
 	float x, y;
 
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
 		x = g_qeglobals.d_z.origin[0];
 		y = g_qeglobals.d_z.origin[1];
@@ -1484,19 +1333,19 @@ void XYZ_DrawZIcon (xyz_t* xyz)
 // sikk---> Free Rotate: Pivot Icon
 /*
 ===============
-XY_DrawRotateIcon
+XYZView::DrawRotateIcon
 ===============
 */
-void XYZ_DrawRotateIcon (xyz_t* xyz)
+void XYZView::DrawRotateIcon ()
 {
 	float x, y;
 
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
 		x = g_v3RotateOrigin[0];
 		y = g_v3RotateOrigin[1];
 	}
-	else if (xyz->dViewType == YZ)
+	else if (dViewType == YZ)
 	{
 		x = g_v3RotateOrigin[1];
 		y = g_v3RotateOrigin[2];
@@ -1531,13 +1380,13 @@ void XYZ_DrawRotateIcon (xyz_t* xyz)
 
 /*
 ==================
-XY_DrawSizeInfo
+XYZView::DrawSizeInfo
 
 Can be greatly simplified but per usual i am in a hurry 
 which is not an excuse, just a fact
 ==================
 */
-void XYZ_DrawSizeInfo (xyz_t* xyz, int nDim1, int nDim2, vec3_t vMinBounds, vec3_t vMaxBounds)
+void XYZView::DrawSizeInfo (int nDim1, int nDim2, vec3_t vMinBounds, vec3_t vMaxBounds)
 {
 	vec3_t	vSize;
 	char	dimstr[128];
@@ -1548,75 +1397,75 @@ void XYZ_DrawSizeInfo (xyz_t* xyz, int nDim1, int nDim2, vec3_t vMinBounds, vec3
 			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1] * .65,
 			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2] * .65);
 
-	if (xyz->dViewType == XY)
+	if (dViewType == XY)
 	{
 		glBegin(GL_LINES);
 
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f  / xyz->scale, 0.0f);
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale, 0.0f);
+		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f  / scale, 0.0f);
+		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale, 0.0f);
 
-		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale, 0.0f);
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale, 0.0f);
+		glVertex3f(vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale, 0.0f);
+		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale, 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f  / xyz->scale, 0.0f);
-		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale, 0.0f);
+		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f  / scale, 0.0f);
+		glVertex3f(vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale, 0.0f);
   
-		glVertex3f(vMaxBounds[nDim1] + 6.0f  / xyz->scale, vMinBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, vMinBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 6.0f  / scale, vMinBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, vMinBounds[nDim2], 0.0f);
 
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, vMinBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, vMaxBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, vMinBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, vMaxBounds[nDim2], 0.0f);
   
-		glVertex3f(vMaxBounds[nDim1] + 6.0f  / xyz->scale, vMaxBounds[nDim2], 0.0f);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, vMaxBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 6.0f  / scale, vMaxBounds[nDim2], 0.0f);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, vMaxBounds[nDim2], 0.0f);
 
 		glEnd();
 
-		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / xyz->scale, 0.0f);
+		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / scale, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
     
-		glRasterPos3f(vMaxBounds[nDim1] + 16.0 / xyz->scale, (vMinBounds[nDim2] + vMaxBounds[nDim2]) * 0.5f, 0.0f);
+		glRasterPos3f(vMaxBounds[nDim1] + 16.0 / scale, (vMinBounds[nDim2] + vMaxBounds[nDim2]) * 0.5f, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim2], vSize[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 
-		glRasterPos3f(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / xyz->scale, 0.0f);
+		glRasterPos3f(vMinBounds[nDim1] + 4, vMaxBounds[nDim2] + 8 / scale, 0.0f);
 		sprintf(dimstr, g_pszOrgStrings[0], vMinBounds[nDim1], vMaxBounds[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 	}
-	else if (xyz->dViewType == XZ)
+	else if (dViewType == XZ)
 	{
 		glBegin(GL_LINES);
 
-		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 6.0f  / xyz->scale);
-		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 6.0f  / scale);
+		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / scale);
 
-		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / xyz->scale);
-		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(vMinBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / scale);
+		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / scale);
 
-		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 6.0f  / xyz->scale);
-		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 6.0f  / scale);
+		glVertex3f(vMaxBounds[nDim1], 0.0f, vMinBounds[nDim2] - 10.0f / scale);
   
-		glVertex3f(vMaxBounds[nDim1] + 6.0f  / xyz->scale, 0.0f, vMinBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, 0.0f, vMinBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 6.0f  / scale, 0.0f, vMinBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, 0.0f, vMinBounds[nDim2]);
 
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, 0.0f, vMinBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, 0.0f, vMaxBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, 0.0f, vMinBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, 0.0f, vMaxBounds[nDim2]);
   
-		glVertex3f(vMaxBounds[nDim1] + 6.0f  / xyz->scale, 0.0f, vMaxBounds[nDim2]);
-		glVertex3f(vMaxBounds[nDim1] + 10.0f / xyz->scale, 0.0f, vMaxBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 6.0f  / scale, 0.0f, vMaxBounds[nDim2]);
+		glVertex3f(vMaxBounds[nDim1] + 10.0f / scale, 0.0f, vMaxBounds[nDim2]);
 
 		glEnd();
 
-		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, 0.0f, vMinBounds[nDim2] - 20.0  / xyz->scale);
+		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, 0.0f, vMinBounds[nDim2] - 20.0  / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
     
-		glRasterPos3f(vMaxBounds[nDim1] + 16.0  / xyz->scale, 0.0f, (vMinBounds[nDim2]+ vMaxBounds[nDim2]) * 0.5f);
+		glRasterPos3f(vMaxBounds[nDim1] + 16.0  / scale, 0.0f, (vMinBounds[nDim2]+ vMaxBounds[nDim2]) * 0.5f);
 		sprintf(dimstr, g_pszDimStrings[nDim2], vSize[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 
-		glRasterPos3f(vMinBounds[nDim1] + 4, 0.0f, vMaxBounds[nDim2] + 8 / xyz->scale);
+		glRasterPos3f(vMinBounds[nDim1] + 4, 0.0f, vMaxBounds[nDim2] + 8 / scale);
 		sprintf(dimstr, g_pszOrgStrings[1], vMinBounds[nDim1], vMaxBounds[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 	}
@@ -1624,35 +1473,35 @@ void XYZ_DrawSizeInfo (xyz_t* xyz, int nDim1, int nDim2, vec3_t vMinBounds, vec3
 	{
 		glBegin (GL_LINES);
 
-		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f  / xyz->scale);
-		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 6.0f  / scale);
+		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale);
 
-		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale);
-		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(0.0f, vMinBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale);
+		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale);
 
-		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f  / xyz->scale);
-		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / xyz->scale);
+		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 6.0f  / scale);
+		glVertex3f(0.0f, vMaxBounds[nDim1], vMinBounds[nDim2] - 10.0f / scale);
   
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 6.0f  / xyz->scale, vMinBounds[nDim2]);
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / xyz->scale, vMinBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 6.0f  / scale, vMinBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / scale, vMinBounds[nDim2]);
 
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / xyz->scale, vMinBounds[nDim2]);
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / xyz->scale, vMaxBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / scale, vMinBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / scale, vMaxBounds[nDim2]);
   
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 6.0f  / xyz->scale, vMaxBounds[nDim2]);
-		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / xyz->scale, vMaxBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 6.0f  / scale, vMaxBounds[nDim2]);
+		glVertex3f(0.0f, vMaxBounds[nDim1] + 10.0f / scale, vMaxBounds[nDim2]);
 
 		glEnd();
 
-		glRasterPos3f(0.0f, (vMinBounds[nDim1]+ vMaxBounds[nDim1]) * 0.5f,  vMinBounds[nDim2] - 20.0 / xyz->scale);
+		glRasterPos3f(0.0f, (vMinBounds[nDim1]+ vMaxBounds[nDim1]) * 0.5f,  vMinBounds[nDim2] - 20.0 / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
     
-		glRasterPos3f(0.0f, vMaxBounds[nDim1] + 16.0 / xyz->scale, (vMinBounds[nDim2] + vMaxBounds[nDim2]) * 0.5f);
+		glRasterPos3f(0.0f, vMaxBounds[nDim1] + 16.0 / scale, (vMinBounds[nDim2] + vMaxBounds[nDim2]) * 0.5f);
 		sprintf(dimstr, g_pszDimStrings[nDim2], vSize[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 
-		glRasterPos3f(0.0f, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / xyz->scale);
+		glRasterPos3f(0.0f, vMinBounds[nDim1] + 4.0, vMaxBounds[nDim2] + 8 / scale);
 		sprintf(dimstr, g_pszOrgStrings[2], vMinBounds[nDim1], vMaxBounds[nDim2]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
 	}
@@ -1661,10 +1510,10 @@ void XYZ_DrawSizeInfo (xyz_t* xyz, int nDim1, int nDim2, vec3_t vMinBounds, vec3
 // sikk---> Light Radius
 /*
 ==============
-XY_DrawLightRadius
+XYZView::DrawLightRadius
 ==============
 */
-void XYZ_DrawLightRadius (brush_t *pBrush, int nViewType)
+void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 {
 	float		f, fRadius;
 	float		fOrigX, fOrigY, fOrigZ;
@@ -1738,12 +1587,12 @@ void XYZ_DrawLightRadius (brush_t *pBrush, int nViewType)
 
 /*
 ==============
-XY_Draw
+XYZView::Draw
 ==============
 */
-void XYZ_Draw (xyz_t* xyz)
+void XYZView::Draw ()
 {
-    brush_t	   *brush;
+    Brush	   *brush;
 	float		w, h;
 	entity_t   *e;
 	double		start, end;
@@ -1758,13 +1607,13 @@ void XYZ_Draw (xyz_t* xyz)
 	if (!g_brActiveBrushes.next)
 		return;	// not valid yet
 
-	if (xyz->timing)
+	if (timing)
 		start = Sys_DoubleTime();
 
 	// clear
-	xyz->d_dirty = false;
+	//d_dirty = false;
 
-	glViewport(0, 0, xyz->width, xyz->height);
+	glViewport(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0], 
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2],
@@ -1776,27 +1625,23 @@ void XYZ_Draw (xyz_t* xyz)
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-	w = xyz->width / 2 / xyz->scale;
-	h = xyz->height / 2 / xyz->scale;
+	w = width / 2 / scale;
+	h = height / 2 / scale;
 
-	nDim1 = (xyz->dViewType == YZ) ? 1 : 0;
-	nDim2 = (xyz->dViewType == XY) ? 1 : 2;
+	nDim1 = (dViewType == YZ) ? 1 : 0;
+	nDim2 = (dViewType == XY) ? 1 : 2;
 
-	mins[0] = xyz->origin[nDim1] - w;
-	maxs[0] = xyz->origin[nDim1] + w;
-	mins[1] = xyz->origin[nDim2] - h;
-	maxs[1] = xyz->origin[nDim2] + h;
+	mins[0] = origin[nDim1] - w;
+	maxs[0] = origin[nDim1] + w;
+	mins[1] = origin[nDim2] - h;
+	maxs[1] = origin[nDim2] + h;
 
 	glOrtho(mins[0], maxs[0], mins[1], maxs[1], 
 			-g_qeglobals.d_savedinfo.nMapSize,  
 			g_qeglobals.d_savedinfo.nMapSize);//;//-8192, 8192);	// sikk - Map Size
 
 	// now draw the grid
-	XYZ_DrawGrid(xyz);
-
-	// draw block grid
-	if (g_qeglobals.d_savedinfo.bShow_Blocks)
-		XYZ_DrawBlockGrid(xyz);
+	DrawGrid();
 
 	// draw stuff
 	glShadeModel(GL_FLAT);
@@ -1809,10 +1654,10 @@ void XYZ_Draw (xyz_t* xyz)
 
 	drawn = culled = 0;
 
-	if (xyz->dViewType != XY)
+	if (dViewType != XY)
 	{
 		glPushMatrix();
-		if (xyz->dViewType == YZ)
+		if (dViewType == YZ)
 			glRotatef(-90, 0, 1, 0);	// put Z going up
 		glRotatef(-90, 1, 0, 0);	    // put Z going up
 	}
@@ -1830,7 +1675,7 @@ void XYZ_Draw (xyz_t* xyz)
 			continue;		// off screen
 		}
 
-		if (FilterBrush(brush))
+		if (brush->IsFiltered())
 			continue;
 
 		drawn++;
@@ -1844,7 +1689,7 @@ void XYZ_Draw (xyz_t* xyz)
 		else
 			glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES]);
 
-		Brush_DrawXY(brush, xyz->dViewType);
+		brush->DrawXY(dViewType);
 	}
 
 	DrawPathLines();
@@ -1879,11 +1724,11 @@ void XYZ_Draw (xyz_t* xyz)
 	{
 		drawn++;
 
-		Brush_DrawXY(brush, xyz->dViewType);
+		brush->DrawXY(dViewType);
 
 // sikk---> Light Radius
 		if (g_qeglobals.d_savedinfo.bShow_LightRadius)
-			XYZ_DrawLightRadius(brush, xyz->dViewType);
+			DrawLightRadius(brush, dViewType);
 // <---sikk
 
 		// paint size
@@ -1909,7 +1754,7 @@ void XYZ_Draw (xyz_t* xyz)
 
 	// paint size
 	if (!bFixedSize && drawn - nSaveDrawn > 0 && g_qeglobals.d_savedinfo.bShow_SizeInfo)
-		XYZ_DrawSizeInfo(xyz, nDim1, nDim2, vMinBounds, vMaxBounds);
+		DrawSizeInfo(nDim1, nDim2, vMinBounds, vMaxBounds);
 
 	// edge / vertex flags
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
@@ -1946,24 +1791,23 @@ void XYZ_Draw (xyz_t* xyz)
 				 -g_qeglobals.d_v3SelectTranslate[2]);
 
 	// clipper
-	if (g_qeglobals.d_bClipMode)
-		Clip_DrawPoints();
+	Clip_DrawPoints();
 
-	if (!(xyz->dViewType == XY))
+	if (!(dViewType == XY))
 		glPopMatrix();
 
 	if (GetKeyState(VK_MENU) < 0)
-		XYZ_DrawRotateIcon(xyz);
+		DrawRotateIcon();
 
 	// now draw camera point
-	XYZ_DrawCameraIcon(xyz);
+	DrawCameraIcon();
 	if (g_qeglobals.d_savedinfo.bShow_Z)	// sikk - Don't draw Z Icon if Z window is hidden
-		XYZ_DrawZIcon(xyz);
-	XYZ_DrawCoords(xyz);	// sikk - Draw Coords last so they are on top
+		DrawZIcon();
+	DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
 	QE_CheckOpenGLForErrors();
 
-	if (xyz->timing)
+	if (timing)
 	{
 		end = Sys_DoubleTime();
 		Sys_Printf("MSG: XYZ: %d ms\n", (int)(1000 * (end - start)));

@@ -442,7 +442,7 @@ void EntWnd_RefreshEditEntity()
 
 	eo = NULL;
 	first = true;
-	for (brush_t* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
 		// since brushes in the selection are (mostly) sorted by entity, this is a 
 		// decent enough way to shuffle through them, but it does no harm if a 
@@ -534,7 +534,7 @@ static void EntWnd_ApplyAngle(int ang)
 	char sz[8];
 	sprintf(sz, "%d", ang);
 
-	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		SetKeyValue(b->owner, "angle", sz);
 	SetKeyValue(&g_eEditEntity, "angle", sz);
 
@@ -561,7 +561,7 @@ static void EntWnd_FlagChecked(int flag)
 
 	entity_t *eo;
 	eo = NULL;
-	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
 		if (b->owner == eo)
 			continue;
@@ -731,7 +731,7 @@ void EntWnd_AddKeyValue ()
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);	
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);	
 
-	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		SetKeyValue(b->owner, key, value);
 	SetKeyValue(&g_eEditEntity, key, value);
 
@@ -751,7 +751,7 @@ void EntWnd_RemoveKeyValue ()
 	// Get current selection text
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(sz) - 1, (LPARAM)sz);	
 
-	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		DeleteKey(b->owner, sz);
 	DeleteKey(&g_eEditEntity, sz);
 

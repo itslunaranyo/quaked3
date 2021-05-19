@@ -35,7 +35,7 @@ int	FindPoint (vec3_t point)
 FindEdge
 ============
 */
-int FindEdge (int p1, int p2, face_t *f)
+int FindEdge (int p1, int p2, Face *f)
 {
 	int i;
 
@@ -61,13 +61,13 @@ int FindEdge (int p1, int p2, face_t *f)
 MakeFace
 ============
 */
-void MakeFace (face_t *f)
+void MakeFace (Face *f)
 {
 	int			i;
 	int			pnum[128];
 	winding_t  *w;
 
-	w = Brush_MakeFaceWinding(g_brSelectedBrushes.next, f);
+	w = g_brSelectedBrushes.next->MakeFaceWinding(f);
 	if (!w)
 		return;
 	for (i = 0; i < w->numpoints; i++)
@@ -75,7 +75,7 @@ void MakeFace (face_t *f)
 	for (i = 0; i < w->numpoints; i++)
 		FindEdge(pnum[i], pnum[(i + 1) % w->numpoints], f);
 
-	free(w);
+	Winding::Free(w);
 }
 
 /*
@@ -85,8 +85,8 @@ SetupVertexSelection
 */
 void SetupVertexSelection ()
 {
-	face_t	*f;
-	brush_t *b;
+	Face	*f;
+	Brush *b;
 
 	g_qeglobals.d_nNumPoints = 0;
 	g_qeglobals.d_nNumEdges = 0;
@@ -107,13 +107,13 @@ void SetupVertexSelection ()
 SelectFaceEdge
 ============
 */
-void SelectFaceEdge (face_t *f, int p1, int p2)
+void SelectFaceEdge (Face *f, int p1, int p2)
 {
 	int			i, j, k;
 	int			pnum[128];
 	winding_t  *w;
 
-	w = Brush_MakeFaceWinding(g_brSelectedBrushes.next, f);
+	w = g_brSelectedBrushes.next->MakeFaceWinding(f);
 
 	if (!w)
 		return;
@@ -133,8 +133,8 @@ void SelectFaceEdge (face_t *f, int p1, int p2)
 				for (k = 0; k < 3; k++)
 					f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
-			AddPlanept(f->planepts[0]);
-			AddPlanept(f->planepts[1]);
+			AddPlanePoint(f->planepts[0]);
+			AddPlanePoint(f->planepts[1]);
 			break;
 		}
 	}
@@ -142,7 +142,7 @@ void SelectFaceEdge (face_t *f, int p1, int p2)
 	if (i == w->numpoints)
 		Sys_Printf("WARNING: Select face edge failed.\n");
 
-	free(w);
+	Winding::Free(w);
 }
 
 /*
@@ -153,14 +153,14 @@ SelectVertex
 void SelectVertex (int p1)
 {
 	int			i, j, k;
-	brush_t	   *b;
-	face_t	   *f;
+	Brush	   *b;
+	Face	   *f;
 	winding_t  *w;
 
 	b = g_brSelectedBrushes.next;
 	for (f = b->brush_faces; f; f = f->next)
 	{
-		w =  Brush_MakeFaceWinding(b, f);
+		w = b->MakeFaceWinding(f);
 
 		if (!w)
 			continue;
@@ -177,11 +177,11 @@ void SelectVertex (int p1)
 					for (k = 0; k < 3; k++)
 						f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
-				AddPlanept(f->planepts[1]);
+				AddPlanePoint(f->planepts[1]);
 				break;
 			}
 		}
-		free(w);
+		Winding::Free(w);
 	}
 }
 

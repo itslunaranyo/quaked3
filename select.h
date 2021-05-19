@@ -25,8 +25,8 @@ typedef enum
 
 typedef struct
 {
-	brush_t	   *brush;
-	face_t	   *face;
+	Brush	   *brush;
+	Face	   *face;
 	float		dist;
 	bool		selected;
 } trace_t;
@@ -34,21 +34,21 @@ typedef struct
 //========================================================================
 
 extern bool			g_bSelectionChanged;
-extern brush_t		g_brSelectedBrushes;
+extern Brush		g_brSelectedBrushes;
 
 // sikk - Multiple Face Selection
-extern face_t		*g_pfaceSelectedFaces[MAX_MAP_FACES];
+extern Face		*g_pfaceSelectedFaces[MAX_MAP_FACES];
 
 // <-- sikk
 
-//extern face_t		*g_pfaceSelectedFace;
-//extern brush_t	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
+//extern Face		*g_pfaceSelectedFace;
+//extern Brush	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
 extern vec3_t		g_v3RotateOrigin;	// sikk - Free Rotate
 
 //========================================================================
 
 void Select_HandleChange();
-void Select_SelectBrush(brush_t *b);
+void Select_SelectBrush(Brush *b);
 
 trace_t Test_Ray (vec3_t origin, vec3_t dir, int flags);
 void Select_Ray (vec3_t origin, vec3_t dir, int flags);
@@ -56,20 +56,20 @@ void Select_Ray (vec3_t origin, vec3_t dir, int flags);
 bool Select_HasBrushes();
 int Select_FaceCount();
 bool Select_IsEmpty();
-int Select_NumBrushFacesSelected(brush_t* b);
+int Select_NumBrushFacesSelected(Brush* b);
 
 void Select_GetBounds (vec3_t mins, vec3_t maxs);
 void Select_GetTrueMid (vec3_t mid);
 void Select_GetMid (vec3_t mid);
 void Select_ApplyMatrix ();
-void Select_HandleBrush (brush_t *b, bool bComplete);
+void Select_HandleBrush (Brush *b, bool bComplete);
 void Select_Delete ();
 void Select_DeselectFiltered();
 void Select_DeselectAll (bool bDeselectFaces);
 void Select_FacesToBrushes(bool partial);
 void Select_BrushesToFaces();
 // sikk---> Multiple Face Selection
-bool Select_IsFaceSelected (face_t *face);
+bool Select_IsFaceSelected (Face *face);
 bool Select_DeselectAllFaces ();
 // <---sikk
 void Select_Clone ();
@@ -101,11 +101,11 @@ bool OnEntityList (entity_t *pFind, entity_t *pList[MAX_MAP_ENTITIES], int nSize
 // <---sikk
 
 // sikk - Multiple Face Selection: returns true if pFind is in pList
-bool OnBrushList (brush_t *pFind, brush_t *pList[MAX_MAP_BRUSHES], int nSize);
+bool OnBrushList (Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize);
 
 
 // updating workzone to a given brush (depends on current view)
-void UpdateWorkzone (brush_t *b);
+void UpdateWorkzone (Brush *b);
 
 
 #endif
