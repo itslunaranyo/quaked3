@@ -31,6 +31,7 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons);
 void XYZ_MouseUp (xyz_t* xyz, int x, int y, int buttons);
 void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons);
 void XYZ_PositionView (xyz_t* xyz);
+void XYZ_PositionAllViews();
 void XYZ_VectorCopy (xyz_t* xyz, vec3_t in, vec3_t out);
 
 void XYZ_Draw (xyz_t* xyz);
@@ -42,7 +43,6 @@ void XYZ_DrawLightRadius (brush_t *pBrush, int nViewType);
 void XYZ_DrawSizeInfo (xyz_t* xyz, int nDim1, int nDim2, vec3_t vMinBounds, vec3_t vMaxBounds);
 void XYZ_DrawRotateIcon (xyz_t* xyz);	// sikk - Free Rotate: Pivot Icon
 void XYZ_DrawZIcon (xyz_t* xyz);
-//void XY_Overlay ();
 
 bool XYZ_DragDelta (xyz_t* xyz, int x, int y, vec3_t move);
 void XYZ_DragNewBrush (xyz_t* xyz, int x, int y);

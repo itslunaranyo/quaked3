@@ -250,17 +250,17 @@ void Surf_ApplyTexdef(texdef_t *dst, texdef_t *src, int nSkipFlags)
 {
 	if (nSkipFlags)
 	{
-		if (!(nSkipFlags & SF_MIXEDNAME))
+		if (!(nSkipFlags & SURF_MIXEDNAME))
 			strcpy(dst->name, src->name);
-		if (!(nSkipFlags & SF_MIXEDSHIFTX))
+		if (!(nSkipFlags & SURF_MIXEDSHIFTX))
 			dst->shift[0] = src->shift[0];
-		if (!(nSkipFlags & SF_MIXEDSHIFTY))
+		if (!(nSkipFlags & SURF_MIXEDSHIFTY))
 			dst->shift[1] = src->shift[1];
-		if (!(nSkipFlags & SF_MIXEDSCALEX))
+		if (!(nSkipFlags & SURF_MIXEDSCALEX))
 			dst->scale[0] = src->scale[0];
-		if (!(nSkipFlags & SF_MIXEDSCALEY))
+		if (!(nSkipFlags & SURF_MIXEDSCALEY))
 			dst->scale[1] = src->scale[1];
-		if (!(nSkipFlags & SF_MIXEDROTATE))
+		if (!(nSkipFlags & SURF_MIXEDROTATE))
 			dst->rotate = src->rotate;
 	}
 	else

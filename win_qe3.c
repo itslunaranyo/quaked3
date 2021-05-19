@@ -1048,12 +1048,12 @@ int WINAPI WinMain (
 			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 // sikk---> Multiple Orthographic Views
-			if (g_qeglobals.d_savedinfo.bShow_XZ)
+			if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
 			{
 				InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
 				UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
 			}
-			if (g_qeglobals.d_savedinfo.bShow_YZ)
+			if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
 			{
 				InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
 				UpdateWindow(g_qeglobals.d_hwndXYZ[1]);

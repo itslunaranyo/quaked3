@@ -30,11 +30,18 @@ void Clip_ResetMode ();
 void Clip_Clip();
 void Clip_Split ();
 void Clip_Flip ();
+
+void Clip_CamStartQuickClip(int x, int y);
+void Clip_CamEndQuickClip();
+void Clip_CamDropPoint(int x, int y);
+void Clip_CamMovePoint(int x, int y);
+void Clip_CamEndPoint();
+
 void Clip_StartQuickClip(xyz_t* xyz, int x, int y);
 void Clip_EndQuickClip();
 void Clip_DropPoint (xyz_t* xyz, int x, int y);
 void Clip_MovePoint (xyz_t* xyz, int x, int y);
-void Clip_DrawPoint (xyz_t* xyz);
 void Clip_EndPoint ();
+void Clip_DrawPoints ();
 
 #endif

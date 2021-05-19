@@ -37,13 +37,15 @@ int g_nCamButtonState;
 
 void Cam_Init ();
 void Cam_KeyDown (int key);
+void Cam_BoundAngles();
+void Cam_PointToRay(int x, int y, vec3_t rayOut);
 void Cam_MouseDown (int x, int y, int buttons);
 void Cam_MouseUp (int x, int y, int buttons);
 void Cam_MouseMoved (int x, int y, int buttons);
 void Cam_MouseControl (float dtime);
 void Cam_Draw ();
 void Cam_DrawGrid ();	// sikk - Camera Grid
-void Cam_DrawClipSplits ();
+void Cam_DrawClipSplits();
 
 void Cam_BuildMatrix ();
 void Cam_ChangeFloor (bool up);

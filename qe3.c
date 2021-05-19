@@ -206,14 +206,12 @@ bool QE_KeyDown (int key)
 		break;
 	case 'A':
 		g_qeglobals.d_camera.angles[0] += SPEED_TURN;
-		if (g_qeglobals.d_camera.angles[0] > 85)
-			g_qeglobals.d_camera.angles[0] = 85;
+		Cam_BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case 'Z':
 		g_qeglobals.d_camera.angles[0] -= SPEED_TURN;
-		if (g_qeglobals.d_camera.angles[0] < -85)
-			g_qeglobals.d_camera.angles[0] = -85;
+		Cam_BoundAngles();
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
@@ -766,9 +764,9 @@ void QE_UpdateCommandUI ()
 	CheckMenuItem(hMenu, ID_VIEW_STATUSBAR, (IsWindowVisible(g_qeglobals.d_hwndStatus) ? MF_CHECKED : MF_UNCHECKED));
 	// XY Windows
 	CheckMenuItem(hMenu, ID_VIEW_CAMERA,	(IsWindowVisible(g_qeglobals.d_hwndCamera) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(g_qeglobals.d_savedinfo.bShow_XZ ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(g_qeglobals.d_savedinfo.bShow_YZ ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (g_qeglobals.d_savedinfo.bShow_XYZ[0] ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(g_qeglobals.d_savedinfo.bShow_Z ? MF_CHECKED : MF_UNCHECKED));
 	// Cubic Clipping
 	CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? MF_CHECKED : MF_UNCHECKED));
@@ -832,6 +830,6 @@ void QE_UpdateCommandUI ()
 //===================================
 // Region Menu
 //===================================
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XZ ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_YZ ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_ENABLED : MF_GRAYED));
 }

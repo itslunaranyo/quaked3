@@ -1312,7 +1312,7 @@ void OnSelect (HWND hTree)
 	}
 
 	// Center on selected entity and update the windows
-	XY_PositionView();
+	XYZ_PositionAllViews();
 	Cam_PositionView();
 	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);

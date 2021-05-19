@@ -407,6 +407,7 @@ void DoWindowPosition (int nStyle)
 	parent.bottom -= status.bottom - status.top;
 	midy = parent.top + (parent.bottom - parent.top) * 0.5;
 
+	g_qeglobals.d_savedinfo.bShow_XYZ[0] = true;
 	switch (nStyle)
 	{
 	case 0:	// QE3 Default
@@ -417,8 +418,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		midx = (parent.right - parent.left) / 3;
@@ -460,8 +461,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		midx = (parent.right - parent.left) / 3;
@@ -503,8 +504,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -560,8 +561,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -617,8 +618,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = false;
 
 		// Set Entity rect
@@ -667,8 +668,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = false;
 
 		// Set Entity rect
@@ -717,8 +718,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -774,8 +775,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -831,8 +832,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = false;
 
 		// Set Entity rect
@@ -881,8 +882,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-		g_qeglobals.d_savedinfo.bShow_XZ = true;
-		g_qeglobals.d_savedinfo.bShow_YZ = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 		g_qeglobals.d_savedinfo.bShow_Z = false;
 
 		// Set Entity rect
@@ -931,8 +932,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -972,8 +973,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -1013,8 +1014,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -1056,8 +1057,8 @@ void DoWindowPosition (int nStyle)
 		ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-		g_qeglobals.d_savedinfo.bShow_XZ = false;
-		g_qeglobals.d_savedinfo.bShow_YZ = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 		g_qeglobals.d_savedinfo.bShow_Z = true;
 
 		// Set Z rect
@@ -1377,18 +1378,22 @@ LONG WINAPI CommandHandler (
 
 
 // sikk---> Multiple Orthographic Views
-		case ID_VIEW_TOGGLE_XY: // NOT saved
+		case ID_VIEW_TOGGLE_XY:
 			if (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]))
 			{
 				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndXYZ[0])
 					BringWindowToTop(g_qeglobals.d_hwndXYZ[0]);
 				else
+				{
 					ShowWindow(g_qeglobals.d_hwndXYZ[0], SW_HIDE);
+					g_qeglobals.d_savedinfo.bShow_XYZ[0] = false;
+				}
 			}
 			else
 			{
 				ShowWindow(g_qeglobals.d_hwndXYZ[0], SW_SHOW);
 				BringWindowToTop(g_qeglobals.d_hwndXYZ[0]);
+				g_qeglobals.d_savedinfo.bShow_XYZ[0] = true;
 			}
 			break;
 
@@ -1400,14 +1405,14 @@ LONG WINAPI CommandHandler (
 				else
 				{
 					ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_XZ = false;
+					g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
 				}
 			}
 			else
 			{
 				ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
 				BringWindowToTop(g_qeglobals.d_hwndXYZ[2]);
-				g_qeglobals.d_savedinfo.bShow_XZ = true;
+				g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
 			}
 			break;
 
@@ -1419,14 +1424,14 @@ LONG WINAPI CommandHandler (
 				else
 				{
 					ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_YZ = false;
+					g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
 				}
 			}
 			else
 			{
 				ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
 				BringWindowToTop(g_qeglobals.d_hwndXYZ[1]);
-				g_qeglobals.d_savedinfo.bShow_YZ = true;
+				g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
 			}
 			break;
 // <---sikk
@@ -1792,6 +1797,13 @@ LONG WINAPI CommandHandler (
 			Undo_Start("CSG Merge");
 			Undo_AddBrushList(&g_brSelectedBrushes);
 			CSG_Merge();
+			Undo_EndBrushList(&g_brSelectedBrushes);
+			Undo_End();
+			break;
+		case ID_SELECTION_CSGCONVEXMERGE:
+			Undo_Start("CSG Convex Merge");
+			Undo_AddBrushList(&g_brSelectedBrushes);
+			CSG_ConvexMerge();
 			Undo_EndBrushList(&g_brSelectedBrushes);
 			Undo_End();
 			break;
@@ -2791,8 +2803,10 @@ void WMain_Create (HINSTANCE hInstance)
 		g_qeglobals.d_savedinfo.nSize				= sizeof(g_qeglobals.d_savedinfo);
 		g_qeglobals.d_savedinfo.nTexMenu			= ID_TEXTURES_TRILINEAR;
 
-		g_qeglobals.d_savedinfo.bShow_XZ			= false;	// sikk - Multiple Orthographic Views
-		g_qeglobals.d_savedinfo.bShow_YZ			= false;	// sikk - Multiple Orthographic Views
+		g_qeglobals.d_savedinfo.bShow_XYZ[0]		= true;	// lunaran - grid view reunification
+		g_qeglobals.d_savedinfo.bShow_XYZ[1]		= false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[2]		= false;
+		g_qeglobals.d_savedinfo.bShow_XYZ[3]		= false;
 		g_qeglobals.d_savedinfo.bShow_Z				= true;		// Saved Window Toggle
 
 		g_qeglobals.d_savedinfo.nExclude			= 0;

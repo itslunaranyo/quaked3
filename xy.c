@@ -28,11 +28,6 @@ void XYZ_Init(xyz_t* xyz)
 	Map_RegionOff();	// sikk - For initiating Map Size change
 }
 
-void XY_Init ()
-{
-	XYZ_Init(&g_qeglobals.d_xyz[0]);
-}
-
 /*
 ==================
 XY_PositionView
@@ -59,9 +54,10 @@ void XYZ_PositionView(xyz_t* xyz)
 	}
 }
 
-void XY_PositionView()
+void XYZ_PositionAllViews()
 {
-	XYZ_PositionView(&g_qeglobals.d_xyz[0]);
+	for (int i = 0; i < 4; i++)
+		XYZ_PositionView(&g_qeglobals.d_xyz[i]);
 }
 
 /*
@@ -87,12 +83,6 @@ void XYZ_VectorCopy (xyz_t* xyz, vec3_t in, vec3_t out)
 		out[2] = in[2];
 	}
 }
-
-void XY_VectorCopy(vec3_t in, vec3_t out)
-{
-	XYZ_VectorCopy(&g_qeglobals.d_xyz[0], in, out);
-}
-
 
 
 
@@ -134,11 +124,6 @@ void XYZ_ToPoint (xyz_t* xyz, int x, int y, vec3_t point)
 	}
 }
 
-void XY_ToPoint(int x, int y, vec3_t point)
-{
-	XYZ_ToPoint(&g_qeglobals.d_xyz[0], x, y, point);
-}
-
 /*
 ==================
 XYZ_ToGridPoint
@@ -172,10 +157,6 @@ void XYZ_ToGridPoint (xyz_t* xyz, int x, int y, vec3_t point)
 		point[2] = floor(point[2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 	}
 }
-void XY_ToGridPoint(int x, int y, vec3_t point)
-{
-	XYZ_ToGridPoint(&g_qeglobals.d_xyz[0], x, y, point);
-}
 
 /*
 ==================
@@ -188,10 +169,6 @@ void XYZ_SnapToPoint (xyz_t* xyz, int x, int y, vec3_t point)
 		XYZ_ToPoint(xyz, x, y, point);
 	else
 		XYZ_ToGridPoint(xyz, x, y, point);
-}
-void XY_SnapToPoint(int x, int y, vec3_t point)
-{
-	XYZ_SnapToPoint(&g_qeglobals.d_xyz[0], x, y, point);
 }
 
 /*
@@ -442,6 +419,7 @@ void XYZ_MouseDown (xyz_t* xyz, int x, int y, int buttons)
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+					Cam_BoundAngles();
 					Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 				}
 			}
@@ -663,6 +641,7 @@ void XYZ_MouseMoved (xyz_t* xyz, int x, int y, int buttons)
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
+					Cam_BoundAngles();
 					Sys_UpdateWindows(W_XY | W_CAMERA);
 				}
 			}
@@ -1874,21 +1853,6 @@ void XYZ_Draw (xyz_t* xyz)
 	if (g_qeglobals.d_nPointfileDisplayList)
 		glCallList(g_qeglobals.d_nPointfileDisplayList);
 
-	// lunaran - why do this?
-	/*
-	if (!(xyz->dViewType == XY))
-		glPopMatrix();
-
-	// now draw selected brushes
-	if (xyz->dViewType != XY)
-	{
-		glPushMatrix();
-		if (xyz->dViewType == YZ)
-			glRotatef(-90, 0, 1, 0);	    // put Z going up
-		glRotatef(-90, 1, 0, 0);	    // put Z going up
-	}
-	*/
-
 	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
 				 g_qeglobals.d_v3SelectTranslate[1], 
 				 g_qeglobals.d_v3SelectTranslate[2]);
@@ -1981,13 +1945,14 @@ void XYZ_Draw (xyz_t* xyz)
 		         -g_qeglobals.d_v3SelectTranslate[1], 
 				 -g_qeglobals.d_v3SelectTranslate[2]);
 
+	// clipper
+	if (g_qeglobals.d_bClipMode)
+		Clip_DrawPoints();
+
 	if (!(xyz->dViewType == XY))
 		glPopMatrix();
 
-	// clipper
-	if (g_qeglobals.d_bClipMode)
-		Clip_DrawPoint(xyz);
-	else if (GetKeyState(VK_MENU) < 0)
+	if (GetKeyState(VK_MENU) < 0)
 		XYZ_DrawRotateIcon(xyz);
 
 	// now draw camera point
@@ -2004,82 +1969,3 @@ void XYZ_Draw (xyz_t* xyz)
 		Sys_Printf("MSG: XYZ: %d ms\n", (int)(1000 * (end - start)));
 	}
 }
-
-/*
-==============
-XY_Overlay
-==============
-*/
-/*
-void XY_Overlay ()
-{
-	int				w, h;
-	int				r[4];
-	static vec3_t	lastz;
-	static vec3_t	lastcamera;
-
-	glViewport(0, 0, g_qeglobals.d_xyz[0].width, g_qeglobals.d_xyz[0].height);
-
-	// set up viewpoint
-	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-	w = g_qeglobals.d_xyz[0].width / 2 / g_qeglobals.d_xyz[0].scale;
-	h = g_qeglobals.d_xyz[0].height / 2 / g_qeglobals.d_xyz[0].scale;
-
-	glOrtho(g_qeglobals.d_xyz[0].origin[0] - w, 
-		    g_qeglobals.d_xyz[0].origin[0] + w, 
-			g_qeglobals.d_xyz[0].origin[1] - h, 
-			g_qeglobals.d_xyz[0].origin[1] + h, 
-			-g_qeglobals.d_savedinfo.nMapSize, 
-			g_qeglobals.d_savedinfo.nMapSize);// -8192, 8192); 	// sikk - Map Size
-
-	// erase the old camera and z checker positions
-	// if the entire xy hasn't been redrawn
-	if (g_qeglobals.d_xyz[0].d_dirty)
-	{
-		glReadBuffer(GL_BACK);
-		glDrawBuffer(GL_FRONT);
-
-		glRasterPos2f(lastz[0] - 9, lastz[1] - 9);
-		glGetIntegerv(GL_CURRENT_RASTER_POSITION, r);
-		glCopyPixels(r[0], r[1], 18, 18, GL_COLOR);
-
-		glRasterPos2f(lastcamera[0] - 50, lastcamera[1] - 50);
-		glGetIntegerv(GL_CURRENT_RASTER_POSITION, r);
-		glCopyPixels(r[0], r[1], 100, 100, GL_COLOR);
-	}
-	g_qeglobals.d_xyz[0].d_dirty = true;
-
-	// save off underneath where we are about to draw
-	VectorCopy(g_qeglobals.d_z.origin, lastz);
-	VectorCopy(g_qeglobals.d_camera.origin, lastcamera);
-
-	glReadBuffer(GL_FRONT);
-	glDrawBuffer(GL_BACK);
-
-	glRasterPos2f(lastz[0] - 9, lastz[1] - 9);
-	glGetIntegerv(GL_CURRENT_RASTER_POSITION, r);
-	glCopyPixels(r[0], r[1], 18, 18, GL_COLOR);
-
-	glRasterPos2f(lastcamera[0] - 50, lastcamera[1] - 50);
-	glGetIntegerv(GL_CURRENT_RASTER_POSITION,r);
-	glCopyPixels(r[0], r[1], 100, 100, GL_COLOR);
-
-	// draw the new icons
-	glDrawBuffer(GL_FRONT);
-
-    glShadeModel(GL_FLAT);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_1D);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glColor3f(0, 0, 0);
-
-	XY_DrawCameraIcon();
-	XY_DrawZIcon();
-
-	glDrawBuffer(GL_BACK);
-    glFinish();
-}
-*/

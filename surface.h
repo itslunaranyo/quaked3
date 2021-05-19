@@ -4,13 +4,13 @@
 #ifndef __SURFACE_H__
 #define __SURFACE_H__
 
-#define SF_MIXEDNAME	0x01
-#define SF_MIXEDSHIFTX	0x02
-#define SF_MIXEDSHIFTY	0x04
-#define SF_MIXEDSCALEX	0x08
-#define SF_MIXEDSCALEY	0x10
-#define SF_MIXEDROTATE	0x20
-#define SF_MIXEDALL		0x3F
+#define SURF_MIXEDNAME	0x01
+#define SURF_MIXEDSHIFTX	0x02
+#define SURF_MIXEDSHIFTY	0x04
+#define SURF_MIXEDSCALEX	0x08
+#define SURF_MIXEDSCALEY	0x10
+#define SURF_MIXEDROTATE	0x20
+#define SURF_MIXEDALL		0x3F
 
 void ProjectOnPlane(vec3_t normal, float dist, vec3_t ez, vec3_t p);
 void Back(vec3_t dir, vec3_t p);

@@ -17,7 +17,7 @@ typedef struct
 {
     vec3_t	normal;
     double	dist;
-    int		type;
+	//int		type;	// lunaran - unused
 } plane_t;
 
 typedef struct
@@ -78,7 +78,7 @@ int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 void		Brush_AddToList (brush_t *b, brush_t *list);
 void		Brush_RemoveFromList (brush_t *b);
 void		Brush_MergeListIntoList(brush_t *src, brush_t *dest);
-void		Brush_CleanList (brush_t *pList);
+void		Brush_FreeList (brush_t *pList);
 void		Brush_CopyList (brush_t *pFrom, brush_t *pTo);
 
 brush_t	   *Brush_Alloc ();

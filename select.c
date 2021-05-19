@@ -1760,7 +1760,7 @@ void Select_Cut ()
 	entity_t	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
 
-	Brush_CleanList(&g_brCopiedBrushes);
+	Brush_FreeList(&g_brCopiedBrushes);
 	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
 	Entity_CleanList();
 
@@ -1809,7 +1809,7 @@ void Select_Copy ()
 	brush_t		*b, *b2, *eb, *eb2;
 	entity_t	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
-	Brush_CleanList(&g_brCopiedBrushes);
+	Brush_FreeList(&g_brCopiedBrushes);
 	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
 	Entity_CleanList();
 

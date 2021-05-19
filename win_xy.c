@@ -183,8 +183,8 @@ void XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y)
 		break;
 	}
 
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XZ ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_YZ ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_ENABLED : MF_GRAYED));
 		
 	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, XYZWnd_HandleFromWin(xyz), NULL);
 
@@ -415,8 +415,11 @@ void WXYZ_Create (HINSTANCE hInstance, int slot)
 
 	sprintf(szLabel, "XYZWindow%d", slot);
 	LoadWindowState(g_qeglobals.d_hwndXYZ[slot], szLabel);
-    ShowWindow(g_qeglobals.d_hwndXYZ[slot], SW_SHOWDEFAULT);
 	XYZWnd_SetViewAxis(g_qeglobals.d_hwndXYZ[slot], (slot+2)%3);
+	if (g_qeglobals.d_savedinfo.bShow_XYZ[slot])
+	    ShowWindow(g_qeglobals.d_hwndXYZ[slot], SW_SHOW);
+	else
+		ShowWindow(g_qeglobals.d_hwndXYZ[slot], SW_HIDE);
 }
 
 /*

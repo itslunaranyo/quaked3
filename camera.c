@@ -4,7 +4,6 @@
 
 #include "qe3.h"
 
-
 #define	PAGEFLIPS	2
 
 static int	buttonx, buttony;
@@ -191,14 +190,8 @@ void Cam_Rotate (int x, int y, vec3_t origin)
 		g_qeglobals.d_camera.angles[PITCH] -= 360;
 
 	g_qeglobals.d_camera.angles[PITCH] -= y;
-	
-	if(g_qeglobals.d_camera.angles[PITCH] > 85)
-		g_qeglobals.d_camera.angles[PITCH] = 85;
-
-	if(g_qeglobals.d_camera.angles[PITCH] < -85)
-		g_qeglobals.d_camera.angles[PITCH] = -85;
-
 	g_qeglobals.d_camera.angles[YAW] -= x;
+	Cam_BoundAngles();
 
 	AngleVectors(g_qeglobals.d_camera.angles, forward, NULL, NULL);
 	forward[2] = -forward[2];
@@ -262,7 +255,7 @@ void Cam_PositionRotate ()
 
 //		f = g_pfaceSelectedFace;
 		// rotate around last selected face
-		f = g_pfaceSelectedFaces[Select_NumFaces() - 1];	// sikk - Multiple Face Selection
+		f = g_pfaceSelectedFaces[Select_FaceCount() - 1];	// sikk - Multiple Face Selection
 		for (j = 0; j < f->face_winding->numpoints; j++)
 		{
 			for (i = 0; i < 3; i++)
@@ -296,6 +289,19 @@ void Cam_PositionRotate ()
 
 /*
 ================
+Cam_BoundAngles
+================
+*/
+void Cam_BoundAngles()
+{
+	g_qeglobals.d_camera.angles[YAW] = fmod(g_qeglobals.d_camera.angles[YAW], 360.0f);
+
+	g_qeglobals.d_camera.angles[PITCH] = fmin(g_qeglobals.d_camera.angles[PITCH], 90);
+	g_qeglobals.d_camera.angles[PITCH] = fmax(g_qeglobals.d_camera.angles[PITCH], -90);
+}
+
+/*
+================
 Cam_FreeLook
 ================
 */
@@ -316,14 +322,9 @@ void Cam_FreeLook ()
 		g_qeglobals.d_camera.angles[PITCH] -= 360;
 
 	g_qeglobals.d_camera.angles[PITCH] -= y;
-	
-	if (g_qeglobals.d_camera.angles[PITCH] > 85)
-		g_qeglobals.d_camera.angles[PITCH] = 85;
-
-	if (g_qeglobals.d_camera.angles[PITCH] < -85)
-		g_qeglobals.d_camera.angles[PITCH] = -85;
-
 	g_qeglobals.d_camera.angles[YAW] -= x;
+
+	Cam_BoundAngles();
 
 	Sys_SetCursorPos(cursorx, cursory);
 	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
@@ -380,23 +381,32 @@ void Cam_MouseControl (float dtime)
 
 /*
 ==============
-Cam_MouseDown
+Cam_PointToRay
 ==============
 */
-void Cam_MouseDown (int x, int y, int buttons)
+void Cam_PointToRay(int x, int y, vec3_t rayOut)
 {
-	int		i;
 	float	f, r, u;
-	vec3_t	dir;
 
 	// calc ray direction
 	u = (float)(y - g_qeglobals.d_camera.height / 2) / (g_qeglobals.d_camera.width / 2);
 	r = (float)(x - g_qeglobals.d_camera.width / 2) / (g_qeglobals.d_camera.width / 2);
 	f = 1;
 
-	for (i = 0; i < 3; i++)
-		dir[i] = g_qeglobals.d_camera.vpn[i] * f + g_qeglobals.d_camera.vright[i] * r + g_qeglobals.d_camera.vup[i] * u;
-	VectorNormalize(dir);
+	for (int i = 0; i < 3; i++)
+		rayOut[i] = g_qeglobals.d_camera.vpn[i] * f + g_qeglobals.d_camera.vright[i] * r + g_qeglobals.d_camera.vup[i] * u;
+	VectorNormalize(rayOut);
+}
+
+/*
+==============
+Cam_MouseDown
+==============
+*/
+void Cam_MouseDown (int x, int y, int buttons)
+{
+	vec3_t	dir;
+	Cam_PointToRay(x, y, dir);
 
 	Sys_GetCursorPos(&cursorx, &cursory);
 
@@ -404,12 +414,23 @@ void Cam_MouseDown (int x, int y, int buttons)
 	buttonx = x;
 	buttony = y;
 
+	// clipper
+	if ((buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
+	{
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_CamStartQuickClip(x, y);
+		else
+			Clip_CamDropPoint(x, y);
+		Sys_UpdateWindows(W_XY|W_CAMERA);
+	}
+
 	// LBUTTON = manipulate selection
 	// shift-LBUTTON = select
 	// middle button = grab texture
 	// ctrl-middle button = set entire brush to texture
 	// ctrl-shift-middle button = set single face to texture
-	if ((buttons == MK_LBUTTON)	|| 
+	else if ((buttons == MK_LBUTTON)	|| 
 		(buttons == (MK_LBUTTON | MK_SHIFT)) || 
 		(buttons == (MK_LBUTTON | MK_CONTROL)) || 
 		(buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT)) || 
@@ -436,8 +457,21 @@ Cam_MouseUp
 */
 void Cam_MouseUp (int x, int y, int buttons)
 {
+	// clipper
+	if (g_qeglobals.d_bClipMode)
+	{
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_CamEndQuickClip();
+		else
+			Clip_CamEndPoint();
+	}
+	else
+	{
+		Drag_MouseUp();
+	}
+	Sys_UpdateWindows(W_ALL);
 	g_nCamButtonState = 0;
-	Drag_MouseUp();
 }
 
 /*
@@ -454,7 +488,12 @@ void Cam_MouseMoved (int x, int y, int buttons)
 	trace_t		t;
 
 	g_nCamButtonState = buttons;
-	if (!buttons)
+
+	if ((!buttons || buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
+	{
+		Clip_CamMovePoint(x, y);
+	}
+	else if (!buttons)
 	{
 		//
 		// calc ray direction
@@ -528,7 +567,7 @@ void Cam_MouseMoved (int x, int y, int buttons)
 	}
 
 // sikk---> Mouse Driven Texture Manipulation - TODO: Too sensitive...
-	if (buttons & MK_LBUTTON)
+	if (buttons & MK_LBUTTON  && !g_qeglobals.d_bClipMode)
 	{			
 		if (GetKeyState(VK_MENU) < 0)
 		{
@@ -645,6 +684,7 @@ void Cam_DrawClipSplits ()
 	g_qeglobals.d_pbrSplitList = NULL;
 
 	if (g_qeglobals.d_bClipMode)
+		Clip_ProduceSplitLists();
 		if (g_cpClip1.bSet && g_cpClip2.bSet)
 			g_qeglobals.d_pbrSplitList = (g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
 }
@@ -845,6 +885,7 @@ void Cam_Draw ()
 		// TODO: Make toggle via Preferences Option.   
 		if (!strncmp(brush->brush_faces->d_texture->name, "*", 1) ||
 			!strcmp(brush->brush_faces->d_texture->name, "clip") ||
+			!strncmp(brush->brush_faces->d_texture->name, "hint", 4) ||
 			!strcmp(brush->brush_faces->d_texture->name, "trigger"))
 			g_pbrTransBrushes[g_nNumTransBrushes++] = brush;
 		else 
@@ -852,11 +893,8 @@ void Cam_Draw ()
 	}
 
 	glEnable(GL_BLEND);
-	// I don't know enough about GL to do this correctly but the darker
-	// the pixel the less transparent. I've tried many combinations and
-	// this proved the best so it'll have to do for now.
-	glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR);
-	for (i = 0; i < g_nNumTransBrushes; i++ ) 
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for (i = 0; i < g_nNumTransBrushes; i++ )
 		Brush_Draw(g_pbrTransBrushes[i]);
 	glDisable(GL_BLEND);
 // <---sikk
@@ -926,9 +964,9 @@ void Cam_Draw ()
 				 g_qeglobals.d_v3SelectTranslate[2]);
 	glMatrixMode(GL_TEXTURE);
 
-	Cam_DrawClipSplits();
-
-	pList = (g_qeglobals.d_bClipMode && g_qeglobals.d_pbrSplitList) ? g_qeglobals.d_pbrSplitList : &g_brSelectedBrushes;
+//	Cam_DrawClipSplits();
+//	pList = (g_qeglobals.d_bClipMode && g_qeglobals.d_pbrSplitList) ? g_qeglobals.d_pbrSplitList : &g_brSelectedBrushes;
+	pList = &g_brSelectedBrushes;
 
 	// draw normally
 	for (brush = pList->next; brush != pList; brush = brush->next)
@@ -959,7 +997,7 @@ void Cam_Draw ()
 // sikk---> Multiple Face Selection
 //	if (Select_FaceCount())
 //	{
-		for (int i = 0; i < Select_NumFaces(); i++)
+		for (int i = 0; i < Select_FaceCount(); i++)
 			Face_Draw(g_pfaceSelectedFaces[i]);
 //	}
 // <---sikk
@@ -1002,18 +1040,15 @@ void Cam_Draw ()
 		glPointSize(1);
 	}
 
-	//
-	// draw pointfile
-	//
+	if (g_qeglobals.d_bClipMode)
+		Clip_DrawPoints();
+
 	glEnable(GL_DEPTH_TEST);
 
 	DrawPathLines();
 
 	if (g_qeglobals.d_nPointfileDisplayList)
-	{
 		Pointfile_Draw();
-//		glCallList(g_qeglobals.d_nPointfileDisplayList);
-	}
 
 	// bind back to the default texture so that we don't have problems
 	// elsewhere using/modifying texture maps between contexts

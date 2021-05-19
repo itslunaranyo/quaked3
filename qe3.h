@@ -23,7 +23,6 @@
 #include <gl/glaux.h>
 #include <math.h>
 #include <stdlib.h>
-#include <malloc.h>	// sikk - Undo/Redo
 #include <assert.h>	// lunaran - for my own sanity
 
 #include "cmdlib.h"
@@ -49,8 +48,6 @@
 
 #include "camera.h"
 #include "xy.h"
-//#include "xz.h"	// sikk - Multiple Orthographic Views
-//#include "yz.h"	// sikk - Multiple Orthographic Views
 #include "z.h"
 #include "mru.h"
 #include "undo.h"
@@ -63,8 +60,7 @@ typedef struct
 	int		nTexMenu;			// nearest, linear, etc
 //	int		nVTexMenu;			// sikk - unused
 	int		nExclude;
-	bool	bShow_XZ,			// sikk - Multiple Orthographic Views
-			bShow_YZ,			// sikk - Multiple Orthographic Views
+	bool	bShow_XYZ[4],		// lunaran - grid view reunification
 			bShow_Z,			// sikk - Saved Window Toggle
 			bShow_Axis,			// sikk - Show Axis
 			bShow_Blocks,
@@ -144,9 +140,6 @@ typedef struct
 					d_hwndConsole,
 					d_hwndTexture,
 				d_hwndXYZ[4],			// lunaran - grid view reunification
-			//	d_hwndXY,
-			//	d_hwndXZ,				// sikk - Multiple Orthographic Views
-			//	d_hwndYZ,				// sikk - Multiple Orthographic Views
 				d_hwndZ,
 				d_hwndStatus,
 				d_hwndToolbar1,
@@ -181,13 +174,8 @@ typedef struct
 
 	camera_t	d_camera;				// sikk - moved camera object here
 	xyz_t		d_xyz[4];				// lunaran - grid view reunification
-//	xyz_t		d_xyz;					// it's now for all view
-//	xz_t		d_xz;					// sikk - Multiple Orthographic Views
-//	yz_t		d_yz;					// sikk - Multiple Orthographic Views
 	z_t         d_z;
 
-	int			d_nLastActiveXY;		// sikk - holds last active XY window for clipping
-	int         d_nViewType;			// XY = x0, y1; XZ = x0, y2; YZ = x1, y2.
 	int         d_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
 
 	LPMRUMENU   d_lpMruMenu;
@@ -341,24 +329,6 @@ void	XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y);	// sikk - Contex Menu
 xyz_t*	XYZWnd_WinFromHandle(HWND xyzwin);
 void	XYZWnd_CycleViewAxis(HWND xyzwin);
 void	XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis);
-
-// sikk---> Multiple Orthographic Views
-/*
-// win_xz.c
-void	WXZ_Create (HINSTANCE hInstance);
-LONG WINAPI WXZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-//static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void	WXZ_Print ();
-void	DoXZPopupMenu (int x, int y);	// sikk - Contex Menu
-
-// win_yz.c
-void	WYZ_Create (HINSTANCE hInstance);
-LONG WINAPI WYZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-//static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void	WYZ_Print ();
-void	DoYZPopupMenu (int x, int y);	// sikk - Contex Menu
-// <---sikk
-*/
 
 // win_z.c
 void WZ_Create (HINSTANCE hInstance);

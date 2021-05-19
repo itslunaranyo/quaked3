@@ -35,21 +35,21 @@ SurfWnd_AddToEditTexdef
 void SurfWnd_AddToEditTexdef(face_t* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
-	if (!(g_nEditSurfMixed & SF_MIXEDNAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
-		g_nEditSurfMixed |= SF_MIXEDNAME;
+	if (!(g_nEditSurfMixed & SURF_MIXEDNAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
+		g_nEditSurfMixed |= SURF_MIXEDNAME;
 
-	if (!(g_nEditSurfMixed & SF_MIXEDSHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
-		g_nEditSurfMixed |= SF_MIXEDSHIFTX;
-	if (!(g_nEditSurfMixed & SF_MIXEDSHIFTY) && f->texdef.shift[1] != g_texdefEdit.shift[1])
-		g_nEditSurfMixed |= SF_MIXEDSHIFTY;
+	if (!(g_nEditSurfMixed & SURF_MIXEDSHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
+		g_nEditSurfMixed |= SURF_MIXEDSHIFTX;
+	if (!(g_nEditSurfMixed & SURF_MIXEDSHIFTY) && f->texdef.shift[1] != g_texdefEdit.shift[1])
+		g_nEditSurfMixed |= SURF_MIXEDSHIFTY;
 
-	if (!(g_nEditSurfMixed & SF_MIXEDSCALEX) && f->texdef.scale[0] != g_texdefEdit.scale[0])
-		g_nEditSurfMixed |= SF_MIXEDSCALEX;
-	if (!(g_nEditSurfMixed & SF_MIXEDSCALEY) && f->texdef.scale[1] != g_texdefEdit.scale[1])
-		g_nEditSurfMixed |= SF_MIXEDSCALEY;
+	if (!(g_nEditSurfMixed & SURF_MIXEDSCALEX) && f->texdef.scale[0] != g_texdefEdit.scale[0])
+		g_nEditSurfMixed |= SURF_MIXEDSCALEX;
+	if (!(g_nEditSurfMixed & SURF_MIXEDSCALEY) && f->texdef.scale[1] != g_texdefEdit.scale[1])
+		g_nEditSurfMixed |= SURF_MIXEDSCALEY;
 
-	if (!(g_nEditSurfMixed & SF_MIXEDROTATE) && f->texdef.rotate != g_texdefEdit.rotate)
-		g_nEditSurfMixed |= SF_MIXEDROTATE;
+	if (!(g_nEditSurfMixed & SURF_MIXEDROTATE) && f->texdef.rotate != g_texdefEdit.rotate)
+		g_nEditSurfMixed |= SURF_MIXEDROTATE;
 }
 
 /*
@@ -136,7 +136,7 @@ void SurfWnd_FromEditTexdef()
 
 	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
-	if (g_nEditSurfMixed & SF_MIXEDNAME)
+	if (g_nEditSurfMixed & SURF_MIXEDNAME)
 		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
 	else
 		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
@@ -146,31 +146,31 @@ void SurfWnd_FromEditTexdef()
 	shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
 	rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
-	if (g_nEditSurfMixed & SF_MIXEDSHIFTX)
+	if (g_nEditSurfMixed & SURF_MIXEDSHIFTX)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)shiftxp);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
 
-	if (g_nEditSurfMixed & SF_MIXEDSHIFTY)
+	if (g_nEditSurfMixed & SURF_MIXEDSHIFTY)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)shiftyp);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
-	if (g_nEditSurfMixed & SF_MIXEDSCALEX)
+	if (g_nEditSurfMixed & SURF_MIXEDSCALEX)
 		sz[0] = 0;
 	else
 		prettyftoa(sz, texdef->scale[0]);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
 
-	if (g_nEditSurfMixed & SF_MIXEDSCALEY)
+	if (g_nEditSurfMixed & SURF_MIXEDSCALEY)
 		sz[0] = 0;
 	else
 		prettyftoa(sz, texdef->scale[1]);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
-	if (g_nEditSurfMixed & SF_MIXEDROTATE)
+	if (g_nEditSurfMixed & SURF_MIXEDROTATE)
 		sz[0] = 0;
 	else
 		sprintf(sz, "%d", (int)rotp);
@@ -197,37 +197,37 @@ void SurfWnd_Apply()
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
 	strncpy(texdef.name, sz, sizeof(texdef.name));// -1);
 	if (texdef.name[0] <= ' ')
-		mixed |= SF_MIXEDNAME;
+		mixed |= SURF_MIXEDNAME;
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SF_MIXEDSHIFTX;
+		mixed |= SURF_MIXEDSHIFTX;
 	texdef.shift[0] = atof(sz);
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SF_MIXEDSHIFTY;
+		mixed |= SURF_MIXEDSHIFTY;
 	texdef.shift[1] = atof(sz);
 
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SF_MIXEDSCALEX;
+		mixed |= SURF_MIXEDSCALEX;
 	texdef.scale[0] = atof(sz);
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz, 127);
 	if (sz[0] <= ' ')
-		mixed |= SF_MIXEDSCALEX;
+		mixed |= SURF_MIXEDSCALEX;
 	texdef.scale[1] = atof(sz);
 
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz, 64);
 	if (sz[0] <= ' ')
-		mixed |= SF_MIXEDROTATE;
+		mixed |= SURF_MIXEDROTATE;
 	texdef.rotate = atof(sz);
 
 	// every field in the inspector is mixed (blank), so this won't do anything anyway
-	if (mixed == SF_MIXEDALL)
+	if (mixed == SURF_MIXEDALL)
 		return;
 
 	Surf_SetTexdef(&texdef, mixed);

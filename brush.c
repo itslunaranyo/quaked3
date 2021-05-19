@@ -99,6 +99,7 @@ float SetShadeForPlane (plane_t *p)
 /*
 ================
 BeginTexturingFace
+lunaran TODO: what's the use case difference between this and Emit and _Emit
 ================
 */
 void BeginTexturingFace (brush_t *b, face_t *f, qtexture_t *q)
@@ -337,7 +338,7 @@ void Face_BoundsOnAxis(face_t *face, vec3_t a, float* min, float* max)
 	vec3_t an;
 
 	if (!face->face_winding)
-		return 0;
+		return;
 
 	*max = -99999;
 	*min = 99999;
@@ -796,6 +797,7 @@ void Brush_BuildWindings (brush_t *b)
 		if (!w)
 			continue;
 	
+		// lunaran TODO: doesn't need to happen this often, move to face_settexdef
 		face->d_texture = Texture_ForName(face->texdef.name);
 	    for (i = 0; i < w->numpoints; i++)
 	    {
@@ -967,10 +969,10 @@ brush_t *Brush_FullClone (brush_t *b)
 
 /*
 ==================
-Brush_CleanList
+Brush_FreeList
 ==================
 */
-void Brush_CleanList (brush_t *pList)
+void Brush_FreeList (brush_t *pList)
 {
 	brush_t *pBrush;
 	brush_t *pNext;
@@ -1168,7 +1170,7 @@ void Brush_Draw (brush_t *b)
 		}
 
 //		glColor3fv(face->d_color);
-		glColor4f(face->d_color[0], face->d_color[1], face->d_color[2], 0.13f);
+		glColor4f(face->d_color[0], face->d_color[1], face->d_color[2], 0.6f);	// lunaran TODO: pref for alpha
 
 		// draw the polygon
 		glBegin(GL_POLYGON);

@@ -18,6 +18,7 @@
 //==================================================================
 
 #include "qe3.h"
+#include <malloc.h>	// sikk - Undo/Redo
 
 
 undo_t *g_undolist;					//first undo in the list

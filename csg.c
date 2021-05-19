@@ -115,6 +115,249 @@ void CSG_Hollow ()
 }
 
 /*
+==============
+Brush_ConvexMerge
+
+lunaran: a super-naive brute force convex hull solver
+
+something like quickHull would absolutely be faster, but would require some gymnastics 
+in pure C, and the user isn't going to merge 10k brushes per second anyway
+==============
+*/
+brush_t* Brush_ConvexMerge(brush_t *bList)
+{
+	brush_t		*result;
+	brush_t		*b;
+	face_t		*f, *bf;
+	vec_t		*pointBuf;
+	plane_t		*planeBuf;
+	int			numPoints, numPlanes;
+
+	// put all input points in a buffer
+	{
+		vec_t	*nextPoint, *curPoint;
+		int		pointBufSize;
+
+		pointBufSize = 0;
+		for (b = bList; b; b = b->next) for (bf = b->brush_faces; bf; bf = bf->next)
+			pointBufSize += bf->face_winding->numpoints;
+		pointBuf = qmalloc(sizeof(vec_t) * 3 * pointBufSize);
+
+		numPoints = 0;
+		nextPoint = pointBuf;
+		for (b = bList; b; b = b->next) for (bf = b->brush_faces; bf; bf = bf->next)
+		{
+			for (int i = 0; i < bf->face_winding->numpoints; i++)
+			{
+				curPoint = pointBuf;
+				// avoid duplicates in point buffer
+				while (curPoint != nextPoint)
+				{
+					if (VectorCompare(bf->face_winding->points[i], curPoint))	// skip xyzst
+						break;
+					curPoint += 3;
+				}
+				if (curPoint == nextPoint)
+				{
+					VectorCopy(bf->face_winding->points[i], nextPoint);
+					nextPoint += 3;
+					numPoints++;
+				}
+			}
+		}
+	}
+
+	numPlanes = numPoints * 2 - 4;
+	planeBuf = qmalloc(sizeof(plane_t) * numPlanes);
+	result = Brush_Alloc();
+
+	// find all planes defined by the outermost points
+	{
+		plane_t	p;
+		int		x, y, z, t;
+		int		lCount, rCount, pl;
+		float	dot;
+		vec3_t	dp;
+		vec_t	*pT;
+
+		pl = 0;
+		// for every unique trio of points
+		for (x = 0; x < numPoints-2; x++) for (y = x+1; y < numPoints-1; y++) for (z = y+1; z < numPoints; z++)
+		{
+			int yf, zf;
+			yf = y;
+			zf = z;
+			if (!Plane_FromPoints(&pointBuf[x * 3], &pointBuf[y * 3], &pointBuf[z * 3], &p))
+				continue;
+
+			lCount = rCount = 0;
+			// compare all other points to the plane
+			for (t = 0; t < numPoints; t++)
+			{
+				if (t == x || t == y || t == z) continue;
+				
+				pT = &pointBuf[t * 3];
+				dot = DotProduct(pT, p.normal) - p.dist;
+				// skip coplanar points
+				if (dot < 0) lCount++;
+				if (dot > 0) rCount++;
+			}
+			// if all are on one side or the other, put plane in result buffer
+			if (!rCount)
+			{
+				yf = z;
+				zf = y;
+				// redo the plane rather than negating it because signs might cancel
+				Plane_FromPoints(&pointBuf[x * 3], &pointBuf[yf * 3], &pointBuf[zf * 3], &p);
+			}
+			if (!rCount || !lCount)
+			{
+				// avoid duplicates in plane buffer now since many collinear plane points could lead to a ton of duplicate planes
+				int pN;
+				for (pN = 0; pN < pl; pN++)
+					if (Plane_Equal(&planeBuf[pN], &p, false))
+						break;
+
+				if (pN == pl)
+				{
+					planeBuf[pl] = p;
+					pl++;
+
+					// add a face to the brush now while we still have the plane points
+					f = Face_Alloc();
+					f->next = result->brush_faces;
+					result->brush_faces = f;
+					f->plane = p;
+					f->owner = result;
+					for (int j = 0; j < 3; j++)
+					{
+						f->planepts[0][j] = pointBuf[x * 3 + j];
+						f->planepts[1][j] = pointBuf[yf * 3 + j];
+						f->planepts[2][j] = pointBuf[zf * 3 + j];
+					}
+				}
+			}
+		}
+		numPlanes = pl;
+	}
+
+	assert(numPlanes > 3);
+	free(pointBuf);
+	free(planeBuf);
+
+	for (f = result->brush_faces; f; f = f->next)
+	{
+		// compare result planes to original brush planes, preserve texdefs from matching planes
+		bool match = false;
+		for (b = bList; b; b = b->next)
+		{
+			for (bf = b->brush_faces; bf; bf = bf->next)
+			{
+				if (Plane_Equal(&bf->plane, &f->plane, true))
+				{
+					f->texdef = bf->texdef;
+					f->d_texture = bf->d_texture;
+					match = true;
+					break;
+				}
+			}
+			if (match) break;
+		}
+		if (!match)
+		{
+			// apply workzone texdef to the rest
+			f->texdef = g_qeglobals.d_workTexDef;
+			f->d_texture = Texture_ForName(f->texdef.name);
+		}
+	}
+
+	Entity_LinkBrush(bList->owner, result);
+	Brush_Build(result);
+
+	return result;
+}
+
+/*
+=============
+CSG_CanMerge
+=============
+*/
+bool CSG_CanMerge()
+{
+	brush_t *b;
+	entity_t *owner;
+
+	if (!Select_HasBrushes())
+	{
+		Sys_Printf("WARNING: No brushes selected.\n");
+		return false;
+	}
+
+	if (g_brSelectedBrushes.next->next == &g_brSelectedBrushes)
+	{
+		Sys_Printf("WARNING: At least two brushes must be selected.\n");
+		return false;
+	}
+
+	owner = g_brSelectedBrushes.next->owner;
+
+	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		if (b->owner->eclass->fixedsize)
+		{
+			Sys_Printf("WARNING: Cannot add fixed size entities.\n");
+			return false;
+		}
+
+		if (b->owner != owner)
+		{
+			Sys_Printf("WARNING: Cannot add brushes from different entities.\n");
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+=============
+CSG_ConvexMerge
+=============
+*/
+void CSG_ConvexMerge()
+{
+	brush_t* bListStart, *b, *next;
+
+	Sys_Printf("CMD: CSG Convex Merging...\n");
+
+	if (!CSG_CanMerge())
+		return;
+
+	bListStart = NULL;
+	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
+	{
+		next = b->next;
+
+		Brush_RemoveFromList(b);
+		b->next = bListStart;
+		b->prev = NULL;
+		bListStart = b;
+	}
+
+	b = Brush_ConvexMerge(bListStart);
+	Select_SelectBrush(b);
+	// free the original brushes
+	for (b = bListStart; b; b = next)
+	{
+		next = b->next;
+		b->next = NULL;
+		b->prev = NULL;
+		Brush_Free(b);
+	}
+
+	Sys_Printf("MSG: Merge done.\n");
+}
+
+/*
 =============
 Brush_Merge
 
@@ -661,38 +904,8 @@ void CSG_Merge ()
 
 	Sys_Printf("CMD: CSG Merging...\n");
 
-	if (!Select_HasBrushes())
-	{
-		Sys_Printf("WARNING: No brushes selected.\n");
+	if (!CSG_CanMerge())
 		return;
-	}
-
-	if (g_brSelectedBrushes.next->next == &g_brSelectedBrushes)
-	{
-		Sys_Printf("WARNING: At least two brushes must be selected.\n");
-		return;
-	}
-
-	owner = g_brSelectedBrushes.next->owner;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
-	{
-		next = b->next;
-
-		if (b->owner->eclass->fixedsize)
-		{
-			// can't use texture from a fixed entity, so don't subtract
-			Sys_Printf("WARNING: Cannot add fixed size entities.\n");
-			return;
-		}
-
-		if (b->owner != owner)
-		{
-			Sys_Printf("WARNING: Cannot add brushes from different entities.\n");
-			return;
-		}
-
-	}
 
 	newlist = NULL;
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
