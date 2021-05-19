@@ -81,6 +81,7 @@ int 	ParseNum (char *str);
 void	StringTolower (char *string);
 void	StringToupper (char *string);
 void	VecToString(const vec3 vec, char *string);
+void	FloatToString(const float f, char *string);
 
 short	BigShort (short l);
 short	LittleShort (short l);

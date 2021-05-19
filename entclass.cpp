@@ -30,7 +30,7 @@ EntClass::EntClass
 ==============
 */
 EntClass::EntClass() :
-	name(nullptr), comments(0), 
+	name("UNINITIALIZED"), comments(0), 
 	form(ECF_UNKNOWN), showFlags(0)
 {
 	mins = vec3(0);
@@ -47,13 +47,14 @@ EntClass::EntClass
 ==============
 */
 EntClass::EntClass(const EntClass& other) :
-	name(other.name), form(other.form), comments(other.comments),
+	form(other.form), comments(other.comments),
 	showFlags(other.showFlags), texdef(other.texdef)
 {
 	mins = other.mins;
 	maxs = other.maxs;
 	color = other.color;
 
+	strcpy(name, other.name);
 	memcpy(flagnames, other.flagnames, MAX_FLAGS * 32);
 }
 
@@ -86,7 +87,6 @@ EntClass *EntClass::InitFromText(char *text)
 
 	// grab the name
 	text = COM_Parse(text);
-	e->name = (char*)qmalloc(strlen(g_szComToken) + 1);
 	strcpy(e->name, g_szComToken);
 
 	// grab the color, reformat as texture name
@@ -235,6 +235,24 @@ EntClass *EntClass::InitFromText(char *text)
 }
 
 /*
+==============
+EntClass::InitFromText
+==============
+*/
+EntClass *EntClass::InitFromTextAndAdd(char *text)
+{
+	EntClass *e;
+	e = InitFromText(text);
+	if (e)
+	{
+		entclasses.push_back(e);
+		e->AddToClassList();
+	}
+	return e;
+}
+
+
+/*
 =================
 EntClass::CreateOppositeForm
 
@@ -307,13 +325,12 @@ EntClass::ScanFile
 void EntClass::ScanFile(const char *filename)
 {
 	int			size;
-	EntClass   *e;
 	int			i;
 	char		temp[1024];
 	qeBuffer	fdata;
 
 	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: ScanFile: %s\n", temp);
+	Sys_Printf("ScanFile: %s\n", temp);
 
 	size = IO_LoadFile(filename, fdata);
 
@@ -321,12 +338,8 @@ void EntClass::ScanFile(const char *filename)
 	{
 		if (!strncmp((char*)&fdata[i], "/*QUAKED", 8))
 		{
-			e = EntClass::InitFromText((char*)&fdata[i]);
-			if (e)
-			{
-				entclasses.push_back(e);
-				e->AddToClassList();
-			}
+			if (!EntClass::InitFromTextAndAdd((char*)&fdata[i]))
+				Sys_Printf("Warning: couldn't scan %s for entity definitions\n", filename);
 		}
 	}
 }
@@ -343,30 +356,56 @@ void EntClass::InitForSourceDirectory(const char *path)
 	char	filename[1024];
 	char	filebase[1024];
 	char    temp[1024];
-	char   *s;
+	char	ext[8];
+	char	fname[_MAX_FNAME];
 
 	QE_ConvertDOSToUnixName(temp, path);
-
-	Sys_Printf("CMD: ScanEntityPath: %s\n", temp);
-
-	strcpy(filebase, path);
-	s = filebase + strlen(filebase) - 1;
-	while (*s != '\\' && *s != '/' && s != filebase)
-		s--;
-	*s = 0;
+	Sys_Printf("ScanEntityPath: %s\n", temp);
 
 	Clear();
 
-	handle = _findfirst(path, &fileinfo);
-	if (handle != -1)
+	// check if entityFiles is a single file, directory path, or a wildcard path
+	ExtractFileExtension(path, ext);
+	if (*ext)
 	{
-		do
+		ExtractFilePath(path, filebase);
+		ExtractFileName(path, fname);
+		//if wildcard, scanfile on everything matching in the folder (likely '/*.qc')
+		if (strchr(fname, '*'))
 		{
-			sprintf(filename, "%s\\%s", filebase, fileinfo.name);
-			EntClass::ScanFile(filename);
-		} while (_findnext(handle, &fileinfo) != -1);
+			handle = _findfirst(path, &fileinfo);
+			if (handle != -1)
+			{
+				do
+				{
+					sprintf(filename, "%s/%s", filebase, fileinfo.name);
+					EntClass::ScanFile(filename);
+				} while (_findnext(handle, &fileinfo) != -1);
 
-		_findclose(handle);
+				_findclose(handle);
+			}
+		}
+		else
+		{
+			// just scan the single file (likely 'something.def')
+			EntClass::ScanFile(path);
+		}
+	}
+	else
+	{
+		//is directory, scanfile on everything in the folder
+		sprintf(filebase, "%s/*.*", path);
+		handle = _findfirst(filebase, &fileinfo);
+		if (handle != -1)
+		{
+			do
+			{
+				sprintf(filename, "%s/%s", path, fileinfo.name);
+				EntClass::ScanFile(filename);
+			} while (_findnext(handle, &fileinfo) != -1);
+
+			_findclose(handle);
+		}
 	}
 
 	Sort();
@@ -375,7 +414,7 @@ void EntClass::InitForSourceDirectory(const char *path)
 	if (!worldspawn)
 	{
 		Sys_Printf("WARNING: No worldspawn definition found in source! Creating a default worldspawn ...\n");
-		worldspawn = EntClass::InitFromText("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
+		worldspawn = EntClass::InitFromTextAndAdd("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
 	}
 
 	badclass = EntClass::InitFromText("/*QUAKED UNKNOWN_CLASS (0 0.5 0) ?");
@@ -467,9 +506,7 @@ EntClass *EntClass::ForName(const char *name, bool has_brushes, bool strict)
 
 	// create a new dummy class for it
 	sprintf(init, "/*QUAKED %s (0 0.5 0) %s\nNot found in source.\n", name, has_brushes ? "?" : "(-8 -8 -8) (8 8 8)");
-	e = EntClass::InitFromText(init);
-	entclasses.push_back(e);
-	e->AddToClassList();
+	e = EntClass::InitFromTextAndAdd(init);
 
 	Sort();
 

@@ -167,7 +167,7 @@ XYZView::SnapToPoint
 */
 void const XYZView::SnapToPoint (const int x, const int y, vec3 &point)
 {
-	if (g_qeglobals.d_savedinfo.bNoClamp)
+	if (!g_qeglobals.bGridSnap)
 		ToPoint(x, y, point);
 	else
 		ToGridPoint(x, y, point);
@@ -180,7 +180,7 @@ XYZView::SnapPoint
 */
 vec3 const XYZView::SnapPoint(const vec3 ptIn)
 {
-	if (g_qeglobals.d_savedinfo.bNoClamp)
+	if (!g_qeglobals.bGridSnap)
 		return ptIn;
 
 	vec3 ptOut;
@@ -221,7 +221,7 @@ mouseContext_t const XYZView::GetMouseContext(const int x, const int y)
 	ToPoint(x, y, mc.org);
 
 	mc.pt = vec3(x, y, 0);
-	mc.org[dViewType] = g_qeglobals.d_savedinfo.nMapSize / 2;
+	mc.org[dViewType] = g_cfgEditor.MapSize / 2;
 	mc.ray[dViewType] = -1;
 	mc.right[nDim1] = 1;
 	mc.up[nDim2] = 1;
@@ -253,7 +253,7 @@ bool XYZView::DragDelta (int x, int y, vec3 move)
 	{
 		delta[i] = xvec[i] * (x - pressx) + yvec[i] * (y - pressy);
 
-		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		if (g_qeglobals.bGridSnap)
 			delta[i] = floor(delta[i] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;		
 	}
 	move = delta - pressdelta;
@@ -347,43 +347,6 @@ void XYZView::MouseDown (int x, int y, int buttons)
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
 
-	// LMB = manipulate selection
-	// Shift+LMB = select
-	/*
-	if (buttonstate & MK_LBUTTON)
-	{
-// sikk---> Quick Move Selection (Ctrl+Alt+LMB)
-		if (GetKeyState(VK_MENU) < 0 && GetKeyState(VK_CONTROL) < 0)
-		{
-			Brush	*b;
-			vec3	v1, v2;
-	
-			SnapToPoint( x, y, v1);
-
-			b = g_brSelectedBrushes.next;
-			v2 = v1 - b->mins;
-
-			v2[dViewType] = 0;
-
-			// this is so we don't drag faces when faces were previously dragged
-			g_qeglobals.d_nNumMovePoints = 0;
-				
-			MoveSelection(v2);
-
-			// update g_v3RotateOrigin to selection
-			g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
-		}
-// <---sikk
-		else
-		{
-			Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
-
-			// update g_v3RotateOrigin to selection
-			g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
-		}
-		return;
-	}
-	*/
 	if (buttonstate & MK_MBUTTON)
 	{
 		// Ctrl+MMB = move camera
@@ -397,29 +360,16 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		// MMB = angle camera
 		else if (buttonstate == MK_MBUTTON)
 		{
-			/*
-			// sikk---> Free Rotate: Pivot Icon
-			if (GetKeyState(VK_MENU) < 0)
+			point = point - g_qeglobals.d_vCamera.origin;
+
+			nAngle = (dViewType == XY) ? YAW : PITCH;
+
+			if (point[nDim2] || point[nDim1])
 			{
-				SnapToPoint(x, y, point);
-				CopyVector(point, g_v3RotateOrigin);
-				Sys_UpdateWindows(W_XY);
-				return;
+				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
+				g_qeglobals.d_vCamera.BoundAngles();
+				Sys_UpdateWindows(W_XY|W_CAMERA);
 			}
-			// <---sikk
-			else
-			{*/
-				point = point - g_qeglobals.d_vCamera.origin;
-
-				nAngle = (dViewType == XY) ? YAW : PITCH;
-
-				if (point[nDim2] || point[nDim1])
-				{
-					g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
-					g_qeglobals.d_vCamera.BoundAngles();
-					Sys_UpdateWindows(W_XY|W_CAMERA);
-				}
-			//}
 			return;
 		}
 		// Shift+MMB = move z checker
@@ -469,7 +419,7 @@ void XYZView::MouseUp (int x, int y, int buttons)
 
 		if (g_bSnapCheck)
 		{
-			g_qeglobals.d_savedinfo.bNoClamp = false;
+			g_qeglobals.bGridSnap = true;
 			g_bSnapCheck = false;
 		}
 
@@ -601,9 +551,9 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		{
 			g_bRotateCheck = true;
 
-			if (!g_qeglobals.d_savedinfo.bNoClamp)
+			if (g_qeglobals.bGridSnap)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = true;
+				g_qeglobals.bGridSnap = false;
 				g_bSnapCheck = true;
 			}
 				
@@ -666,9 +616,9 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 		g_bScaleCheck = true;
 
-		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		if (g_qeglobals.bGridSnap)
 		{
-			g_qeglobals.d_savedinfo.bNoClamp = true;
+			g_qeglobals.bGridSnap = false;
 			g_bSnapCheck = true;
 		}
 			
@@ -783,7 +733,7 @@ void XYZView::DrawGrid ()
 	ye = majorSize * ceil(ye / majorSize);
 
 	// draw major blocks
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR].r);
+	glColor3fv(&g_colors.gridMajor.r);
 
 	if (g_qeglobals.d_bShowGrid)
 	{
@@ -805,7 +755,7 @@ void XYZView::DrawGrid ()
 	// draw minor blocks
 	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
 	{
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR].r);
+		glColor3fv(&g_colors.gridMinor.r);
 
 		glBegin(GL_LINES);
 		for (x = xb; x < xe; x += g_qeglobals.d_nGridSize)
@@ -829,7 +779,7 @@ void XYZView::DrawGrid ()
 	if (g_qeglobals.d_bShowGrid)
 	{
 		// lunaran - grid axis now block color, not grid major * 65%
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK].r);
+		glColor3fv(&g_colors.gridBlock.r);
 		glBegin(GL_LINES);
 		glVertex2f(xb, 0);
 		glVertex2f(xe, 0);
@@ -840,7 +790,7 @@ void XYZView::DrawGrid ()
 
 	// show current work zone?
 	// the work zone is used to place dropped points and brushes
-	if (g_qeglobals.d_savedinfo.bShow_Workzone)
+	if (g_cfgUI.ShowWorkzone)
 	{
 		glColor3f(1.0f, 0.0f, 0.0f);
 		glBegin(GL_LINES);
@@ -865,7 +815,7 @@ XYZView::DrawBlockGrid
 */
 void XYZView::DrawBlockGrid ()
 {
-	if (!g_qeglobals.d_savedinfo.bShow_Blocks)
+	if (!g_cfgUI.ShowBlocks)
 		return;
 	
 	float	x, y, xb, xe, yb, ye;
@@ -901,7 +851,7 @@ void XYZView::DrawBlockGrid ()
 	ye = 1024 * ceil(ye / 1024);
 
 	// draw major blocks
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK].r);
+	glColor3fv(&g_colors.gridBlock.r);
 	glLineWidth(2);
 	glBegin(GL_LINES);
 	
@@ -933,6 +883,76 @@ void XYZView::DrawBlockGrid ()
 
 /*
 ==============
+XYZView::DrawViewName
+sikk: View Axis - cleaner, more intuitive look
+==============
+*/
+void XYZView::DrawViewName()
+{
+	// lunaran: always draw view name if we have one grid view, and never in 3-view mode
+	if ((!g_qeglobals.d_wndGrid[1] || g_qeglobals.d_wndGrid[1]->Open()) &&
+		(!g_qeglobals.d_wndGrid[2] || g_qeglobals.d_wndGrid[2]->Open()) &&
+		(!g_qeglobals.d_wndGrid[3] || g_qeglobals.d_wndGrid[3]->Open()))
+		return;
+
+	float *p1, *p2;
+	float fColor[][3] = { { 1.0f, 0.0f, 0.0f },{ 0.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } };
+	char *szView;
+	int w, h;
+
+	w = width / 2 / scale;
+	h = height / 2 / scale;
+
+	if (dViewType == XY)
+	{
+		p1 = fColor[0];
+		p2 = fColor[1];
+		szView = "XY";
+	}
+	else if (dViewType == XZ)
+	{
+		p1 = fColor[0];
+		p2 = fColor[2];
+		szView = "XZ";
+	}
+	else
+	{
+		p1 = fColor[1];
+		p2 = fColor[2];
+		szView = "YZ";
+	}
+
+	glColor3fv(&g_colors.gridText.r);
+	glRasterPos2f(origin[nDim1] - w + 68 / scale,
+		origin[nDim2] + h - 51 / scale);
+	glCallLists(1, GL_UNSIGNED_BYTE, &szView[0]);
+
+	glColor3fv(&g_colors.gridText.r);
+	glRasterPos2f(origin[nDim1] - w + 44 / scale,
+		origin[nDim2] + h - 28 / scale);
+	glCallLists(1, GL_UNSIGNED_BYTE, &szView[1]);
+
+	glLineWidth(2);
+	glColor3fv(p1);
+	glBegin(GL_LINES);
+	glVertex2f(origin[nDim1] - w + 48 / scale,
+		origin[nDim2] + h - 48 / scale);
+	glVertex2f(origin[nDim1] - w + 64 / scale,
+		origin[nDim2] + h - 48 / scale);
+	glEnd();
+
+	glColor3fv(p2);
+	glBegin(GL_LINES);
+	glVertex2f(origin[nDim1] - w + 48 / scale,
+		origin[nDim2] + h - 48 / scale);
+	glVertex2f(origin[nDim1] - w + 48 / scale,
+		origin[nDim2] + h - 32 / scale);
+	glEnd();
+	glLineWidth(1);
+}
+
+/*
+==============
 XYZView::DrawCoords
 ==============
 */
@@ -941,8 +961,6 @@ void XYZView::DrawCoords()
 	float	x, y, xb, xe, yb, ye;
 	int		w, h;
 	char	text[8];
-	char	*szView;
-	float	fColor[][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
 	int		nSize;
 
 	glDisable(GL_TEXTURE_2D);
@@ -983,9 +1001,9 @@ void XYZView::DrawCoords()
 // sikk---> Filter Coords so they don't become bunched and unreadable 
 	// TODO: Fix the bug that makes next coord off screen draw in various locations. 
 	// draw coordinate text if needed
-	if (g_qeglobals.d_savedinfo.bShow_Coordinates)
+	if (g_cfgUI.ShowCoordinates)
 	{
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT].r);
+		glColor3fv(&g_colors.gridText.r);
 
 		nSize = 64;
 		if (scale <= 0.6)
@@ -1032,59 +1050,7 @@ void XYZView::DrawCoords()
 	}
 // <---sikk
 
-// sikk---> View Axis - cleaner, more intuitive look
-	if (g_qeglobals.d_savedinfo.bShow_Viewname)
-	{
-		float *p1, *p2;
-
-		if (dViewType == XY)
-		{
-			p1 = fColor[0];
-			p2 = fColor[1];
-			szView = "XY";
-		}
-		else if (dViewType == XZ)
-		{
-			p1 = fColor[0];
-			p2 = fColor[2];
-			szView = "XZ";
-		}
-		else
-		{
-			p1 = fColor[1];
-			p2 = fColor[2];
-			szView = "YZ";
-		}
-
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME].r);
-		glRasterPos2f(origin[nDim1] - w + 68 / scale, 
-					  origin[nDim2] + h - 51 / scale);
-		glCallLists(1, GL_UNSIGNED_BYTE, &szView[0]);
-
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME].r);
-		glRasterPos2f(origin[nDim1] - w + 44 / scale, 
-				      origin[nDim2] + h - 28 / scale);
-		glCallLists(1, GL_UNSIGNED_BYTE, &szView[1]);
-
-		glLineWidth(2);
-		glColor3fv(p1);
-		glBegin(GL_LINES);
-		glVertex2f(origin[nDim1] - w + 48 / scale, 
-				   origin[nDim2] + h - 48 / scale);
-		glVertex2f(origin[nDim1] - w + 64 / scale, 
-				   origin[nDim2] + h - 48 / scale);
-		glEnd();
-
-		glColor3fv(p2);
-		glBegin(GL_LINES);
-		glVertex2f(origin[nDim1] - w + 48 / scale, 
-				   origin[nDim2] + h - 48 / scale);
-		glVertex2f(origin[nDim1] - w + 48 / scale, 
-				   origin[nDim2] + h - 32 / scale);
-		glEnd();
-		glLineWidth(1);
-	}
-// <---sikk
+	DrawViewName();	
 
 /*
 // sikk---> Show Axis in center of view
@@ -1290,7 +1256,7 @@ lunaran TODO: simplify
 */
 void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 {
-	if (!g_qeglobals.d_savedinfo.bShow_SizeInfo)
+	if (!g_cfgUI.ShowSizeInfo)
 		return;
 
 	vec3	vSize;
@@ -1298,9 +1264,9 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 	vSize = vMaxBounds - vMinBounds;
 
-	glColor3f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0] * .65, 
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1] * .65,
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2] * .65);
+	glColor3f(g_colors.selection[0] * .65, 
+			  g_colors.selection[1] * .65,
+			  g_colors.selection[2] * .65);
 
 	if (dViewType == XY)
 	{
@@ -1326,7 +1292,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
-		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
+		glColor3fv((GLfloat*)&g_colors.selection);
 
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / scale, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
@@ -1364,7 +1330,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
-		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
+		glColor3fv((GLfloat*)&g_colors.selection);
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, 0.0f, vMinBounds[nDim2] - 20.0  / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
@@ -1401,7 +1367,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
-		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
+		glColor3fv((GLfloat*)&g_colors.selection);
 		glRasterPos3f(0.0f, (vMinBounds[nDim1]+ vMaxBounds[nDim1]) * 0.5f,  vMinBounds[nDim2] - 20.0 / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
@@ -1448,9 +1414,9 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	glDisable(GL_LINE_STIPPLE);
 	glLineWidth(1);
 
-	glColor3f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0] * 0.5,
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1] * 0.5,
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2] * 0.5);
+	glColor3f(g_colors.selection[0] * 0.5,
+			  g_colors.selection[1] * 0.5,
+			  g_colors.selection[2] * 0.5);
 	glBegin(GL_LINE_STRIP);
 	for (f = 0; f <= 8; f += fStep)
 	{
@@ -1463,9 +1429,9 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	}
 	glEnd();
 
-	glColor3f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0] * 0.75,
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1] * 0.75,
-			  g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2] * 0.75);
+	glColor3f(g_colors.selection[0] * 0.75,
+			  g_colors.selection[1] * 0.75,
+			  g_colors.selection[2] * 0.75);
 	glBegin(GL_LINE_STRIP);
 	for (f = 0; f <= 8; f += fStep)
 	{
@@ -1478,7 +1444,7 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	}
 	glEnd();
 
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].r);
+	glColor3fv(&g_colors.selection.r);
 	glBegin(GL_LINE_STRIP);
 	for (f = 0; f <= 8; f += fStep)
 	{
@@ -1492,7 +1458,7 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	glEnd();
 
 	glLineWidth(2);
-	if (!g_qeglobals.d_savedinfo.bNoStipple)
+	if (g_cfgUI.Stipple)
 		glEnable(GL_LINE_STIPPLE);
 }
 // <---sikk
@@ -1513,8 +1479,8 @@ void XYZView::SetBounds()
 	vMaxs[nDim1] = origin[nDim1] + w;
 	vMins[nDim2] = origin[nDim2] - h;
 	vMaxs[nDim2] = origin[nDim2] + h;
-	vMins[dViewType] = -g_qeglobals.d_savedinfo.nMapSize;
-	vMaxs[dViewType] = g_qeglobals.d_savedinfo.nMapSize;
+	vMins[dViewType] = -g_cfgEditor.MapSize;
+	vMaxs[dViewType] = g_cfgEditor.MapSize;
 }
 
 /*
@@ -1536,8 +1502,8 @@ bool XYZView::CullBrush(Brush *b)
 
 void XYZView::BeginDrawSelection()
 {
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].r);
-	if (!g_qeglobals.d_savedinfo.bNoStipple)
+	glColor3fv(&g_colors.selection.r);
+	if (g_cfgUI.Stipple)
 		glEnable(GL_LINE_STIPPLE);
 	if (g_qeglobals.d_selSelectMode != sel_face)
 	{
@@ -1583,12 +1549,12 @@ void XYZView::DrawSelection()
 		brush->DrawXY(dViewType);
 
 		// sikk---> Light Radius
-		if (g_qeglobals.d_savedinfo.bShow_LightRadius)
+		if (g_cfgUI.ShowLightRadius)
 			DrawLightRadius(brush, dViewType);
 		// <---sikk
 
 		// paint size
-		if (g_qeglobals.d_savedinfo.bShow_SizeInfo)
+		if (g_cfgUI.ShowSizeInfo)
 		{
 			if (!bFixedSize)
 			{
@@ -1630,9 +1596,9 @@ void XYZView::Draw ()
 		start = Sys_DoubleTime();
 
 	glViewport(0, 0, width, height);
-	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0], 
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1],
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2],
+	glClearColor(g_colors.gridBackground[0], 
+				 g_colors.gridBackground[1],
+				 g_colors.gridBackground[2],
 				 0);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -1678,7 +1644,7 @@ void XYZView::Draw ()
 		if (brush->owner != e && brush->owner)
 			glColor3fv(&brush->owner->eclass->color.r);
 		else
-			glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES].r);
+			glColor3fv(&g_colors.brush.r);
 
 		brush->DrawXY(dViewType);
 	}
@@ -1697,7 +1663,7 @@ void XYZView::Draw ()
 
 	// now draw camera point
 	DrawCameraIcon();
-	if (g_qeglobals.d_savedinfo.bShow_Z)	// sikk - Don't draw Z Icon if Z window is hidden
+	if (g_qeglobals.d_wndZ->Open())
 		DrawZIcon();
 	DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
@@ -1705,6 +1671,6 @@ void XYZView::Draw ()
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("MSG: XYZ: %d ms\n", (int)(1000 * (end - start)));
+		Sys_Printf("XYZ: %d ms\n", (int)(1000 * (end - start)));
 	}
 }

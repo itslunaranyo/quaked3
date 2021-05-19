@@ -116,6 +116,16 @@ void WndView::SetPosition(int l, int t, int r, int b, bool show)
 
 /*
 ==================
+WndView::Open
+==================
+*/
+bool WndView::Open()
+{
+	return IsWindowVisible(w_hwnd) > 0;
+}
+
+/*
+==================
 WndView::Toggle
 ==================
 */
@@ -701,7 +711,7 @@ void WndView::OnCreate()
 		w_hglrcBase = w_hglrc;
 
 		MakeFont();
-		Texture_SetMode(g_qeglobals.d_savedinfo.nTexMenu);
+		Textures::SetTextureMode(g_cfgUI.TextureMode);
 
 		// report OpenGL information
 		Sys_Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));

@@ -16,7 +16,15 @@ typedef struct label_s
 	bool operator==(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) == 0); }
 } label_t;
 
-
+const int g_textureModes[] =
+{
+	GL_NEAREST,
+	GL_NEAREST_MIPMAP_NEAREST,
+	GL_NEAREST_MIPMAP_LINEAR,
+	GL_LINEAR,
+	GL_LINEAR_MIPMAP_NEAREST,
+	GL_LINEAR_MIPMAP_LINEAR
+};
 
 class Texture
 {
@@ -91,8 +99,10 @@ namespace Textures
 	Texture *ForName(const char *name);
 
 	void LoadWad(const char* wadfile);
+	void LoadPalette();
 	void MenuLoadWad(const int menunum);
-	void SetRenderMode(const int menunum);
+	void SetTextureMode(const int mode);
+	void SetDrawMode(const int mode);
 	void SetParameters();
 	void RemoveFromNameMap(TextureGroup* tg);
 	void AddToNameMap(TextureGroup* tg);
@@ -131,8 +141,7 @@ public:
 
 // as yet orphan bs:
 
-void SetTexParameters ();
-void Texture_SetMode (int iMenu);	// GL_NEAREST, etc..
+//void Texture_SetMode (int iMenu);	// GL_NEAREST, etc..
 void FillTextureMenu ();
 
 

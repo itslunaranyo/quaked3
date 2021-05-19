@@ -471,7 +471,7 @@ void TextureView::SortTextures()
 {
 	Texture	*q, *qtemp, *qhead, *qcur, *qprev;
 
-	Sys_Printf("CMD: Sorting active textures...\n");
+	Sys_Printf("Sorting active textures...\n");
 
 	// standard insertion sort
 	// Take the first texture from the list and
@@ -543,14 +543,15 @@ void TextureView::Draw()
 	char	   *name;
 	vec3 txavg;
 
-	txavg = 0.5f * (g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK] + g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT]);
+	txavg = 0.5f * (g_colors.texBackground + g_colors.texText);
 
 	if (stale) Layout();
-
-	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][0],
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][1],
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][2],
+	
+	glClearColor(g_colors.texBackground[0],
+		g_colors.texBackground[1],
+		g_colors.texBackground[2],
 		0);
+
 	glViewport(0, 0, width, height);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
@@ -605,7 +606,7 @@ void TextureView::Draw()
 			if (g_qeglobals.d_workTexDef.tex == twp->tex)
 			{
 				glLineWidth(3);
-				glColor3f(1, 0, 0);
+				glColor3fv(&g_colors.selection.r);
 				glDisable(GL_TEXTURE_2D);
 
 				glBegin(GL_LINE_LOOP);
@@ -620,7 +621,7 @@ void TextureView::Draw()
 			}
 
 			// draw the texture name
-			glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT].r);
+			glColor3fv(&g_colors.texText.r);
 			glDisable(GL_TEXTURE_2D);
 
 			// don't draw the directory name

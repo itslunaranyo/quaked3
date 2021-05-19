@@ -647,9 +647,9 @@ bool ManipTool::Draw3D(CameraView &v)
 		glEnable(GL_BLEND);
 
 		// lunaran: brighten & clarify selection tint, use selection color preference
-		glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
-				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
-				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+		glColor4f(g_colors.selection[0],
+				g_colors.selection[1],
+				g_colors.selection[2],
 				0.3f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDisable(GL_TEXTURE_2D);

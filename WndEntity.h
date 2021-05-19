@@ -51,6 +51,7 @@ public:
 	//EntityView *ev;
 
 	void Initialize();
+	void SelectEntityColor();
 	void ForceUpdate();
 	bool TryCut();
 	bool TryCopy();

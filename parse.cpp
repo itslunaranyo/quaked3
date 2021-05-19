@@ -44,6 +44,7 @@ bool GetToken (bool crossline)
 			{
 				if (!crossline)
 					Error("Line %d is incomplete.", g_nScriptLine);
+				*g_szToken = 0;
 				return false;
 			}
 			if (*g_pszScript++ == '\n')
@@ -64,6 +65,7 @@ bool GetToken (bool crossline)
 				{
 					if (!crossline)
 						Error("Line %d is incomplete.", g_nScriptLine);
+					*g_szToken = 0;
 					return false;
 				}
 			skip = true;

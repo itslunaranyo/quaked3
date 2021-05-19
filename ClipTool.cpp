@@ -12,14 +12,12 @@ ClipTool::ClipTool() :
 	g_pcmdBC(nullptr),
 	Tool("Clipper", true)	// clip tool is modal
 {
-	g_qeglobals.d_clipTool = this;
 	Selection::DeselectAllFaces();
 	Reset();
 }
 
 ClipTool::~ClipTool()
 {
-	g_qeglobals.d_clipTool = nullptr;
 	Reset();
 	Sys_UpdateGridStatusBar();
 }
@@ -760,7 +758,7 @@ void ClipTool::DrawPoints()
 	char		strMsg[4];
 
 	glDisable(GL_DEPTH_TEST);
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER].r);
+	glColor3fv(&g_colors.tool.r);
 
 	glPointSize(4);
 	glBegin(GL_POINTS);
@@ -816,9 +814,9 @@ void ClipTool::Draw()
 	// draw red highlight over carved brushes
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
-				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
-				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+	glColor4f(g_colors.selection[0],
+				g_colors.selection[1],
+				g_colors.selection[2],
 				0.3f);
 	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
 		for (face = (*brIt)->faces; face; face = face->fnext)

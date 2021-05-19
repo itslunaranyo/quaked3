@@ -58,6 +58,7 @@ private:
 
 	void	DrawGrid ();
 	void	DrawBlockGrid ();
+	void	DrawViewName();
 	void	DrawCoords ();	// sikk - made separate function so coords and axis layed on top
 	void	DrawCameraIcon ();
 	void	DrawLightRadius (Brush *pBrush, int nViewType);

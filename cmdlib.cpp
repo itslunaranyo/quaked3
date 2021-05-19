@@ -10,6 +10,21 @@ char	g_szComToken[1024];
 bool	g_bComEOF;
 
 /*
+==================
+qmalloc
+==================
+*/
+void *qmalloc(int size)
+{
+	void *b;
+
+	b = malloc(size);
+	memset(b, 0, size);
+
+	return b;
+}
+
+/*
 ================
 I_FloatTime
 ================
@@ -538,7 +553,7 @@ ExtractFileExtension
 void ExtractFileExtension (const char *path, char *dest)
 {
 	const char *src;
-
+	
 	src = path + strlen(path) - 1;
 
 	// back up until a . or the start
@@ -640,25 +655,43 @@ VecToString
 void VecToString(const vec3 vec, char *string)
 {
 	char szVal[3][64];
-	char *pos;
+//	char *pos;
 
-	// lunaran: trim trailing zeroes, including the . if necessary, for no other reason
-	// than I think they don't look very nice
 	for (int i = 0; i < 3; i++)
-	{
-		sprintf(szVal[i], "%f", vec[i]);
-		pos = &szVal[i][strlen(szVal[i]) - 1];
-		while (*pos == '0' && pos != szVal[i])
-		{
-			*pos-- = 0;
-		}
-		if (*pos == '.')
-			*pos = 0;
-	}
+		FloatToString(vec[i], szVal[i]);
 
 	sprintf(string, "%s %s %s", szVal[0], szVal[1], szVal[2]);
 }
 
+/*
+==============
+VecToString
+
+lunaran: trim trailing zeroes, including the . if necessary, for no other reason
+than I think they don't look very nice
+==============
+*/
+void FloatToString(const float f, char *string)
+{
+	char *szVal;
+	char *pos;
+
+	szVal = string;
+	sprintf(szVal, "%0.5f", f);
+	pos = &szVal[strlen(szVal) - 1];
+	while (*pos == '0' && pos != szVal)
+	{
+		*pos-- = 0;
+	}
+	if (*pos == '.')
+		*pos = 0;
+//	else if (*pos == 'e')
+//	{
+		// we got a scientific notation version of a very tiny float, mark it zero
+//		string[0] = '0';
+//		string[1] = 0;
+//	}
+}
 
 /*
 ============================================================================

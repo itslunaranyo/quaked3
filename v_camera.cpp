@@ -363,8 +363,8 @@ void CameraView::MouseControl (float dtime)
 				xf = 0;
 		}
 		
-		origin = origin + yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * forward;
-		angles[YAW] += xf * -dtime * (g_qeglobals.d_savedinfo.nCameraSpeed * 0.5);
+		origin = origin + yf * dtime * (int)g_cfgEditor.CameraSpeed * forward;
+		angles[YAW] += xf * -dtime * ((int)g_cfgEditor.CameraSpeed / 2);
 	}
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
@@ -630,9 +630,9 @@ bool CameraView::CullBrush (Brush *b)
 	vec3	point;
 
 // sikk---> Cubic Clipping
-	if (g_qeglobals.d_savedinfo.bCubicClip)
+	if (g_cfgEditor.CubicClip)
 	{
-		float fLevel = g_qeglobals.d_savedinfo.nCubicScale * 64;
+		float fLevel = (int)g_cfgEditor.CubicScale * 64;
 
 		point[0] = origin[0] - fLevel;
 		point[1] = origin[1] - fLevel;
@@ -676,14 +676,14 @@ CameraView::DrawGrid
 */
 void CameraView::DrawGrid ()
 {
-	if (!g_qeglobals.d_savedinfo.bShow_CameraGrid)
+	if (!g_cfgUI.ShowCameraGrid)
 		return;
 
 	int x, y, i;
 
-	i = g_qeglobals.d_savedinfo.nMapSize * 0.5;
+	i = g_cfgEditor.MapSize / 2;
 
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID].r);
+	glColor3fv(&g_colors.camGrid.r);
 //	glLineWidth(1);
 	glBegin(GL_LINES);
 	for (x = -i; x <= i; x += 256)
@@ -762,9 +762,9 @@ void CameraView::DrawSelected(Brush	*pList)
 	glEnable(GL_BLEND);
 
 	// lunaran: brighten & clarify selection tint, use selection color preference
-	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+	glColor4f(g_colors.selection[0],
+			g_colors.selection[1],
+			g_colors.selection[2],
 			0.3f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glDisable(GL_TEXTURE_2D);
@@ -823,9 +823,9 @@ void CameraView::Draw ()
 
 	glViewport(0, 0, width, height);
 	glScissor(0, 0, width, height);
-	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][0],
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][1],
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][2],
+	glClearColor(g_colors.camBackground[0],
+				 g_colors.camBackground[1],
+				 g_colors.camBackground[2],
 				 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -835,7 +835,7 @@ void CameraView::Draw ()
 
 	screenaspect = (float)width / height;
 	yfov = 2 * atan((float)height / width) * 180 / Q_PI;
-    gluPerspective(yfov, screenaspect, 2, g_qeglobals.d_savedinfo.nMapSize);//8192);
+    gluPerspective(yfov, screenaspect, 2, g_cfgEditor.MapSize);//8192);
 
     glRotatef(-90, 1, 0, 0);	// put Z going up
     glRotatef(90, 0, 0, 1);		// put Z going up
@@ -847,7 +847,7 @@ void CameraView::Draw ()
 	InitCull();
 
 	// draw stuff
-	switch (draw_mode)
+	switch (g_cfgUI.DrawMode)
 	{
 	case cd_wire:
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -896,7 +896,7 @@ void CameraView::Draw ()
 		}
 #endif
 		break;
-
+		/*
 	case cd_blend:
 		glCullFace(GL_FRONT);
 		glEnable(GL_CULL_FACE);
@@ -909,15 +909,15 @@ void CameraView::Draw ()
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		break;
+		break;*/
 	}
 
 // sikk---> Camera Grid/Axis/Map Boundary Box
 	DrawGrid();
 
 	// TODO: Display Axis in lower left corner of window and rotate with camera orientation (e.g. blender)
-	bound = g_qeglobals.d_savedinfo.nMapSize / 2;
-	if (g_qeglobals.d_savedinfo.bShow_Axis)
+	bound = g_cfgEditor.MapSize / 2;
+	if (g_cfgUI.ShowAxis)
 	{
 		glColor3f(1.0, 0.0, 0.0);
 		glBegin(GL_LINES);
@@ -938,9 +938,9 @@ void CameraView::Draw ()
 		glEnd();
 	}
 
-	if (g_qeglobals.d_savedinfo.bShow_MapBoundary)
+	if (g_cfgUI.ShowMapBoundary)
 	{
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY].r);
+		glColor3fv(&g_colors.camGrid.r);
 		glBegin(GL_LINE_LOOP);
 		glVertex3f(-bound, -bound, -bound);
 		glVertex3f(bound, -bound, -bound);
@@ -993,6 +993,6 @@ void CameraView::Draw ()
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("MSG: Camera: %d ms\n", (int)(1000 * (end - start)));
+		Sys_Printf("Camera: %d ms\n", (int)(1000 * (end - start)));
 	}
 }

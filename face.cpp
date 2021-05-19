@@ -225,7 +225,7 @@ bool Face::TestSideSelect(const vec3 origin, const vec3 dir)
 	vec3	p1, p2;
 
 	p1 = origin;
-	p2 = origin + dir * (float)g_qeglobals.d_savedinfo.nMapSize * 2.0f;
+	p2 = origin + dir * 2.0f * (float)g_cfgEditor.MapSize;
 
 	for (f2 = owner->faces; f2; f2 = f2->fnext)
 	{
@@ -394,7 +394,8 @@ void Face::SetColor()
 	q = texdef.tex;
 	shade = ShadeForPlane();
 
-	if (g_qeglobals.d_vCamera.draw_mode == cd_texture && owner->owner->IsBrush())
+	// lunaran TODO: get rid of this branch
+	if (g_cfgUI.DrawMode == cd_texture && owner->owner->IsBrush())
 	{
 		d_color[0] = d_color[1] = d_color[2] = shade;
 	}

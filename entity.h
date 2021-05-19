@@ -13,6 +13,8 @@ public:
 
 	EPair		*next;
 	qeBuffer	key, value;
+
+	static EPair *ParseEpair();
 };
 
 //==============================
@@ -65,8 +67,7 @@ public:
 	char	*GetKeyValue(const char *key) const;
 	float	GetKeyValueFloat(const char *key) const;
 	int		GetKeyValueInt(const char *key) const;
-	vec3 	GetKeyValueVector(const char *key) const;
-
+	bool	GetKeyValueVector(const char *key, vec3 &out) const;
 	void 	DeleteKeyValue(const char *key);
 
 	// sikk---> Undo/Redo
@@ -85,17 +86,7 @@ public:
 	static Entity* Parse (bool onlypairs);
 	void	CheckOrigin();
 	void	Write(std::ostream & stream, bool use_region);
-	//void	Write (FILE *f, bool use_region);
 	void	WriteSelected(std::ostream & out);
-	//void	WriteSelected (FILE *f);	// sikk - Export Selection (Map/Prefab)
 };
-
-//========================================================================
-
-
-
-EPair		*ParseEpair ();
-
-
 
 #endif

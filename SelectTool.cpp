@@ -98,16 +98,16 @@ bool SelectTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wn
 		switch (v.GetAxis())
 		{
 		case YZ:
-			rayOrg.x = g_qeglobals.d_savedinfo.nMapSize / 2;
+			rayOrg.x = g_cfgEditor.MapSize / 2;
 			rayEnd.x = -1;
 			break;
 		case XZ:
-			rayOrg.y = g_qeglobals.d_savedinfo.nMapSize / 2;
+			rayOrg.y = g_cfgEditor.MapSize / 2;
 			rayEnd.y = -1;
 			break;
 		case XY:
 		default:
-			rayOrg.z = g_qeglobals.d_savedinfo.nMapSize / 2;
+			rayOrg.z = g_cfgEditor.MapSize / 2;
 			rayEnd.z = -1;
 			break;
 		}

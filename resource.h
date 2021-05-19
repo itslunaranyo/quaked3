@@ -35,6 +35,13 @@
 #define IDD_TEXTURESCALE                183
 #define IDD_FINDKEYVALUE                184
 #define IDD_CONSOLE                     185
+#define IDD_CONFIG                      186
+#define IDD_CONFIG_EDITOR               192
+#define IDD_CONFIG_PROJECT              193
+#define IDD_CONFIG_UI                   194
+#define IDD_NEWPROJNAME                 195
+#define IDD_NEWNAME                     195
+#define IDD_CONFIG_COLOR                196
 #define IDC_E_FLAG1                     1026
 #define IDC_E_FLAG2                     1027
 #define IDC_E_FLAG3                     1028
@@ -100,7 +107,9 @@
 #define IDC_BUTTON_TEXTUREDIRECTORY     1146
 #define IDC_EDIT_DEFAULTWADS            1147
 #define IDC_BUTTON_DEFAULTWADS          1148
+#define IDC_EDIT_PALETTEFILE            1149
 #define IDC_EDIT_MAPSDIRECTORY          1150
+#define IDC_BUTTON_PALETTEFILE          1151
 #define IDC_BUTTON_MAPSDIRECTORY        1153
 #define IDC_COMBO_BSPNAME               1159
 #define IDC_LIST_CREATEENTITY           1159
@@ -183,6 +192,29 @@
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
 #define IDC_ABOUT_APPNAME               1285
+#define IDC_CONFIG_LIST                 1287
+#define IDC_COMBO_PROJECT               1290
+#define IDC_BUTTON_NEWPROJ              1291
+#define IDC_BUTTON_GAMEBASEPATH         1292
+#define IDC_BUTTON_DELPROJ              1293
+#define IDC_EDIT_GAMEBASEPATH           1294
+#define IDC_COMBO_RENDERMODE            1295
+#define IDC_EDIT_NEWNAME                1296
+#define IDC_BUTTON_COLOR1               1297
+#define IDC_BUTTON_COLOR2               1298
+#define IDC_BUTTON_COLOR3               1299
+#define IDC_BUTTON_COLOR4               1300
+#define IDC_BUTTON_COLOR5               1301
+#define IDC_BUTTON_COLOR6               1302
+#define IDC_BUTTON_COLOR7               1303
+#define IDC_BUTTON_COLOR8               1304
+#define IDC_BUTTON_COLOR9               1305
+#define IDC_BUTTON_COLOR10              1306
+#define IDC_BUTTON_COLOR11              1307
+#define IDC_COMBO_COLOR                 1308
+#define IDC_BUTTON_COLORSAVE            1309
+#define IDC_BUTTON_COLOR12              1310
+#define IDC_BUTTON_COLORDELETE          1311
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -423,14 +455,17 @@
 #define ID_VIEW_HIDESHOW_HIDEUNSELECTED 40457
 #define ID_TOOLS_DRAGFACES              40460
 #define ID_SELECTION_DRAGFACES          40461
+#define ID_DRAWMODE_TEXTURED            40462
+#define ID_DRAWMODE_FLATSHADE           40463
+#define ID_DRAWMODE_WIREFRAME           40464
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        192
-#define _APS_NEXT_COMMAND_VALUE         40462
-#define _APS_NEXT_CONTROL_VALUE         1286
+#define _APS_NEXT_RESOURCE_VALUE        198
+#define _APS_NEXT_COMMAND_VALUE         40465
+#define _APS_NEXT_CONTROL_VALUE         1312
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

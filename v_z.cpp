@@ -25,8 +25,6 @@ ZView::Init
 */
 void ZView::Init()
 {
-	if (!g_qeglobals.d_savedinfo.bShow_Z)
-		ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
 }
 
 /*
@@ -252,7 +250,7 @@ void ZView::DrawGrid ()
 	ze = nSize * ceil(ze / nSize);
 
 	// draw major blocks
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR].x);
+	glColor3fv(&g_colors.gridMajor.x);
 
 	glBegin(GL_LINES);
 	glVertex2f(0, zb);
@@ -267,7 +265,7 @@ void ZView::DrawGrid ()
 	// draw minor blocks
 	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
 	{
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR].x);
+		glColor3fv(&g_colors.gridMinor.x);
 
 		glBegin(GL_LINES);
 		for (zz = zb; zz < ze; zz += g_qeglobals.d_nGridSize)
@@ -313,7 +311,7 @@ void ZView::DrawCoords ()
 		ze = g_map.regionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
 
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT].x);
+	glColor3fv(&g_colors.gridText.x);
 
 	for (z = zb; z <= ze; z += nSize)	// sikk - 'z <= ze' instead of 'z < ze' so last coord is drawn
 	{
@@ -381,9 +379,9 @@ void ZView::DrawSelection()
 	int xCam = width / 3;
 
 	org_top = origin;
-	org_top[2] = g_qeglobals.d_savedinfo.nMapSize / 2;
+	org_top[2] = g_cfgEditor.MapSize / 2;
 	org_bottom = origin;
-	org_bottom[2] = -g_qeglobals.d_savedinfo.nMapSize / 2;
+	org_bottom[2] = -g_cfgEditor.MapSize / 2;
 
 	// draw selected brushes
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
@@ -414,7 +412,7 @@ void ZView::DrawSelection()
 	}
 
 	// lunaran: draw all selection borders over the colored quads so nothing in the selection is obscured
-	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].x);
+	glColor3fv(&g_colors.selection.x);
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
 		glBegin(GL_LINE_LOOP);
@@ -449,9 +447,9 @@ void ZView::Draw ()
 
 	// clear
 	glViewport(0, 0, width, height);
-	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0],
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1],
-				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2],
+	glClearColor(g_colors.gridBackground[0],
+				 g_colors.gridBackground[1],
+				 g_colors.gridBackground[2],
 				 0);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -480,9 +478,9 @@ void ZView::Draw ()
 	// draw filled interiors and edges
 	vec3 org_top, org_bottom;
 	org_top = origin;
-	org_top[2] = g_qeglobals.d_savedinfo.nMapSize / 2;
+	org_top[2] = g_cfgEditor.MapSize / 2;
 	org_bottom = origin;
-	org_bottom[2] = -g_qeglobals.d_savedinfo.nMapSize / 2;
+	org_bottom[2] = -g_cfgEditor.MapSize / 2;
 
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
@@ -528,14 +526,14 @@ void ZView::Draw ()
 	DrawCameraIcon();
 
 	// draw coordinate text if needed
-	if (g_qeglobals.d_savedinfo.bShow_Coordinates)	// sikk - Toggle By Menu Command
+	if (g_cfgUI.ShowCoordinates)	// sikk - Toggle By Menu Command
 		DrawCoords();	// sikk - Draw Coords last so they are on top
     glFinish();
 
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("MSG: Z: %d ms\n", (int)(1000 * (end - start)));
+		Sys_Printf("Z: %d ms\n", (int)(1000 * (end - start)));
 	} 
 }
 

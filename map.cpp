@@ -35,7 +35,7 @@ void Map::New()
 	char buf[1024];
 	qeBuffer between(0);
 
-	Sys_Printf("CMD: Map::New\n");
+	Sys_Printf("Map::New\n");
 
 	SaveBetween(between);
 	Free();
@@ -45,12 +45,12 @@ void Map::New()
 	world->CloseLinks();
 
 	// sikk---> Wad Loading
-	strcpy(buf, g_qeglobals.d_entityProject->GetKeyValue("defaultwads"));
+	strcpy(buf, g_project.defaultWads);
 	if (strlen(buf))
 	{
 		int i = 0;
 		char *temp, tempwads[1024] = "";
-		char *texpath = g_qeglobals.d_entityProject->GetKeyValue("texturepath");
+		char *texpath = g_project.wadPath;
 
 		for (temp = strtok(buf, ";"); temp; temp = strtok(0, ";"), i++)
 		{
@@ -171,7 +171,7 @@ void Map::BuildBrushData()
 {
 	double time;
 
-	Sys_Printf("CMD: Map::BuildBrushData\n");
+	Sys_Printf("Map::BuildBrushData\n");
 
 	Sys_BeginWait();	// this could take a while
 	time = Sys_DoubleTime();
@@ -298,9 +298,9 @@ void Map::LoadFromFile(const char *filename)
 	Sys_BeginWait();
 
 	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-	if (!g_qeglobals.d_savedinfo.bNoClamp)
+	if (g_qeglobals.bGridSnap)
 	{
-		g_qeglobals.d_savedinfo.bNoClamp = true;
+		g_qeglobals.bGridSnap = false;
 		bSnapCheck = true;
 	}
 	// <---sikk
@@ -308,7 +308,7 @@ void Map::LoadFromFile(const char *filename)
 	QE_SetInspectorMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: Map::LoadFromFile: %s\n", temp);
+	Sys_Printf("Map::LoadFromFile: %s\n", temp);
 
 	SaveBetween(between);
 	Free();
@@ -365,8 +365,8 @@ void Map::LoadFromFile(const char *filename)
 
 		if (ent)
 		{
-			g_qeglobals.d_vCamera.origin = ent->GetKeyValueVector("origin");
-			g_qeglobals.d_vXYZ[0].origin = ent->GetKeyValueVector("origin");
+			ent->GetKeyValueVector("origin", g_qeglobals.d_vCamera.origin);
+			ent->GetKeyValueVector("origin", g_qeglobals.d_vXYZ[0].origin);
 			g_qeglobals.d_vCamera.angles[YAW] = ent->GetKeyValueFloat("angle");
 		}
 		else
@@ -376,11 +376,8 @@ void Map::LoadFromFile(const char *filename)
 			g_qeglobals.d_vXYZ[0].origin = vec3(0);
 		}
 
-		//Texture_ShowInuse();
 		Textures::FlushUnused(false);	// don't build the map twice
 
-		//modified = false;
-		//Sys_SetTitle(temp);
 		QE_UpdateTitle();
 		RegionOff();
 	}
@@ -389,7 +386,7 @@ void Map::LoadFromFile(const char *filename)
 	Sys_UpdateWindows(W_ALL);
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-		g_qeglobals.d_savedinfo.bNoClamp = false;
+		g_qeglobals.bGridSnap = true;
 
 	Sys_EndWait();
 }
@@ -411,35 +408,12 @@ void Map::ImportFromFile(const char *filename)
 	QE_SetInspectorMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: Map::ImportFromFile: %s\n", temp);
+	Sys_Printf("Map::ImportFromFile: %s\n", temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();
 	cmdIM->File(filename);
 	g_cmdQueue.Complete(cmdIM);
-	//cmdIM->Select();
 
-	/*
-	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-	if (!g_qeglobals.d_savedinfo.bNoClamp)
-	{
-		g_qeglobals.d_savedinfo.bNoClamp = true;
-		bSnapCheck = true;
-	}
-	// <---sikk
-	g_qeglobals.d_nParsedBrushes = 0;
-
-	qeBuffer buf;
-	IO_LoadFile(filename, buf);
-	if (ParseBufferMerge((char*)*buf))
-	{
-		Selection::Changed();
-		modified = true;
-		BuildBrushData(g_brSelectedBrushes);
-	}
-
-	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-		g_qeglobals.d_savedinfo.bNoClamp = false;
-	*/
 	Sys_EndWait();
 	Sys_UpdateWindows(W_SCENE);
 }
@@ -453,10 +427,8 @@ write entire contents of the scene to a file
 */
 void Map::SaveToFile(const char *filename, bool use_region)
 {
-//	Entity   *e, *next;
 	std::ofstream	   *f;
 	char        temp[1024];
-//	int			count;
 
 	QE_ConvertDOSToUnixName(temp, filename);
 
@@ -472,7 +444,7 @@ void Map::SaveToFile(const char *filename, bool use_region)
 		rename(filename, backup);
 	}
 
-	Sys_Printf("CMD: Map::SaveToFile: %s\n", filename);
+	Sys_Printf("Map::SaveToFile: %s\n", filename);
 
 	f = new std::ofstream(filename);
 	if (!f)
@@ -491,15 +463,7 @@ void Map::SaveToFile(const char *filename, bool use_region)
 	if (use_region)
 		RegionRemove();
 
-	//modified = false;
-
-	//if (!strstr(temp, "autosave"))
-	//	Sys_SetTitle(temp);
-
-	//g_bMBCheck = false;	// sikk - Reset this to false
-	//g_nBrushNumCheck = -1;	// sikk - Reset this to -1
-
-	Sys_Printf("MSG: Saved.\n");
+	Sys_Printf("Saved.\n");
 	Sys_Status("Saved.", 0);
 }
 
@@ -512,11 +476,9 @@ write selected brushes and entities to a file
 */
 void Map::ExportToFile(const char *filename)
 {
-//	Entity   *e, *next;
 	std::ofstream	   *f;
-//	int			count;
 
-	Sys_Printf("CMD: Map::ExportToFile: %s\n", filename);
+	Sys_Printf("Map::ExportToFile: %s\n", filename);
 
 	f = new std::ofstream(filename);
 	if (!f)
@@ -527,7 +489,7 @@ void Map::ExportToFile(const char *filename)
 	WriteSelected(*f);
 	f->close();
 
-	Sys_Printf("MSG: Selection exported.\n", filename);
+	Sys_Printf("Selection exported.\n", filename);
 }
 
 /*
@@ -593,47 +555,6 @@ void Map::Paste()
 	CmdPaste *cmdP = new CmdPaste();
 	g_cmdQueue.Complete(cmdP);
 
-	/*
-	if (!IsClipboardFormatAvailable(CF_TEXT)) return;
-	if (!OpenClipboard(g_qeglobals.d_hwndMain)) return;
-
-	HGLOBAL hglb;
-	char*	cbdata;
-
-	hglb = GetClipboardData(CF_TEXT);
-	if (hglb != nullptr)
-	{
-		cbdata = (char*)GlobalLock(hglb);
-		if (cbdata != nullptr && cbdata[0] == '{')	// no opening brace = definitely not map data, don't even complain
-		{
-			bool	bSnapCheck = false;
-
-			// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-			if (!g_qeglobals.d_savedinfo.bNoClamp)
-			{
-				g_qeglobals.d_savedinfo.bNoClamp = true;
-				bSnapCheck = true;
-			}
-			// <---sikk
-
-			g_qeglobals.d_nParsedBrushes = 0;
-
-			if (ParseBufferMerge(cbdata))
-			{
-				Selection::Changed();
-				modified = true;
-				BuildBrushData(g_brSelectedBrushes);
-			}
-
-			if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-				g_qeglobals.d_savedinfo.bNoClamp = false;
-
-			Sys_UpdateWindows(W_ALL);
-		}
-		GlobalUnlock(hglb);
-	}
-	CloseClipboard();
-	*/
 	Sys_EndWait();
 }
 
@@ -748,15 +669,7 @@ void Map::WriteAll(std::ostream &out, bool use_region)
 		out << "// entity " << count << "\n";
 		count++;
 		next = e->next;
-		/*
-		if (e->brushes.onext == &e->brushes)
-		{
-			assert(0);
-			delete e;	// no brushes left, so remove it
-		}
-		else
-			e->Write(out, use_region);
-		*/
+
 		if (e->brushes.onext != &e->brushes)
 			e->Write(out, use_region);
 	}
@@ -817,8 +730,8 @@ void Map::RegionOff()
 
 	for (int i = 0; i < 3; i++)
 	{
-		regionMaxs[i] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		regionMins[i] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+		regionMaxs[i] = g_cfgEditor.MapSize / 2;
+		regionMins[i] = -g_cfgEditor.MapSize / 2;
 	}
 
 	for (b = brRegioned.next; b != &brRegioned; b = next)
@@ -850,22 +763,22 @@ void Map::RegionXY()
 		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
 		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - h;
 		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + h;
-		regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[2] = -g_cfgEditor.MapSize / 2;
+		regionMaxs[2] = g_cfgEditor.MapSize / 2;
 	}
 	else if (g_qeglobals.d_vXYZ[0].GetAxis() == XZ)
 	{
 		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
 		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
-		regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[1] = -g_cfgEditor.MapSize / 2;
+		regionMaxs[1] = g_cfgEditor.MapSize / 2;
 		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
 		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
 	}
 	else if (g_qeglobals.d_vXYZ[0].GetAxis() == YZ)
 	{
-		regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[0] = -g_cfgEditor.MapSize / 2;
+		regionMaxs[0] = g_cfgEditor.MapSize / 2;
 		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - w;
 		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + w;
 		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
@@ -880,8 +793,8 @@ void Map::RegionXZ()
 	RegionOff();
 	regionMins[0] = g_qeglobals.d_vXYZ[2].origin[0] - 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
 	regionMaxs[0] = g_qeglobals.d_vXYZ[2].origin[0] + 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
-	regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	regionMins[1] = -g_cfgEditor.MapSize / 2;
+	regionMaxs[1] = g_cfgEditor.MapSize / 2;
 	regionMins[2] = g_qeglobals.d_vXYZ[2].origin[2] - 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
 	regionMaxs[2] = g_qeglobals.d_vXYZ[2].origin[2] + 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
 	RegionApply();
@@ -890,8 +803,8 @@ void Map::RegionXZ()
 void Map::RegionYZ()
 {
 	RegionOff();
-	regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	regionMins[0] = -g_cfgEditor.MapSize / 2;
+	regionMaxs[0] = g_cfgEditor.MapSize / 2;
 	regionMins[1] = g_qeglobals.d_vXYZ[1].origin[1] - 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
 	regionMaxs[1] = g_qeglobals.d_vXYZ[1].origin[1] + 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
 	regionMins[2] = g_qeglobals.d_vXYZ[1].origin[2] - 0.5 * g_qeglobals.d_vXYZ[1].height / g_qeglobals.d_vXYZ[1].scale;
@@ -912,8 +825,8 @@ void Map::RegionTallBrush()
 
 	regionMins = b->mins;
 	regionMaxs = b->maxs;
-	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	regionMins[2] = -g_cfgEditor.MapSize / 2;
+	regionMaxs[2] = g_cfgEditor.MapSize / 2;
 
 	Modify_Delete();
 	RegionApply();

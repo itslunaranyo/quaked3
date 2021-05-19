@@ -10,16 +10,6 @@
 #include <sys/stat.h>
 #include <exception>
 
-/*
-// sikk---> Mousewheel Handling
-#include <zmouse.h>
-
-UINT	g_unMouseWheel;
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x020A
-#endif
-// <---sikk
-*/
 double	g_deltaTime;
 int		g_nUpdateBits;
 int		g_nScreenWidth;
@@ -119,7 +109,7 @@ Sys_UpdateWindows
 */
 void Sys_UpdateWindows (int bits)
 {
-//	Sys_Printf("MSG: Updating 0x%X\n", bits);
+//	Sys_Printf("Updating 0x%X\n", bits);
 	g_nUpdateBits |= bits;
 //	g_nUpdateBits = -1;
 }
@@ -193,7 +183,7 @@ called whenever we need to open/close/check the console log file
 */
 void Sys_LogFile ()
 {
-	if (g_qeglobals.d_savedinfo.bLogConsole && !g_qeglobals.d_nLogFile)
+	if (g_cfgEditor.LogConsole && !g_qeglobals.d_nLogFile)
 	{
 		// open a file to log the console (if user prefs say so)
 		// the file handle is g_qeglobals.logfile
@@ -204,13 +194,13 @@ void Sys_LogFile ()
 		sprintf(name, "%s/qe3.log", path);
 		g_qeglobals.d_nLogFile = _open(name, _O_TRUNC | _O_CREAT | _O_WRONLY, _S_IREAD | _S_IWRITE);
 		if (g_qeglobals.d_nLogFile)
-			Sys_Printf("CMD: Console Logging: Started...\n");
+			Sys_Printf("Console Logging: Started...\n");
 		else
 			MessageBox(g_qeglobals.d_hwndMain, "Failed to create log file. Check write permissions in QE3 directory.", "QuakeEd 3: Console Logging Error", MB_OK | MB_ICONEXCLAMATION);
 	}	
 	else if (g_qeglobals.d_nLogFile)
 	{
-		Sys_Printf("CMD: Console Logging: Stopped\n");
+		Sys_Printf("Console Logging: Stopped\n");
 		_close(g_qeglobals.d_nLogFile);
 		g_qeglobals.d_nLogFile = 0;
 	}
@@ -342,10 +332,10 @@ OpenDialog
 void OpenDialog ()
 {
 	// Obtain the system directory name and store it in szDirName. 
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	strcpy(szDirName, g_project.mapPath);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcpy(szDirName, g_project.basePath);
 		strcat(szDirName, "/maps");
 	}
 
@@ -385,10 +375,10 @@ SaveAsDialog
 */
 void SaveAsDialog ()
 { 
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	strcpy(szDirName, g_project.mapPath);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcpy(szDirName, g_project.basePath);
 		strcat(szDirName, "/maps");
 	}
 
@@ -476,10 +466,10 @@ ImportDialog
 void ImportDialog()
 {
 	// Obtain the system directory name and store it in szDirName. 
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	strcpy(szDirName, g_project.mapPath);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcpy(szDirName, g_project.basePath);
 		strcat(szDirName, "/maps");
 	}
 	// Filter string for Map files
@@ -515,10 +505,10 @@ ExportDialog
 void ExportDialog()
 { 
 	// Obtain the system directory name and store it in szDirName. 
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	strcpy(szDirName, g_project.mapPath);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+		strcpy(szDirName, g_project.mapPath);
 		strcat(szDirName, "/maps");
 	}
 	// Filter string for Map files
@@ -579,6 +569,8 @@ void FillBSPMenu ()
 		DeleteMenu(hmenu, CMD_BSPCOMMAND + i, MF_BYCOMMAND);
 	count = 0;
 
+	if (!g_qeglobals.d_entityProject)
+		return;
 	i = 0;
 	for (ep = g_qeglobals.d_entityProject->epairs; ep; ep=ep->next)
 	{

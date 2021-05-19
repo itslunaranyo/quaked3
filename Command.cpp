@@ -185,7 +185,7 @@ void CommandQueue::Complete(Command *cmd)
 	if (!idFirstAfterSave)
 		idFirstAfterSave = cmd->id;
 
-	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)
+	if ((int)undoQueue.size() > (int)g_cfgEditor.UndoLevels)
 		ClearOldestUndo();
 
 	Selection::Changed();
@@ -203,7 +203,6 @@ if the user changes the undo queue size in preferences, shrink it immediately
 */
 void CommandQueue::SetSize(int size)
 {
-	g_qeglobals.d_savedinfo.nUndoLevels = size;
 	while ((unsigned)size < undoQueue.size())
 	{
 		ClearOldestUndo();

@@ -37,6 +37,7 @@
 
 #include "qedefs.h"
 #include "qfiles.h"
+#include "config.h"
 
 #include "palette.h"
 #include "textures.h"
@@ -86,9 +87,9 @@
 typedef struct
 {
 	int		nSize;				// structure size
-	int		nTexMenu;			// nearest, linear, etc
+	int		nRenderMode;			// nearest, linear, etc
 //	int		nVTexMenu;			// sikk - unused
-	int		nExclude;
+	int		nViewFilter;
 	bool	bShow_XYZ[4],		// lunaran - grid view reunification
 			bShow_Z,			// sikk - Saved Window Toggle
 			bShow_Axis,			// sikk - Show Axis
@@ -103,10 +104,10 @@ typedef struct
 			bShow_Workzone,
 			bShow_Angles,		// lunaran - no longer an entity flag
 			bShow_Paths,		// lunaran - no longer an entity flag
-			bNoClamp,
-			bScaleLockX,		// sikk - Brush Scaling Axis Lock
-			bScaleLockY, 
-			bScaleLockZ,
+			bNoClamp,	//obsolete
+			bScaleLockX,	//obsolete
+			bScaleLockY, 	//obsolete
+			bScaleLockZ,	//obsolete
 			bCubicClip;			// sikk - Cubic Clipping
 	int		nCubicScale;		// sikk - Cubic Clipping
 	int		nCameraSpeed;		// sikk - Camera Speed Trackbar 
@@ -155,6 +156,7 @@ typedef struct
 {
 	bool		d_bShowGrid;
 	int			d_nGridSize;
+	bool		bGridSnap;
 
 	vec3		d_v3WorkMin, 			// defines the boundaries of the current work area, used to guess
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
@@ -182,6 +184,7 @@ typedef struct
 	WndTexture	*d_wndTexture;
 	WndEntity	*d_wndEntity;
 	WndConsole	*d_wndConsole;
+	int         d_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
 
 	CameraView	d_vCamera;				// sikk - moved camera object here
 	XYZView		d_vXYZ[4];				// lunaran - grid view reunification
@@ -189,35 +192,19 @@ typedef struct
 	TextureView d_vTexture;
 
 	Entity		*d_entityProject;
-
-	int			d_nNumPoints;
-	int			d_nNumEdges;
-	int			d_nNumMovePoints;
-	vec3		d_v3Points[MAX_POINTS];
-	pedge_t		d_pEdges[MAX_EDGES];
-	vec3		*d_fMovePoints[1024];
-
 	Texture		*d_qtextures;
-
 	int			d_nPointfileDisplayList;
 
-	int         d_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
-
 	LPMRUMENU   d_lpMruMenu;
-
 	savedinfo_t d_savedinfo;
-
-	//int         d_nWorkCount;		// no longer necessary for punishing jromero unproductivity
-
 	select_t    d_selSelectMode;
-
 	int		    d_nFontList;
 
 	bool		d_bTextureLock;
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
+	vec3		d_lastColor;
 
 	std::vector<Tool*> d_tools;
-	ClipTool	*d_clipTool;
 	TextureTool	*d_texTool;
 
 	// handle to the console log file
@@ -252,18 +239,19 @@ extern bool	g_bSnapCheck;
 // QE function declarations
 void	QE_TestSomething();
 
-void	QE_CheckAutoSave ();
+void	QE_CheckAutoSave();
 void	QE_CheckOpenGLForErrors (void);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
 void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
-void	QE_Init ();
+void	QE_Init();
 bool	QE_KeyDown (int key);
 void	QE_SaveMap();
 void	QE_UpdateTitle();
-bool	QE_LoadProject (char *projectfile);
+bool	QE_LoadProject();
 int		QE_BestViewAxis();
-bool	QE_SingleBrush ();
-void	QE_UpdateCommandUI ();
+bool	QE_SingleBrush();
+void	QE_UpdateCommandUI();
+void	QE_UpdateCommandUIFilters(HMENU hMenu);
 char   *QE_ExpandRelativePath (char *p);
 void	QE_SetInspectorMode(int nType);
 
@@ -307,6 +295,7 @@ XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 void WMain_Create ();
 LONG WINAPI CommandHandler (HWND hWnd, WPARAM wParam, LPARAM lParam); // sikk - Declaration for Popup menu
 BOOL DoColor (int iIndex);
+bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut);
 void DoTestMap ();	// sikk - Test Map
 void DoWindowPosition (int nStyle);	// sikk - Window Positions
 
@@ -346,17 +335,22 @@ void	SurfWnd_UpdateUI();
 void	SurfWnd_Close();
 void	SurfWnd_Create();
 
+// WndConfig.c
+void DoConfigWindow();
+void DoConfigWindowProject();
+
 // win_proj.c
 BOOL CALLBACK ProjectSettingsDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SelectDirDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-void GetProjectDirectory (HWND hwndDlg);
-void GetRemoteBasePath (HWND hwndDlg);
-void GetMapsDirectory (HWND hwndDlg);
-void GetAutosaveMap (HWND hwndDlg);
-void GetEntityFiles (HWND hwndDlg);
-void GetTextureDirectory (HWND hwndDlg);
-void GetToolsDirectory (HWND hwndDlg);
+void GetProjectDirectory(HWND hwndDlg);
+void GetRemoteBasePath(HWND hwndDlg);
+void GetMapsDirectory(HWND hwndDlg);
+void WndCfg_GetAutosaveMap(HWND hwndDlg);
+void WndCfg_GetEntityFiles(HWND hwndDlg);
+void GetTextureDirectory(HWND hwndDlg);
+void GetToolsDirectory(HWND hwndDlg);
+void WndCfg_GetDefaultWads(HWND hwndDlg);
 
 int  GetNextFreeBspIndex ();
 int  GetBspIndex (char *text);
@@ -365,7 +359,7 @@ void AcceptBspCommand (HWND hwndDlg);
 void DeleteBspCommand (HWND hwndDlg);
 
 void SaveSettings (HWND hwndDlg);
-bool SelectDir (HWND h);
+bool SelectDir (HWND h, bool format, char* title);
 
 
 #endif

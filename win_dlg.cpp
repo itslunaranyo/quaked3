@@ -145,7 +145,7 @@ void FindBrush (int entitynum, int brushnum)
 	for (i = 0; i < 3; i++)
 		g_qeglobals.d_vXYZ[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
 
-	Sys_Printf("MSG: Selected.\n");
+	Sys_Printf("Selected.\n");
 }
 
 /*
@@ -265,9 +265,9 @@ BOOL CALLBACK RotateDlgProc (
 	case WM_INITDIALOG:
 		SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_ROTX));
 // sikk--->	For more precise rotation
-		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		if (g_qeglobals.bGridSnap)
 		{
-			g_qeglobals.d_savedinfo.bNoClamp = true;
+			g_qeglobals.bGridSnap = false;
 			g_bSnapCheck = true;
 		}
 // <---sikk
@@ -300,7 +300,7 @@ BOOL CALLBACK RotateDlgProc (
 // sikk--->	For more precise rotation
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 // <---sikk
@@ -335,7 +335,7 @@ BOOL CALLBACK RotateDlgProc (
 // sikk--->	For more precise rotation
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 // <---sikk
@@ -511,9 +511,9 @@ BOOL CALLBACK SidesDlgProc (
 		SetDlgItemText(hwndDlg, IDC_EDIT_SIDES, sz);
 // <---sikk
 // sikk--->	For more precision
-		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		if (g_qeglobals.bGridSnap)
 		{
-			g_qeglobals.d_savedinfo.bNoClamp = true;
+			g_qeglobals.bGridSnap = false;
 			g_bSnapCheck = true;
 		}
 // <---sikk
@@ -545,7 +545,7 @@ BOOL CALLBACK SidesDlgProc (
 // sikk--->	For more precision
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 // <---sikk
@@ -557,7 +557,7 @@ BOOL CALLBACK SidesDlgProc (
 // sikk--->	For more precision
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 // <---sikk
@@ -1524,8 +1524,8 @@ OnPrefabPath
 */
 void OnPrefabPath (HWND h)
 {
-	HWND hwndEdit = GetDlgItem(h, IDC_EDIT_PREFABPATH);
-	SelectDir(hwndEdit);
+	//HWND hwndEdit = GetDlgItem(h, IDC_EDIT_PREFABPATH);
+	//SelectDir(hwndEdit, false);
 }
 
 /*
@@ -1544,12 +1544,12 @@ BOOL CALLBACK PreferencesDlgProc (
 	HBITMAP	hb;
 	int		nUndoLevel;
 	int		nAutosave;
-	int		nMapSize = g_qeglobals.d_savedinfo.nMapSize;
-	int		nGamma = g_qeglobals.d_savedinfo.fGamma * 10;
+	int		nMapSize = g_cfgEditor.MapSize;
+	int		nGamma = (float)g_cfgUI.Gamma * 10;
 	int		nMBCheck;
 	char	sz[256];
 	bool	bGammaCheck = false;
-	bool	bLogCheck = g_qeglobals.d_savedinfo.bLogConsole;
+	bool	bLogCheck = (bool)g_cfgEditor.LogConsole;
 
 	switch (uMsg)
     {
@@ -1570,21 +1570,22 @@ BOOL CALLBACK PreferencesDlgProc (
 		SetDlgItemText(hwndDlg, IDC_EDIT_GAMEPATH, g_qeglobals.d_savedinfo.szGamePath);
 		SetDlgItemText(hwndDlg, IDC_EDIT_PREFABPATH, g_qeglobals.d_savedinfo.szPrefabPath);
 		SetDlgItemText(hwndDlg, IDC_EDIT_PARAMGAME, g_qeglobals.d_savedinfo.szModName);
-		sprintf(sz, "%d", g_qeglobals.d_savedinfo.nAutosave);
+		sprintf(sz, "%d", (int)g_cfgEditor.AutosaveTime);
 		SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
-		sprintf(sz, "%d", g_qeglobals.d_savedinfo.nUndoLevels);
+		sprintf(sz, "%d", (int)g_cfgEditor.UndoLevels);
 		SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
 
 		// Initialize Check Boxes 
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE,			BM_SETCHECK, (g_qeglobals.d_savedinfo.bAutosave			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bLogConsole		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bNoStipple		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bRadiantLights	? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bVFEModesExclusive ? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bBrushPrecision	? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,		BM_SETCHECK, (g_cfgUI.Stipple			? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,	BM_SETCHECK, (g_cfgUI.RadiantLights		? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,		BM_SETCHECK, (g_cfgEditor.LogConsole		? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_SETCHECK, (g_cfgEditor.LoadLastMap		? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE,			BM_SETCHECK, (g_cfgEditor.Autosave			? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,	BM_SETCHECK, (g_cfgEditor.BrushPrecision	? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_SETCHECK, (g_cfgEditor.VFEModesExclusive	? BST_CHECKED : BST_UNCHECKED), 0);
+
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bTestAfterBSP		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastProject	? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastMap		? BST_CHECKED : BST_UNCHECKED), 0);
 	//	SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSortTexByWad		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bModName			? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bHeapsize			? BST_CHECKED : BST_UNCHECKED), 0);
@@ -1599,7 +1600,7 @@ BOOL CALLBACK PreferencesDlgProc (
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"16384");
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"32768");
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"65536");
-		sprintf(sz, "%d", g_qeglobals.d_savedinfo.nMapSize);
+		sprintf(sz, "%d", g_cfgEditor.MapSize);
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)sz);
 
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"16384");
@@ -1621,18 +1622,20 @@ BOOL CALLBACK PreferencesDlgProc (
 		{ 
 		case IDOK:
 			nGamma = SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0);
-			if (nGamma != g_qeglobals.d_savedinfo.fGamma * 10)
+			if (nGamma != (float)g_cfgUI.Gamma * 10)
 				bGammaCheck = true;
-			g_qeglobals.d_savedinfo.fGamma				= nGamma * 0.1;	
-			g_qeglobals.d_savedinfo.bAutosave			= SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE,			BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bLogConsole			= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,			BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bNoStipple			= SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,			BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bRadiantLights		= SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bVFEModesExclusive	= SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bBrushPrecision		= SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,		BM_GETCHECK, 0, 0);
+			g_cfgUI.Gamma = nGamma * 0.1;
+
+			g_cfgUI.Stipple = SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE, BM_GETCHECK, 0, 0);
+			g_cfgUI.RadiantLights = SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS, BM_GETCHECK, 0, 0);
+			g_cfgEditor.LogConsole = SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0);
+			g_cfgEditor.LoadLastMap = SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP, BM_GETCHECK, 0, 0);
+			g_cfgEditor.Autosave = SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0);
+			g_cfgEditor.BrushPrecision = SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0);
+			g_cfgEditor.VFEModesExclusive = SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0);
+
 			g_qeglobals.d_savedinfo.bTestAfterBSP		= SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastProject	= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bLoadLastMap		= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_GETCHECK, 0, 0);
 		//	g_qeglobals.d_savedinfo.bSortTexByWad		= SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bModName			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,			BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bHeapsize			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,		BM_GETCHECK, 0, 0);
@@ -1645,23 +1648,25 @@ BOOL CALLBACK PreferencesDlgProc (
 			GetDlgItemText(hwndDlg, IDC_EDIT_GAMEPATH, g_qeglobals.d_savedinfo.szGamePath, 255);
 			GetDlgItemText(hwndDlg, IDC_EDIT_PREFABPATH, g_qeglobals.d_savedinfo.szPrefabPath, 255);
 			GetDlgItemText(hwndDlg, IDC_EDIT_PARAMGAME, g_qeglobals.d_savedinfo.szModName, 255);
+
 			GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 2);
-			g_qeglobals.d_savedinfo.nAutosave = atoi(sz);
+			g_cfgEditor.AutosaveTime = atoi(sz);
+
 			GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 2);
-			g_cmdQueue.SetSize(atoi(sz));
-			//g_qeglobals.d_savedinfo.nUndoLevels = atoi(sz);
-			//Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
+			g_cfgEditor.UndoLevels = atoi(sz);
+			g_cmdQueue.SetSize((int)g_cfgEditor.UndoLevels);
 
 			GetDlgItemText(hwndDlg, IDC_COMBO_MAPSIZE, sz, 8);
-			g_qeglobals.d_savedinfo.nMapSize = atoi(sz);
-			if (nMapSize != g_qeglobals.d_savedinfo.nMapSize)
+			g_cfgEditor.MapSize = atoi(sz);
+
+			if (nMapSize != g_cfgEditor.MapSize)
 				g_map.RegionOff();
 			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, g_qeglobals.d_savedinfo.szHeapsize, 8);
 			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMSKILL, g_qeglobals.d_savedinfo.szSkill, 2);
 
 			if (bGammaCheck)
 				MessageBox(hwndDlg, "New Gamma setting requires a restart to take effect.", "QuakeEd 3: Preferences Info", MB_OK | MB_ICONINFORMATION);
-			if (bLogCheck != g_qeglobals.d_savedinfo.bLogConsole)
+			if (bLogCheck != (bool)g_cfgEditor.LogConsole)
 				Sys_LogFile();
 			EndDialog(hwndDlg, 1);
 			Sys_UpdateWindows(W_ALL);
@@ -1794,9 +1799,9 @@ BOOL CALLBACK ScaleDlgProc (
 	case WM_INITDIALOG:
 		SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_SCALEX));
 		// For more precise scaling
-		if (!g_qeglobals.d_savedinfo.bNoClamp)
+		if (g_qeglobals.bGridSnap)
 		{
-			g_qeglobals.d_savedinfo.bNoClamp = true;
+			g_qeglobals.bGridSnap = false;
 			g_bSnapCheck = true;
 		}
 
@@ -1825,7 +1830,7 @@ BOOL CALLBACK ScaleDlgProc (
 			// For more precise scaling
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 			EndDialog(hwndDlg, 1);
@@ -1850,7 +1855,7 @@ BOOL CALLBACK ScaleDlgProc (
 			// For more precise scaling
 			if (g_bSnapCheck)
 			{
-				g_qeglobals.d_savedinfo.bNoClamp = false;
+				g_qeglobals.bGridSnap = true;
 				g_bSnapCheck = false;
 			}
 
@@ -2021,14 +2026,14 @@ BOOL CALLBACK CamSpeedDlgProc(
 		// Sets the current logical position of the slider in a trackbar. 
 		// WPARAM: Redraw flag 
 		// LPARAM: New logical position of the slider
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)g_qeglobals.d_savedinfo.nCameraSpeed); 
+		SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)g_cfgEditor.CameraSpeed);
 		return TRUE;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDCANCEL:
-			g_qeglobals.d_savedinfo.nCameraSpeed = SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_GETPOS, 0, 0);
+			g_cfgEditor.CameraSpeed = SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_GETPOS, 0, 0);
 			ReleaseCapture();
 			EndDialog(hwndDlg, 1);
 			break;
@@ -2038,7 +2043,7 @@ BOOL CALLBACK CamSpeedDlgProc(
 	case WM_NCHITTEST:
 		if (DefWindowProc(hwndDlg, uMsg, wParam, lParam) != HTCLIENT)
 		{
-			g_qeglobals.d_savedinfo.nCameraSpeed = SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_GETPOS, 0, 0);
+			g_cfgEditor.CameraSpeed = SendDlgItemMessage(hwndDlg, IDC_SLIDER_CAMSPEED, TBM_GETPOS, 0, 0);
 			EndDialog(hwndDlg, 1);
 		}
 		return 0;

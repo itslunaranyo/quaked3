@@ -686,9 +686,6 @@ Selection::DeselectAll
 */
 void Selection::DeselectAll()
 {
-	//g_qeglobals.d_nWorkCount++;
-	g_qeglobals.d_nNumMovePoints = 0;
-
 	DeselectAllFaces();
 
 	g_qeglobals.d_selSelectMode = sel_brush;
@@ -760,7 +757,7 @@ vec3 Selection::GetMid()
 	vec3	mid;
 	vec3	mins, maxs;
 
-	if (g_qeglobals.d_savedinfo.bNoClamp)
+	if (!g_qeglobals.bGridSnap)
 	{
 		return GetTrueMid();
 	}
@@ -883,7 +880,7 @@ void Selection::Invert()
 {
 	Brush *next, *prev;
 
-	//Sys_Printf("CMD: Inverting selection...\n");
+	//Sys_Printf("Inverting selection...\n");
 
 	next = g_map.brActive.next;
 	prev = g_map.brActive.prev;
@@ -915,7 +912,7 @@ void Selection::Invert()
 	}
 
 	Selection::Changed();
-	//Sys_Printf("MSG: Done.\n");
+	//Sys_Printf("Done.\n");
 }
 
 

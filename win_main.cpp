@@ -60,7 +60,7 @@ void RunBsp (char *command)
 
 	if (g_hBSP_Process)
 	{
-		Sys_Printf("MSG: BSP is still running...\n");
+		Sys_Printf("BSP is still running...\n");
 		return;
 	}
 
@@ -106,7 +106,7 @@ void RunBsp (char *command)
 
 	Pointfile_Delete();
 
-	basepath = g_qeglobals.d_entityProject->GetKeyValue("basepath");
+	basepath = g_project.basePath;
 	if(basepath && !(*basepath))
 		basepath = NULL;
 
@@ -136,13 +136,39 @@ void RunBsp (char *command)
 	SetFocus(g_qeglobals.d_hwndCamera);
 }
 
+
+bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut)
+{
+	CHOOSECOLOR		cc;
+	static COLORREF	custom[16];
+
+	cc.lStructSize = sizeof(cc);
+	cc.hwndOwner = g_qeglobals.d_hwndMain;
+	cc.hInstance = g_qeglobals.d_hInstanceColor;	// eerie
+	cc.lpCustColors = custom;
+	cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+
+	cc.rgbResult = (int)(rgbIn.r * 255) +
+					(((int)(rgbIn.g * 255)) << 8) +
+					(((int)(rgbIn.b * 255)) << 16);
+
+	if (!ChooseColor(&cc))
+		return false;
+
+	rgbOut.r = (cc.rgbResult & 255);
+	rgbOut.g = ((cc.rgbResult >> 8) & 255);
+	rgbOut.b = ((cc.rgbResult >> 16) & 255);
+	rgbOut /= 255.0f;
+	return true;
+}
+
 /*
 =============
 DoColor
 =============
 */
 BOOL DoColor (int iIndex)
-{
+{/*
 	CHOOSECOLOR		cc;
 	static COLORREF	custom[16];
 
@@ -167,10 +193,8 @@ BOOL DoColor (int iIndex)
 	g_qeglobals.d_savedinfo.v3Colors[iIndex][1] = ((cc.rgbResult >> 8) & 255) / 255.0;
 	g_qeglobals.d_savedinfo.v3Colors[iIndex][2] = ((cc.rgbResult >> 16) & 255) / 255.0;
 
-	/*
-	** scale colors so that at least one component is at 1.0F 
-	** if this is meant to select an entity color
-	*/
+	// scale colors so that at least one component is at 1.0F 
+	// if this is meant to select an entity color
 	if (iIndex == COLOR_ENTITY)
 	{
 		float largest = 0.0F;
@@ -199,7 +223,7 @@ BOOL DoColor (int iIndex)
 	}
 
 	Sys_UpdateWindows(W_ENTITY|W_CAMERA);
-
+*/
 	return true;
 }
 
@@ -211,45 +235,45 @@ DoTheme
 */
 void DoTheme (vec3 v[])
 {
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][0] = v[0][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][1] = v[0][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][2] = v[0][2];
+	g_colors.brush[0] = v[0][0];
+	g_colors.brush[1] = v[0][1];
+	g_colors.brush[2] = v[0][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][0] = v[1][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][1] = v[1][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][2] = v[1][2];
+	g_colors.camBackground[0] = v[1][0];
+	g_colors.camBackground[1] = v[1][1];
+	g_colors.camBackground[2] = v[1][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID][0] = v[2][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID][1] = v[2][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID][2] = v[2][2];
+	g_colors.camGrid[0] = v[2][0];
+	g_colors.camGrid[1] = v[2][1];
+	g_colors.camGrid[2] = v[2][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0] = v[3][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1] = v[3][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2] = v[3][2];
+	g_colors.gridBackground[0] = v[3][0];
+	g_colors.gridBackground[1] = v[3][1];
+	g_colors.gridBackground[2] = v[3][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][0] = v[4][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][1] = v[4][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][2] = v[4][2];
+	g_colors.gridBlock[0] = v[4][0];
+	g_colors.gridBlock[1] = v[4][1];
+	g_colors.gridBlock[2] = v[4][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR][0] = v[5][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR][1] = v[5][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR][2] = v[5][2];
+	g_colors.gridMajor[0] = v[5][0];
+	g_colors.gridMajor[1] = v[5][1];
+	g_colors.gridMajor[2] = v[5][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR][0] = v[6][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR][1] = v[6][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR][2] = v[6][2];
+	g_colors.gridMinor[0] = v[6][0];
+	g_colors.gridMinor[1] = v[6][1];
+	g_colors.gridMinor[2] = v[6][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][0] = v[7][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][1] = v[7][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][2] = v[7][2];
+	g_colors.gridText[0] = v[7][0];
+	g_colors.gridText[1] = v[7][1];
+	g_colors.gridText[2] = v[7][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][0] = v[8][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][1] = v[8][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][2] = v[8][2];
+	g_colors.camGrid[0] = v[8][0];
+	g_colors.camGrid[1] = v[8][1];
+	g_colors.camGrid[2] = v[8][2];
 
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][0] = v[9][0];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][1] = v[9][1];
-	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][2] = v[9][2];
+	g_colors.gridText[0] = v[9][0];
+	g_colors.gridText[1] = v[9][1];
+	g_colors.gridText[2] = v[9][2];
 
 	Sys_UpdateWindows(W_SCENE|W_TEXTURE);
 }
@@ -772,10 +796,10 @@ void Sys_UpdateGridStatusBar ()
 
 	sprintf(gridstatus, "Grid Size: %d  Grid Snap: %s  Tool: %s  Texture Lock: %s  Cubic Clip: %d", 
 			g_qeglobals.d_nGridSize, 
-			g_qeglobals.d_savedinfo.bNoClamp ? "OFF" : "On", 
+			g_qeglobals.bGridSnap ? "On" : "OFF", 
 			g_qeglobals.d_tools.back()->modal ? g_qeglobals.d_tools.back()->name : "None",
 			g_qeglobals.d_bTextureLock ? "On" : "Off",
-			g_qeglobals.d_savedinfo.nCubicScale);	// sikk - Cubic Clipping
+			(int)g_cfgEditor.CubicScale);	// sikk - Cubic Clipping
 	Sys_Status(gridstatus, 1);
 }
 
@@ -1109,6 +1133,106 @@ MAIN WINDOW
 
 bool	g_bHaveQuit;
 
+bool CommandHandlerFilters(int cmd)
+{
+	switch (cmd)
+	{
+	case ID_VIEW_SHOWAXIS:	// sikk - Show Axis
+		g_cfgUI.ShowAxis ^= true;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWBLOCKS:
+		g_cfgUI.ShowBlocks ^= true;
+		Sys_UpdateWindows(W_XY);
+		return true;
+	case ID_VIEW_SHOWCAMERAGRID:	// sikk - Camera Grid
+		g_cfgUI.ShowCameraGrid ^= true;
+		Sys_UpdateWindows(W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWCOORDINATES:
+		g_cfgUI.ShowCoordinates ^= true;
+		Sys_UpdateWindows(W_XY | W_Z);
+		return true;
+	case ID_VIEW_SHOWLIGHTRADIUS:	// sikk - Show Light Radius
+		g_cfgUI.ShowLightRadius ^= true;
+		Sys_UpdateWindows(W_XY);
+		return true;
+	case ID_VIEW_SHOWMAPBOUNDARY:	// sikk - Show Map Boundary Box
+		g_cfgUI.ShowMapBoundary ^= true;
+		Sys_UpdateWindows(W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWNAMES:
+		g_cfgUI.ShowNames ^= true;
+		Sys_UpdateWindows(W_XY);
+		return true;
+	case ID_VIEW_SHOWSIZEINFO:
+		g_cfgUI.ShowSizeInfo ^= true;
+		Sys_UpdateWindows(W_XY);
+		return true;
+	case ID_VIEW_SHOWWORKZONE:
+		g_cfgUI.ShowWorkzone ^= true;
+		Sys_UpdateWindows(W_XY);
+		return true;
+	case ID_VIEW_SHOWANGLES:
+		g_cfgUI.ShowAngles ^= true;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWPATH:
+		g_cfgUI.ShowPaths ^= true;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+
+	case ID_VIEW_SHOWCLIP:
+		g_cfgUI.ViewFilter ^= BFL_CLIP;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWPOINTENTS:
+		g_cfgUI.ViewFilter ^= EFL_POINTENTITY;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWBRUSHENTS:
+		g_cfgUI.ViewFilter ^= EFL_BRUSHENTITY;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWFUNCWALL:
+		g_cfgUI.ViewFilter ^= EFL_FUNCWALL;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWLIGHTS:
+		g_cfgUI.ViewFilter ^= EFL_LIGHT;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWSKY:
+		g_cfgUI.ViewFilter ^= BFL_SKY;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWWATER:
+		g_cfgUI.ViewFilter ^= BFL_LIQUID;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWWORLD:
+		g_cfgUI.ViewFilter ^= EFL_WORLDSPAWN;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWHINT:
+		g_cfgUI.ViewFilter ^= BFL_HINT;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWDETAIL:
+		g_cfgUI.ViewFilter ^= EFL_DETAIL;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWMONSTERS:
+		g_cfgUI.ViewFilter ^= EFL_MONSTER;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	case ID_VIEW_SHOWTRIGGERS:
+		g_cfgUI.ViewFilter ^= EFL_TRIGGER;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return true;
+	}
+	return false;
+}
 
 /*
 ==============
@@ -1125,6 +1249,9 @@ LONG WINAPI CommandHandler (
 {
 	HMENU hMenu = GetMenu(hWnd);
 	int	nBandIndex;
+
+	if (CommandHandlerFilters(LOWORD(wParam)))
+		return TRUE;
 
 	switch (LOWORD(wParam))
 	{
@@ -1152,7 +1279,7 @@ LONG WINAPI CommandHandler (
 		case ID_FILE_SAVEAS:
 			SaveAsDialog();
 			break;
-
+			/*
 		case ID_FILE_NEWPROJECT:	// sikk - New Project Dialog
 			NewProjectDialog();
 			break;
@@ -1164,13 +1291,10 @@ LONG WINAPI CommandHandler (
 		case ID_FILE_EDITPROJECT:	// sikk - Project Settings Dialog
 			DoProject(false);
 			break;
-
+			*/
 		case ID_FILE_IMPORTMAP:	// sikk - Import Map Dialog
 			ImportDialog();
 			break;
-		//case ID_FILE_IMPORTPREFAB:	// sikk - Import Prefab Dialog
-		//	ImportDialog(false);
-		//	break;
 
 		case ID_FILE_POINTFILE:
 			if (g_qeglobals.d_nPointfileDisplayList)
@@ -1178,11 +1302,7 @@ LONG WINAPI CommandHandler (
 			else
 				Pointfile_Check();
 			break;
-		/*
-		case ID_FILE_PRINTXY:
-			WXY_Print();
-			break;
-		*/
+
 		case IDMRU + 1:
 		case IDMRU + 2:
 		case IDMRU + 3:
@@ -1238,7 +1358,8 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_EDIT_PREFERENCES:	// sikk - Preferences Dialog
-			DoPreferences();
+			//DoPreferences();
+			DoConfigWindow();
 			break;
 
 //===================================
@@ -1336,19 +1457,6 @@ LONG WINAPI CommandHandler (
 // <---sikk
 
 		case ID_VIEW_CAMERA:	// sikk - Toggle Camera View
-			/*
-			if (IsWindowVisible(g_qeglobals.d_hwndCamera))
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndCamera)
-					BringWindowToTop(g_qeglobals.d_hwndCamera);
-				else
-					ShowWindow(g_qeglobals.d_hwndCamera, SW_HIDE);
-			}
-			else
-			{
-				ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
-				BringWindowToTop(g_qeglobals.d_hwndCamera);
-			}*/
 			g_qeglobals.d_wndCamera->Toggle();
 			break;
 		
@@ -1362,88 +1470,16 @@ LONG WINAPI CommandHandler (
 			QE_SetInspectorMode(W_TEXTURE);
 			break;
 
-// sikk---> Multiple Orthographic Views
 		case ID_VIEW_TOGGLE_XY:
-			/*
-			if (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]))
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndXYZ[0])
-					BringWindowToTop(g_qeglobals.d_hwndXYZ[0]);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndXYZ[0], SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_XYZ[0] = false;
-				}
-			}
-			else
-			{
-				ShowWindow(g_qeglobals.d_hwndXYZ[0], SW_SHOW);
-				BringWindowToTop(g_qeglobals.d_hwndXYZ[0]);
-				g_qeglobals.d_savedinfo.bShow_XYZ[0] = true;
-			}*/
 			g_qeglobals.d_wndGrid[0]->Toggle();
 			break;
-
-		case ID_VIEW_TOGGLE_XZ:	// Saved
-			/*
-			if (IsWindowVisible(g_qeglobals.d_hwndXYZ[2]))
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndXYZ[2])
-					BringWindowToTop(g_qeglobals.d_hwndXYZ[2]);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_XYZ[2] = false;
-				}
-			}
-			else
-			{
-				ShowWindow(g_qeglobals.d_hwndXYZ[2], SW_SHOW);
-				BringWindowToTop(g_qeglobals.d_hwndXYZ[2]);
-				g_qeglobals.d_savedinfo.bShow_XYZ[2] = true;
-			}*/
+		case ID_VIEW_TOGGLE_XZ:
 			g_qeglobals.d_wndGrid[2]->Toggle();
 			break;
-
-		case ID_VIEW_TOGGLE_YZ:	// Saved
-			/*
-			if (IsWindowVisible(g_qeglobals.d_hwndXYZ[1]))
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndXYZ[1])
-					BringWindowToTop(g_qeglobals.d_hwndXYZ[1]);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_XYZ[1] = false;
-				}
-			}
-			else
-			{
-				ShowWindow(g_qeglobals.d_hwndXYZ[1], SW_SHOW);
-				BringWindowToTop(g_qeglobals.d_hwndXYZ[1]);
-				g_qeglobals.d_savedinfo.bShow_XYZ[1] = true;
-			}*/
+		case ID_VIEW_TOGGLE_YZ:
 			g_qeglobals.d_wndGrid[1]->Toggle();
 			break;
-// <---sikk
-		case ID_VIEW_TOGGLE_Z:	// Saved
-			/*
-			if (IsWindowVisible(g_qeglobals.d_hwndZ))
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndZ)
-					BringWindowToTop(g_qeglobals.d_hwndZ);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndZ, SW_HIDE);
-					g_qeglobals.d_savedinfo.bShow_Z = false;
-				}
-			}
-			else
-			{
-				ShowWindow(g_qeglobals.d_hwndZ, SW_SHOW);
-				BringWindowToTop(g_qeglobals.d_hwndZ);
-				g_qeglobals.d_savedinfo.bShow_Z = true;
-			}*/
+		case ID_VIEW_TOGGLE_Z:
 			g_qeglobals.d_wndZ->Toggle();
 			break;
 
@@ -1523,125 +1559,23 @@ LONG WINAPI CommandHandler (
 
 // sikk---> Cubic Clipping
 		case ID_VIEW_CUBICCLIP:
-			g_qeglobals.d_savedinfo.bCubicClip ^= true;
+			g_cfgEditor.CubicClip ^= true;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_CUBICCLIPZOOMIN:
-			g_qeglobals.d_savedinfo.nCubicScale--;
-			if (g_qeglobals.d_savedinfo.nCubicScale < 1)
-				g_qeglobals.d_savedinfo.nCubicScale = 1;
+			g_cfgEditor.CubicScale = max((int)g_cfgEditor.CubicScale - 1, 1);
 			Sys_UpdateGridStatusBar();
 			Sys_UpdateWindows(W_CAMERA);
 			break;
 
 		case ID_VIEW_CUBICCLIPZOOMOUT:
-			g_qeglobals.d_savedinfo.nCubicScale++;
-			if (g_qeglobals.d_savedinfo.nCubicScale > 64)
-				g_qeglobals.d_savedinfo.nCubicScale = 64;
+			g_cfgEditor.CubicScale = min((int)g_cfgEditor.CubicScale + 1, 64);
 			Sys_UpdateGridStatusBar();
 			Sys_UpdateWindows(W_CAMERA);
 			break;
 // <---sikk
 
-		case ID_VIEW_SHOWAXIS:	// sikk - Show Axis
-			g_qeglobals.d_savedinfo.bShow_Axis ^= true;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWBLOCKS:
-			g_qeglobals.d_savedinfo.bShow_Blocks ^= true;
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWCAMERAGRID:	// sikk - Camera Grid
-			g_qeglobals.d_savedinfo.bShow_CameraGrid ^= true;
-			Sys_UpdateWindows(W_CAMERA);
-			break;
-		case ID_VIEW_SHOWCOORDINATES:
-			g_qeglobals.d_savedinfo.bShow_Coordinates ^= true;
-			Sys_UpdateWindows(W_XY | W_Z);
-			break;
-		case ID_VIEW_SHOWLIGHTRADIUS:	// sikk - Show Light Radius
-			g_qeglobals.d_savedinfo.bShow_LightRadius ^= true;
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWMAPBOUNDARY:	// sikk - Show Map Boundary Box
-			g_qeglobals.d_savedinfo.bShow_MapBoundary ^= true;
-			Sys_UpdateWindows(W_CAMERA);
-			break;
-		case ID_VIEW_SHOWNAMES:
-			g_qeglobals.d_savedinfo.bShow_Names ^= true;
-			//g_map.BuildBrushData();
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWSIZEINFO:
-			g_qeglobals.d_savedinfo.bShow_SizeInfo ^= true;
-			//g_map.BuildBrushData();
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWVIEWNAME:
-			g_qeglobals.d_savedinfo.bShow_Viewname ^= true;
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWWORKZONE:
-			g_qeglobals.d_savedinfo.bShow_Workzone ^= true;
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_VIEW_SHOWANGLES:
-			g_qeglobals.d_savedinfo.bShow_Angles ^= true;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWPATH:
-			g_qeglobals.d_savedinfo.bShow_Paths ^= true;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
 
-		case ID_VIEW_SHOWCLIP:
-			g_qeglobals.d_savedinfo.nExclude ^= BFL_CLIP;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWPOINTENTS:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_POINTENTITY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWBRUSHENTS:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_BRUSHENTITY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWFUNCWALL:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_FUNCWALL;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWLIGHTS:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_LIGHT;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWSKY:
-			g_qeglobals.d_savedinfo.nExclude ^= BFL_SKY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWWATER:
-			g_qeglobals.d_savedinfo.nExclude ^= BFL_LIQUID;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWWORLD:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_WORLDSPAWN;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWHINT:
-			g_qeglobals.d_savedinfo.nExclude ^= BFL_HINT;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWDETAIL:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_DETAIL;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWMONSTERS:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_MONSTER;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWTRIGGERS:
-			g_qeglobals.d_savedinfo.nExclude ^= EFL_TRIGGER;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
 
 		case ID_VIEW_HIDESHOW_HIDESELECTED:
 			Modify_HideSelected();
@@ -1750,7 +1684,7 @@ LONG WINAPI CommandHandler (
 			if (dynamic_cast<ClipTool*>(g_qeglobals.d_tools.back()))
 				delete g_qeglobals.d_tools.back();
 			else
-				g_qeglobals.d_clipTool = new ClipTool();
+				new ClipTool();
 			break;
 
 		case ID_SELECTION_CONNECT:
@@ -1855,7 +1789,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_GRID_SNAPTOGRID:
-			g_qeglobals.d_savedinfo.bNoClamp ^= true;
+			g_qeglobals.bGridSnap ^= true;
 			Sys_UpdateGridStatusBar();
 			break;
 
@@ -1910,15 +1844,23 @@ LONG WINAPI CommandHandler (
 			DoTexturesPopup();
 			break;
 
-		case ID_TEXTURES_WIREFRAME:
-		case ID_TEXTURES_FLATSHADE:
-		case ID_TEXTURES_NEAREST:
-		case ID_TEXTURES_NEARESTMIPMAP:
-		case ID_TEXTURES_LINEAR:
-		case ID_TEXTURES_BILINEAR:
-		case ID_TEXTURES_BILINEARMIPMAP:
-		case ID_TEXTURES_TRILINEAR:
-			Texture_SetMode(LOWORD(wParam));
+		case ID_DRAWMODE_WIREFRAME:
+			g_cfgUI.DrawMode = cd_wire;
+			Textures::SetDrawMode(cd_wire);
+			g_map.BuildBrushData();
+			Sys_UpdateWindows(W_CAMERA);
+			break;
+		case ID_DRAWMODE_FLATSHADE:
+			g_cfgUI.DrawMode = cd_solid;
+			Textures::SetDrawMode(cd_solid);
+			g_map.BuildBrushData();
+			Sys_UpdateWindows(W_CAMERA);
+			break;
+		case ID_DRAWMODE_TEXTURED:
+			g_cfgUI.DrawMode = cd_texture;
+			Textures::SetDrawMode(cd_texture);
+			g_map.BuildBrushData();
+			Sys_UpdateWindows(W_CAMERA);
 			break;
 
 		case CMD_TEXTUREWAD:
@@ -1998,6 +1940,7 @@ LONG WINAPI CommandHandler (
 			QE_SetInspectorMode(W_CONSOLE);
 			break;
 
+			/*
 // sikk---> Color Themes
 // I will continue to add themes as I am able to get the colors used by other popular 3D apps
 		case ID_THEMES_QE4:
@@ -2073,7 +2016,6 @@ LONG WINAPI CommandHandler (
 				DoTheme(v);
 			}
 			break;
-
 		case ID_COLORS_VIEWNAME:
 			DoColor(COLOR_VIEWNAME);
 			Sys_UpdateWindows(W_XY);
@@ -2130,7 +2072,7 @@ LONG WINAPI CommandHandler (
 			DoColor(COLOR_TEXTURETEXT);
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
-
+			*/
 		case ID_MISC_NEXTLEAKSPOT:
 			Pointfile_Next();
 			break;
@@ -2139,15 +2081,18 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_MISC_SELECTENTITYCOLOR:
+			g_qeglobals.d_wndEntity->SelectEntityColor();
+			/*
 			if (DoColor(COLOR_ENTITY) == TRUE)
 			{
 				Modify_SetColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY]);
 				Sys_UpdateWindows(W_CAMERA|W_ENTITY);
 			}
+			*/
 			break;
 
 		case ID_MISC_TESTMAP:
-			DoTestMap();
+			//DoTestMap();
 			break;
 
 //===================================
@@ -2306,6 +2251,7 @@ LONG WINAPI WMain_WndProc (
 	case WM_DESTROY:
 		SaveMruInReg(g_qeglobals.d_lpMruMenu, QE3_WIN_REGISTRY_MRU);
 		DeleteMruMenu(g_qeglobals.d_lpMruMenu);
+		g_qeconfig.Save();
 		PostQuitMessage(0);
 		KillTimer(hWnd, QE_TIMER0);
 		return 0;
@@ -2358,7 +2304,6 @@ LONG WINAPI WMain_WndProc (
 		// <---sikk
 
 		// FIXME: is this right?
-		strcpy(g_qeglobals.d_savedinfo.szLastMap, g_map.name); // sikk - save current map name for Load Last Map option
 		SaveRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, sizeof(g_qeglobals.d_savedinfo));
 
 		time(&lTime);	// sikk - Print current time for logging purposes
@@ -2461,7 +2406,7 @@ void WMain_Create ()
 	if (!g_qeglobals.d_hwndMain)
 		Error("Could not create Main Window.");
 
-	// create a timer so that we can count brushes
+	// autosave timer
 	SetTimer(g_qeglobals.d_hwndMain, QE_TIMER0, 1000, NULL);
 
 #ifdef _DEBUG
@@ -2497,15 +2442,16 @@ void WMain_Create ()
 	{
 		// fill in new defaults
 		g_qeglobals.d_savedinfo.nSize				= sizeof(g_qeglobals.d_savedinfo);
-		g_qeglobals.d_savedinfo.nTexMenu			= ID_TEXTURES_TRILINEAR;
+		g_qeglobals.d_savedinfo.nRenderMode			= ID_TEXTURES_TRILINEAR;
 
+		// all 5 obsolete:
 		g_qeglobals.d_savedinfo.bShow_XYZ[0]		= true;	// lunaran - grid view reunification
 		g_qeglobals.d_savedinfo.bShow_XYZ[1]		= false;
 		g_qeglobals.d_savedinfo.bShow_XYZ[2]		= false;
 		g_qeglobals.d_savedinfo.bShow_XYZ[3]		= false;
 		g_qeglobals.d_savedinfo.bShow_Z				= true;		// Saved Window Toggle
 
-		g_qeglobals.d_savedinfo.nExclude			= BFL_HIDDEN;
+		g_qeglobals.d_savedinfo.nViewFilter			= BFL_HIDDEN;
 		g_qeglobals.d_savedinfo.bShow_Axis			= true;		// sikk - Show Axis
 		g_qeglobals.d_savedinfo.bShow_Blocks		= false;
 		g_qeglobals.d_savedinfo.bShow_CameraGrid	= true;		// sikk - Show Camera Grid
@@ -2516,7 +2462,6 @@ void WMain_Create ()
 		g_qeglobals.d_savedinfo.bShow_SizeInfo		= true;
 		g_qeglobals.d_savedinfo.bShow_Viewname		= true;		// sikk - Show View Name
 		g_qeglobals.d_savedinfo.bShow_Workzone		= false;
-		g_qeglobals.d_savedinfo.bNoClamp			= false;
 		g_qeglobals.d_savedinfo.bScaleLockX			= false;
 		g_qeglobals.d_savedinfo.bScaleLockY			= false;
 		g_qeglobals.d_savedinfo.bScaleLockZ			= false;
@@ -2537,33 +2482,33 @@ void WMain_Create ()
 // <---sikk
 		for (i = 0; i < 3; i++)
 		{
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][i]		= 0.0f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERABACK][i]	= 0.25f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID][i]	= 0.2f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][i]		= 1.0f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR][i]	= 0.5f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR][i]	= 0.75f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT][i]		= 0.0f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDARY][i]	= 0.0f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][i]	= 0.25f;
-			g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTURETEXT][i]	= 0.0f;
+			g_colors.brush[i]		= 0.0f;
+			g_colors.camBackground[i]	= 0.25f;
+			g_colors.camGrid[i]	= 0.2f;
+			g_colors.gridBackground[i]		= 1.0f;
+			g_colors.gridMajor[i]	= 0.5f;
+			g_colors.gridMinor[i]	= 0.75f;
+			g_colors.gridText[i]		= 0.0f;
+			g_colors.camGrid[i]	= 0.0f;
+			g_colors.texBackground[i]	= 0.25f;
+			g_colors.texText[i]	= 0.0f;
 		}
 
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER][0]		= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER][1]		= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER][2]		= 1.0f;
+		g_colors.tool[0]		= 0.0f;
+		g_colors.tool[1]		= 0.0f;
+		g_colors.tool[2]		= 1.0f;
 
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][0]	= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][1]	= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBLOCK][2]	= 1.0f;
+		g_colors.gridBlock[0]	= 0.0f;
+		g_colors.gridBlock[1]	= 0.0f;
+		g_colors.gridBlock[2]	= 1.0f;
 
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0]	= 1.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1]	= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2]	= 0.0f;
+		g_colors.selection[0]	= 1.0f;
+		g_colors.selection[1]	= 0.0f;
+		g_colors.selection[2]	= 0.0f;
 
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][0]		= 0.5f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][1]		= 0.0f;
-		g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][2]		= 0.75f;
+		g_colors.gridText[0]		= 0.5f;
+		g_colors.gridText[1]		= 0.0f;
+		g_colors.gridText[2]		= 0.75f;
 
 		// sikk - Set window positions to QE3 Default
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_WINDOW_QE3DEFAULT, 0);
@@ -2571,50 +2516,51 @@ void WMain_Create ()
 
 	if ((hMenu = GetMenu(g_qeglobals.d_hwndMain)) != 0)
 	{
+		QE_UpdateCommandUIFilters(hMenu);
+		// by default all of these are checked because that's how they're defined in the menu editor
 		/*
-		** by default all of these are checked because that's how they're defined in the menu editor
-		*/
-		if (!g_qeglobals.d_savedinfo.bShow_Axis)	// sikk - Show Axis
+		if (!g_cfgUI.ShowAxis)	// sikk - Show Axis
 			CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.bShow_Blocks)	// sikk - Show Blocks moved to savedinfo_t
+		if (g_cfgUI.ShowBlocks)	// sikk - Show Blocks moved to savedinfo_t
 			CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS, MF_CHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_CameraGrid)	// sikk - Show Camera Grid
+		if (!g_cfgUI.ShowCameraGrid)	// sikk - Show Camera Grid
 			CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID, MF_UNCHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_Coordinates)
+		if (!g_cfgUI.ShowCoordinates)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.bShow_LightRadius)	// sikk - Show Light Radius
+		if (g_cfgUI.ShowLightRadius)	// sikk - Show Light Radius
 			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, MF_CHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_MapBoundary)	// sikk - Show Map Boundary
+		if (!g_cfgUI.ShowMapBoundary)	// sikk - Show Map Boundary
 			CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, MF_UNCHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_Names)
+		if (!g_cfgUI.ShowNames)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, MF_UNCHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_SizeInfo)
+		if (!g_cfgUI.ShowSizeInfo)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO, MF_UNCHECKED);
 		if (!g_qeglobals.d_savedinfo.bShow_Viewname)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.bShow_Workzone)	// sikk - Show Workzone moved to savedinfo_t
+		if (g_cfgUI.ShowWorkzone)	// sikk - Show Workzone moved to savedinfo_t
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, MF_CHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_Angles)
+		if (!g_cfgUI.ShowAngles)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, MF_UNCHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_Paths)
+		if (!g_cfgUI.ShowPaths)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWPATH, MF_UNCHECKED);
 
-		if (g_qeglobals.d_savedinfo.nExclude & EFL_LIGHT)
+		if (g_cfgUI.ViewFilter & EFL_LIGHT)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EFL_POINTENTITY)
+		if (g_cfgUI.ViewFilter & EFL_POINTENTITY)
 			CheckMenuItem(hMenu, ID_VIEW_ENTITY, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & BFL_LIQUID)
+		if (g_cfgUI.ViewFilter & BFL_LIQUID)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EFL_WORLDSPAWN)
+		if (g_cfgUI.ViewFilter & EFL_WORLDSPAWN)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & BFL_CLIP)
+		if (g_cfgUI.ViewFilter & BFL_CLIP)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & BFL_HINT)
+		if (g_cfgUI.ViewFilter & BFL_HINT)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EFL_DETAIL)
+		if (g_cfgUI.ViewFilter & EFL_DETAIL)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.bNoClamp)
+		if (!g_qeglobals.bGridSnap)
 			CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, MF_UNCHECKED);
+		*/
 
 		if (g_qeglobals.d_savedinfo.bScaleLockX)
 		{
@@ -2632,10 +2578,10 @@ void WMain_Create ()
 			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKZ, (g_qeglobals.d_savedinfo.bScaleLockZ ? (LPARAM)true : (LPARAM)false));
 		}
 
-		if (g_qeglobals.d_savedinfo.bCubicClip)
+		if (g_cfgEditor.CubicClip)
 		{
 			CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, MF_CHECKED);
-			SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? (LPARAM)true : (LPARAM)false));
+			SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)true : (LPARAM)false));
 		}
 	}
 
@@ -2756,14 +2702,16 @@ int WINAPI WinMain (
 
 	//g_unMouseWheel = GetMouseWheelMsg();	// sikk - Mousewheel Handling
 
-	Sys_Printf("MSG: Entering message loop...\n");
+	Sys_Printf("Entering message loop...\n");
 
 //	oldtime = Sys_DoubleTime();
 	Sys_DeltaTime();
 
-	// sikk - Load Last Map if option is set in Preferences
-	if (g_qeglobals.d_savedinfo.bLoadLastMap && strcmp(g_qeglobals.d_savedinfo.szLastMap, "unnamed.map"))
-		g_map.LoadFromFile(g_qeglobals.d_savedinfo.szLastMap);
+	{
+		char szLastMap[_MAX_PATH];
+		if (g_cfgEditor.LoadLastMap && GetMenuItem(g_qeglobals.d_lpMruMenu, 0, false, szLastMap, _MAX_PATH))
+			g_map.LoadFromFile(szLastMap);
+	}
 
 #ifndef _DEBUG
 	}
@@ -2773,7 +2721,7 @@ int WINAPI WinMain (
 		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Initialization Exception", MB_OK | MB_ICONEXCLAMATION);
 
 		// close logging if necessary
-		g_qeglobals.d_savedinfo.bLogConsole = false;
+		g_cfgEditor.LogConsole = false;
 		Sys_LogFile();
 
 		exit(1);
@@ -2838,7 +2786,7 @@ int WINAPI WinMain (
 			MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
 
 			// close logging if necessary
-			g_qeglobals.d_savedinfo.bLogConsole = false;
+			g_cfgEditor.LogConsole = false;
 			Sys_LogFile();
 
 			exit(1);

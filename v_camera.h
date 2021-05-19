@@ -7,14 +7,6 @@
 // window system independent camera view code
 #include "v_view.h"
 
-typedef enum
-{
-	cd_wire,
-	cd_solid,
-	cd_texture,
-	cd_blend
-} camera_draw_mode;
-
 class CameraView : public View
 {
 public:
@@ -24,7 +16,6 @@ public:
 	vec3	forward, right, up;	// move matrix
 	vec3	vup, vpn, vright;	// view matrix
 	vec3	mpUp, mpRight;		// mouse manipulation plane
-	camera_draw_mode	draw_mode;
 	int		nCamButtonState;
 
 	void MouseDown (int x, int y, int buttons);

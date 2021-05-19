@@ -43,6 +43,7 @@ public:
 	void SetPosition(int l, int t, int r, int b, bool show);
 
 	void SetTitle(const char* title);
+	bool Open();
 	void Toggle();
 	void Show();
 	void Hide();

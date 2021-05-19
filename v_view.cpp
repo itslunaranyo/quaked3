@@ -46,7 +46,7 @@ void View::DrawPathLines()
 	char		*ent_target[MAX_MAP_ENTITIES];
 	Entity		*ent_entity[MAX_MAP_ENTITIES];
 
-	if (!g_qeglobals.d_savedinfo.bShow_Paths)
+	if (!g_cfgUI.ShowPaths)
 		return;
 
 	num_entities = 0;

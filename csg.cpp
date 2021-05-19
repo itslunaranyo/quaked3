@@ -486,7 +486,7 @@ void CSG::Subtract ()
 	std::vector<Brush*> brCarved;
 	CmdAddRemove *cmdAR = new CmdAddRemove();
 
-	Sys_Printf("CMD: CSG Subtracting...\n");
+	Sys_Printf("CSG Subtracting...\n");
 
 	if (!Selection::HasBrushes())
 	{
@@ -594,7 +594,7 @@ void CSG::Subtract ()
 
 	g_cmdQueue.Complete(cmdAR);
 
-	Sys_Printf("MSG: Done. (created %d fragment%s out of %d brush%s)\n", 
+	Sys_Printf("Done. (created %d fragment%s out of %d brush%s)\n", 
 				numfragments, (numfragments == 1) ? "" : "s",
 				numbrushes, (numbrushes == 1) ? "" : "es");
 	Sys_UpdateWindows(W_SCENE);
@@ -607,7 +607,7 @@ CSG::Hollow
 */
 void CSG::Hollow()
 {
-	Sys_Printf("CMD: CSG Hollowing...\n");
+	Sys_Printf("CSG Hollowing...\n");
 
 	if (!Selection::HasBrushes())
 	{
@@ -630,7 +630,7 @@ CSG::Merge
 */
 void CSG::Merge ()
 {
-	Sys_Printf("CMD: CSG Merging...\n");
+	Sys_Printf("CSG Merging...\n");
 
 	if (!CSG_CanMerge())
 		return;
@@ -640,6 +640,6 @@ void CSG::Merge ()
 	g_cmdQueue.Complete(cmdM);
 	//cmdM->Select();
 
-	Sys_Printf("MSG: Merge done.\n");
+	Sys_Printf("Merge done.\n");
 	Sys_UpdateWindows(W_SCENE);
 }

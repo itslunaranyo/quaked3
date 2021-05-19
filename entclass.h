@@ -15,7 +15,7 @@ public:
 	EntClass(const EntClass& other);
 	~EntClass();
 
-	char			*name;
+	char			name[64];
 	typedef enum {
 		ECF_POINT	= 0x0001,
 		ECF_BRUSH	= 0x0002,
@@ -47,6 +47,7 @@ public:
 private:
 	static void		ScanFile(const char *filename);
 	static EntClass	*InitFromText(char *text);
+	static EntClass	*InitFromTextAndAdd(char *text);
 	static EntClass *CreateOppositeForm(EntClass* e);
 
 	static std::vector<EntClass*> pointclasses;

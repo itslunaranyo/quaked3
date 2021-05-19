@@ -124,7 +124,8 @@ bool Brush::IsFiltered() const
 	if (!owner)
 		return true;		// during construction
 
-	if (g_qeglobals.d_savedinfo.nExclude & (showFlags | owner->eclass->showFlags) )
+	//if (g_qeglobals.d_savedinfo.nViewFilter & (showFlags | owner->eclass->showFlags) )
+	if (g_cfgUI.ViewFilter & (showFlags | owner->eclass->showFlags) )
 		return true;
 
 	return false;
@@ -382,7 +383,7 @@ Brush::SnapPlanePoints
 */
 void Brush::SnapPlanePoints()
 {
-	if (g_qeglobals.d_savedinfo.bNoClamp)
+	if (!g_qeglobals.bGridSnap)
 		return;
 
 	for (Face *f = faces; f; f = f->fnext)
@@ -764,22 +765,21 @@ void Brush::Draw ()
     Texture *tprev = 0;
 	winding_t  *w;
 
-//	if (owner->IsPoint() && g_qeglobals.d_vCamera.draw_mode == cd_texture)
+//	if (owner->IsPoint() && g_cfgUI.DrawMode == cd_texture)
 //		glDisable (GL_TEXTURE_2D);
 
 	if (owner->IsPoint())
 	{
-		//if (!(g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) && (owner->eclass->showFlags & ECLASS_ANGLE))
 		if (owner->eclass->form & EntClass::ECF_ANGLE)
 			DrawFacingAngle();
 
-		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
+		if (g_cfgUI.RadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
 		{
 			DrawLight();
 			return;
 		}
 
-		if (g_qeglobals.d_vCamera.draw_mode == cd_texture)
+		if (g_cfgUI.DrawMode == cd_texture)
 			glDisable(GL_TEXTURE_2D);
 	}
 
@@ -792,7 +792,7 @@ void Brush::Draw ()
 			continue;	// freed face
 
 		assert(face->texdef.tex);
-		if (face->texdef.tex != tprev && g_qeglobals.d_vCamera.draw_mode == cd_texture)
+		if (face->texdef.tex != tprev && g_cfgUI.DrawMode == cd_texture)
 		{
 			// set the texture for this face
 			tprev = face->texdef.tex;
@@ -807,14 +807,14 @@ void Brush::Draw ()
 
 	    for (i = 0; i < w->numpoints; i++)
 		{
-			if (g_qeglobals.d_vCamera.draw_mode == cd_texture)
+			if (g_cfgUI.DrawMode == cd_texture)
 				glTexCoord2fv(&w->points[i].s);
 			glVertex3fv(&w->points[i].point[0]);
 		}
 		glEnd();
 	}
 
-	if (owner->IsPoint() && g_qeglobals.d_vCamera.draw_mode == cd_texture)
+	if (owner->IsPoint() && g_cfgUI.DrawMode == cd_texture)
 		glEnable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -834,7 +834,7 @@ void Brush::DrawXY (int nViewType)
 
 	if (owner->IsPoint())
 	{
-		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
+		if (g_cfgUI.RadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
 		{
  			vec3	vCorners[4];
 			vec3	vTop, vBottom;
@@ -908,7 +908,7 @@ void Brush::DrawXY (int nViewType)
 	}
 
 	// optionally add a text label
-	if (g_qeglobals.d_savedinfo.bShow_Names)
+	if (g_cfgUI.ShowNames)
 		DrawEntityName();
 }
 
@@ -1002,7 +1002,7 @@ void Brush::DrawEntityName ()
 		glEnd();
 	}
 
-	if (g_qeglobals.d_savedinfo.bShow_Names)
+	if (g_cfgUI.ShowNames)
 	{
 		name = owner->GetKeyValue("classname");
 // sikk---> Draw Light Styles
@@ -1214,14 +1214,14 @@ Brush::Write
 void Brush::Write(std::ostream& out)
 {
 	int		i;
-	char   *pname;
-	Face *fa;
+	char	*pname;
+	Face	*fa;
 
 	out << "{\n";
 	for (fa = faces; fa; fa = fa->fnext)
 	{
 		for (i = 0; i < 3; i++)
-			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision
+			if (g_cfgEditor.BrushPrecision)	// sikk - Brush Precision
 				out << "( " << fa->plane.pts[i][0] << " " << fa->plane.pts[i][1] << " " << fa->plane.pts[i][2] << " ) ";
 			else
 				out << "( " << (int)fa->plane.pts[i][0] << " " << (int)fa->plane.pts[i][1] << " " << (int)fa->plane.pts[i][2] << " ) ";

@@ -37,7 +37,7 @@ void Pointfile_Next ()
 
 	if (s_check_point >= s_num_points - 2)
 	{
-		Sys_Printf("MSG: End of pointfile.\n");
+		Sys_Printf("End of pointfile.\n");
 		return;
 	}
 	s_check_point++;
@@ -68,7 +68,7 @@ void Pointfile_Prev ()
 
 	if (s_check_point == 0)
 	{
-		Sys_Printf("MSG: Beginning of pointfile.\n");
+		Sys_Printf("Beginning of pointfile.\n");
 		return;
 	}
 	s_check_point--;
@@ -105,7 +105,7 @@ bool Pointfile_Check ()
 	if (!f)
 		return false;
 
-	Sys_Printf("CMD: Reading pointfile %s\n", name);
+	Sys_Printf("Reading pointfile %s\n", name);
 
 	if (!g_qeglobals.d_nPointfileDisplayList)
 		g_qeglobals.d_nPointfileDisplayList = glGenLists(1);

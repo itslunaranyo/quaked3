@@ -82,6 +82,25 @@ void WndEntity::Initialize()
 ========================================================================
 */
 
+void WndEntity::SelectEntityColor()
+{
+	QE_SetInspectorMode(W_ENTITY);
+
+	vec3 color;
+	if (!g_eEditEntity.GetKeyValueVector("_color", color))
+		color = g_qeglobals.d_lastColor;
+	if (DoColorSelect(color, color))
+	{
+		char buffer[64];
+		VecToString(color, buffer);
+
+		SetWindowText(w_hwndCtrls[ENT_KEYFIELD], "_color");
+		SetWindowText(w_hwndCtrls[ENT_VALUEFIELD], buffer);
+		SetKeyValue();
+	}
+	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+}
+
 /*
 =========================
 WndEntity::FieldProc
@@ -205,21 +224,8 @@ BOOL CALLBACK WndEntity::EntityDlgProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			CreateEntity();
 			break;
 		case IDC_E_COLOR:
-			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == TRUE)
-			{
-				char buffer[64];
-
-				sprintf(buffer, "%f %f %f", g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][0],
-					g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][1],
-					g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][2]);
-
-				SetWindowText(w_hwndCtrls[ENT_KEYFIELD], "_color");
-				SetWindowText(w_hwndCtrls[ENT_VALUEFIELD], buffer);
-				SetKeyValue();
-			}
-			Sys_UpdateWindows(W_SCENE|W_ENTITY);
+			SelectEntityColor();
 			break;
-
 		case IDC_E_ADDPROP:
 			Focus();
 			SetKeyValue();

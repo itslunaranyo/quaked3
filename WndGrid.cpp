@@ -157,8 +157,8 @@ void WndGrid::DoPopupMenu(int x, int y)
 		EnableMenuItem(hMenu, ID_REGION_SETBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETTALLBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETSELECTION, MF_GRAYED);
-		//	EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
-		//	EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CONNECT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_UNGROUPENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_INSERTBRUSH, MF_GRAYED);
@@ -166,8 +166,8 @@ void WndGrid::DoPopupMenu(int x, int y)
 		break;
 	}
 
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_wndGrid[2]->Open() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_wndGrid[1]->Open() ? MF_ENABLED : MF_GRAYED));
 
 	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, w_hwnd, NULL);
 

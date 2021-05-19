@@ -8,15 +8,12 @@ void Palette::LoadFromFile(const char* palfile)
 	char pfname[MAX_PATH];
 	qeBuffer lmp(768);
 
-	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
-	// lunaran - check both, old location was hardcoded because that's where quake.exe expects it to be
-	sprintf(pfname, "%s/gfx/%s", g_qeglobals.d_entityProject->GetKeyValue("basepath"), palfile);
-	Sys_Printf("Loading palette from %s ...\n", pfname);
+	Sys_Printf("Loading palette from %s ...\n", palfile);
 	if (LoadFromFileImpl(pfname))
 		return;
 
 	Sys_Printf("Could not load %s, trying texturepath ...\n", palfile);
-	sprintf(pfname, "%s/%s", g_qeglobals.d_entityProject->GetKeyValue("texturepath"), palfile);
+	sprintf(pfname, "%s/%s", g_project.wadPath, palfile);
 	if (LoadFromFileImpl(pfname))
 		return;
 
@@ -24,7 +21,7 @@ void Palette::LoadFromFile(const char* palfile)
 	if (LoadFromFileImpl("quakepal.lmp"))
 		return;
 
-	Sys_Printf("Warning: Couldn't open QE9 data directory! Are you running it from the directory it's installed in?\n");
+	Sys_Printf("Warning: Couldn't open QE3 data directory! Are you running it from the directory it's installed in?\n");
 	GenerateErrorPalette();
 }
 
@@ -76,7 +73,7 @@ void Palette::GenerateGammaTable(byte *gammatable)
 	int		inf;
 	float	gamma;
 
-	gamma = g_qeglobals.d_savedinfo.fGamma;
+	gamma = (float)g_cfgUI.Gamma;
 
 	if (gamma == 1.0)
 	{

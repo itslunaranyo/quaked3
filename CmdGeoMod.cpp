@@ -303,6 +303,11 @@ void CmdGeoMod::ApplyTranslation(vec3 tr)
 	{
 		++vIt;	// do every second one
 		*vIt += tr;
+	//	for (int i = 0; i < 3; i++)
+	//	{
+	//		if (tr[i] != 0)
+	//			(*vIt)[i] = qround((*vIt)[i], g_qeglobals.d_nGridSize);
+	//	}
 	}
 }
 

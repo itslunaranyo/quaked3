@@ -213,13 +213,13 @@ int Entity::GetKeyValueInt(const char *key) const
 Entity::GetKeyValueVector
 ==============
 */
-vec3 Entity::GetKeyValueVector(const char *key) const
+bool Entity::GetKeyValueVector(const char *key, vec3 &out) const
 {
-	vec3 vec;
 	char *cv = GetKeyValue(key);
-	if (!*cv) vec = vec3(0);
-	sscanf(cv, "%f %f %f", &vec[0], &vec[1], &vec[2]);
-	return vec;
+	if (!*cv)
+		return false;
+	sscanf(cv, "%f %f %f", &out[0], &out[1], &out[2]);
+	return true;
 }
 
 /*
@@ -393,10 +393,10 @@ int Entity::MemorySize ()
 
 /*
 =================
-ParseEpair
+EPair::ParseEpair
 =================
 */
-EPair *ParseEpair ()
+EPair *EPair::ParseEpair ()
 {
 	EPair	*e;
 	
@@ -456,7 +456,7 @@ Entity *Entity::Parse (bool onlypairs)
 		}
 		else
 		{
-			ep = ParseEpair();
+			ep = EPair::ParseEpair();
 			ep->next = ent->epairs;
 			ent->epairs = ep;
 		}
@@ -470,7 +470,7 @@ Entity *Entity::Parse (bool onlypairs)
 	else
 		has_brushes = true;
 
-	ent->origin = ent->GetKeyValueVector("origin");
+	ent->GetKeyValueVector("origin", ent->origin);
 
 	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
 	// with brushes or brush entities without any, so that all the downstream code Just Works
@@ -500,7 +500,7 @@ void Entity::CheckOrigin()
 	if (IsBrush()) return;
 
 	vec3 testorg, org;
-	testorg = GetKeyValueVector("origin");
+	GetKeyValueVector("origin", testorg);
 
 	// be sure for now
 	if (!VectorCompare(origin, testorg))
@@ -648,7 +648,7 @@ void Entity::SetOriginFromKeyvalue()
 {
 	if (IsBrush()) return;
 
-	origin = GetKeyValueVector("origin");
+	GetKeyValueVector("origin", origin);
 	MakeBrush();
 }
 
@@ -720,14 +720,6 @@ Otherwise, the brushes have their ownership transfered to the new entity.
 bool Entity::Create (EntClass *ecIn)
 {
 	Entity		*e;
-	//EntClass	*c;
-//	Brush		*b;
-	/*
-	if (!_stricmp(ecIn->name, "worldspawn"))
-	{
-		Sys_Printf("WARNING: Cannot create a new worldspawn entity.\n");
-		return nullptr;
-	}*/
 
 	if (g_brSelectedBrushes.next != &g_brSelectedBrushes &&		// brushes are selected
 		g_brSelectedBrushes.next == g_brSelectedBrushes.prev &&	// one brush is selected
@@ -739,17 +731,6 @@ bool Entity::Create (EntClass *ecIn)
 		Selection::Changed();
 		return true;
 	}
-
-	// check to make sure the brushes are ok
-	/*
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		if (!b->owner->IsWorld())
-		{
-			Sys_Printf("WARNING: Entity not created, brushes not all from world.\n");
-			Sys_Beep();
-			return nullptr;
-		}
-		*/
 
 	if (Selection::HasBrushes() == ecIn->IsPointClass())	// x0r!
 	{
@@ -764,85 +745,20 @@ bool Entity::Create (EntClass *ecIn)
 		{
 			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);
 			cmd->AddBrushes(&g_brSelectedBrushes);
-			//Selection::DeselectAll();
 			g_cmdQueue.Complete(cmd);
-			//cmd->Select();
 		}
 		catch (...)
 		{
 			return false;
 		}
-		/*
-		// create it
-		e = new Entity();
-		e->eclass = ecIn;
-		e->SetKeyValue("classname", ecIn->name);
-
-		// add the entity to the entity list
-		e->next = g_map.entities.next;
-		g_map.entities.next = e;
-		e->next->prev = e;
-		e->prev = &g_map.entities;
-
-		// change the selected brushes over to the new entity
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			Entity::UnlinkBrush(b);
-			e->LinkBrush(b);
-			b->Build();	// so the key brush gets a name
-		}*/
 	}
 	else
 	{
 		// TODO: pass the location of the right-click via an appropriate method
 		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.mins);
-		//Selection::DeselectAll();
 		g_cmdQueue.Complete(cmd);
-		//cmd->Select();
 		g_brSelectedBrushes.mins = vec3(0);	// reset
 	}
-
-	/*
-		// this will spit back a reversed-form eclass
-		c = EntClass::ForName(ecIn->name, Selection::HasBrushes(), false);
-	}
-	else
-		c = ecIn;
-
-	// create it
-	e = new Entity();
-	e->eclass = c;
-	e->SetKeyValue("classname", c->name);
-
-	// add the entity to the entity list
-	e->next = g_map.entities.next;
-	g_map.entities.next = e;
-	e->next->prev = e;
-	e->prev = &g_map.entities;
-
-	if (c->IsPointClass())
-	{
-		// TODO: pass the location of the right-click via an appropriate method
-		e->origin = g_brSelectedBrushes.mins;
-		e->SetKeyValueIVector("origin", e->origin);
-		g_brSelectedBrushes.mins = vec3(0);	// reset
-
-		e->MakeBrush();
-
-		Selection::HandleBrush(e->brushes.onext,false);
-	}
-	else
-	{
-		// change the selected brushes over to the new entity
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			Entity::UnlinkBrush(b);
-			e->LinkBrush(b);
-			b->Build();	// so the key brush gets a name
-		}
-	}
-	*/
-	//return e;
 	return true;
 }
 
@@ -916,12 +832,6 @@ Entity *Entity::Clone()
 
 	n = new Entity();
 	n->eclass = eclass;
-
-	// add the entity to the entity list
-/*	n->next = g_map.entities.next;
-	g_map.entities.next = n;
-	n->next->prev = n;
-	n->prev = &g_map.entities;*/
 
 	for (ep = epairs; ep; ep = ep->next)
 	{

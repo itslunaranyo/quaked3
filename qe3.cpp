@@ -7,8 +7,8 @@
 #define	SPEED_MOVE	32.0f
 #define	SPEED_TURN	22.5f
 
-qeglobals_t  g_qeglobals;
-
+qeglobals_t	g_qeglobals;
+qeConfig	g_qeconfig;
 
 // it can test aaanything you want
 void QE_TestSomething()
@@ -17,21 +17,6 @@ void QE_TestSomething()
 }
 
 
-
-/*
-==================
-qmalloc
-==================
-*/
-void *qmalloc (int size)
-{
-	void *b;
-
-	b = malloc(size);
-	memset(b, 0, size);
-
-	return b;
-}
 
 /*
 ==================
@@ -102,7 +87,7 @@ void QE_InitProject()
 	char	szProject[_MAX_PATH];	// sikk - Load Last Project
 	szProject[0] = 0;
 	Sys_Printf("Initializing project settings ...\n");
-
+	/*
 	if (g_pszArgV[1])
 	{
 		// the project file can be specified on the command line (must be first parameter)
@@ -132,8 +117,8 @@ void QE_InitProject()
 		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
 		Sys_Printf("Loading default project: %s\n", szProject);
 	}
-
-	if (!QE_LoadProject(szProject))
+	*/
+	if (!QE_LoadProject())
 	{
 		//DoProject(true);	// sikk - Manually create project file if none is found
 		ProjectDialog();	// lunaran - i know it's down there somewhere just let me have a look
@@ -149,30 +134,28 @@ QE_Init
 */
 void QE_Init ()
 {
-	int i;	// sikk - Save Rebar Band Info
-
 	Sys_Printf("Initializing QuakeEd\n");
+
+	g_qeconfig.Load();
 
 	QE_InitProject();
 
 	// initialize variables
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
+	g_qeglobals.bGridSnap = true;
 	g_qeglobals.d_vXYZ[0].SetAxis(XY);
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
-	g_qeglobals.d_clipTool = nullptr;
 	g_qeglobals.d_v3WorkMin = vec3(0);
 	g_qeglobals.d_v3WorkMax = vec3(8);
-	g_qeglobals.d_savedinfo.nExclude |= BFL_HIDDEN;	// hidden things are always filtered
+	//g_qeglobals.d_savedinfo.nViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
+	g_cfgUI.ViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
 
 	// create tools - creation order determines which tools get first chance to handle inputs
 	Sys_Printf("Creating base tools\n");
 	new SelectTool();
 	new TextureTool();
 	new ManipTool();
-
-	// set maximium undo levels
-	//Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
 
 	Sys_UpdateGridStatusBar();
 
@@ -181,7 +164,7 @@ void QE_Init ()
 	//g_nBrushNumCheck = -1;
 
 // sikk---> Save Rebar Band Info
-	for (i = 0; i < 11; i++)
+	for (int i = 0; i < 11; i++)
 	{
 		g_qeglobals.d_savedinfo.rbiSettings[i].cbSize	= sizeof(REBARBANDINFO);
 		SendMessage(g_qeglobals.d_hwndRebar, RB_SETBANDINFO, (WPARAM)i, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);
@@ -529,9 +512,9 @@ bool QE_KeyDown (int key)
 	case VK_F4: // sikk - Preferences Dialog
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_EDIT_PREFERENCES, 0);
 		break;
-	case VK_F5: // sikk - Project Dialog
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_FILE_EDITPROJECT, 0);
-		break;
+	//case VK_F5: // sikk - Project Dialog
+	//	PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_FILE_EDITPROJECT, 0);
+	//	break;
 	case VK_F10: // sikk - added shortcut key
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_MISC_BENCHMARK, 0);
 		break;
@@ -605,7 +588,7 @@ void QE_CheckAutoSave ()
 	//static clock_t s_start;
 	clock_t        now;
 
-	if (!g_qeglobals.d_savedinfo.bAutosave)	// sikk - Preferences Dialog
+	if (!g_cfgEditor.Autosave)	// sikk - Preferences Dialog
 		return;
 	if (!g_cmdQueue.IsModified() || g_map.autosaveTime == -1)
 		return;
@@ -618,14 +601,14 @@ void QE_CheckAutoSave ()
 		return;
 	}
 
-	if (now - g_map.autosaveTime > (CLOCKS_PER_SEC * 60 * g_qeglobals.d_savedinfo.nAutosave))	// sikk - Preferences Dialog
+	if (now - g_map.autosaveTime > (CLOCKS_PER_SEC * 60 * g_cfgEditor.AutosaveTime))	// sikk - Preferences Dialog
 	{
-		Sys_Printf("CMD: Autosaving...\n");
+		Sys_Printf("Autosaving...\n");
 		Sys_Status("Autosaving...", 0);
 
-		g_map.SaveToFile(g_qeglobals.d_entityProject->GetKeyValue("autosave"), false);
+		g_map.SaveToFile(g_project.autosaveFile, false);
 
-		Sys_Printf("MSG: Autosave successful.\n");
+		Sys_Printf("Autosave successful.\n");
 		Sys_Status("Autosave successful.", 0);
 
 		g_map.autosaveTime = -1;
@@ -637,34 +620,20 @@ void QE_CheckAutoSave ()
 QE_LoadProject
 ===========
 */
-bool QE_LoadProject (char *projectfile)
+bool QE_LoadProject()
 {
-	char *data;
+	Sys_Printf("QE_LoadProject (%s)\n", g_project.name);
 
-	Sys_Printf("CMD: QE_LoadProject (%s)\n", projectfile);
+	Sys_Printf("basePath: %s\n", g_project.basePath);
+	Sys_Printf("mapPath: %s\n", g_project.mapPath);
+	Sys_Printf("autosaveFile: %s\n", g_project.autosaveFile);
+	Sys_Printf("entityFiles: %s\n", g_project.entityFiles);
+	Sys_Printf("wadPath: %s\n", g_project.wadPath);
+	Sys_Printf("defaultWads: %s\n", g_project.defaultWads);
+	Sys_Printf("paletteFile: %s\n", g_project.paletteFile);
 
-	if (IO_LoadFileNoCrash(projectfile, (void**)&data) == -1)
-		return false;
-	StartTokenParsing(data);
-	g_qeglobals.d_entityProject = Entity::Parse(true);
-	if (!g_qeglobals.d_entityProject)
-		Error("QE_LoadProject: Could not parse %s", projectfile);
-	free(data);
+	EntClass::InitForSourceDirectory(g_project.entityFiles);
 
-	// usefull for the log file and debugging fucked up configurations from users:
-	// output the basic information of the .qe3 project file
-	Sys_Printf("MSG: basepath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-	Sys_Printf("MSG: remotebasepath: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("remotebasepath"));
-	Sys_Printf("MSG: mapspath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
-	Sys_Printf("MSG: autosavemap: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("autosave"));
-	Sys_Printf("MSG: entitypath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
-	Sys_Printf("MSG: texturepath: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
-	Sys_Printf("MSG: defaultwads: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("defaultwads"));
-	Sys_Printf("MSG: toolspath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("rshcmd"));
-
-	EntClass::InitForSourceDirectory(g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
-
-	//EntWnd_FillClassList();	// list in entity window
 	g_qeglobals.d_wndEntity->FillClassList();
 	FillTextureMenu();
 	FillBSPMenu();
@@ -744,7 +713,7 @@ void QE_ExpandBspString (char *bspaction, char *out, char *mapname)
 	ExtractFileName(mapname, base);
 // sikk - using "mapspath" instead.... What other use is "mapspath" for?
 //	sprintf(src, "%s/maps/%s", g_qeglobals.d_entityProject->GetKeyValue("remotebasepath"), base);
-	sprintf(src, "%s%s", g_qeglobals.d_entityProject->GetKeyValue("mapspath"), base);
+	sprintf(src, "%s%s", g_project.mapPath, base);
 
 	StripExtension(src);
 	strcpy(rsh, g_qeglobals.d_entityProject->GetKeyValue("rshcmd"));
@@ -785,15 +754,13 @@ QE_ExpandRelativePath
 char *QE_ExpandRelativePath (char *p)
 {
 	static char	temp[1024];
-	char	   *base;
 
 	if (!p || !p[0])
 		return NULL;
 	if (p[0] == '/' || p[0] == '\\')
 		return p;
 
-	base = g_qeglobals.d_entityProject->GetKeyValue("basepath");
-	sprintf(temp, "%s/%s", base, p);
+	sprintf(temp, "%s/%s", g_project.basePath, p);
 	return temp;
 }
 
@@ -804,6 +771,35 @@ char *QE_ExpandRelativePath (char *p)
 QE_UpdateCommandUI
 ==================
 */
+
+void QE_UpdateCommandUIFilters(HMENU hMenu)
+{
+	CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS, (g_cfgUI.ShowAxis ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS, (g_cfgUI.ShowBlocks ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID, (g_cfgUI.ShowCameraGrid ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, (g_cfgUI.ShowCoordinates ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, (g_cfgUI.ShowLightRadius ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, (g_cfgUI.ShowMapBoundary ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, (g_cfgUI.ShowNames ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO, (g_cfgUI.ShowSizeInfo ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, (g_cfgUI.ShowWorkzone ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, (g_cfgUI.ShowAngles ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWPATH, (g_cfgUI.ShowPaths ? MF_CHECKED : MF_UNCHECKED));
+
+	CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, ((g_cfgUI.ViewFilter & BFL_CLIP) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWBRUSHENTS, ((g_cfgUI.ViewFilter & EFL_BRUSHENTITY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWPOINTENTS, ((g_cfgUI.ViewFilter & EFL_POINTENTITY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL, ((g_cfgUI.ViewFilter & EFL_FUNCWALL) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, ((g_cfgUI.ViewFilter & EFL_LIGHT) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWSKY, ((g_cfgUI.ViewFilter & BFL_SKY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, ((g_cfgUI.ViewFilter & BFL_LIQUID) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, ((g_cfgUI.ViewFilter & EFL_WORLDSPAWN) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, ((g_cfgUI.ViewFilter & BFL_HINT) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, ((g_cfgUI.ViewFilter & EFL_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS, ((g_cfgUI.ViewFilter & EFL_MONSTER) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS, ((g_cfgUI.ViewFilter & EFL_TRIGGER) ? MF_UNCHECKED : MF_CHECKED));
+}
+
 void QE_UpdateCommandUI ()
 {
 	HMENU hMenu = GetMenu(g_qeglobals.d_hwndMain);
@@ -853,35 +849,11 @@ void QE_UpdateCommandUI ()
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(IsWindowVisible(g_qeglobals.d_hwndXYZ[1]) ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(IsWindowVisible(g_qeglobals.d_hwndZ) ? MF_CHECKED : MF_UNCHECKED));
 	// Cubic Clipping
-	CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? MF_CHECKED : MF_UNCHECKED));
-	SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_qeglobals.d_savedinfo.bCubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
+	CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? MF_CHECKED : MF_UNCHECKED));
+	SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Filter Commands
-	CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS,			(g_qeglobals.d_savedinfo.bShow_Axis ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS,		(g_qeglobals.d_savedinfo.bShow_Blocks ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID,	(g_qeglobals.d_savedinfo.bShow_CameraGrid ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES,	(g_qeglobals.d_savedinfo.bShow_Coordinates ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS,	(g_qeglobals.d_savedinfo.bShow_LightRadius ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY,	(g_qeglobals.d_savedinfo.bShow_MapBoundary ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES,			(g_qeglobals.d_savedinfo.bShow_Names ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO,		(g_qeglobals.d_savedinfo.bShow_SizeInfo ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME,		(g_qeglobals.d_savedinfo.bShow_Viewname ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE,		(g_qeglobals.d_savedinfo.bShow_Workzone ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES,		(g_qeglobals.d_savedinfo.bShow_Angles ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWPATH,			(g_qeglobals.d_savedinfo.bShow_Paths ? MF_CHECKED : MF_UNCHECKED));
 
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP,			((g_qeglobals.d_savedinfo.nExclude & BFL_CLIP) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWBRUSHENTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_BRUSHENTITY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWPOINTENTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_POINTENTITY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL,		((g_qeglobals.d_savedinfo.nExclude & EFL_FUNCWALL) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_LIGHT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWSKY,			((g_qeglobals.d_savedinfo.nExclude & BFL_SKY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWATER,			((g_qeglobals.d_savedinfo.nExclude & BFL_LIQUID) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD,			((g_qeglobals.d_savedinfo.nExclude & EFL_WORLDSPAWN) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWHINT,			((g_qeglobals.d_savedinfo.nExclude & BFL_HINT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL,		((g_qeglobals.d_savedinfo.nExclude & EFL_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS,		((g_qeglobals.d_savedinfo.nExclude & EFL_MONSTER) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS,		((g_qeglobals.d_savedinfo.nExclude & EFL_TRIGGER) ? MF_UNCHECKED : MF_CHECKED));
-
+	QE_UpdateCommandUIFilters(hMenu);
 
 //===================================
 // Selection Menu
@@ -923,7 +895,7 @@ void QE_UpdateCommandUI ()
 // Grid Menu
 //===================================
 	CheckMenuItem(hMenu, ID_GRID_TOGGLE, (g_qeglobals.d_bShowGrid ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, (g_qeglobals.d_savedinfo.bNoClamp ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, (g_qeglobals.bGridSnap ? MF_CHECKED : MF_UNCHECKED));
 
 //===================================
 // Texture Menu
@@ -933,6 +905,6 @@ void QE_UpdateCommandUI ()
 //===================================
 // Region Menu
 //===================================
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_wndGrid[2]->Open() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_wndGrid[1]->Open() ? MF_ENABLED : MF_GRAYED));
 }

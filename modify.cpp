@@ -28,7 +28,6 @@ void Modify_Delete()
 	Selection::DeselectAllFaces();
 	
 	g_qeglobals.d_selSelectMode = sel_brush;
-	g_qeglobals.d_nNumMovePoints = 0;
 
 	CmdDelete *cmd = new CmdDelete(&g_brSelectedBrushes);
 	g_cmdQueue.Complete(cmd);

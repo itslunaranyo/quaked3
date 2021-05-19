@@ -38,7 +38,7 @@ void GeoTool::ToggleMode(gt_mode_t gtm)
 
 void GeoTool::_toggleMode(gt_mode_t gtm)
 {
-	if (g_qeglobals.d_savedinfo.bVFEModesExclusive)
+	if (g_cfgEditor.VFEModesExclusive)
 	{
 		DeselectAllHandles();
 		SortHandles();
@@ -46,7 +46,7 @@ void GeoTool::_toggleMode(gt_mode_t gtm)
 	}
 	mode ^= gtm;
 	if (!mode) return;
-	if (g_qeglobals.d_savedinfo.bVFEModesExclusive)
+	if (g_cfgEditor.VFEModesExclusive)
 		return;
 	
 	if (!(mode & gtm))
@@ -309,7 +309,14 @@ void GeoTool::DragMove(const mouseContext_t &mc)
 				trDelta = ptDelta - trans;
 				trans = ptDelta;
 				for (auto hIt = handles.begin(); hIt != handles.end() && hIt->selected; ++hIt)
+				{
 					hIt->origin += trDelta;
+				//	for (int i = 0; i < 3; i++)
+				//	{
+				//		if (trDelta[i] != 0)
+				//			hIt->origin[i] = qround(hIt->origin[i], g_qeglobals.d_nGridSize);
+				//	}
+				}
 			}
 		}
 	}
@@ -500,6 +507,7 @@ void GeoTool::GenerateHandles()
 	vec3 end;
 	std::vector<vec3> oldSelection;
 
+	// remember what handles were selected so regenerating the list doesn't appear to lose them
 	if (!handles.empty() && handles.front().selected)
 	{
 		for (auto hIt = handles.begin(); hIt != handles.end() && hIt->selected; ++hIt)
@@ -517,6 +525,8 @@ void GeoTool::GenerateHandles()
 	wFaces = 0;
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
+		if (b->owner->IsPoint())
+			continue;
 		for (Face* f = b->faces; f; f = f->fnext)
 		{
 			if (f->face_winding)
@@ -537,6 +547,8 @@ void GeoTool::GenerateHandles()
 	pIdx = 0;
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
+		if (b->owner->IsPoint())
+			continue;
 		for (Face* f = b->faces; f; f = f->fnext)
 		{
 			if (!f->face_winding)

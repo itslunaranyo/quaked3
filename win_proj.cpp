@@ -22,7 +22,7 @@ char   *g_szBspNames[MAX_BSPCOMMANDS];
 char   *g_szBspCommands[MAX_BSPCOMMANDS];
 
 char	g_szProjectDir[MAX_PATH];
-char	g_szCurrentDirectory[MAX_PATH];
+extern char	g_szCurrentDirectory[MAX_PATH];
 
 //=======================================================================
 
@@ -173,35 +173,6 @@ static char szFileTitle[_MAX_FNAME];		// file title string
 static char szProjectFilter[260] = 
 	"QuakeEd project (*.qe3)\0*.qe3\0\0";	// filter string
 
-/*
-==================
-SelectDir
-==================
-*/
-bool SelectDir (HWND h)
-{
-	BROWSEINFO bi = { 0 };
-	LPITEMIDLIST pidl;
-
-	bi.hwndOwner = h; 
-	bi.lpszTitle = "Choose a Directory";
-	pidl = SHBrowseForFolder(&bi);
-	
-	if (pidl != 0)
-	{
-		char DirName[MAX_PATH];
-
-		if (SHGetPathFromIDList(pidl, DirName))
-		{
-			SetStr(szDirName, DirName, "\\", NULL, NULL);
-			SetWindowText(h, szDirName);
-		}
-		
-		GlobalFree(pidl);
-		return true;
-	}
-	return false;
-}
 
 
 /*
@@ -211,6 +182,11 @@ bool SelectDir (HWND h)
 
 ===========================================================
 */
+
+BOOL SelectDir(HWND wnd, bool b)
+{
+	return SelectDir(wnd, b, "Select Directory");
+}
 
 /*
 ==================
@@ -224,7 +200,7 @@ void GetProjectDirectory (HWND hwndDlg)
 	if (!SendMessage(hwndEdit, WM_GETTEXT, (WPARAM)MAX_PATH - 1, (LPARAM)szDirName))
 		strcpy(szDirName, g_szCurrentDirectory);
 
-	SelectDir(hwndEdit);
+	SelectDir(hwndEdit, false);
 }
 
 /*
@@ -239,7 +215,7 @@ void GetRemoteBasePath (HWND hwndDlg)
 	if (!SendMessage(hwndEdit, WM_GETTEXT, (WPARAM)MAX_PATH - 1, (LPARAM)szDirName))
 		strcpy(szDirName, g_szCurrentDirectory);
 
-	SelectDir(hwndEdit);
+	SelectDir(hwndEdit, false);
 }
 
 /*
@@ -254,80 +230,10 @@ void GetMapsDirectory (HWND hwndDlg)
 	if (!SendMessage(hwndEdit, WM_GETTEXT, (WPARAM)MAX_PATH - 1, (LPARAM)szDirName))
 		strcpy(szDirName, g_szCurrentDirectory);
 
-	SelectDir(hwndEdit);
+	SelectDir(hwndEdit, false);
 }
 
-/*
-==================
-GetAutosaveMap
-==================
-*/
-void GetAutosaveMap (HWND hwndDlg)
-{
-	sprintf(szDirName, "%smaps", g_szCurrentDirectory);
 
-	szFile[0] = 0;
-
-	GetDlgItemText(hwndDlg, IDC_EDIT_PROJECTDIRECTORY, g_szProjectDir, 511);
-
-	GetCurrentDirectory(MAX_PATH - 1, szDirName);
-
-	ofn.lStructSize		= sizeof(OPENFILENAME);
-	ofn.hwndOwner		= hwndDlg;
-	ofn.lpstrFilter		= "QuakeEd File (*.map)\0*.map\0\0";
-	ofn.nFilterIndex	= 1;
-	ofn.lpstrFile		= szFile;
-	ofn.nMaxFile		= sizeof(szFile);
-	ofn.lpstrFileTitle	= szFileTitle;
-	ofn.nMaxFileTitle	= sizeof(szFileTitle);
-	ofn.lpstrInitialDir	= szDirName;
-	ofn.Flags			= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-	ofn.lpstrTitle		= "Select Auto-Save Map File";
-
-	if (GetSaveFileName(&ofn))
-	{
-		if (!strncmp(szFile, g_szProjectDir, strlen(g_szProjectDir)))
-			SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVEMAP, &szFile[strlen(g_szProjectDir)]);
-		else
-			SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVEMAP, szFile);
-	}
-}
-
-/*
-==================
-GetEntityFiles
-==================
-*/
-void GetEntityFiles (HWND hwndDlg)
-{
-	szFile[0] = 0;
-
-	GetDlgItemText(hwndDlg, IDC_EDIT_PROJECTDIRECTORY, g_szProjectDir, 511);
-
-	MessageBox(g_qeglobals.d_hwndMain, "To load multiple entity definition files,\nuse the wildcard expression (EG: *.def or *.qc)", "Quake Ed 3: Info", MB_OK | MB_ICONINFORMATION);
-	
-	GetCurrentDirectory(MAX_PATH - 1, szDirName);
-
-	ofn.lStructSize		= sizeof(OPENFILENAME);
-	ofn.hwndOwner		= hwndDlg;
-	ofn.lpstrFilter		= "QuakeEd Entity Definition File (*.qc)\0*.qc\0QuakeEd Entity Definition File (*.def)\0*.def\0QuakeEd Entity Definition File (*.c)\0*.c\0All Files\0*.*\0\0";
-	ofn.nFilterIndex	= 1;
-	ofn.lpstrFile		= szFile;
-	ofn.nMaxFile		= sizeof(szFile);
-	ofn.lpstrFileTitle	= szFileTitle;
-	ofn.nMaxFileTitle	= sizeof(szFileTitle);
-	ofn.lpstrInitialDir	= g_szCurrentDirectory;
-	ofn.Flags			= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-	ofn.lpstrTitle		= "Select Entity Definition File";
-
-	if (GetOpenFileName(&ofn))
-	{
-		if (!strncmp(szFile, g_szProjectDir, strlen(g_szProjectDir)))
-			SetDlgItemText(hwndDlg, IDC_EDIT_ENTITYFILES, &szFile[strlen(g_szProjectDir)]);
-		else
-			SetDlgItemText(hwndDlg, IDC_EDIT_ENTITYFILES, szFile);
-	}
-}
 
 /*
 ==================
@@ -347,117 +253,10 @@ void GetTextureDirectory (HWND hwndDlg)
 
 	// Strip off Project Directory string else wads won't load. I'm looking into a fix
 	// so you can load wads from any dir instead of it having to be within in project dir.
-	if (SelectDir(hwndEdit))
+	if (SelectDir(hwndEdit, false))
 		SetDlgItemText(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY, &szDirName[strlen(g_szProjectDir)]);
 }
 
-/*
-==================
-GetDefaultWads
-==================
-*/
-void GetDefaultWads(HWND hwndDlg)
-{
-	HWND hwndEdit = GetDlgItem(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY);
-
-	if (!SendMessage(hwndEdit, WM_GETTEXT, (WPARAM)MAX_PATH - 1, (LPARAM)szDirName))
-		strcpy(szDirName, g_szCurrentDirectory);
-
-	szFile[0] = 0;
-
-	ofn.lStructSize		= sizeof(OPENFILENAME);
-	ofn.hwndOwner		= hwndDlg;
-	ofn.lpstrFilter		= "QuakeEd Wad File (*.wad)\0*.wad\0\0";
-	ofn.nFilterIndex	= 1;
-	ofn.lpstrFile		= szFile;
-	ofn.nMaxFile		= sizeof(szFile);
-	ofn.lpstrFileTitle	= szFileTitle;
-	ofn.nMaxFileTitle	= sizeof(szFileTitle);
-	ofn.lpstrInitialDir	= szDirName;
-	ofn.Flags			= OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | 
-						  OFN_EXPLORER | OFN_ALLOWMULTISELECT;
-	ofn.lpstrTitle		= "Select Default Wad File(s)";
-
-	if (GetOpenFileName(&ofn))
-	{
-		if (strlen(ofn.lpstrFile))
-		{
-			char *dir, *file;
-
-			dir = ofn.lpstrFile;
-			file = (ofn.lpstrFile + strlen(ofn.lpstrFile) + 1);
-			if (*file == '\0') // Single file selected
-			{
-				// need to strip off the path
-				file = strrchr(dir, '\\') + 1;
-				SetDlgItemText(hwndDlg, IDC_EDIT_DEFAULTWADS, file);
-			}
-			else
-			{
-				szFile[0] = 0;
-				while (*file)
-				{
-					if (szFile[0])
-						strcat(szFile, ";");
-					strcat(szFile, file);
-					file = (file + strlen(file) + 1);
-				}
-				SetDlgItemText(hwndDlg, IDC_EDIT_DEFAULTWADS, szFile);
-			}
-		}
-	}
-	else
-	{
-		switch(CommDlgExtendedError())
-		{
-			case CDERR_DIALOGFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_DIALOGFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_FINDRESFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_FINDRESFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_NOHINSTANCE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOHINSTANCE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_INITIALIZATION:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_INITIALIZATION", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_NOHOOK:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOHOOK", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_LOCKRESFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOCKRESFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_NOTEMPLATE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOTEMPLATE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_LOADRESFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOADRESFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_STRUCTSIZE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_STRUCTSIZE", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_LOADSTRFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOADSTRFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case FNERR_BUFFERTOOSMALL:
-				MessageBox(g_qeglobals.d_hwndMain, "FNERR_BUFFERTOOSMALL", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_MEMALLOCFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_MEMALLOCFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case FNERR_INVALIDFILENAME:
-				MessageBox(g_qeglobals.d_hwndMain, "FNERR_INVALIDFILENAME", "Common Dialog Error", MB_OK);
-				break;
-			case CDERR_MEMLOCKFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "CDERR_MEMLOCKFAILURE", "Common Dialog Error", MB_OK);
-				break;
-			case FNERR_SUBCLASSFAILURE:
-				MessageBox(g_qeglobals.d_hwndMain, "FNERR_SUBCLASSFAILURE", "Common Dialog Error", MB_OK);
-				break;
-		}
-	}
-}
 
 /*
 ==================
@@ -471,7 +270,7 @@ void GetToolsDirectory (HWND hwndDlg)
 	if (!SendMessage(hwndEdit, WM_GETTEXT, (WPARAM)MAX_PATH - 1, (LPARAM)szDirName))
 		strcpy(szDirName, g_szCurrentDirectory);
 
-	SelectDir(hwndEdit);
+	SelectDir(hwndEdit, false);
 }
 
 //=======================================================================
@@ -819,16 +618,16 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 			GetMapsDirectory(hwndDlg);
 			break;
 		case IDC_BUTTON_AUTOSAVEMAP:
-			GetAutosaveMap(hwndDlg);
+			WndCfg_GetAutosaveMap(hwndDlg);
 			break;
 		case IDC_BUTTON_ENTITYFILES:
-			GetEntityFiles(hwndDlg);
+			WndCfg_GetEntityFiles(hwndDlg);
 			break;
 		case IDC_BUTTON_TEXTUREDIRECTORY:
 			GetTextureDirectory(hwndDlg);
 			break;
 		case IDC_BUTTON_DEFAULTWADS:
-			GetDefaultWads(hwndDlg);
+			WndCfg_GetDefaultWads(hwndDlg);
 			break;
 		case IDC_BUTTON_TOOLSDIRECTORY:
 			GetToolsDirectory(hwndDlg);
@@ -889,12 +688,10 @@ ProjectDialog
 */
 void ProjectDialog()
 {
-	//Obtain the system directory name and store it in szDirName.
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
+	ExtractFilePath(g_project.entityFiles, szDirName);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-		strcat(szDirName, "/scripts");
+		strcpy(szDirName, "/defs");
 	}
 
 	// Place the terminating null character in the szFile.
@@ -920,7 +717,7 @@ void ProjectDialog()
 	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
 
 	// Open the file.
-	if (!QE_LoadProject(ofn.lpstrFile))
+	if (!QE_LoadProject())
 		//		Error("Could not load project file.");
 		DoProject(true);
 
@@ -936,12 +733,10 @@ NewProjectDialog
 */
 void NewProjectDialog()
 {
-
-	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
+	ExtractFilePath(g_project.entityFiles, szDirName);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-		strcat(szDirName, "/scripts");
+		strcpy(szDirName, "/defs/");
 	}
 
 	// Place the terminating null character in the szFile. 

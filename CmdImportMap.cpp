@@ -32,9 +32,9 @@ void CmdImportMap::Do_Impl()
 		Error("No filename specified for import");
 
 	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-	if (!g_qeglobals.d_savedinfo.bNoClamp)
+	if (g_qeglobals.bGridSnap)
 	{
-		g_qeglobals.d_savedinfo.bNoClamp = true;
+		g_qeglobals.bGridSnap = false;
 		bSnapCheck = true;
 	}
 	// <---sikk
@@ -66,7 +66,7 @@ void CmdImportMap::Do_Impl()
 	g_map.BuildBrushData(blist);
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-		g_qeglobals.d_savedinfo.bNoClamp = false;
+		g_qeglobals.bGridSnap = true;
 
 	// delink the lists to feed them to CmdAddRemove
 	// lunaran FIXME: this is stupid and parse should change instead

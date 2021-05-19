@@ -45,8 +45,7 @@ void Textures::Init()
 {
 	Sys_Printf("Initializing textures\n");
 
-	// load palette
-	texpal.LoadFromFile("palette.lmp");	// TODO: specify name in project
+	LoadPalette();
 
 	// prepare null texture
 	MakeNullTexture();
@@ -332,7 +331,7 @@ void Textures::LoadWad(const char* wadfile)
 	TextureGroup* wad;
 	bool refresh = false;
 
-	Sys_Printf("CMD: Loading all textures from %s...\n", wadfile);
+	Sys_Printf("Loading all textures from %s...\n", wadfile);
 
 	auto tgIt = groups.begin();
 	// check if the wad is already loaded and trash it first
@@ -380,6 +379,15 @@ void Textures::LoadWad(const char* wadfile)
 		SelectFirstTexture();
 }
 
+void Textures::LoadPalette()
+{
+	// load palette
+	if (*g_project.paletteFile)
+		texpal.LoadFromFile(g_project.paletteFile);
+	else
+		texpal.LoadFromFile("palette.lmp");
+}
+
 /*
 ==================
 Textures::MenuLoadWad
@@ -397,22 +405,80 @@ void Textures::MenuLoadWad(const int menunum)
 
 /*
 ==================
-Textures::ForName
+Textures::SetTextureMode
 ==================
 */
-void Textures::SetRenderMode(const int menunum)
+void Textures::SetTextureMode(const int mode)
 {
+	//	g_cfgUI.TextureMode = min(max(0, mode), 5);
+//	SetParameters();
 
+	for (int i = 0; i < g_nTextureExtensionNumber; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, i);
+		SetParameters();
+	}
+
+	// select the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFinish();
 }
 
 /*
 ==================
-Textures::ForName
+Textures::SetDrawMode
+==================
+*/
+void Textures::SetDrawMode(const int mode)
+{
+	HMENU	hMenu;
+	hMenu = GetMenu(g_qeglobals.d_hwndMain);
+
+	CheckMenuItem(hMenu, ID_DRAWMODE_WIREFRAME, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DRAWMODE_FLATSHADE, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_DRAWMODE_TEXTURED, MF_UNCHECKED);
+
+	switch (mode)
+	{
+	case 0:	// wireframe
+		g_cfgUI.DrawMode = cd_wire;
+		CheckMenuItem(hMenu, ID_DRAWMODE_WIREFRAME, MF_CHECKED);
+		break;
+	case 1:	// flatshade
+		g_cfgUI.DrawMode = cd_solid;
+		CheckMenuItem(hMenu, ID_DRAWMODE_FLATSHADE, MF_CHECKED);
+		break;
+	case 2:	// textured
+	default:
+		g_cfgUI.DrawMode = cd_texture;
+		CheckMenuItem(hMenu, ID_DRAWMODE_TEXTURED, MF_CHECKED);
+		break;
+	}
+}
+
+/*
+==================
+Textures::SetParameters
 ==================
 */
 void Textures::SetParameters()
 {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, g_textureModes[g_cfgUI.TextureMode]);
 
+	switch (g_textureModes[g_cfgUI.TextureMode])
+	{
+	case GL_NEAREST:
+	case GL_NEAREST_MIPMAP_NEAREST:
+	case GL_NEAREST_MIPMAP_LINEAR:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+	case GL_LINEAR:
+	case GL_LINEAR_MIPMAP_NEAREST:
+	case GL_LINEAR_MIPMAP_LINEAR:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		break;
+	}
 }
 
 //=====================================================
@@ -641,7 +707,7 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 {
 	char	filepath[MAX_PATH];
 
-	sprintf(filepath, "%s/%s", g_qeglobals.d_entityProject->GetKeyValue("texturepath"), filename);
+	sprintf(filepath, "%s/%s", g_project.wadPath, filename);
 
 	if (IO_LoadFile(filepath, wadFileBuf) <= 0)
 	{
@@ -745,7 +811,7 @@ int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
 	int texnum = g_nTextureExtensionNumber++;
 
 	glBindTexture(GL_TEXTURE_2D, texnum);
-	SetTexParameters();
+	Textures::SetParameters();
 
 	if (nomips)
 		glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
@@ -761,57 +827,11 @@ int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
 
 /*
 ============
-SetTexParameters
+Texture_SetParameters
 ============
 */
-void SetTexParameters ()
-{
-// sikk---> Removed Anisotropy
-/*	GLfloat max_anisotropy;
-
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotropy);
-
-	switch (g_nTextureMode)
-	{
-	case TX_NEAREST:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-		break;
-	case TX_NEAREST_ANISOTROPY:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy);
-		break;
-	default: 
-	case TX_LINEAR:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-		break;
-	case TX_LINEAR_ANISOTROPY:
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy);
-		break;
-	}*/
-	
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, g_nTextureMode);
-
-	switch (g_nTextureMode)
-	{
-	case GL_NEAREST:
-	case GL_NEAREST_MIPMAP_NEAREST:
-	case GL_NEAREST_MIPMAP_LINEAR:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		break;
-	case GL_LINEAR:
-	case GL_LINEAR_MIPMAP_NEAREST:
-	case GL_LINEAR_MIPMAP_LINEAR:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-// <---sikk
-	}
+void Texture_SetParameters ()
+{	
 }
 
 /*
@@ -819,13 +839,11 @@ void SetTexParameters ()
 Texture_SetMode
 ============
 */
+
 void Texture_SetMode (int iMenu)
 {
 	int		i, iMode;
 	bool	texturing = true;
-	HMENU	hMenu;
-
-	hMenu = GetMenu(g_qeglobals.d_hwndMain);
 
 // sikk---> Removed Anisotropy
 	switch (iMenu) 
@@ -854,37 +872,34 @@ void Texture_SetMode (int iMenu)
 		iMode = GL_LINEAR_MIPMAP_NEAREST;
 		break;
 	case ID_TEXTURES_TRILINEAR:
+	default:
 		iMode = GL_LINEAR_MIPMAP_LINEAR;
 		break;
 	}
-
-	CheckMenuItem(hMenu, ID_TEXTURES_WIREFRAME, MF_UNCHECKED);
-	CheckMenuItem(hMenu, ID_TEXTURES_FLATSHADE, MF_UNCHECKED);
-	CheckMenuItem(hMenu, ID_TEXTURES_NEAREST, MF_UNCHECKED);
+	/*
 	CheckMenuItem(hMenu, ID_TEXTURES_NEARESTMIPMAP, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_TEXTURES_LINEAR, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_TEXTURES_BILINEAR, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_TEXTURES_BILINEARMIPMAP, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_TEXTURES_TRILINEAR, MF_UNCHECKED);
-	
-	CheckMenuItem(hMenu, iMenu, MF_CHECKED);
+	*/
 // <---sikk
 
-	g_qeglobals.d_savedinfo.nTexMenu = iMenu;
+	g_cfgUI.TextureMode = iMenu;
 	g_nTextureMode = iMode;
 	if (texturing)
-		SetTexParameters();
+		Texture_SetParameters();
 
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME)
 	{
-		g_qeglobals.d_vCamera.draw_mode = cd_wire;
+		g_cfgUI.DrawMode = cd_wire;
 		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_CAMERA);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE)
 	{
-		g_qeglobals.d_vCamera.draw_mode = cd_solid;
+		g_cfgUI.DrawMode = cd_solid;
 		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_CAMERA);
 		return;
@@ -893,7 +908,7 @@ void Texture_SetMode (int iMenu)
 	for (i = 1; i < g_nTextureExtensionNumber; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, i);
-		SetTexParameters();
+		Texture_SetParameters();
 	}
 
 	// select the default texture
@@ -901,9 +916,9 @@ void Texture_SetMode (int iMenu)
 
 	glFinish();
 
-	if (g_qeglobals.d_vCamera.draw_mode != cd_texture)
+	if (g_cfgUI.DrawMode != cd_texture)
 	{
-		g_qeglobals.d_vCamera.draw_mode = cd_texture;
+		g_cfgUI.DrawMode = cd_texture;
 		g_map.BuildBrushData();
 	}
 
@@ -937,11 +952,12 @@ void FillTextureMenu ()
 //	strcpy(g_szWadString, "");	// sikk - Wad Loading
 
 	// add everything
-	strcpy(dirstring, g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
+	strcpy(dirstring, g_project.wadPath);
+	//strcpy(dirstring, g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
 	sprintf(path, "%s*.wad", dirstring);	// sikk - Wad Loading
 
 	QE_ConvertDOSToUnixName(temp, dirstring);
-	Sys_Printf("CMD: ScanTexturePath: %s\n", temp);
+	Sys_Printf("ScanTexturePath: %s\n", temp);
 
 	s = dirstring + strlen(dirstring) - 1;
 	while ((*s != '\\') && (*s != '/') && (s != dirstring))
@@ -953,7 +969,7 @@ void FillTextureMenu ()
 	{
 		do
 		{
-			Sys_Printf("MSG: FoundFile: %s/%s\n", dirstring, fileinfo.name);
+			Sys_Printf("FoundFile: %s/%s\n", dirstring, fileinfo.name);
 
 			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)fileinfo.name);
 			strcpy(g_szTextureMenuNames[g_nTextureNumMenus], fileinfo.name);

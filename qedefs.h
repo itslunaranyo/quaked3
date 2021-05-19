@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	34
+#define QE_VERSION_BUILD	35
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -127,6 +127,13 @@ enum texModType_t {
 	TM_ROTATE,
 };
 
+enum drawMode_t
+{
+	cd_wire,
+	cd_solid,
+	cd_texture
+};
+
 enum surfIgnoreFlags_t
 {
 	SFI_NAME = 0x01,
@@ -141,32 +148,32 @@ enum surfIgnoreFlags_t
 
 enum entitymask_t
 {
-	// entity flags
-	EFL_WORLDSPAWN	= 1,
-	EFL_POINTENTITY	= 1 << 1,
-	EFL_BRUSHENTITY	= 1 << 2,
-	EFL_TRIGGER		= 1 << 3,
-	EFL_LIGHT		= 1 << 4,
-	EFL_MONSTER		= 1 << 5,
-	EFL_FUNCWALL	= 1 << 6,
-	EFL_DETAIL		= 1 << 7,
-	EFL_X1			= 1 << 8,
-	EFL_X2			= 1 << 9,
-	EFL_X3			= 1 << 10,
-	EFL_X4			= 1 << 11,
-	EFL_CUSTOM1		= 1 << 12,
-	EFL_CUSTOM2		= 1 << 13,
-	EFL_CUSTOM3		= 1 << 14,
-	EFL_CUSTOM4		= 1 << 15,
-
 	// brush flags
-	BFL_HIDDEN	= 1 << 16,
-	BFL_CLIP	= 1 << 17,
-	BFL_HINT	= 1 << 18,
-	BFL_SKIP	= 1 << 19,
-	BFL_LIQUID	= 1 << 20,
-	BFL_SKY		= 1 << 21,
-	BFL_TRANS	= 1 << 22,
+	BFL_HIDDEN	= 1,
+	BFL_CLIP	= 1 << 1,
+	BFL_HINT	= 1 << 2,
+	BFL_SKIP	= 1 << 3,
+	BFL_LIQUID	= 1 << 4,
+	BFL_SKY		= 1 << 5,
+	BFL_TRANS	= 1 << 6,
+
+	// entity flags
+	EFL_WORLDSPAWN	= 1 << 7,
+	EFL_POINTENTITY	= 1 << 8,
+	EFL_BRUSHENTITY	= 1 << 9,
+	EFL_TRIGGER		= 1 << 10,
+	EFL_LIGHT		= 1 << 11,
+	EFL_MONSTER		= 1 << 12,
+	EFL_FUNCWALL	= 1 << 13,
+	EFL_DETAIL		= 1 << 14,
+	EFL_X1			= 1 << 15,
+	EFL_X2			= 1 << 16,
+	EFL_X3			= 1 << 17,
+	EFL_X4			= 1 << 18,
+	EFL_CUSTOM1		= 1 << 19,
+	EFL_CUSTOM2		= 1 << 20,
+	EFL_CUSTOM3		= 1 << 21,
+	EFL_CUSTOM4		= 1 << 22,
 };
 
 #endif
