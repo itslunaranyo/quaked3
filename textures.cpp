@@ -75,7 +75,7 @@ void Textures::Flush()
 	// if a map is loaded, we must force all brushes to refresh their texture assignments to 
 	// properly populate the unknown wad and redo texture projections for the 64x64 notexture
 	g_map.BuildBrushData();
-	Sys_UpdateWindows(W_CAMERA);
+	Sys_UpdateWindows(W_CAMERA|W_TEXTURE);
 }
 
 /*
@@ -83,15 +83,23 @@ void Textures::Flush()
 Textures::FlushUnused
 ==================
 */
-void Textures::FlushUnused()
+void Textures::FlushUnused(bool rebuild)
 {
+	RefreshUsedStatus();
+
 	// call flushunused on all texture groups
+	Textures::RemoveFromNameMap(&group_unknown);	// hurf
+	group_unknown.FlushUnused();
+	Textures::AddToNameMap(&group_unknown);		// durf
 	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
 	{
 		Textures::RemoveFromNameMap(*tgIt);	// hurf
 		(*tgIt)->FlushUnused();
 		Textures::AddToNameMap(*tgIt);		// durf
 	}
+	
+	if (rebuild)
+		g_map.BuildBrushData();
 
 	// check if selected texture was flushed and get its name out of the work def
 	if (!texMap[label_t(g_qeglobals.d_workTexDef.name)])
@@ -104,27 +112,40 @@ void Textures::FlushUnused()
 		SelectFirstTexture();
 
 	g_qeglobals.d_vTexture.stale = true;
-	Sys_UpdateWindows(W_CAMERA);
+	Sys_UpdateWindows(W_CAMERA|W_TEXTURE);
 }
 
 /*
 ==================
-Textures::ClearUsed
+Textures::RefreshUsedStatus
 ==================
 */
-void Textures::ClearUsed()
+void Textures::RefreshUsedStatus()
 {
 	// call clearused on all texture groups
 	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
 		(*tgIt)->ClearUsed();
+	group_unknown.ClearUsed();	// don't forget meee
 
-	// TODO: should "refresh used" instead, so used status contains no false negatives
+	// refresh texdefs to reset used status
+	Brush* b;
+	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		b->RefreshTexdefs();
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = b->next)
+		b->RefreshTexdefs();
+	for (b = g_map.brRegioned.next; b != &g_map.brRegioned; b = b->next)
+		b->RefreshTexdefs();
+
 	g_qeglobals.d_vTexture.stale = true;
+	Sys_UpdateWindows(W_TEXTURE);
 }
 
 /*
 ==================
 Textures::CreateSolid
+
+lunaran TODO: do we really need a 1px texture for a color, or can we just
+	render vtx color on a universal white texture
 ==================
 */
 Texture *Textures::CreateSolid(const char *name)
@@ -226,7 +247,7 @@ Texture *Textures::ForName(const char *name)
 
 	// still not found, make wrapper for nulltexture and put it in the unknown wad
 	tx = new Texture(*nulltexture);
-	strncpy(tx->name, name, 16);
+	strncpy(tx->name, name, MAX_TEXNAME);
 	tx->next = nullptr;
 	tx->used = true;
 
@@ -241,6 +262,7 @@ Texture *Textures::ForName(const char *name)
 Textures::RemoveFromNameMap
 
 do before deleting a texturegroup that is potentially used
+
 the null indexes are okay because they'll turn into notextures in 
 the unknown group if they're used again
 ==================
@@ -384,7 +406,7 @@ Texture::Texture
 Texture::Texture(int w, int h, const char* n, vec3 c, int gltex) :
 	next(nullptr), width(w), height(h), used(false), texture_number(gltex), color(c)
 {
-	strncpy(name, n, 16);
+	strncpy(name, n, MAX_TEXNAME);
 	SetFlags();
 }
 
@@ -471,7 +493,7 @@ Texture *TextureGroup::ForName(const char *name)
 {
 	for (Texture *tex = first; tex; tex = tex->next)
 	{
-		if (!strncmp(name, tex->name, 16))
+		if (!strncmp(name, tex->name, MAX_TEXNAME))
 			return tex;
 	}
 	return nullptr;
@@ -503,7 +525,7 @@ void TextureGroup::Add(Texture* tx)
 		first = tx;
 		return;
 	}
-	if (strncmp(tx->name, first->name, 16) < 0)
+	if (strncmp(tx->name, first->name, MAX_TEXNAME) < 0)
 	{
 		tx->next = first;
 		first = tx;
@@ -514,7 +536,7 @@ void TextureGroup::Add(Texture* tx)
 	qtex = first;
 	while (qtex->next)
 	{
-		if (strncmp(tx->name, qtex->next->name, 16) < 0)
+		if (strncmp(tx->name, qtex->next->name, MAX_TEXNAME) < 0)
 		{
 			tx->next = qtex->next;
 			qtex->next = tx;
@@ -824,14 +846,14 @@ void Texture_SetMode (int iMenu)
 	{
 		g_qeglobals.d_vCamera.draw_mode = cd_wire;
 		g_map.BuildBrushData();
-		Sys_UpdateWindows(W_ALL);
+		Sys_UpdateWindows(W_CAMERA);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE)
 	{
 		g_qeglobals.d_vCamera.draw_mode = cd_solid;
 		g_map.BuildBrushData();
-		Sys_UpdateWindows(W_ALL);
+		Sys_UpdateWindows(W_CAMERA);
 		return;
 	}
 
@@ -852,7 +874,7 @@ void Texture_SetMode (int iMenu)
 		g_map.BuildBrushData();
 	}
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_CAMERA);
 }
 
 /*

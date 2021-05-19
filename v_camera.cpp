@@ -84,6 +84,9 @@ void CameraView::BuildMatrix ()
 	VectorNormalize(vright);
 	VectorNormalize(vup);
 	VectorNormalize(vpn);
+
+	mpUp = AxisForVector(vup);
+	mpRight = AxisForVector(vright);
 }
 
 /*
@@ -162,7 +165,7 @@ CameraView::Rotate
 void CameraView::Rotate (int yaw, int pitch, const vec3 org)
 {
 	int		i;
-	vec_t	distance;
+	float	distance;
 	vec3	work, forward, dir, vecdist;
 
 	for (i = 0; i < 3; i++)
@@ -384,12 +387,27 @@ void CameraView::PointToRay(int x, int y, vec3 &rayOut)
 	VectorNormalize(rayOut);
 }
 
+
+
 bool CameraView::GetBasis(vec3 &_right, vec3 &_up, vec3 &_forward)
 {
 	_right = vright;
 	_up = vup;
 	_forward = vpn;
 	return true;
+}
+
+mouseContext_t const CameraView::GetMouseContext(const int x, const int y)
+{
+	mouseContext_t mc;
+
+	mc.org = origin;
+	mc.up = mpUp;
+	mc.right = mpRight;
+	PointToRay(x, y, mc.ray);
+	mc.scale = 1;	// what use?
+	mc.dims = 3;	// 3D view
+	return mc;
 }
 
 /*
@@ -468,12 +486,12 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 
 		if (t.brush)
 		{
-			Brush	   *b;
-//			int			i;
-			vec3		mins, maxs, size;
+			vec3	size;
+			/*
+			Brush	*b;
+			vec3	mins, maxs;
 
 			ClearBounds(mins, maxs);
-
 			b = t.brush;
 			for (i = 0; i < 3; i++)
 			{
@@ -482,8 +500,9 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 				if (b->basis.maxs[i] > maxs[i])
 					maxs[i] = b->basis.maxs[i];
 			}
-
 			size = maxs - mins;
+			*/
+			size = t.brush->basis.maxs - t.brush->basis.mins;
 			if (t.brush->owner->IsPoint())
 				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
 			else
@@ -692,18 +711,20 @@ void CameraView::DrawActive()
 
 	for (Brush *brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
-		if (CullBrush(brush))
-			continue;
 		if (brush->IsFiltered())
+			continue;
+		if (CullBrush(brush))
 			continue;
 	// sikk---> Transparent Brushes
 		// TODO: Make toggle via Preferences Option. 
-		// lunaran TODO: collect into texture showflags to eliminate all these strcmps
 		assert(brush->basis.faces->texdef.tex);
+		/*
 		if (!strncmp(brush->basis.faces->texdef.tex->name, "*", 1) ||
 			!strcmp(brush->basis.faces->texdef.tex->name, "clip") ||
 			!strncmp(brush->basis.faces->texdef.tex->name, "hint", 4) ||
 			!strcmp(brush->basis.faces->texdef.tex->name, "trigger"))
+			*/
+		if (brush->showFlags & BFL_TRANS)
 			g_pbrTransBrushes[numTransBrushes++] = brush;
 		else
 		{
@@ -734,10 +755,11 @@ void CameraView::DrawSelected(Brush	*pList)
 
 	// Draw selected brushes
 	glMatrixMode(GL_PROJECTION);
+	/*
 	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
 				 g_qeglobals.d_v3SelectTranslate[1], 
 				 g_qeglobals.d_v3SelectTranslate[2]);
-
+				 */
 	// draw brushes first normally
 	for (brush = pList->next; brush != pList; brush = brush->next)
 		brush->Draw();
@@ -952,7 +974,7 @@ void CameraView::Draw ()
 	}
 // <---sikk
 
-	glMatrixMode(GL_TEXTURE);
+	//glMatrixMode(GL_TEXTURE);
 
 	// ----------------------------------------------------------------
 

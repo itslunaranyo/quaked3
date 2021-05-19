@@ -144,11 +144,9 @@ supercedes old CSG merge which was buggy and weird
 
 notexmerge: if true, don't combine coincident planes if they have different textures
 		if false, coincident planes' texdefs are overwritten with first one found
-convex: if true, always merge any input brushes and create new planes to force convexity
-		if false, don't merge the input brushes if their union wouldn't be convex
 ==============
 */
-Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool convex)
+Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 {
 	Brush	*result;
 	Brush	*b;
@@ -230,7 +228,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 			if (dot > 0) rCount++;
 		}
 		// if all are on one side or the other, put plane in result buffer
-		if (!rCount)
+		if (!lCount)
 		{
 			yf = z;
 			zf = y;
@@ -273,7 +271,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool conve
 			b = *brIt;
 			for (bf = b->basis.faces; bf; bf = bf->fnext)
 			{
-				if (bf->plane.EqualTo(&f->plane, true))
+				if (bf->plane.EqualTo(&f->plane, false))
 				{
 					if (match && ftx != bf->texdef.tex)
 					{
@@ -543,7 +541,7 @@ void CSG::Subtract ()
 		{
 			snext = s->next;
 
-			if (s->owner->IsPoint() || s->hiddenBrush)
+			if (s->owner->IsPoint() || s->IsFiltered())
 				continue;
 			if (std::find(brCarved.begin(), brCarved.end(), s) != brCarved.end())
 				continue;	// is already in fragments

@@ -154,16 +154,16 @@ XYZView::ToGridPoint
 void const XYZView::ToGridPoint (const int x, const int y, vec3 &point)
 {
 	ToPoint(x, y, point);
-	point[nDim1] = floor((float)point[nDim1] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-	point[nDim2] = floor((float)point[nDim2] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+	point[nDim1] = round(point[nDim1], g_qeglobals.d_nGridSize);
+	point[nDim2] = round(point[nDim2], g_qeglobals.d_nGridSize);
 	return;
 }
 
 void const XYZView::ToGridPoint(const int xIn, const int yIn, int &xOut, int &yOut)
 {
 	ToPoint(xIn, yIn, xOut, yOut);
-	xOut = floor((float)xOut / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-	yOut = floor((float)yOut / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+	xOut = round(xOut, g_qeglobals.d_nGridSize);
+	yOut = round(yOut, g_qeglobals.d_nGridSize);
 	return;
 }
 
@@ -215,6 +215,31 @@ bool XYZView::GetBasis(vec3 &right, vec3 &up, vec3 &forward)
 
 	return true;
 }
+
+/*
+==================
+XYZView::GetMouseContext
+==================
+*/
+mouseContext_t const XYZView::GetMouseContext(const int x, const int y)
+{
+	mouseContext_t mc;
+
+	ToPoint(x, y, mc.org);
+
+	mc.org[dViewType] = g_qeglobals.d_savedinfo.nMapSize / 2;
+	mc.ray[dViewType] = -1;
+	mc.right[nDim1] = 1;
+	mc.up[nDim2] = 1;
+	mc.scale = 1 / scale;
+	mc.dims = 2;	// 2D view
+
+	return mc;
+}
+
+
+
+
 
 /*
 ==================
@@ -1506,8 +1531,15 @@ void XYZView::BeginDrawSelection()
 	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].r);
 	if (!g_qeglobals.d_savedinfo.bNoStipple)
 		glEnable(GL_LINE_STIPPLE);
-	glLineStipple(3, 0xaaaa);
-	glLineWidth(2);
+	if (g_qeglobals.d_selSelectMode != sel_face)
+	{
+		glLineStipple(3, 0xaaaa);
+		glLineWidth(2);
+	}
+	else
+	{
+		glLineStipple(2, 0xaaaa);
+	}
 }
 
 void XYZView::EndDrawSelection() 
@@ -1523,6 +1555,16 @@ void XYZView::DrawSelection()
 	Brush	*brush;
 
 	BeginDrawSelection();
+
+	if (g_qeglobals.d_selSelectMode == sel_face)
+	{
+		for (int i = 0; i < Selection::FaceCount(); i++)
+		{
+			g_vfSelectedFaces[i]->DrawWire();
+		}
+		EndDrawSelection();
+		return;
+	}
 
 	// paint size
 	ClearBounds(vMinBounds, vMaxBounds);
@@ -1620,6 +1662,8 @@ void XYZView::Draw ()
 	e = g_map.world;
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
+		if (brush->IsFiltered())
+			continue;
 		if (CullBrush(brush))
 			continue;
 

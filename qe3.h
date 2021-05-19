@@ -98,6 +98,8 @@ typedef struct
 			bShow_SizeInfo,
 			bShow_Viewname,		// sikk - Show View Name
 			bShow_Workzone,
+			bShow_Angles,		// lunaran - no longer an entity flag
+			bShow_Paths,		// lunaran - no longer an entity flag
 			bNoClamp,
 			bScaleLockX,		// sikk - Brush Scaling Axis Lock
 			bScaleLockY, 
@@ -256,6 +258,8 @@ void	QE_CountBrushesAndUpdateStatusBar ();
 void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
 void	QE_Init ();
 bool	QE_KeyDown (int key);
+void	QE_SaveMap();
+void	QE_UpdateTitle();
 bool	QE_LoadProject (char *projectfile);
 int		QE_BestViewAxis();
 bool	QE_SingleBrush ();

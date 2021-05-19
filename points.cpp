@@ -52,7 +52,7 @@ void Pointfile_Next ()
 	g_qeglobals.d_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
 	g_qeglobals.d_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -83,7 +83,7 @@ void Pointfile_Prev ()
 	g_qeglobals.d_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
 	g_qeglobals.d_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -174,5 +174,5 @@ void Pointfile_Clear ()
 	glDeleteLists(g_qeglobals.d_nPointfileDisplayList, 1);
 	g_qeglobals.d_nPointfileDisplayList = 0;
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }

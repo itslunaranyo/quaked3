@@ -35,7 +35,36 @@ void ZView::Init()
 
 }
 
+/*
+==================
+ZView::ToPoint
+==================
+*/
+void ZView::ToPoint(int x, int y, vec3 &point)
+{
+	point = origin;
+	point.z = origin.z + (y - height / 2) / scale;
+}
 
+/*
+==================
+ZView::GetMouseContext
+==================
+*/
+mouseContext_t const ZView::GetMouseContext(const int x, const int y)
+{
+	mouseContext_t mc;
+
+	ToPoint(x, y, mc.org);
+
+	// .ray and .right are 0,0,0 because their direction is meaningless
+
+	mc.up = vec3(0,0,1);
+	mc.scale = 1 / scale;
+	mc.dims = 1;	// 1D view
+
+	return mc;
+}
 /*
 ============================================================================
 
@@ -327,7 +356,80 @@ void ZView::DrawCameraIcon ()
 
 }
 
-GLbitfield g_glbitClear = GL_COLOR_BUFFER_BIT; // HACK
+
+/*
+==============
+ZView::DrawTools
+==============
+*/
+bool ZView::DrawTools()
+{
+	for (auto tIt = g_qeglobals.d_tools.rbegin(); tIt != g_qeglobals.d_tools.rend(); ++tIt)
+	{
+		if ((*tIt)->Draw1D(*this))
+			return true;
+	}
+	return false;
+}
+
+/*
+==============
+ZView::DrawSelection
+==============
+*/
+void ZView::DrawSelection()
+{
+	Brush*	brush;
+	float	top, bottom;
+	vec3	org_top, org_bottom;
+	Texture *q;
+	int xCam = width / 3;
+
+	org_top = origin;
+	org_top[2] = g_qeglobals.d_savedinfo.nMapSize / 2;
+	org_bottom = origin;
+	org_bottom[2] = -g_qeglobals.d_savedinfo.nMapSize / 2;
+
+	// draw selected brushes
+	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	{
+		if (!(brush->basis.mins[0] >= origin[0] ||
+			brush->basis.maxs[0] <= origin[0] ||
+			brush->basis.mins[1] >= origin[1] ||
+			brush->basis.maxs[1] <= origin[1]))
+		{
+			if (brush->RayTest(org_top, vec3(0,0,-1), &top))
+			{
+				top = org_top[2] - top;
+				if (brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
+				{
+					bottom = org_bottom[2] + bottom;
+					q = Textures::ForName(brush->basis.faces->texdef.name);
+
+					glColor3f(q->color[0], q->color[1], q->color[2]);
+					glBegin(GL_QUADS);
+					glVertex2f(-xCam, bottom);
+					glVertex2f(xCam, bottom);
+					glVertex2f(xCam, top);
+					glVertex2f(-xCam, top);
+					glEnd();
+				}
+			}
+		}
+	}
+
+	// lunaran: draw all selection borders over the colored quads so nothing in the selection is obscured
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].x);
+	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	{
+		glBegin(GL_LINE_LOOP);
+		glVertex2f(-xCam, brush->basis.mins[2]);
+		glVertex2f(xCam, brush->basis.mins[2]);
+		glVertex2f(xCam, brush->basis.maxs[2]);
+		glVertex2f(-xCam, brush->basis.maxs[2]);
+		glEnd();
+	}
+}
 
 /*
 ==============
@@ -341,7 +443,6 @@ void ZView::Draw ()
 	float		top, bottom;
 	double		start, end;
 	Texture *q;
-	vec3		org_top, org_bottom, dir_up, dir_down;
 
 	int xCam = width / 3;
 
@@ -351,21 +452,14 @@ void ZView::Draw ()
 	if (timing)
 		start = Sys_DoubleTime();
 
-	//
 	// clear
-	//
 	glViewport(0, 0, width, height);
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][0],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][1],
 				 g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDBACK][2],
 				 0);
 
-    /* GL Bug */ 
-	/* When not using hw acceleration, gl will fault if we clear the depth 
-	buffer bit on the first pass. The hack fix is to set the GL_DEPTH_BUFFER_BIT
-	only after Z_Draw() has been called once. Yeah, right. */
-	glClear(g_glbitClear); 
-	g_glbitClear |= GL_DEPTH_BUFFER_BIT;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
@@ -378,14 +472,9 @@ void ZView::Draw ()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	//
-	// now draw the grid
-	//
 	DrawGrid();
 
-	//
 	// draw stuff
-	//
 	glDisable(GL_CULL_FACE);
 	glShadeModel(GL_FLAT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -394,30 +483,28 @@ void ZView::Draw ()
 	glDisable(GL_DEPTH_TEST);
 
 	// draw filled interiors and edges
-	dir_up[0] = 0; 
-	dir_up[1] = 0; 
-	dir_up[2] = 1;
-	dir_down[0] = 0; 
-	dir_down[1] = 0; 
-	dir_down[2] = -1;
+	vec3 org_top, org_bottom;
 	org_top = origin;
-	org_top[2] = 4096;
+	org_top[2] = g_qeglobals.d_savedinfo.nMapSize / 2;
 	org_bottom = origin;
-	org_bottom[2] = -4096;
+	org_bottom[2] = -g_qeglobals.d_savedinfo.nMapSize / 2;
 
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
 		if (brush->basis.mins[0] >= origin[0] || 
-			brush->basis.maxs[0] <= origin[0]	|| 
-			brush->basis.mins[1] >= origin[1]	|| 
+			brush->basis.maxs[0] <= origin[0] || 
+			brush->basis.mins[1] >= origin[1] || 
 			brush->basis.maxs[1] <= origin[1])
 			continue;
 
-		if (!brush->RayTest(org_top, dir_down, &top))
+		if (brush->IsFiltered())
+			continue;
+
+		if (!brush->RayTest(org_top, vec3(0,0,-1), &top))
 			continue;
 		top = org_top[2] - top;
 
-		if (!brush->RayTest(org_bottom, dir_up, &bottom))
+		if (!brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
 			continue;
 		bottom = org_bottom[2] + bottom;
 
@@ -440,43 +527,8 @@ void ZView::Draw ()
 		glEnd();
 	}
 
-	//
-	// now draw selected brushes
-	//
-	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-	{
-		if (!(brush->basis.mins[0] >= origin[0] || 
-			  brush->basis.maxs[0] <= origin[0] || 
-			  brush->basis.mins[1] >= origin[1] || 
-			  brush->basis.maxs[1] <= origin[1]))
-		{
-			if (brush->RayTest(org_top, dir_down, &top))
-			{
-				top = org_top[2] - top;
-				if (brush->RayTest(org_bottom, dir_up, &bottom))
-				{
-					bottom = org_bottom[2] + bottom;
-					q = Textures::ForName(brush->basis.faces->texdef.name);
-
-					glColor3f(q->color[0], q->color[1], q->color[2]);
-					glBegin(GL_QUADS);
-					glVertex2f(-xCam, bottom);
-					glVertex2f(xCam, bottom);
-					glVertex2f(xCam, top);
-					glVertex2f(-xCam, top);
-					glEnd();
-				}
-			}
-		}
-
-		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].x);
-		glBegin(GL_LINE_LOOP);
-		glVertex2f(-xCam, brush->basis.mins[2]);
-		glVertex2f(xCam, brush->basis.mins[2]);
-		glVertex2f(xCam, brush->basis.maxs[2]);
-		glVertex2f(-xCam, brush->basis.maxs[2]);
-		glEnd();
-	}
+	if (!DrawTools())
+		DrawSelection();
 
 	DrawCameraIcon();
 
@@ -492,8 +544,3 @@ void ZView::Draw ()
 	} 
 }
 
-void ZView::ToPoint(int x, int y, vec3 &point)
-{
-	point = origin;
-	point.z = origin.z + (y - height / 2) / scale;
-}

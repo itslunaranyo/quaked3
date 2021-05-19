@@ -13,7 +13,8 @@ public:
 	~Map() {};
 
 	char		name[MAX_PATH];
-	BOOL		modified;		// for quit confirmations - FIXME: big-BOOL (not little-bool) because autosave sets it to 2 for some daffy logic
+	bool		hasFilename;	// has this map ever been saved?
+	clock_t		autosaveTime;
 	int			numBrushes, numEntities, numTextures;
 
 	Entity		*world;			// the world entity is NOT included in the entities chain
@@ -55,7 +56,7 @@ private:
 
 	void	Free();
 	void	SaveBetween(qeBuffer& buf);
-	void	LoadBetween(qeBuffer& buf);
+	bool	LoadBetween(qeBuffer& buf);
 
 	bool	ParseBufferMerge(const char *data);
 	bool	ParseBufferReplace(const char *data);

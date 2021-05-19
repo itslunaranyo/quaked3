@@ -34,6 +34,8 @@
 
 #define MAX_BRUSH_SIZE			8192	//4096 // quake default 
 
+#define MAX_TEXNAME	16
+
 // key / value pair sizes
 #define	MAX_KEY		32
 #define	MAX_VALUE	1024
@@ -47,7 +49,7 @@
 
 typedef struct miptex_s
 {
-	char		name[16];
+	char		name[MAX_TEXNAME];
 	unsigned	width, height;
 	unsigned	offsets[MIPLEVELS];	// four mip maps stored
 } miptex_t;

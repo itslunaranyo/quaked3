@@ -64,23 +64,6 @@
 #define	KEY_UP			256
 #define	KEY_DOWN		512
 
-// lunaran TODO: get rid of this junk and convert to entitymask_t
-#define	EXCLUDE_LIGHTS		1
-#define	EXCLUDE_ENT			2
-#define	EXCLUDE_PATHS		4
-#define	EXCLUDE_WATER		8
-#define	EXCLUDE_WORLD		16
-#define	EXCLUDE_CLIP		32
-#define	EXCLUDE_FUNC_WALL	64
-#define	EXCLUDE_DETAIL		128
-#define	EXCLUDE_SKY			256
-#define	EXCLUDE_ANGLES		512
-#define	EXCLUDE_HINT		1024
-
-#define	ECLASS_LIGHT		0x0001
-#define	ECLASS_ANGLE		0x0002
-#define	ECLASS_PATH			0x0004
-
 // menu indexes for modifying menus
 #define	MENU_VIEW		2
 #define	MENU_TEXTURE	6
@@ -101,6 +84,7 @@
 #define	W_TEXTURE		0x0010
 #define W_CONSOLE		0x0020
 #define W_ENTITY		0x0040
+#define W_TITLE			0x0080
 
 #define	W_ALL			0xFFFF
 
@@ -145,7 +129,7 @@ enum entitymask_t
 	EFL_LIGHT		= 1 << 4,
 	EFL_MONSTER		= 1 << 5,
 	EFL_FUNCWALL	= 1 << 6,
-	EFL_FUNCDETAIL	= 1 << 7,
+	EFL_DETAIL		= 1 << 7,
 	EFL_X1			= 1 << 8,
 	EFL_X2			= 1 << 9,
 	EFL_X3			= 1 << 10,

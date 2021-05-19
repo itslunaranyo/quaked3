@@ -101,6 +101,7 @@ void QE_Init ()
 	g_qeglobals.d_clipTool = nullptr;
 	g_qeglobals.d_v3WorkMin = vec3(0);
 	g_qeglobals.d_v3WorkMax = vec3(8);
+	g_qeglobals.d_savedinfo.nExclude |= BFL_HIDDEN;	// hidden things are always filtered
 
 	new SelectTool();
 	new ManipTool();
@@ -481,6 +482,26 @@ void QE_CheckOpenGLForErrors (void)
     }
 }
 
+void QE_SaveMap()
+{
+	g_map.SaveToFile(g_map.name, false);	// ignore region
+	g_cmdQueue.SetSaved();
+	g_map.autosaveTime = clock();
+
+	Sys_UpdateWindows(W_TITLE);
+}
+
+void QE_UpdateTitle()
+{
+	char tmp[MAX_PATH + 2];
+
+	sprintf(tmp, "%s%s",
+		g_map.hasFilename ? g_map.name : "unnamed",
+		g_cmdQueue.IsModified() ? " *" : "" );
+	
+	Sys_SetTitle(tmp);
+}
+
 /*
 ===============
 QE_CheckAutoSave
@@ -491,21 +512,23 @@ and the map hasn't been saved, save it out.
 */
 void QE_CheckAutoSave ()
 {
-	static clock_t s_start;
+	//static clock_t s_start;
 	clock_t        now;
 
 	if (!g_qeglobals.d_savedinfo.bAutosave)	// sikk - Preferences Dialog
 		return;
+	if (!g_cmdQueue.IsModified())
+		return;
 
 	now = clock();
 
-	if (g_map.modified != 1 || !s_start)
+	if (!g_map.autosaveTime)
 	{
-		s_start = now;
+		g_map.autosaveTime = now;
 		return;
 	}
 
-	if (now - s_start > (CLOCKS_PER_SEC * 60 * g_qeglobals.d_savedinfo.nAutosave))	// sikk - Preferences Dialog
+	if (now - g_map.autosaveTime > (CLOCKS_PER_SEC * 60 * g_qeglobals.d_savedinfo.nAutosave))	// sikk - Preferences Dialog
 	{
 		Sys_Printf("CMD: Autosaving...\n");
 		Sys_Status("Autosaving...", 0);
@@ -515,8 +538,7 @@ void QE_CheckAutoSave ()
 		Sys_Printf("MSG: Autosave successful.\n");
 		Sys_Status("Autosave successful.", 0);
 
-		g_map.modified = 2;
-		s_start = now;
+		g_map.autosaveTime = 0;
 	}
 }
 
@@ -739,14 +761,15 @@ void QE_CountBrushesAndUpdateStatusBar ()
 		s_lasttexturecount = g_map.numTextures;
 		s_didonce = true;
 	}
-
-	if (g_map.modified)
+	/*
+	//if (g_map.modified)
+	if (g_cmdQueue.IsModified())
 	{
 		char title[1024];
 		sprintf(title, "%s *", g_map.name);
 		QE_ConvertDOSToUnixName(title, title);
 		Sys_SetTitle(title);
-	}
+	}*/
 }
 
 // sikk--->	Update Menu Items & Toolbar Buttons
@@ -816,17 +839,22 @@ void QE_UpdateCommandUI ()
 	CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO,		(g_qeglobals.d_savedinfo.bShow_SizeInfo ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME,		(g_qeglobals.d_savedinfo.bShow_Viewname ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE,		(g_qeglobals.d_savedinfo.bShow_Workzone ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES,		((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_CLIP) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWENT,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ENT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL,		((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_FUNC_WALL) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS,		((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_LIGHTS) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWPATH,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWSKY,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_SKY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWATER,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WATER) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWHINT,			((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_HINT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL,		((g_qeglobals.d_savedinfo.nExclude & EXCLUDE_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES,		(g_qeglobals.d_savedinfo.bShow_Angles ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWPATH,			(g_qeglobals.d_savedinfo.bShow_Paths ? MF_CHECKED : MF_UNCHECKED));
+
+	CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP,			((g_qeglobals.d_savedinfo.nExclude & BFL_CLIP) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWBRUSHENTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_BRUSHENTITY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWPOINTENTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_POINTENTITY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL,		((g_qeglobals.d_savedinfo.nExclude & EFL_FUNCWALL) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS,		((g_qeglobals.d_savedinfo.nExclude & EFL_LIGHT) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWSKY,			((g_qeglobals.d_savedinfo.nExclude & BFL_SKY) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWWATER,			((g_qeglobals.d_savedinfo.nExclude & BFL_LIQUID) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD,			((g_qeglobals.d_savedinfo.nExclude & EFL_WORLDSPAWN) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWHINT,			((g_qeglobals.d_savedinfo.nExclude & BFL_HINT) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL,		((g_qeglobals.d_savedinfo.nExclude & EFL_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS,		((g_qeglobals.d_savedinfo.nExclude & EFL_MONSTER) ? MF_UNCHECKED : MF_CHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS,		((g_qeglobals.d_savedinfo.nExclude & EFL_TRIGGER) ? MF_UNCHECKED : MF_CHECKED));
+
 
 //===================================
 // Selection Menu

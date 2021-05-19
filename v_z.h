@@ -16,8 +16,11 @@ public:
 	void	MouseUp(int x, int y, int buttons);
 	void	MouseMoved(int x, int y, int buttons);
 	void	Draw ();
+	bool	DrawTools();
+	void	DrawSelection();
 
 	void	ToPoint(int x, int y, vec3 &point);
+	mouseContext_t const GetMouseContext(const int x, const int y);
 
 private:
 	void	Init();

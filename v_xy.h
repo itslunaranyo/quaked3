@@ -35,6 +35,7 @@ public:
 	void	const SnapToPoint(const int x, const int y, vec3 &point);
 	vec3	const SnapPoint(const vec3 ptIn);
 
+	mouseContext_t	const GetMouseContext(const int x, const int y);
 	void	Draw();
 	void	DrawSelection();
 	void	BeginDrawSelection();

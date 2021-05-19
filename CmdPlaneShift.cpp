@@ -4,59 +4,67 @@
 
 #include "qe3.h"
 
-CmdPlaneShift::CmdPlaneShift()
-{
-	// state = LIVE;
-}
+CmdPlaneShift::CmdPlaneShift() {}
+CmdPlaneShift::~CmdPlaneShift() {}
 
-CmdPlaneShift::~CmdPlaneShift()
-{
-	
-}
 
-void CmdPlaneShift::AddFaces(std::vector<Face*> &faceList)
-{
-	assert(!fShifted.size());	// one time operation
-	fShifted = faceList;	// copies vector contents
 
-	Brush* lastBrush;	// face list should come from the tool already sorted by brush
-	lastBrush = nullptr;
-	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
+void CmdPlaneShift::SetFaces(std::vector<Face*> &faceList)
+{
+	if (fShifted.size())
+		Error("Faces already set on CmdPlaneShift");	// one time operation
+	assert(planeShift == vec3(0));	// faces before translate
+
+	// filter out duplicates now
+	for (auto flIt = faceList.begin(); flIt != faceList.end(); ++flIt)
 	{
-		//fShifted.push_back(*fIt);
-		if ((*fIt)->owner == lastBrush)
-			continue;
-		lastBrush = (*fIt)->owner;
-
-		// will except if faces were not sorted right
-		cmdBM.ModifyBrush(lastBrush);
+		if (std::find(fShifted.begin(), fShifted.end(), *flIt) == fShifted.end())
+			fShifted.push_back(*flIt);
 	}
-	state = LIVE;
+
+	// make a list of affected brushes now, for less derping around later to derive it
+	for (auto fsIt = fShifted.begin(); fsIt != fShifted.end(); ++fsIt)
+	{
+		if (std::find(bChanged.begin(), bChanged.end(), (*fsIt)->owner) == bChanged.end())
+			bChanged.push_back((*fsIt)->owner);
+	}
+	cmdFM.ModifyFaces(faceList);
 }
 
-void CmdPlaneShift::Translate(vec3 shift)
+// preventCrush: invalidate any plane translate that causes a brush to be dragged negative
+// lunaran TODO: when preventCrush is allowed, track lost brushes with CmdAddRemove
+void CmdPlaneShift::Translate(vec3 shift, bool preventCrush)
 {
+	assert(fShifted.size());	// faces before translate
 	vec3 shiftMod;
 
-	if (planeShift != vec3(0))
-		shiftMod = shift - planeShift;
+	shiftMod = shift - planeShift;
+	planeShift = shift;
 
 	if (shiftMod == vec3(0))
-		return;	// no change
+		return;
 
-	Brush* lastBrush;
-	lastBrush = nullptr;
+	//Sys_Printf("Shift: %f %f %f Total %f %f %f\n", shiftMod.x, shiftMod.y, shiftMod.z, planeShift.x, planeShift.y, planeShift.z);
+
 	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
 	{
 		(*fIt)->plane.Translate(shiftMod);
-		if ((*fIt)->owner != lastBrush)
+	}
+	for (auto bcIt = bChanged.begin(); bcIt != bChanged.end(); ++bcIt)
+	{
+		if (!(*bcIt)->Build() && preventCrush)
 		{
-			// rebuild brush if we've moved the last face
-			if (lastBrush)
-				lastBrush->Build();
-			lastBrush = (*fIt)->owner;
+			// brush dragged backwards, must undo move
+			Translate(planeShift - shiftMod, false);	// don't recurse if the state we're returning to is 
+														// also invalid, although it Shouldn't Be(tm)
+			break;
 		}
 	}
+
+	if (planeShift == vec3(0))
+		state = NOOP;
+	else
+		state = LIVE;
 }
 
 //==============================
@@ -68,26 +76,34 @@ void CmdPlaneShift::Do_Impl()
 		state = NOOP;
 		return;
 	}
-	// TODO: check that planeshift isn't perpendicular to at least one face, or else
+
+	// check that planeshift isn't perpendicular to at least one face, or else
 	// all plane points were slid within their plane and no geometry was changed
+	bool ok = false;
+	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
+	{
+		if (DotProduct(planeShift, (*fIt)->plane.normal))
+		{
+			ok = true;
+			break;
+		}
+	}
+	if (!ok)
+	{
+		state = NOOP;
+		return;
+	}
 
-	cmdBM.Do();
-	return;
+	cmdFM.Do();
 }
 
-void CmdPlaneShift::Undo_Impl()
-{
-	cmdBM.Undo();
-}
-
-void CmdPlaneShift::Redo_Impl()
-{
-	cmdBM.Redo();
-}
+void CmdPlaneShift::Undo_Impl() { cmdFM.Undo(); }
+void CmdPlaneShift::Redo_Impl() { cmdFM.Redo(); }
 
 void CmdPlaneShift::Select_Impl()
 {
-	
+	for (auto bcIt = bChanged.begin(); bcIt != bChanged.end(); ++bcIt)
+		Selection::HandleBrush(*bcIt, false);
 }
 
 

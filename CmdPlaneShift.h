@@ -11,14 +11,15 @@ public:
 	CmdPlaneShift();
 	~CmdPlaneShift();
 
-	void AddFaces(std::vector<Face*> &faceList);
-	void Translate(vec3 shift);
+	void SetFaces(std::vector<Face*> &faceList);
+	void Translate(vec3 shift, bool preventCrush = true);
 
 private:
 	vec3 planeShift;
 	std::vector<Face*> fShifted;
+	std::vector<Brush*> bChanged;
 
-	CmdBrushMod cmdBM;
+	CmdFaceMod cmdFM;
 
 	void Do_Impl();
 	void Undo_Impl();

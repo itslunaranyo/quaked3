@@ -10,9 +10,10 @@
 Map		g_map;
 Brush	*g_pbrRegionSides[4];
 
-Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr), regionMins(-99999), regionMaxs(99999)
+Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
 {
 	g_brSelectedBrushes.CloseLinks();
+	ClearBounds(regionMins, regionMaxs);
 
 	/*
 	entities.CloseLinks();
@@ -66,11 +67,10 @@ void Map::New()
 	g_qeglobals.d_vCamera.origin[2] = 48;
 	g_qeglobals.d_vXYZ[0].origin = vec3(0);
 
-	LoadBetween(between);
-	BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
+	if (LoadBetween(between))
+		BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
 
 	Sys_UpdateWindows(W_ALL);
-	modified = false;
 }
 
 /*
@@ -83,8 +83,9 @@ trashes all map data, but does not restore a workable blank state (use New() for
 void Map::Free()
 {
 	Pointfile_Clear();
-	strcpy(name, "unnamed.map");
-	Sys_SetTitle(name);
+	name[0] = 0;
+	hasFilename = false;
+	//Sys_SetTitle(name);
 	g_qeglobals.d_nNumEntities = 0;
 
 	if (brActive.next)
@@ -118,12 +119,16 @@ void Map::Free()
 	// dump the wads after brushes delete their geometry, because flush calls MapRebuild 
 	// which will generate a bunch of notextures that just get thrown away
 	Textures::Flush();
+	g_qeglobals.d_workTexDef = TexDef();
 
 	g_cmdQueue.Clear();
+	autosaveTime = 0;
 
 	// winding clear must come last, as it resets the winding allocator, so that all
 	// brush geometry that might point into the winding pages is already destroyed
 	Winding::Clear();
+
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -141,6 +146,11 @@ void Map::BuildBrushData(Brush &blist)
 	for (b = blist.next; b != NULL && b != &blist; b = next)
 	{
 		next = b->next;
+
+		// buildbrushdata is called after a wad is loaded or refreshed to make sure names match texture pointers
+		// wads are also not loaded until after worldspawn is parsed during a map load
+		b->RefreshTexdefs();
+
 		b->Build();
 		if (!b->basis.faces)
 		{
@@ -308,6 +318,7 @@ void Map::LoadFromFile(const char *filename)
 	if (ParseBufferReplace((char*)*buf))
 	{
 		strcpy(name, filename);
+		hasFilename = true;
 
 		if (!world)
 		{
@@ -334,8 +345,7 @@ void Map::LoadFromFile(const char *filename)
 		Sys_Printf("%5i entities\n", g_qeglobals.d_nNumEntities);
 
 		LoadBetween(between);
-
-		BuildBrushData();
+		g_map.BuildBrushData();
 
 		// move the view to a start position
 		ent = Map_FindClass("info_player_start");
@@ -358,9 +368,11 @@ void Map::LoadFromFile(const char *filename)
 		}
 
 		//Texture_ShowInuse();
-		Textures::FlushUnused();
-		modified = false;
-		Sys_SetTitle(temp);
+		Textures::FlushUnused(false);	// don't build the map twice
+
+		//modified = false;
+		//Sys_SetTitle(temp);
+		QE_UpdateTitle();
 		RegionOff();
 	}
 
@@ -419,7 +431,7 @@ void Map::ImportFromFile(const char *filename)
 		g_qeglobals.d_savedinfo.bNoClamp = false;
 	*/
 	Sys_EndWait();
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -469,10 +481,10 @@ void Map::SaveToFile(const char *filename, bool use_region)
 	if (use_region)
 		RegionRemove();
 
-	modified = false;
+	//modified = false;
 
-	if (!strstr(temp, "autosave"))
-		Sys_SetTitle(temp);
+	//if (!strstr(temp, "autosave"))
+	//	Sys_SetTitle(temp);
 
 	g_bMBCheck = false;	// sikk - Reset this to false
 	g_nBrushNumCheck = -1;	// sikk - Reset this to -1
@@ -648,19 +660,11 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 
 			// add the worldspawn to the beginning of the entity list so it's easy to find
 			ent->AddToList(&elist, false);
-		//	ent->prev = &elist;
-		//	ent->next = elist.next;
-		//	elist.next->prev = ent;
-		//	elist.next = ent;
 		}
 		else
 		{
 			// add the entity to the end of the entity list
 			ent->AddToList(&elist, true);
-		//	ent->next = &elist;
-		//	ent->prev = elist.prev;
-		//	elist.prev->next = ent;
-		//	elist.prev = ent;
 			numEntities++;
 		}
 
@@ -779,17 +783,18 @@ void Map::SaveBetween(qeBuffer &buf)
 Map::LoadBetween
 ==================
 */
-void Map::LoadBetween(qeBuffer &buf)
+bool Map::LoadBetween(qeBuffer &buf)
 {
 	if (!buf.size())
-		return;		// nothing saved in it
+		return false;		// nothing saved in it
 
 	if (ParseBufferMerge((char*)*buf))
 	{
 		//BuildBrushData(g_brSelectedBrushes);
 		Selection::Changed();
-		modified = true;
+		//modified = true;
 	}
+	return true;
 }
 
 //================================================================
@@ -815,7 +820,7 @@ void Map::RegionOff()
 		b->AddToList(&brActive);
 	}
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 void Map::RegionXY()
@@ -937,8 +942,8 @@ void Map::RegionSelectedBrushes()
 
 	// move the entire g_brSelectedBrushes list to brActive
 	g_brSelectedBrushes.MergeListIntoList(&brActive);
-
-	Sys_UpdateWindows(W_ALL);
+	Selection::Changed();
+	Sys_UpdateWindows(W_SCENE);
 }
 
 void Map::RegionApply()
@@ -955,7 +960,7 @@ void Map::RegionApply()
 		b->AddToList(&brRegioned);
 	}
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 void Map::RegionAdd()

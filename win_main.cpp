@@ -198,7 +198,7 @@ BOOL DoColor (int iIndex)
 		}
 	}
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_ENTITY|W_CAMERA);
 
 	return true;
 }
@@ -251,7 +251,7 @@ void DoTheme (vec3 v[])
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][1] = v[9][1];
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_VIEWNAME][2] = v[9][2];
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE|W_TEXTURE);
 }
 // <---sikk
 
@@ -611,7 +611,7 @@ void DoWindowPosition (int nStyle)
 		g_qeglobals.d_wndZ->SetPosition(h3, vtop, hright, vbottom, false);
 		break;
 	}
-	Sys_UpdateWindows(W_ALL);
+	//Sys_UpdateWindows(W_ALL);
 }
 
 
@@ -1142,10 +1142,10 @@ LONG WINAPI CommandHandler (
 			OpenDialog();
 			break;
 		case ID_FILE_SAVE:
-			if (!strcmp(g_map.name, "unnamed.map"))
+			if (!g_map.hasFilename)
 				SaveAsDialog();
 			else
-				g_map.SaveToFile(g_map.name, false);	// ignore region
+				QE_SaveMap();
 			if (g_qeglobals.d_nPointfileDisplayList)
 				Pointfile_Clear();
 			break;
@@ -1206,11 +1206,9 @@ LONG WINAPI CommandHandler (
 //===================================
 		case ID_EDIT_UNDO:
 			g_cmdQueue.Undo();
-			Sys_UpdateWindows(W_ALL);
 			break;
 		case ID_EDIT_REDO:
 			g_cmdQueue.Redo();
-			Sys_UpdateWindows(W_ALL);
 			break;
 
 		// lunaran cut/copy/paste need to work in entity edit fields and console
@@ -1465,7 +1463,7 @@ LONG WINAPI CommandHandler (
 			for (int i = 0; i < 4; i++)
 				g_qeglobals.d_vXYZ[i].PositionView();
 			g_qeglobals.d_vCamera.PositionCenter();
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY|W_CAMERA);
 			break;
 
 		case ID_VIEW_NEXTVIEW:
@@ -1571,12 +1569,12 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_VIEW_SHOWNAMES:
 			g_qeglobals.d_savedinfo.bShow_Names ^= true;
-			g_map.BuildBrushData();
+			//g_map.BuildBrushData();
 			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_SHOWSIZEINFO:
 			g_qeglobals.d_savedinfo.bShow_SizeInfo ^= true;
-			g_map.BuildBrushData();
+			//g_map.BuildBrushData();
 			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_SHOWVIEWNAME:
@@ -1587,49 +1585,61 @@ LONG WINAPI CommandHandler (
 			g_qeglobals.d_savedinfo.bShow_Workzone ^= true;
 			Sys_UpdateWindows(W_XY);
 			break;
-
 		case ID_VIEW_SHOWANGLES:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_ANGLES;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWCLIP:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_CLIP;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWENT:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_ENT;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWFUNCWALL:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_FUNC_WALL;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_VIEW_SHOWLIGHTS:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_LIGHTS;
+			g_qeglobals.d_savedinfo.bShow_Angles ^= true;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWPATH:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_PATHS;
+			g_qeglobals.d_savedinfo.bShow_Paths ^= true;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+
+		case ID_VIEW_SHOWCLIP:
+			g_qeglobals.d_savedinfo.nExclude ^= BFL_CLIP;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWPOINTENTS:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_POINTENTITY;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWBRUSHENTS:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_BRUSHENTITY;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWFUNCWALL:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_FUNCWALL;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWLIGHTS:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_LIGHT;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWSKY:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_SKY;
+			g_qeglobals.d_savedinfo.nExclude ^= BFL_SKY;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWWATER:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_WATER;
+			g_qeglobals.d_savedinfo.nExclude ^= BFL_LIQUID;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWWORLD:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_WORLD;
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_WORLDSPAWN;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWHINT:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_HINT;
+			g_qeglobals.d_savedinfo.nExclude ^= BFL_HINT;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_SHOWDETAIL:
-			g_qeglobals.d_savedinfo.nExclude ^= EXCLUDE_DETAIL;
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_DETAIL;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWMONSTERS:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_MONSTER;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWTRIGGERS:
+			g_qeglobals.d_savedinfo.nExclude ^= EFL_TRIGGER;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 
@@ -1648,7 +1658,7 @@ LONG WINAPI CommandHandler (
 			if (g_qeglobals.d_selSelectMode == sel_edge)
 			{
 				g_qeglobals.d_selSelectMode = sel_brush;
-				Sys_UpdateWindows(W_ALL);
+				Sys_UpdateWindows(W_XY|W_CAMERA);
 			}
 			else
 			{
@@ -1663,7 +1673,7 @@ LONG WINAPI CommandHandler (
 			if (g_qeglobals.d_selSelectMode == sel_vertex)
 			{
 				g_qeglobals.d_selSelectMode = sel_brush;
-				Sys_UpdateWindows(W_ALL);
+				Sys_UpdateWindows(W_XY | W_CAMERA);
 			}
 			else
 			{
@@ -1773,26 +1783,13 @@ LONG WINAPI CommandHandler (
 			if (g_qeglobals.d_selSelectMode != sel_brush)
 			{
 				g_qeglobals.d_selSelectMode = sel_brush;
-				Sys_UpdateWindows(W_ALL);
+				Sys_UpdateWindows(W_XY | W_CAMERA);
 			}
 			if (g_qeglobals.d_clipTool)
 				delete g_qeglobals.d_clipTool;
 			else
 				g_qeglobals.d_clipTool = new ClipTool();
 			break;
-			/*
-		// lunaran - moved undo into the actual clip & split actions
-		case ID_SELECTION_CLIPSELECTED:
-			Clip_Clip();
-			break;
-		case ID_SELECTION_SPLITSELECTED:
-			Clip_Split();
-			break;
-		case ID_SELECTION_FLIPCLIP:
-			Clip_Flip();
-			break;
-			*/
-		// lunaran - back and forth face<->brush conversion
 
 		case ID_SELECTION_CONNECT:
 			Modify_ConnectEntities();
@@ -1924,12 +1921,8 @@ LONG WINAPI CommandHandler (
 			QE_SetInspectorMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
-		// sikk - TODO: This doesn't function like Radiant and is, for
-		// the most part, pointless. Will later make it toggle along 
-		// with a "Show All" command .
 		case ID_TEXTURES_SHOWINUSE:
-			Sys_BeginWait();
-			//Texture_ShowInuse();
+			Textures::RefreshUsedStatus();
 			QE_SetInspectorMode(W_TEXTURE);
 			break;
 
@@ -2124,59 +2117,59 @@ LONG WINAPI CommandHandler (
 
 		case ID_COLORS_VIEWNAME:
 			DoColor(COLOR_VIEWNAME);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_COLORS_CAMERABACK:
 			DoColor(COLOR_CAMERABACK);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_CAMERA);
 			break;
 		case ID_COLORS_CAMERAGRID:
 			DoColor(COLOR_CAMERAGRID);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_CAMERA);
 			break;
 		case ID_COLORS_CLIPPER:
 			DoColor(COLOR_CLIPPER);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_COLORS_BRUSHES:
 			DoColor(COLOR_BRUSHES);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY|W_Z);
 			break;
 		case ID_COLORS_GRIDBACK:
 			DoColor(COLOR_GRIDBACK);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY|W_Z);
 			break;
 		case ID_COLORS_GRIDBLOCK:
 			DoColor(COLOR_GRIDBLOCK);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY|W_Z);
 			break;
 		case ID_COLORS_GRIDMAJOR:
 			DoColor(COLOR_GRIDMAJOR);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY|W_Z);
 			break;
 		case ID_COLORS_GRIDMINOR:
 			DoColor(COLOR_GRIDMINOR);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY | W_Z);
 			break;
 		case ID_COLORS_GRIDTEXT:
 			DoColor(COLOR_GRIDTEXT);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_XY | W_Z);
 			break;
 		case ID_COLORS_MAPBOUNDRY:
 			DoColor(COLOR_MAPBOUNDRY);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_CAMERA);
 			break;
 		case ID_COLORS_SELECTEDBRUSH:
 			DoColor(COLOR_SELBRUSHES);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_SCENE);
 			break;
 		case ID_COLORS_TEXTUREBACK:
 			DoColor(COLOR_TEXTUREBACK);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_TEXTURE);
 			break;
 		case ID_COLORS_TEXTURETEXT:
 			DoColor(COLOR_TEXTURETEXT);
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_TEXTURE);
 			break;
 
 		case ID_MISC_NEXTLEAKSPOT:
@@ -2548,7 +2541,7 @@ void WMain_Create ()
 		g_qeglobals.d_savedinfo.bShow_XYZ[3]		= false;
 		g_qeglobals.d_savedinfo.bShow_Z				= true;		// Saved Window Toggle
 
-		g_qeglobals.d_savedinfo.nExclude			= 0;
+		g_qeglobals.d_savedinfo.nExclude			= BFL_HIDDEN;
 		g_qeglobals.d_savedinfo.bShow_Axis			= true;		// sikk - Show Axis
 		g_qeglobals.d_savedinfo.bShow_Blocks		= false;
 		g_qeglobals.d_savedinfo.bShow_CameraGrid	= true;		// sikk - Show Camera Grid
@@ -2636,24 +2629,24 @@ void WMain_Create ()
 			CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME, MF_UNCHECKED);
 		if (g_qeglobals.d_savedinfo.bShow_Workzone)	// sikk - Show Workzone moved to savedinfo_t
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, MF_CHECKED);
-
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES)
+		if (!g_qeglobals.d_savedinfo.bShow_Angles)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_LIGHTS)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ENT)
-			CheckMenuItem(hMenu, ID_VIEW_ENTITY, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
+		if (!g_qeglobals.d_savedinfo.bShow_Paths)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWPATH, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WATER)
+
+		if (g_qeglobals.d_savedinfo.nExclude & EFL_LIGHT)
+			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, MF_UNCHECKED);
+		if (g_qeglobals.d_savedinfo.nExclude & EFL_POINTENTITY)
+			CheckMenuItem(hMenu, ID_VIEW_ENTITY, MF_UNCHECKED);
+		if (g_qeglobals.d_savedinfo.nExclude & BFL_LIQUID)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD)
+		if (g_qeglobals.d_savedinfo.nExclude & EFL_WORLDSPAWN)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_CLIP)
+		if (g_qeglobals.d_savedinfo.nExclude & BFL_CLIP)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_HINT)
+		if (g_qeglobals.d_savedinfo.nExclude & BFL_HINT)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, MF_UNCHECKED);
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_DETAIL)
+		if (g_qeglobals.d_savedinfo.nExclude & EFL_DETAIL)
 			CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, MF_UNCHECKED);
 		if (g_qeglobals.d_savedinfo.bNoClamp)
 			CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, MF_UNCHECKED);

@@ -35,6 +35,7 @@ public:
 
 	bool		EqualTo(Plane *b, int flip);	// returns true if the planes are equal-ish
 	bool		FromPoints(const vec3 p0, const vec3 p1, const vec3 p2);	// returns false if the points are collinear
+	bool		ClipLine(vec3 &p1, vec3 &p2);
 	bool		Make();
 	void		Flip();
 	void		Translate(vec3 move);
@@ -65,8 +66,11 @@ public:
 	Face	*Clone();
 	Face	*FullClone(Brush *own);	// sikk - Undo/Redo
 	int		MemorySize();	// sikk - Undo/Redo
+	winding_t *MakeWinding();
 	void	BoundsOnAxis(const vec3 a, float* min, float* max);
+	void	AddBounds(vec3 &mins, vec3 &maxs);
 	bool	ClipLine(vec3 &p1, vec3 &p2);
+	bool	TestSideSelect(const vec3 origin, const vec3 dir);
 
 	void	FitTexture(float fHeight, float fWidth);
 	void	MoveTexture(const vec3 delta);

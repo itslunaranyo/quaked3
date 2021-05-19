@@ -235,7 +235,7 @@ void Surf_ApplyTexdef(TexDef *dst, TexDef *src, int nSkipFlags)
 	{
 		if (!(nSkipFlags & SURF_MIXEDNAME))
 		{
-			strncpy(dst->name, src->name, 16);
+			strncpy(dst->name, src->name, MAX_TEXNAME);
 			dst->tex = src->tex;
 		}
 		if (!(nSkipFlags & SURF_MIXEDSHIFTX))
@@ -315,7 +315,7 @@ void Surf_SetTexdef(TexDef *texdef, int nSkipFlags)
 
 	Undo::End();	// sikk - Undo/Redo
 	SurfWnd_UpdateUI();
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE|W_TEXTURE);
 }
 
 

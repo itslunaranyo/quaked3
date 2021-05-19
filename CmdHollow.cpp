@@ -18,7 +18,7 @@ void CmdHollow::UseBrush(Brush *br)
 
 	if (br->owner->IsPoint())
 		Error("Can't hollow a point entity");
-	else if (!br->hiddenBrush)
+	else if (!br->IsHidden())
 		brHollowed.push_back(br);
 
 	state = LIVE;

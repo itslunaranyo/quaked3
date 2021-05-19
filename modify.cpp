@@ -28,8 +28,6 @@ void Modify_Delete()
 
 	CmdDelete *cmd = new CmdDelete(&g_brSelectedBrushes);
 	g_cmdQueue.Complete(cmd);
-
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -67,8 +65,6 @@ void Modify_Clone()
 	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
 	Selection::DeselectAll();
 	g_cmdQueue.Complete(cmd);
-
-	Sys_UpdateWindows(W_ALL);
 }
 
 
@@ -165,7 +161,8 @@ void Modify_Hide()
 
 	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
 	{
-		b->hiddenBrush = true;
+		//b->hiddenBrush = true;
+		b->showFlags |= BFL_HIDDEN;
 	}
 
 	Selection::Changed();
@@ -181,12 +178,12 @@ void Modify_ShowHidden()
 	Brush *b;
 
 	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
-		b->hiddenBrush = false;
+		b->showFlags &= !BFL_HIDDEN;
 
 	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
-		b->hiddenBrush = false;
+		b->showFlags &= !BFL_HIDDEN;
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*

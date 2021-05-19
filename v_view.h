@@ -6,6 +6,16 @@
 
 // window system independent view code
 
+typedef struct mouseContext_s {
+	mouseContext_s() : up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), scale(1.0f), dims(0) {}
+	vec3 up;
+	vec3 right;
+	vec3 ray;
+	vec3 org;
+	float scale;
+	int dims;
+} mouseContext_t;
+
 class View
 {
 public:
@@ -16,6 +26,8 @@ public:
 	float	scale;
 	vec3	origin;
 	bool	timing;
+
+	virtual mouseContext_t	const GetMouseContext(const int x, const int y) { return mouseContext_t(); }
 
 	virtual void Resize(int w, int h) { width = w; height = h; }
 	virtual void MouseDown(int x, int y, int buttons) {};

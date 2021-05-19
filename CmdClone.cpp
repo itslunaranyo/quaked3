@@ -17,20 +17,8 @@ CmdClone::~CmdClone()
 
 void CmdClone::Clone(Brush *brList, const vec3 offset)
 {
-	vec3	delta;
 	Brush	*n;
 	Entity	*e, *laste;
-
-	delta = offset;
-	/*
-	if (offset)
-	{
-		delta = offset;
-	}
-	else
-	{
-		delta = vec3(0);
-	}*/
 
 	laste = nullptr;
 
@@ -55,14 +43,14 @@ void CmdClone::Clone(Brush *brList, const vec3 offset)
 
 		if (e->IsPoint())
 		{
-			e->Move(delta);
+			e->Move(offset);
 		}
 		else
 		{
 			n = b->Clone();
 			n->Build();		// must have geo before the Move() for texture lock
 			n->owner = e;
-			n->Move(delta);
+			n->Move(offset, g_qeglobals.d_bTextureLock);
 			cmdAR.AddedBrush(n);
 		}
 	}

@@ -220,9 +220,7 @@ Selection::IsFaceSelected
 */
 bool Selection::IsFaceSelected (Face *face)
 {
-	int i;
-	
-	for (i = 0; i < g_nSelFaceCount; i++)
+	for (int i = 0; i < g_nSelFaceCount; i++)
 		if (face == g_vfSelectedFaces[i])
 			return true;
 
@@ -466,7 +464,10 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 ================
 Selection::Ray
 
-If the origin is inside a brush, that brush will be ignored.
+If the origin is inside a brush, that brush will be ignored
+
+lunaran: now returns a modified version of flags based on what was hit first,
+so paint-select can persistently select or deselect across the movement
 ================
 */
 int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
@@ -493,7 +494,6 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_SELECTED) return 0;
 			out |= SF_UNSELECTED;
 			SelectFace(t.face);
-			//t.face->owner = t.brush;	// important safety tip: this is important because apparently face.owner isn't set to anything by default?
 			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, false);
 		}
 	}

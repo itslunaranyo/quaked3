@@ -17,19 +17,20 @@ public:
 
 	char			*name;
 	typedef enum {
-		ECF_POINT = 0x01,
-		ECF_BRUSH = 0x02,
-		ECF_HACKED = 0x04,	// is supposed to be the opposite form
-		ECF_UNKNOWN = 0x08
+		ECF_POINT	= 0x0001,
+		ECF_BRUSH	= 0x0002,
+		ECF_HACKED	= 0x0004,	// is supposed to be the opposite form
+		ECF_UNKNOWN	= 0x0008,
+		ECF_ANGLE	= 0x0010
 	} eclass_form_e;
 
 	int				form;
 	vec3			mins, maxs;
 	vec3			color;
-	TexDef		texdef;
+	TexDef			texdef;
 	qeBuffer		comments;
 	char			flagnames[MAX_FLAGS][32];
-	unsigned int	nShowFlags;
+	unsigned int	showFlags;
 
 	bool			IsPointClass() { return !!(form & ECF_POINT); }
 	static EntClass	*ForName(const char *name, bool has_brushes, bool strict);

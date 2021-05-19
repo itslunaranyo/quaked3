@@ -106,7 +106,7 @@ void Entity::SetKeyValue(const char *key, const char *value)
 	}
 
 	strcpy((char*)*ep->value, value);
-	g_map.modified = true;
+	//g_map.modified = true;
 }
 
 /*

@@ -127,12 +127,13 @@ Set the window fields to mirror the edit texdef
 */
 void SurfWnd_FromEditTexdef()
 {
-	char		sz[16];
+	char		sz[MAX_TEXNAME];
 	TexDef   *texdef;
 	float shiftxp, shiftyp, rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
+	texdef->name[MAX_TEXNAME - 1] = 0;
 
 	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
@@ -190,14 +191,22 @@ Reads the window fields and changes relevant texdef members on selection
 */
 void SurfWnd_Apply()
 {
-	char		sz[64];
-	TexDef	texdef;
+	char		sz[MAX_TEXNAME];
+	TexDef		texdef;
 	int			mixed = 0;
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
-	strncpy(texdef.name, sz, sizeof(texdef.name));// -1);
+	strncpy(texdef.name, sz, MAX_TEXNAME);// -1);
+	texdef.name[MAX_TEXNAME - 1] = 0;
 	if (texdef.name[0] <= ' ')
+	{
+		texdef.tex = nullptr;
 		mixed |= SURF_MIXEDNAME;
+	}
+	else
+	{
+		texdef.tex = Textures::ForName(texdef.name);
+	}
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
 	if (sz[0] <= ' ')

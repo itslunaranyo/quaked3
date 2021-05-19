@@ -40,13 +40,13 @@ void View::DrawPathLines()
 	Brush		*sb, *tb;
 	char		*psz;
 	vec3		dir, s1, s2;
-	vec_t		len, f;
+	float		len, f;
 	int			arrows;
 	int			num_entities;
 	char		*ent_target[MAX_MAP_ENTITIES];
 	Entity		*ent_entity[MAX_MAP_ENTITIES];
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
+	if (!g_qeglobals.d_savedinfo.bShow_Paths)
 		return;
 
 	num_entities = 0;

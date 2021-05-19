@@ -25,6 +25,7 @@ public:
 	void Undo();
 	void Redo();
 	void Select();
+	unsigned id;
 
 protected:
 	bool selectOnDo;
@@ -40,13 +41,15 @@ protected:
 class CommandQueue
 {
 public:
-	CommandQueue() {}
+	CommandQueue() : gId(0), idLastBeforeSave(0), idFirstAfterSave(0) {}
 	~CommandQueue() {}
 
 	void Complete(Command* cmd);
 	void Undo();
 	void Redo();
 	void Clear();
+	void SetSaved();
+	bool IsModified();
 
 	Command* LastUndo() { return undoQueue.back(); }
 	bool UndoAvailable() { return (undoQueue.size() != 0); }
@@ -56,6 +59,9 @@ private:
 	void ClearOldestUndo();
 	void ClearAllRedos();
 	void ClearAllUndos();
+
+	unsigned gId, idLastBeforeSave, idFirstAfterSave;
+
 	std::deque<Command*> undoQueue, redoQueue;
 };
 

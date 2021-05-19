@@ -18,11 +18,12 @@ typedef enum
 class CameraView : public View
 {
 public:
-	vec_t	viewdistance;		// For rotating around a point
+	float	viewdistance;		// For rotating around a point
 	vec3	angles;
 	vec3	color;				// background 
 	vec3	forward, right, up;	// move matrix
 	vec3	vup, vpn, vright;	// view matrix
+	vec3	mpUp, mpRight;		// mouse manipulation plane
 	camera_draw_mode	draw_mode;
 	int		nCamButtonState;
 
@@ -34,6 +35,7 @@ public:
 	void GetAimPoint(vec3 &pt);
 	void PointToRay(int x, int y, vec3 &rayOut);
 	bool GetBasis(vec3 &right, vec3 &up, vec3 &forward);
+	mouseContext_t	const GetMouseContext(const int x, const int y);
 
 	void ChangeFloor(bool up);
 	void FreeLook();
@@ -46,6 +48,8 @@ public:
 	void Draw ();
 	bool CullBrush(Brush *b);
 
+	void DrawSelected(Brush	*pList);
+
 private:
 
 	int		buttonX, buttonY;
@@ -57,7 +61,6 @@ private:
 	void BuildMatrix ();
 	void DrawGrid ();	// sikk - Camera Grid
 	void DrawActive();
-	void DrawSelected(Brush	*pList);
 	bool DrawTools();
 };
 

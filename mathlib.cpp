@@ -9,7 +9,6 @@
 #include "qedefs.h"
 #include <assert.h>
 
-
 bool VectorCompare(const vec3 v1, const vec3 v2)
 {
 	for (int i = 0; i < 3; i++)
@@ -19,7 +18,7 @@ bool VectorCompare(const vec3 v1, const vec3 v2)
 	return true;
 }
 
-vec_t VectorNormalize(vec3 &v)
+float VectorNormalize(vec3 &v)
 {
 	float l = glm::length(v);
 	v = v / l;
@@ -222,7 +221,7 @@ bool VectorCompare (vec3_t v1, vec3_t v2)
 Q_rint
 ==================
 */
-vec_t Q_rint (vec_t in)
+float Q_rint (float in)
 {
 	return (float)floor(in + 0.5);
 }
@@ -256,7 +255,7 @@ void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross)
 _DotProduct
 ==================
 */
-vec_t _DotProduct (vec3_t v1, vec3_t v2)
+float _DotProduct (vec3_t v1, vec3_t v2)
 {
 	return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
@@ -302,7 +301,7 @@ void _VectorCopy (vec3_t in, vec3_t out)
 VectorNormalize
 ==================
 */
-vec_t VectorNormalize (vec3_t v)
+float VectorNormalize (vec3_t v)
 {
 	int		i;
 	float	length;
@@ -312,7 +311,7 @@ vec_t VectorNormalize (vec3_t v)
 		length += v[i] * v[i];
 	length = (float)sqrt(length);
 	if (length == 0)
-		return (vec_t)0;
+		return (float)0;
 		
 	for (i = 0; i < 3; i++)
 		v[i] /= length;	
@@ -337,7 +336,7 @@ void VectorInverse (vec3_t v)
 VectorScale
 ==================
 */
-void VectorScale (vec3_t v, vec_t scale, vec3_t out)
+void VectorScale (vec3_t v, float scale, vec3_t out)
 {
 	out[0] = v[0] * scale;
 	out[1] = v[1] * scale;
@@ -374,8 +373,8 @@ void VectorRotate (vec3_t vIn, vec3_t vRotation, vec3_t out)
 			dAngle = vRotation[i] * Q_PI / 180.0;
 			c = cos(dAngle);
 			s = sin(dAngle);
-			vWork[nIndex[i][0]] = va[nIndex[i][0]] * (vec_t)c - va[nIndex[i][1]] * (vec_t)s;
-			vWork[nIndex[i][1]] = va[nIndex[i][0]] * (vec_t)s + va[nIndex[i][1]] * (vec_t)c;
+			vWork[nIndex[i][0]] = va[nIndex[i][0]] * (float)c - va[nIndex[i][1]] * (float)s;
+			vWork[nIndex[i][1]] = va[nIndex[i][0]] * (float)s + va[nIndex[i][1]] * (float)c;
 		}
 		va = vWork;
 	}
@@ -428,7 +427,7 @@ AddPointToBounds
 void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs)
 {
 	int		i;
-	vec_t	val;
+	float	val;
 	
 	for (i = 0; i < 3; i++)
 	{

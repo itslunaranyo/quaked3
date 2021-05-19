@@ -43,7 +43,11 @@ instantiated.
 */
 void Command::Do()
 {
-	assert(state == LIVE);
+	//assert(state == LIVE);
+	// sub-commands can sometimes do nothing, just check here
+	if (state == NOOP)
+		return;
+
 	Do_Impl();
 
 	// commands can decide as they're Do()ne that despite being set up and
@@ -129,6 +133,7 @@ void CommandQueue::Complete(Command *cmd)
 	if (cmd->state == Command::NOOP)
 	{
 		// dead command that produces no changes in the scene, throw it away
+		Sys_Printf("already noop command, deleting\n");
 		delete cmd;
 		return;
 	}
@@ -144,16 +149,19 @@ void CommandQueue::Complete(Command *cmd)
 
 	if (cmd->state == Command::NOOP)
 	{
+		Sys_Printf("noop command after do, deleting\n");
 		delete cmd;
 		return;
 	}
 
 	undoQueue.push_back(cmd);
+	cmd->id = ++gId;
+	if (!idFirstAfterSave)
+		idFirstAfterSave = cmd->id;
 
 	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)
 		ClearOldestUndo();
 
-	g_map.modified = true;
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -176,9 +184,6 @@ void CommandQueue::Undo()
 	cmd->Undo();
 	redoQueue.push_back(cmd);
 
-	// lunaran TODO: remember on what step the map was last saved, and clear the
-	//	modified flag if we undo/redo back to that exact step
-	g_map.modified = true;
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -200,7 +205,7 @@ void CommandQueue::Redo()
 	redoQueue.pop_back();
 	cmd->Redo();
 	undoQueue.push_back(cmd);
-	g_map.modified = true;
+
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -213,6 +218,56 @@ void CommandQueue::Clear()
 {
 	ClearAllUndos();
 	ClearAllRedos();
+}
+
+/*
+==================
+CommandQueue::SetSaved
+
+make a note of the undo and redo steps on either side of us right now, so we know
+this is the last saved state should we undo/redo across it again
+==================
+*/
+void CommandQueue::SetSaved()
+{
+	if (undoQueue.size())
+		idLastBeforeSave = undoQueue.back()->id;
+	//else
+	//	idLastBeforeSave = 0;
+
+	if (redoQueue.size())
+		idFirstAfterSave = redoQueue.back()->id;
+	else
+		idFirstAfterSave = 0;
+
+	//QE_UpdateTitle();
+}
+
+/*
+==================
+CommandQueue::IsModified
+==================
+*/
+bool CommandQueue::IsModified()
+{
+	if (undoQueue.size())
+	{
+		if (idLastBeforeSave == undoQueue.back()->id)
+			return false;
+	}
+	else
+	{
+		if (!idLastBeforeSave)
+			return false;
+		// if undoqueue is empty but there is an idLastBeforeSave, we filled the undo queue and then undid all of it
+		if (redoQueue.size())
+		{
+			if (idFirstAfterSave == redoQueue.back()->id)
+				return false;
+		}
+	}
+
+	return true;
 }
 
 /*

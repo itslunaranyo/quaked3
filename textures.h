@@ -9,11 +9,11 @@ class TextureGroup;
 // lunaran - for mapping texture names to addresses without screwing around with std::strings
 typedef struct label_s
 {
-	char n[16];		// matches the WAD2 spec (16)
+	char n[MAX_TEXNAME];		// matches the WAD2 spec (16)
 	label_s() { n[0] = 0; }
-	label_s(const char* name) { strncpy(n, name, 16); }
-	bool operator<(const label_s &other) const { return (strncmp(n, other.n, 16) < 0); }
-	bool operator==(const label_s &other) const { return (strncmp(n, other.n, 16) == 0); }
+	label_s(const char* name) { strncpy(n, name, MAX_TEXNAME); }
+	bool operator<(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) < 0); }
+	bool operator==(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) == 0); }
 } label_t;
 
 
@@ -25,7 +25,7 @@ public:
 	~Texture() {};
 
 	Texture		*next;
-	char		name[16];		// matches the WAD2 spec (16)
+	char		name[MAX_TEXNAME];		// matches the WAD2 spec (16)
     int			width, height;
 	int			texture_number;	// gl bind number
 	vec3		color;			// for flat shade mode
@@ -83,8 +83,8 @@ namespace Textures
 {
 	void Init();
 	void Flush();
-	void FlushUnused();
-	void ClearUsed();
+	void FlushUnused(bool rebuild = true);
+	void RefreshUsedStatus();
 
 	Texture *CreateSolid(const char *name);
 	Texture *MakeNullTexture();
@@ -110,14 +110,14 @@ namespace Textures
 class TexDef
 {
 public:
-	TexDef() : tex(nullptr), shift(), scale(), rotate(0) {};
+	TexDef() : tex(nullptr), shift(), scale(), rotate(0) { name[0] = 0; };
 
-	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, 16); }
-	void	Set(const char* txn) { strncpy(name, txn, 16); tex = Textures::ForName(name); }
+	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, MAX_TEXNAME); stx->used = true; }
+	void	Set(const char* txn) { strncpy(name, txn, MAX_TEXNAME); tex = Textures::ForName(name); }
 	void	Clamp();
 
 	Texture	*tex;
-	char	name[16];		// matches the WAD2 spec (16)
+	char	name[MAX_TEXNAME];		// matches the WAD2 spec (16)
 	float	shift[2];
 	float	scale[2];
 	float	rotate;

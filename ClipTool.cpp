@@ -418,8 +418,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 	t = Selection::TestRay(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED);
 	if (t.brush && t.face)
 	{
-		pn = t.face->plane.normal;
-		AxializeVector(pn);
+		pn = AxializeVector(t.face->plane.normal);
 
 		if (pn[0])
 			*outAxis = YZ;

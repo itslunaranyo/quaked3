@@ -17,7 +17,7 @@ void CmdMerge::UseBrush(Brush *br)
 
 	if (br->owner->IsPoint())
 		Error("Can't merge a point entity");
-	else if (!br->hiddenBrush)
+	else if (!br->IsHidden())
 		brMerged.push_back(br);
 
 	state = LIVE;

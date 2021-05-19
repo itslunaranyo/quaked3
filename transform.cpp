@@ -31,7 +31,7 @@ void Transform_Move(const vec3 delta)
 		if (b->owner->IsPoint())
 			b->owner->Move(delta);
 		else
-			b->Move(delta);
+			b->Move(delta, g_qeglobals.d_bTextureLock);
 	}
 	//	Sys_UpdateWindows(W_ALL);
 }
@@ -103,7 +103,7 @@ void Transform_RotateAxis(int axis, float deg, bool bMouse)
 	/*
 	vec3_t	temp;
 	int		i, j;
-	vec_t	c, s;
+	float	c, s;
 
 	if (deg == 0)
 	return;
@@ -173,7 +173,7 @@ void Transform_RotateAxis(int axis, float deg, bool bMouse)
 	}
 	*/
 	int		i;
-	vec_t	c, s;
+	float	c, s;
 
 
 	while (deg >= 360)

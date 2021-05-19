@@ -17,6 +17,7 @@ public:
 	Brush	*prev, *next;	// links in active/selected
 	Brush	*oprev, *onext;	// links in entity
 	Entity	*owner;
+
 	struct brbasis_s {
 		brbasis_s();
 		~brbasis_s();
@@ -26,8 +27,10 @@ public:
 		Face	*faces;
 		vec3	mins, maxs;
 	} basis;
-	bool	hiddenBrush;
 
+	unsigned int showFlags;	// lunaran: hiddenBrush now rolled into a whole set of bitflags
+
+	// lunaran TODO: go away
 	// sikk---> Undo/Redo
 	int undoId;			// undo ID		
 	int redoId;			// redo ID
@@ -40,6 +43,7 @@ public:
 	int		MemorySize() const;	// sikk - Undo/Redo
 	bool	IsConvex() const;	// sikk - Vertex Editing Splits Face
 	bool	IsFiltered() const;
+	bool	IsHidden() const { return !!(showFlags & BFL_HIDDEN); }
 
 	static Brush *Create (const vec3 inMins, const vec3 inMaxs, TexDef *texdef);
 	void	Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef);
@@ -47,23 +51,25 @@ public:
 	Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	CopyBasis(brbasis_s &brb);
 	void	ClearFaces();
-	void	Move(const vec3 move);
-	void	Transform(const glm::mat4 mat, bool textureLock);
+	void	Move(const vec3 move, const bool texturelock);
+	void	Transform(const glm::mat4 mat, const bool textureLock);
+	void	RefreshFlags();
 
-	void	Build();
+	bool	Build();	// lunaran: now returns false if brush disappeared when built
 	void	MakeFacePlanes();
 	void	SnapPlanePoints();
-	winding_t *MakeFaceWinding(Face *face);
 	void	RemoveEmptyFaces();
 
 	void	CheckTexdef(Face *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 	void	FitTexture(int nHeight, int nWidth);
 	void	SetTexture(TexDef *texdef, int nSkipFlags);
+	void	RefreshTexdefs();
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
 	void	SelectFaceForDragging(Face *f, bool shear);
 	void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
 	bool	PointTest(const vec3 origin);
+	vec3	Center() { return (basis.maxs + basis.mins) * 0.5f; }
 
 	// sikk---> Vertex Editing Splits Face
 	bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);

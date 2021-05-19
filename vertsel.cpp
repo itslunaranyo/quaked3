@@ -67,7 +67,8 @@ void MakeFace (Face *f)
 	int			pnum[128];
 	winding_t  *w;
 
-	w = g_brSelectedBrushes.next->MakeFaceWinding(f);
+	//w = g_brSelectedBrushes.next->MakeFaceWinding(f);
+	w = f->MakeWinding();
 	if (!w)
 		return;
 	for (i = 0; i < w->numpoints; i++)
@@ -99,7 +100,7 @@ void SetupVertexSelection ()
 	for (f = b->basis.faces; f; f = f->fnext)
 		MakeFace(f);
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -113,7 +114,8 @@ void SelectFaceEdge (Face *f, int p1, int p2)
 	int			pnum[128];
 	winding_t  *w;
 
-	w = g_brSelectedBrushes.next->MakeFaceWinding(f);
+	//w = g_brSelectedBrushes.next->MakeFaceWinding(f);
+	w = f->MakeWinding();
 
 	if (!w)
 		return;
@@ -167,7 +169,8 @@ void SelectVertex (int p1)
 	b = g_brSelectedBrushes.next;
 	for (f = b->basis.faces; f; f = f->fnext)
 	{
-		w = b->MakeFaceWinding(f);
+		//w = b->MakeFaceWinding(f);
+		w = f->MakeWinding();
 
 		if (!w)
 			continue;

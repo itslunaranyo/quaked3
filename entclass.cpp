@@ -31,7 +31,7 @@ EntClass::EntClass
 */
 EntClass::EntClass() :
 	name(nullptr), comments(0), 
-	form(ECF_UNKNOWN), nShowFlags(0)
+	form(ECF_UNKNOWN), showFlags(0)
 {
 	mins = vec3(0);
 	maxs = vec3(0);
@@ -48,7 +48,7 @@ EntClass::EntClass
 */
 EntClass::EntClass(const EntClass& other) :
 	name(other.name), form(other.form), comments(other.comments),
-	nShowFlags(other.nShowFlags), texdef(other.texdef)
+	showFlags(other.showFlags), texdef(other.texdef)
 {
 	mins = other.mins;
 	maxs = other.maxs;
@@ -78,7 +78,7 @@ EntClass *EntClass::InitFromText(char *text)
 	int			r, i;
 	char		*p, parms[256];
 	EntClass	*e;
-	//char		color[16];
+	char		color[MAX_TEXNAME];
 
 	e = new EntClass();
 
@@ -99,7 +99,8 @@ EntClass *EntClass::InitFromText(char *text)
 	}
 	//sprintf(color, "#%1.3f %1.3f %1.3f", e->color[0], e->color[1], e->color[2]);
 	//strcpy(e->texdef.name, color);
-	rgbToHex(e->color, e->texdef.name);
+	rgbToHex(e->color, color);
+	e->texdef.Set(color);	// make a solid color texture
 
 	while (*text != ')')
 	{
@@ -191,26 +192,45 @@ EntClass *EntClass::InitFromText(char *text)
 	e->comments[len] = 0;
 
 	// setup show flags
-	e->nShowFlags = 0;
-	if (_strcmpi(e->name, "light") == 0)
-		e->nShowFlags |= ECLASS_LIGHT;
+	e->showFlags = 0;
 
-	if ((_strnicmp(e->name, "info_player_start", strlen("info_player_start")) == 0) ||
-		(_strnicmp(e->name, "info_player_start2", strlen("info_player_start2")) == 0) ||
-		(_strnicmp(e->name, "info_player_deathmatch", strlen("info_player_deathmatch")) == 0) ||
-		(_strnicmp(e->name, "info_player_coop", strlen("info_player_coop")) == 0) ||
-		(_strnicmp(e->name, "info_teleport_destination", strlen("info_teleport_destination")) == 0) ||
-		(_strnicmp(e->name, "info_intermission", strlen("info_intermission")) == 0) ||
-		// sikk---> added monsters
-		(_strnicmp(e->name, "monster_", strlen("monster_")) == 0) ||
-		// <---sikk
-		(_strnicmp(e->name, "path_corner", strlen("path_corner")) == 0) ||
-		(_strnicmp(e->name, "viewthing", strlen("viewthing")) == 0))
-		e->nShowFlags |= ECLASS_ANGLE;
+	if (_strnicmp(e->name, "worldspawn", 10) == 0)
+	{
+		e->showFlags = EFL_WORLDSPAWN;
+	}
+	else
+	{
+		if (e->form == ECF_BRUSH)
+		{
+			e->showFlags = EFL_BRUSHENTITY;
+			if (_strnicmp(e->name, "trigger", 7) == 0)
+				e->showFlags |= EFL_TRIGGER;
+			if (_strnicmp(e->name, "func_wall", 9) == 0)
+				e->showFlags |= EFL_FUNCWALL;
+			if (_strnicmp(e->name, "func_detail", 11) == 0)
+				e->showFlags |= EFL_DETAIL;
+		}
+		else
+		{
+			e->showFlags = EFL_POINTENTITY;
+			if (_strnicmp(e->name, "light", 5) == 0)
+				e->showFlags |= EFL_LIGHT;
+			else if (_strnicmp(e->name, "monster", 7) == 0)
+				e->showFlags |= EFL_MONSTER;
+		}
+	}
 
+	if ((_strnicmp(e->name, "info_player", 11) == 0) ||
+		(_strnicmp(e->name, "info_teleport", 13) == 0) ||
+		(_strnicmp(e->name, "info_intermission", 17) == 0) ||
+		(_strnicmp(e->name, "monster", 7) == 0) ||	// sikk: added monsters
+		(_strnicmp(e->name, "path_corner", 11) == 0) ||
+		(_strnicmp(e->name, "viewthing", 9) == 0))
+		e->form |= ECF_ANGLE;
+	/*
 	if (_strcmpi(e->name, "path") == 0)
-		e->nShowFlags |= ECLASS_PATH;
-
+		e->showFlags |= ECLASS_PATH;
+	*/
 	return e;
 }
 

@@ -349,7 +349,7 @@ TextureView::UpdateStatus
 void TextureView::UpdateStatus(TexDef* texdef)
 {
 	char		sz[256];
-	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, 0, 0);// q->width, q->height);	// lunaran TODO: texdef doesn't contain a pointer to the texture?
+	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, texdef->tex->width, texdef->tex->height);
 	Sys_Status(sz, 3);
 }
 

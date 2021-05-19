@@ -25,7 +25,20 @@ AxializeVector
 lunaran: matches function of TextureAxisFromPlane now, used to fail on diagonal cases
 ==============
 */
-void AxializeVector (vec3 &v)
+vec3 AxializeVector (const vec3 &v)
+{
+	vec3	out;
+
+	out = AxisForVector(v);
+
+	for (int i = 0; i < 3; i++)
+	{
+		out[i] = fabs(v[i]) * out[i];
+	}
+	return out;
+}
+
+vec3 AxisForVector(const vec3 &v)
 {
 	int		i, bestaxis;
 	float	dot, best;
@@ -35,7 +48,7 @@ void AxializeVector (vec3 &v)
 
 	for (i = 0; i < 6; i++)
 	{
-		dot = DotProduct(v, g_v3BaseAxis[i*3]);
+		dot = DotProduct(v, g_v3BaseAxis[i * 3]);
 		if (dot > best)
 		{
 			best = dot;
@@ -43,11 +56,10 @@ void AxializeVector (vec3 &v)
 		}
 	}
 
-	for (i = 0; i < 3; i++)
-	{
-		v[i] = fabs(v[i]) * g_v3BaseAxis[bestaxis*3][i];
-	}
+	return g_v3BaseAxis[bestaxis * 3];
 }
+
+
 
 /*
 =============
@@ -64,7 +76,7 @@ void MoveSelection (const vec3 move)
 	if (!move[0] && !move[1] && !move[2])
 		return;
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE|W_ENTITY);
 
 	// dragging only a part of the selection
 	if (g_qeglobals.d_nNumMovePoints)
@@ -155,10 +167,8 @@ void Drag_Setup(int x, int y, int buttons,
 	pressx = x;
 	pressy = y;
 
-	g_v3DragXVec = xaxis;
-	AxializeVector(g_v3DragXVec);
-	g_v3DragYVec = yaxis;
-	AxializeVector(g_v3DragYVec);
+	g_v3DragXVec = AxializeVector(xaxis);
+	g_v3DragYVec = AxializeVector(yaxis);
 
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
 	{
@@ -334,7 +344,7 @@ void Drag_Begin(int x, int y, int buttons,
 					t.brush->SetTexture(&g_qeglobals.d_workTexDef, 0);
 					Undo::EndBrush(t.brush);
 					Undo::End();
-					Sys_UpdateWindows(W_ALL);
+					Sys_UpdateWindows(W_SCENE);
 				}
 			}
 			else
@@ -359,7 +369,7 @@ void Drag_Begin(int x, int y, int buttons,
 					t.brush->Build();
 					Undo::EndBrush(t.brush);
 					Undo::End();
-					Sys_UpdateWindows(W_ALL);
+					Sys_UpdateWindows(W_SCENE);
 				}
 			}
 			else
@@ -384,7 +394,7 @@ void Drag_Begin(int x, int y, int buttons,
 					t.brush->Build();
 					Undo::EndBrush(t.brush);
 					Undo::End();
-					Sys_UpdateWindows(W_ALL);
+					Sys_UpdateWindows(W_SCENE);
 				}
 			}
 			else

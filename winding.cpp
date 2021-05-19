@@ -477,7 +477,7 @@ winding_t *Winding::TryMerge (winding_t &f1, winding_t &f2, const vec3 planenorm
 {
 	int			i, j, k, l;
 	bool		keep1, keep2;
-	vec_t		dot;
+	float		dot;
 	vec3		*p1, *p2, *p3, *p4, *back;
 	vec3		normal, delta;
 	winding_t	*newf;

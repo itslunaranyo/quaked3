@@ -15,14 +15,17 @@ public:
 	void UseBrushes(Brush *brList);
 
 	void Translate(vec3 tr, const bool relative = false);
+	void TextureLock(bool lock) { textureLock = lock; if (lock) postDrag = true; }
 
-private:
 	vec3 trans;
+	bool postDrag;
+private:
 	bool textureLock;
-	glm::mat4 mat;
+	//glm::mat4 mat;
 	std::vector<Brush*> brMoved;
+	std::vector<Entity*> entMoved;
 
-	CmdBrushMod cmdBM;		// for moving brushes
+	CmdFaceMod cmdFM;	// for moving brushes (doesn't need to be a BrushMod bc facecounts don't change)
 
 	void Do_Impl();
 	void Undo_Impl();

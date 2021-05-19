@@ -74,9 +74,12 @@ BEGIN
             MENUITEM "Show &Detail",                40421,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Func Wall",             ID_VIEW_SHOWFUNCWALL,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Lights",                ID_VIEW_SHOWLIGHTS,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Monsters",              ID_VIEW_SHOWMONSTERS,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Triggers",              ID_VIEW_SHOWTRIGGERS,MFT_STRING,MFS_CHECKED
             MENUITEM MFT_SEPARATOR
             MENUITEM "Show Wo&rld",                 ID_VIEW_SHOWWORLD,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Entities",              ID_VIEW_SHOWENT,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Brush Entities",        ID_VIEW_SHOWBRUSHENTS,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Point Entities",        ID_VIEW_SHOWPOINTENTS,MFT_STRING,MFS_CHECKED
         END
         POPUP "&Hide/Show",                     65535,MFT_STRING,MFS_ENABLED
         BEGIN

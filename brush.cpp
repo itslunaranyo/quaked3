@@ -29,7 +29,7 @@ Brush::Brush
 */
 Brush::Brush() :
 	prev(nullptr), next(nullptr), oprev(nullptr), onext(nullptr),
-	owner(nullptr), hiddenBrush(false),
+	owner(nullptr), showFlags(0),
 	undoId(0), redoId(0), ownerId(0)
 {}
 
@@ -163,48 +163,54 @@ bool Brush::IsFiltered() const
 	if (!owner)
 		return true;		// during construction
 
+	if (g_qeglobals.d_savedinfo.nExclude & showFlags)
+		return true;
+
+	if (g_qeglobals.d_savedinfo.nExclude & owner->eclass->showFlags)
+		return true;
+	/*
 	if (hiddenBrush)
 		return true;
 	
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_CLIP)
+	if (g_qeglobals.d_savedinfo.nExclude & BFL_CLIP)
 		if (!strncmp(basis.faces->texdef.name, "clip", 4))
 			return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_HINT)
+	if (g_qeglobals.d_savedinfo.nExclude & BFL_HINT)
 		if (!strncmp(basis.faces->texdef.name, "hint", 4))	// catches hint and hintskip
 			return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WATER)
+	if (g_qeglobals.d_savedinfo.nExclude & BFL_LIQUID)
 		if (basis.faces->texdef.name[0] == '*')
 			return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_SKY)
+	if (g_qeglobals.d_savedinfo.nExclude & BFL_SKY)
 		if (!strncmp(basis.faces->texdef.name, "sky", 3))
 			return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_FUNC_WALL)
+	if (g_qeglobals.d_savedinfo.nExclude & EFL_FUNCWALL)
 		if (!strncmp(owner->eclass->name, "func_wall", 9))
 			return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_DETAIL)
+	if (g_qeglobals.d_savedinfo.nExclude & EFL_DETAIL)
 		if (!strncmp(owner->eclass->name, "func_detail", 11))
 			return true;
 
 	if (owner->IsWorld())
 	{
-		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD)
+		if (g_qeglobals.d_savedinfo.nExclude & EFL_WORLDSPAWN)
 			return true;
 		return false;
 	}
-	else if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ENT)
+	else if (g_qeglobals.d_savedinfo.nExclude & EFL_POINTENTITY)
 		return true;
 
-	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_LIGHTS)
-		return (owner->eclass->nShowFlags & ECLASS_LIGHT);
+	if (g_qeglobals.d_savedinfo.nExclude & EFL_LIGHT)
+		return (owner->eclass->showFlags & ECLASS_LIGHT);
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
-		return ((owner->eclass->nShowFlags & ECLASS_PATH) != 0);
-
+		return ((owner->eclass->showFlags & ECLASS_PATH) != 0);
+		*/
 	return false;
 }
 
@@ -241,6 +247,17 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 	vec3		pts[4][2];
 	int			i, j;
 	Face	   *f, *fnext;
+
+	// with no wads loaded, a brush created has to summon a broken texture
+	// from somewhere - putting it here prevents a pink garbage texture added 
+	// to the list until actually needed
+	if (inTexDef->tex == nullptr)
+	{
+		if (inTexDef->name[0])
+			inTexDef->Set(inTexDef->name);
+		else
+			inTexDef->Set("none");
+	}
 
 	// free old faces
 	for (f = basis.faces; f; f = fnext)
@@ -375,32 +392,24 @@ void Brush::ClearFaces()
 Brush::Move
 ============
 */
-void Brush::Move(const vec3 move)
+void Brush::Move(const vec3 move, const bool texturelock)
 {
 	//int		i;
 	Face	*f;
 
 	if (VectorCompare(move, vec3(0))) return;
-
+	assert(owner->IsBrush());
 	for (f = basis.faces; f; f = f->fnext)
 	{
-		if (owner->IsBrush() && g_qeglobals.d_bTextureLock)
+		if (texturelock)
 			f->MoveTexture(move);
-
 		f->plane.Translate(move);
 	}
 
 	Build();
-
-	// PGM - keep the origin vector up to date on fixed size entities.
-	if (owner->IsPoint() && onext != this)	// FIXME: hmmm
-	{
-		// lunaran: update everything
-		owner->SetOriginFromBrush();
-	}
 }
 
-void Brush::Transform(const glm::mat4 mat, bool textureLock)
+void Brush::Transform(const glm::mat4 mat, const bool textureLock)
 {
 	int i;
 	Face *f;
@@ -416,6 +425,15 @@ void Brush::Transform(const glm::mat4 mat, bool textureLock)
 	Build();
 }
 
+void Brush::RefreshFlags()
+{
+	showFlags = showFlags & BFL_HIDDEN;
+	for (Face *f = basis.faces; f; f = f->fnext)
+	{
+		showFlags |= f->texdef.tex->showflags;
+	}
+}
+
 /*
 ==================
 Brush::Build
@@ -423,112 +441,53 @@ Brush::Build
 Builds a brush rendering data and also sets the min/max bounds
 ==================
 */
-void Brush::Build()
+bool Brush::Build()
 {
-	vec_t		v;
+	//float		v;
 	Face		*face;
 	winding_t	*w;
+	int			i;
 
 	ClearBounds(basis.mins, basis.maxs);
 	SnapPlanePoints();
-	MakeFacePlanes();
+	MakeFacePlanes();	// planes should be made by now but snapping makes it necessary
 
 	for (face = basis.faces; face; face = face->fnext)
 	{
-		int	i, j;
 		face->owner = this;
 		
-		w = face->face_winding = MakeFaceWinding(face);
+		//w = face->face_winding = MakeFaceWinding(face);
+		w = face->face_winding = face->MakeWinding();
 		if (!w)
 			continue;
-
-		// lunaran TODO: doesn't need to happen this often, move to face_settexdef
-		// also duplicate this somewhere else so it still happens for all faces during map_buildbrushdata
-		face->texdef.tex = Textures::ForName(face->texdef.name);
 
 		for (i = 0; i < w->numpoints; i++)
 		{
 			// add to bounding box
-			for (j = 0; j < 3; j++)
-			{
-				v = w->points[i].point[j];
-				if (v > basis.maxs[j])
-					basis.maxs[j] = v;
-				if (v < basis.mins[j])
-					basis.mins[j] = v;
-			}
+			basis.mins = glm::min(basis.mins, w->points[i].point);
+			basis.maxs = glm::max(basis.maxs, w->points[i].point);
 		}
 		// setup s and t vectors, and set color
 		face->ColorAndTexture();
 	}
 
-	g_map.modified = true;	// mark the map as changed
+	// check that brush planes didn't completely clip each other away
+	for (i = 0; i < 3; i++)
+	{
+		if (basis.mins[i] >= basis.maxs[i])
+			return false;
+	}
+
+	RefreshFlags();
+	//g_map.modified = true;	// mark the map as changed
 
 	// move the points and edges if in select mode
 	if (g_qeglobals.d_selSelectMode == sel_vertex || g_qeglobals.d_selSelectMode == sel_edge)
 		SetupVertexSelection();
+
+	return true;
 }
 
-/*
-=================
-Brush::MakeFaceWinding
-
-returns the visible polygon on a face
-
-TODO: why isn't this in Face::?
-=================
-*/
-winding_t *Brush::MakeFaceWinding(Face *face)
-{
-	bool		past;
-	Face	   *clip;
-	Plane		plane;
-	winding_t  *w;
-
-	// get a poly that covers an effectively infinite area
-	w = face->plane.BasePoly();
-
-	// chop the poly by all of the other faces
-	past = false;
-	for (clip = basis.faces; clip && w; clip = clip->fnext)
-	{
-		if (clip == face)
-		{
-			past = true;
-			continue;
-		}
-
-		if (DotProduct(face->plane.normal, clip->plane.normal) > 0.999 &&
-			fabs(face->plane.dist - clip->plane.dist) < 0.01)
-		{	// identical plane, use the later one
-			if (past)
-			{
-				Winding::Free(w);
-				return NULL;
-			}
-			continue;
-		}
-
-		// flip the plane, because we want to keep the back side
-		plane.normal = vec3(0) - clip->plane.normal;
-		plane.dist = -clip->plane.dist;
-
-		w = Winding::Clip(w, &plane, false);
-		if (!w)
-			return w;
-	}
-
-	if (w->numpoints < 3)
-	{
-		Winding::Free(w);
-		w = NULL;
-	}
-
-	if (!w)
-		printf("unused plane\n");
-
-	return w;
-}
 
 /*
 ==================
@@ -559,7 +518,8 @@ void Brush::SnapPlanePoints()
 ==================
 Brush::RemoveEmptyFaces
 
-Frees any overconstraining faces
+HEY: this changes the face pointer makeup of a brush, so it must only
+be used in the context of a CmdBrushMod
 ==================
 */
 void Brush::RemoveEmptyFaces()
@@ -679,6 +639,17 @@ void Brush::SetTexture(TexDef *texdef, int nSkipFlags)
 }
 
 /*
+=================
+Brush::RefreshTexdefs
+=================
+*/
+void Brush::RefreshTexdefs()
+{
+	for (Face *face = basis.faces; face; face = face->fnext)
+		face->texdef.tex = Textures::ForName(face->texdef.name);
+}
+
+/*
 ==============
 Brush::RayTest
 
@@ -792,7 +763,8 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 	{
 		if (f2 == f)
 			continue;
-		w = MakeFaceWinding(f2);
+		//w = MakeFaceWinding(f2);
+		w = f2->MakeWinding();
 		if (!w)
 			continue;
 
@@ -848,29 +820,10 @@ planes for dragging
 */
 void Brush::SideSelect(const vec3 origin, const vec3 dir, bool shear)
 {
-	Face	*f, *f2;
-	vec3	 p1, p2;
-
-	for (f = basis.faces; f; f = f->fnext)
+	for (Face *f = basis.faces; f; f = f->fnext)
 	{
-		p1 = origin;
-		p2 = origin + 16384.0f * dir;
-
-		for (f2 = basis.faces; f2; f2 = f2->fnext)
-		{
-			if (f2 == f)
-				continue;
-			f2->ClipLine(p1, p2);
-		}
-
-		if (f2)
-			continue;
-		if (VectorCompare(p1, origin))
-			continue;
-		if (f->ClipLine(p1, p2))
-			continue;
-
-		SelectFaceForDragging(f, shear);
+		if (f->TestSideSelect(origin, dir))
+			SelectFaceForDragging(f, shear);
 	}
 }
 
@@ -878,7 +831,7 @@ void Brush::SideSelect(const vec3 origin, const vec3 dir, bool shear)
 =================
 Brush::PointTest
 
-test if a point is inside the volume of the brush
+simply test if a point is inside the volume of the brush
 =================
 */
 bool Brush::PointTest(const vec3 origin)
@@ -1532,18 +1485,19 @@ void Brush::Draw ()
     Texture *tprev = 0;
 	winding_t  *w;
 
-	if (hiddenBrush)
-		return;
+	//if (hiddenBrush)
+	//	return;
 
 //	if (owner->IsPoint() && g_qeglobals.d_vCamera.draw_mode == cd_texture)
 //		glDisable (GL_TEXTURE_2D);
 
 	if (owner->IsPoint())
 	{
-		if (!(g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) && (owner->eclass->nShowFlags & ECLASS_ANGLE))
+		//if (!(g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) && (owner->eclass->showFlags & ECLASS_ANGLE))
+		if (owner->eclass->form & EntClass::ECF_ANGLE)
 			DrawFacingAngle();
 
-		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->nShowFlags & ECLASS_LIGHT))
+		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
 		{
 			DrawLight();
 			return;
@@ -1602,12 +1556,12 @@ void Brush::DrawXY (int nViewType)
 	Face		*face;
 	winding_t	*w;
 
-	if (hiddenBrush)
-		return;
+	//if (hiddenBrush)
+	//	return;
 
 	if (owner->IsPoint())
 	{
-		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->nShowFlags & ECLASS_LIGHT))
+		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->showFlags & EFL_LIGHT))
 		{
  			vec3	vCorners[4];
 			vec3	vTop, vBottom;

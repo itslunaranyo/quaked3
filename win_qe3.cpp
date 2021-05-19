@@ -50,16 +50,15 @@ Sys_SetTitle
 */
 void Sys_SetTitle (char *text)
 {
-// sikk---> Put "QuakeEd 3" in title
 	char	buf[512];
-	int		i, len;
+	int		len;
 
-	len = sprintf(buf, "QuakeEd 3 - [%s]", text);
-	
-	for(i = 0; i < len; i++) // Make pathnames look more "Win32" (HI HEFFO!)
+	len = sprintf(buf, "QuakeEd 3 - [%s]", text);	// sikk - Put "QuakeEd 3" in title
+	/*
+	for(int i = 0; i < len; i++) // Make pathnames look more "Win32" (HI HEFFO!)
 		if(buf[i] == '/')
 			buf[i] = '\\';
-// <---sikk
+	*/
 	SetWindowText(g_qeglobals.d_hwndMain, buf);
 }
 
@@ -136,6 +135,10 @@ void Sys_ForceUpdateWindows(int bits)
 		if ((*wvIt)->vbits & bits)
 			(*wvIt)->ForceUpdate();
 	}
+
+	if (g_nUpdateBits & W_TITLE)
+		QE_UpdateTitle();
+
 	g_nUpdateBits = 0;
 }
 
@@ -407,6 +410,7 @@ void SaveAsDialog ()
   
 	DefaultExtension(ofn.lpstrFile, ".map");
 	strcpy(g_map.name, ofn.lpstrFile);
+	g_map.hasFilename = true;
 
 	// Add the file in MRU.
 	AddNewItem(g_qeglobals.d_lpMruMenu, ofn.lpstrFile);
@@ -414,7 +418,8 @@ void SaveAsDialog ()
 	// Refresh the File menu.
 	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
 
-	g_map.SaveToFile(ofn.lpstrFile, false);	// ignore region
+	QE_SaveMap();
+	//g_map.SaveToFile(ofn.lpstrFile, false);	// ignore region
 }
 
 
@@ -430,17 +435,18 @@ bool ConfirmModified ()
 {
 	char szMessage[128];
 
-	if (!g_map.modified)
+	if (!g_cmdQueue.IsModified())
 		return true;
 
-	sprintf(szMessage, "Save Changes to %s?", g_map.name);
+	sprintf(szMessage, "Save Changes to %s?", g_map.name[0] ? g_map.name : "untitled");
 	switch (MessageBox(g_qeglobals.d_hwndMain, szMessage, "QuakeEd 3: Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION))
 	{
 	case IDYES:
-		if (!strcmp(g_map.name, "unnamed.map"))
+		if (!g_map.hasFilename)
 			SaveAsDialog();
 		else
-			g_map.SaveToFile(g_map.name, false);	// ignore region
+			QE_SaveMap();
+			//g_map.SaveToFile(g_map.name, false);	// ignore region
 		
 		return true;
 		break;

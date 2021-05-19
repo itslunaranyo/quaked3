@@ -15,7 +15,7 @@ const vec3 g_v3BaseAxis[18] =
 };
 
 const float g_fLightAxis[3] = {0.8f, 0.9f, 1.0f};	// lunaran: lightened a bit
-//vec_t g_vLightAxis[3] = {(vec_t)0.6, (vec_t)0.8, (vec_t)1.0};
+//float g_vLightAxis[3] = {(float)0.6, (float)0.8, (float)1.0};
 
 
 
@@ -79,6 +79,33 @@ bool Plane::FromPoints(const vec3 p0, const vec3 p1, const vec3 p2)
 	pts[0] = p0;
 	pts[1] = p1;
 	pts[2] = p2;
+
+	return true;
+}
+
+bool Plane::ClipLine(vec3 &p1, vec3 &p2)
+{
+	int		i;
+	float	d1, d2, fr;
+	vec3	*v;
+
+	d1 = DotProduct(p1, normal) - dist;
+	d2 = DotProduct(p2, normal) - dist;
+
+	if (d1 >= 0 && d2 >= 0)
+		return false;	// totally outside
+	if (d1 <= 0 && d2 <= 0)
+		return true;	// totally inside
+
+	fr = d1 / (d1 - d2);
+
+	if (d1 > 0)
+		v = &p1;
+	else
+		v = &p2;
+
+	for (i = 0; i < 3; i++)
+		(*v)[i] = p1[i] + fr * (p2[i] - p1[i]);
 
 	return true;
 }
@@ -154,7 +181,7 @@ Plane::BasePoly
 winding_t *Plane::BasePoly()
 {
 	int			i, x;
-	vec_t		max, v;
+	float		max, v;
 	vec3		org, vright, vup;
 	winding_t  *w;
 
@@ -366,6 +393,66 @@ int Face::MemorySize()
 	return size;
 }
 
+/*
+=================
+Face::MakeWinding
+
+returns the visible polygon on the face
+
+TODO: why isn't this in Face::?
+=================
+*/
+winding_t *Face::MakeWinding()
+{
+	bool		past;
+	Face		*clip;
+	Plane		p;
+	winding_t	*w;
+
+	// get a poly that covers an effectively infinite area
+	w = plane.BasePoly();
+
+	// chop the poly by all of the other faces
+	past = false;
+	for (clip = owner->basis.faces; clip && w; clip = clip->fnext)
+	{
+		if (clip == this)
+		{
+			past = true;
+			continue;
+		}
+
+		if (DotProduct(plane.normal, clip->plane.normal) > 0.999 &&
+			fabs(plane.dist - clip->plane.dist) < 0.01)
+		{	// identical plane, use the later one
+			if (past)
+			{
+				Winding::Free(w);
+				return NULL;
+			}
+			continue;
+		}
+
+		// flip the plane, because we want to keep the back side
+		p.normal = vec3(0) - clip->plane.normal;
+		p.dist = -clip->plane.dist;
+
+		w = Winding::Clip(w, &p, false);
+		if (!w)
+			return w;
+	}
+
+	if (w->numpoints < 3)
+	{
+		Winding::Free(w);
+		w = nullptr;
+	}
+
+	if (!w)
+		printf("unused plane\n");
+
+	return w;
+}
 
 /*
 =================
@@ -399,32 +486,54 @@ void Face::BoundsOnAxis(const vec3 a, float* min, float* max)
 
 /*
 =================
+Face::AddBounds
+=================
+*/
+void Face::AddBounds(vec3 & mins, vec3 & maxs)
+{
+	for (int i = 0; i < face_winding->numpoints; i++)
+	{
+		mins = glm::min(mins, face_winding->points[i].point);
+		maxs = glm::max(maxs, face_winding->points[i].point);
+	}
+}
+
+/*
+=================
 Face::ClipLine
 =================
 */
 bool Face::ClipLine(vec3 &p1, vec3 &p2)
 {
-	int		i;
-	float	d1, d2, fr;
-	vec3	*v;
+	return plane.ClipLine(p1, p2);
+}
 
-	d1 = DotProduct(p1, plane.normal) - plane.dist;
-	d2 = DotProduct(p2, plane.normal) - plane.dist;
+/*
+=================
+Face::TestSideSelect
+=================
+*/
+bool Face::TestSideSelect(const vec3 origin, const vec3 dir)
+{
+	Face	*f2;
+	vec3	p1, p2;
 
-	if (d1 >= 0 && d2 >= 0)
-		return false;	// totally outside
-	if (d1 <= 0 && d2 <= 0)
-		return true;	// totally inside
+	p1 = origin;
+	p2 = origin + dir * (float)g_qeglobals.d_savedinfo.nMapSize * 2.0f;
 
-	fr = d1 / (d1 - d2);
+	for (f2 = owner->basis.faces; f2; f2 = f2->fnext)
+	{
+		if (f2 == this)
+			continue;
+		f2->ClipLine(p1, p2);
+	}
 
-	if (d1 > 0)
-		v = &p1;
-	else
-		v = &p2;
-
-	for (i = 0; i < 3; i++)
-		(*v)[i] = p1[i] + fr * (p2[i] - p1[i]);
+	if (f2)
+		return false;
+	//if (VectorCompare(p1, origin))
+	//	return false;
+	if (ClipLine(p1, p2))
+		return false;
 
 	return true;
 }
@@ -438,7 +547,7 @@ lunaran: rewrote all this so it works with decimal fit increments
 */
 void Face::FitTexture(float fHeight, float fWidth)
 {
-	vec_t		scale;
+	float		scale;
 	vec3		u, v, n;
 	float		min, max, len;
 	winding_t	*w;

@@ -216,7 +216,7 @@ BOOL CALLBACK WndEntity::EntityDlgProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				SetWindowText(w_hwndCtrls[ENT_VALUEFIELD], buffer);
 				SetKeyValue();
 			}
-			Sys_UpdateWindows(W_ALL);
+			Sys_UpdateWindows(W_SCENE|W_ENTITY);
 			break;
 
 		case IDC_E_ADDPROP:

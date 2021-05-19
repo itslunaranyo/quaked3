@@ -20,6 +20,7 @@ public:
 
 	bool Draw3D(CameraView &v);
 	bool Draw2D(XYZView &v);
+	bool Draw1D(ZView &v);
 
 private:
 	enum {
@@ -28,13 +29,18 @@ private:
 		DRAGMOVE,
 		DRAGPLANE,
 	} state;
-	int xDown, yDown;
-	int vDim1, vDim2, vType;	// up/right axis indexes of view w/capture
-	Brush *brDragNew;
+	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
+	vec3 ptDown;
 
-	void DragStart(int x, int y);
-	void DragMove(int x, int y);
-	void DragFinish(int x, int y);
+	Brush *brDragNew;
+	CmdPlaneShift *cmdPS;
+	CmdTranslate *cmdTr;
+
+	void DragStart1D(const mouseContext_t & mc);
+	void DragStart(const mouseContext_t &vc);
+	void DragMove(const mouseContext_t &vc);
+	void DragFinish(const mouseContext_t &vc);
+
 };
 
 #endif

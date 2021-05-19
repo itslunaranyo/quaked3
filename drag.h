@@ -10,7 +10,8 @@ void Drag_Begin (int x, int y, int buttons, const vec3 xaxis, const vec3 yaxis, 
 void Drag_MouseMoved (int x, int y, int buttons);
 void Drag_MouseUp ();
 
-void AxializeVector (vec3 &v);
+vec3 AxializeVector (const vec3 &v);
+vec3 AxisForVector(const vec3 &v);
 void MoveSelection (const vec3 move);
 //void UpdateTarget (const vec3 origin, const vec3 dir);
 

@@ -9,6 +9,7 @@
 #include "CmdAddRemove.h"
 #include "CmdReparentBrush.h"
 #include "CmdBrushMod.h"
+#include "CmdFaceMod.h"
 
 // scene
 #include "CmdPaste.h"
