@@ -67,15 +67,15 @@ void RunBsp (char *command)
 	GetTempPath(1024, temppath);
 	sprintf(outputpath, "%sjunk.txt", temppath);
 
-	strcpy(name, g_szCurrentMap);
-	if (g_bRegionActive)
+	strcpy(name, g_map.name);
+	if (g_map.regionActive)
 	{
-		Map_SaveFile(name, false);
+		g_map.SaveToFile(name, false);
 		StripExtension(name);
 		strcat(name, ".reg");
 	}
 
-	Map_SaveFile(name, g_bRegionActive);
+	g_map.SaveToFile(name, g_map.regionActive);
 
 	QE_ExpandBspString(command, sys, name);
 
@@ -283,7 +283,7 @@ BOOL DoMru (HWND hWnd, WORD wId)
 		AddNewItem(g_qeglobals.d_lpMruMenu, (LPSTR)szFileName);
 
 		// Now perform opening this file !!!
-		Map_LoadFile(szFileName);	
+		g_map.LoadFromFile(szFileName);
 	}
 	else
 		// Remove the file on MRU.
@@ -305,13 +305,13 @@ void DoTestMap ()
 {
 	char	szWorkDir[MAX_PATH] = "";
 	char	szParam[256] = "";
-	char   *szMapName = &g_szCurrentMap[strlen(g_qeglobals.d_entityProject->GetKeyValue("mapspath"))];
+	char   *szMapName = (char*)&g_map.name[strlen(g_qeglobals.d_entityProject->GetKeyValue("mapspath"))];
 	char	szBSPName[MAX_PATH] = "";
 	int		handle;
 	struct _finddata_t fileinfo;
 
 	// strip "map" extension 
-	strncpy(szBSPName, g_szCurrentMap, strlen(g_szCurrentMap) - 3);
+	strncpy(szBSPName, g_map.name, strlen(g_map.name) - 3);
 	// append "bsp" extension
 	strcat(szBSPName, "bsp");
 
@@ -1133,7 +1133,7 @@ LONG WINAPI CommandHandler (
 		case ID_FILE_NEW:
 			if (!ConfirmModified())
 				return TRUE;
-			Map_New();
+			g_map.New();
 			break;
 		case ID_FILE_OPEN:
 			if (!ConfirmModified())
@@ -1141,10 +1141,10 @@ LONG WINAPI CommandHandler (
 			OpenDialog();
 			break;
 		case ID_FILE_SAVE:
-			if (!strcmp(g_szCurrentMap, "unnamed.map"))
+			if (!strcmp(g_map.name, "unnamed.map"))
 				SaveAsDialog();
 			else
-				Map_SaveFile(g_szCurrentMap, false);	// ignore region
+				g_map.SaveToFile(g_map.name, false);	// ignore region
 			if (g_qeglobals.d_nPointfileDisplayList)
 				Pointfile_Clear();
 			break;
@@ -1210,32 +1210,31 @@ LONG WINAPI CommandHandler (
 			Undo_Redo();
 			break;
 
-// sikk---> TODO: Copy still broken
 		case ID_EDIT_CUT:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode != W_TEXTURE)
 				break;
 			Undo_Start("Cut");
 			Undo_AddBrushList(&g_brSelectedBrushes);
-			Select_Cut();
+			g_map.Cut();
 			Undo_EndBrushList(&g_brSelectedBrushes);
 			Undo_End();
 			break;
 		case ID_EDIT_COPY:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_TEXTURE)
 				break;
-			Select_Copy();
+			g_map.Copy();
 			break;
 		case ID_EDIT_PASTE:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_ENTITY)
 				break;
 			Undo_Start("Paste");
-			Select_Paste();
+			g_map.Paste();
+			//Select_Paste();
 			Undo_End();
 			break;
-// <---sikk
 
 		case ID_EDIT_FINDBRUSH:
 			DoFindBrush();
@@ -1580,12 +1579,12 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_VIEW_SHOWNAMES:
 			g_qeglobals.d_savedinfo.bShow_Names ^= true;
-			Map_BuildBrushData();
+			g_map.BuildBrushData();
 			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_SHOWSIZEINFO:
 			g_qeglobals.d_savedinfo.bShow_SizeInfo ^= true;
-			Map_BuildBrushData();
+			g_map.BuildBrushData();
 			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_SHOWVIEWNAME:
@@ -2296,28 +2295,28 @@ LONG WINAPI CommandHandler (
 // Region menu
 //===================================
 		case ID_REGION_OFF:
-			Map_RegionOff();
+			g_map.RegionOff();
 			break;
 
 		case ID_REGION_SETXY:
-			Map_RegionXY();
+			g_map.RegionXY();
 			break;
 // sikk---> Multiple Orthographic Views
 		case ID_REGION_SETXZ:
-			Map_RegionXZ();
+			g_map.RegionXZ();
 			break;
 		case ID_REGION_SETYZ:
-			Map_RegionYZ();
+			g_map.RegionYZ();
 			break;
 // <---sikk
 		case ID_REGION_SETTALLBRUSH:
-			Map_RegionTallBrush();
+			g_map.RegionTallBrush();
 			break;
 		case ID_REGION_SETBRUSH:
-			Map_RegionBrush();
+			g_map.RegionBrush();
 			break;
 		case ID_REGION_SETSELECTION:
-			Map_RegionSelectedBrushes();
+			g_map.RegionSelectedBrushes();
 			break;
 
 //===================================
@@ -2572,7 +2571,7 @@ LONG WINAPI WMain_WndProc (
 // <---sikk
 
 		// FIXME: is this right?
-		strcpy(g_qeglobals.d_savedinfo.szLastMap, g_szCurrentMap); // sikk - save current map name for Load Last Map option
+		strcpy(g_qeglobals.d_savedinfo.szLastMap, g_map.name); // sikk - save current map name for Load Last Map option
 		SaveRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, sizeof(g_qeglobals.d_savedinfo));
 
 		time(&lTime);	// sikk - Print current time for logging purposes
@@ -3076,12 +3075,10 @@ Sys_UpdateBrushStatusBar
 */
 void Sys_UpdateBrushStatusBar ()
 {
-//	extern int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
 	char		numbrushbuffer[128] = "";
 
-	sprintf(numbrushbuffer, "Brushes: %d  Entities: %d  Textures: %d", g_nNumBrushes, 
-																	   g_nNumEntities, 
-																	   g_nNumTextures);
+	sprintf(numbrushbuffer, "Brushes: %d  Entities: %d  Textures: %d",
+			g_map.numBrushes, g_map.numEntities, g_map.numTextures);
 	Sys_Status(numbrushbuffer, 2);
 }
 

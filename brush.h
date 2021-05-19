@@ -65,12 +65,14 @@ public:
 	// TODO: promote brushlist to its own container class
 	void	AddToList(Brush *list);
 	void	RemoveFromList();
+	void	CloseLinks();
 	static void	MergeListIntoList(Brush *src, Brush *dest);
 	static void	FreeList(Brush *pList);
 	static void	CopyList(Brush *pFrom, Brush *pTo);
 
-	static	Brush *Parse();
-	void	Write(FILE *f);
+	static Brush *Parse();
+	void	Write(std::ostream &out);
+	//void	Write(FILE *f);
 
 	void	Draw ();
 	void	DrawXY (int nViewType);

@@ -225,10 +225,10 @@ int CheckParm (char *check)
 
 /*
 ================
-Q_filelength
+IO_FileLength
 ================
 */
-int Q_filelength (FILE *f)
+int IO_FileLength (FILE *f)
 {
 	int		pos, end;
 
@@ -242,10 +242,10 @@ int Q_filelength (FILE *f)
 
 /*
 ==============
-SafeOpenWrite
+IO_SafeOpenWrite
 ==============
 */
-FILE *SafeOpenWrite (char *filename)
+FILE *IO_SafeOpenWrite (char *filename)
 {
 	FILE *f;
 
@@ -259,10 +259,10 @@ FILE *SafeOpenWrite (char *filename)
 
 /*
 ==============
-SafeOpenRead
+IO_SafeOpenRead
 ==============
 */
-FILE *SafeOpenRead (char *filename)
+FILE *IO_SafeOpenRead (char *filename)
 {
 	FILE *f;
 
@@ -276,10 +276,10 @@ FILE *SafeOpenRead (char *filename)
 
 /*
 ==============
-SafeRead
+IO_SafeRead
 ==============
 */
-void SafeRead (FILE *f, void *buffer, int count)
+void IO_SafeRead (FILE *f, void *buffer, int count)
 {
 	if ((int)fread(buffer, 1, count, f) != count)
 		Error("File read failure.");
@@ -287,10 +287,11 @@ void SafeRead (FILE *f, void *buffer, int count)
 
 /*
 ==============
-SafeWrite
+IO_SafeWrite
 ==============
 */
-void SafeWrite (FILE *f, void *buffer, int count)
+void IO_SafeWrite
+(FILE *f, void *buffer, int count)
 {
 	if ((int)fwrite(buffer, 1, count, f) != count)
 		Error("File read failure.");
@@ -298,10 +299,10 @@ void SafeWrite (FILE *f, void *buffer, int count)
 
 /*
 ==============
-LoadFile
+IO_LoadFile
 ==============
 */
-int LoadFile (char *filename, void **bufferptr)
+int IO_LoadFile (const char *filename, void **bufferptr)
 {
 	int			 length;
 	FILE		*f;
@@ -314,10 +315,10 @@ int LoadFile (char *filename, void **bufferptr)
 		*bufferptr = NULL;
 		return -1;
 	}
-	length = Q_filelength(f);
+	length = IO_FileLength(f);
 	buffer = qmalloc(length + 1);
 	((char *)buffer)[length] = 0;
-	SafeRead(f, buffer, length);
+	IO_SafeRead(f, buffer, length);
 	fclose(f);
 
 	*bufferptr = buffer;
@@ -326,10 +327,10 @@ int LoadFile (char *filename, void **bufferptr)
 
 /*
 ==============
-LoadFile
+IO_LoadFile
 ==============
 */
-int LoadFile(const char *filename, qeBuffer &fileBuf)
+int IO_LoadFile(const char *filename, qeBuffer &fileBuf)
 {
 	FILE* f;
 	int length = -1;
@@ -339,10 +340,10 @@ int LoadFile(const char *filename, qeBuffer &fileBuf)
 		return -1;
 	}
 
-	length = Q_filelength(f);
+	length = IO_FileLength(f);
 	fileBuf.resize(length + 1);
 	((char*)*fileBuf)[length] = 0;
-	SafeRead(f, *fileBuf, min(length,(int)fileBuf.size()));	// truncate if buffer is too small
+	IO_SafeRead(f, *fileBuf, min(length,(int)fileBuf.size()));	// truncate if buffer is too small
 	fclose(f);
 
 	return length;
@@ -350,12 +351,12 @@ int LoadFile(const char *filename, qeBuffer &fileBuf)
 
 /*
 ==============
-LoadFileNoCrash
+IO_LoadFileNoCrash
 
 returns -1 length if not present
 ==============
 */
-int LoadFileNoCrash (char *filename, void **bufferptr)
+int IO_LoadFileNoCrash (char *filename, void **bufferptr)
 {
 	int		length;
 	void    *buffer;
@@ -364,10 +365,10 @@ int LoadFileNoCrash (char *filename, void **bufferptr)
 	f = fopen(filename, "rb");
 	if (!f)
 		return -1;
-	length = Q_filelength(f);
+	length = IO_FileLength(f);
 	buffer = qmalloc(length + 1);
 	((char *)buffer)[length] = 0;
-	SafeRead(f, buffer, length);
+	IO_SafeRead(f, buffer, length);
 	fclose(f);
 
 	*bufferptr = buffer;
@@ -376,15 +377,15 @@ int LoadFileNoCrash (char *filename, void **bufferptr)
 
 /*
 ==============
-SaveFile
+IO_SaveFile
 ==============
 */
-void SaveFile (char *filename, void *buffer, int count)
+void IO_SaveFile (char *filename, void *buffer, int count)
 {
 	FILE *f;
 
-	f = SafeOpenWrite(filename);
-	SafeWrite(f, buffer, count);
+	f = IO_SafeOpenWrite(filename);
+	IO_SafeWrite(f, buffer, count);
 	fclose(f);
 }
 

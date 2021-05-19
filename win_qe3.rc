@@ -33,20 +33,12 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE,MFT_STRING,MFS_ENABLED
         MENUITEM "Save &As...\tCtrl+Shift+S",   ID_FILE_SAVEAS,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
+        MENUITEM "&Import...",                  ID_FILE_IMPORTMAP,MFT_STRING,MFS_ENABLED
+        MENUITEM "E&xport Selection...",        ID_SELECTION_EXPORTMAP,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
         MENUITEM "Ne&w Project...\tCtrl+Shift+N", ID_FILE_NEWPROJECT,MFT_STRING,MFS_ENABLED
         MENUITEM "&Load Project...\tCtrl+L",    ID_FILE_LOADPROJECT,MFT_STRING,MFS_ENABLED
         MENUITEM "&Edit Project...\tF5",        ID_FILE_EDITPROJECT,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        POPUP "&Import",                        65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "&Map...\tM",                  ID_FILE_IMPORTMAP,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Prefab...\tP",               ID_FILE_IMPORTPREFAB,MFT_STRING,MFS_ENABLED
-        END
-        POPUP "E&xport Selection",              65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "&Map...\tCtrl+Shift+M",       ID_SELECTION_EXPORTMAP,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Prefab...\tCtrl+Shift+P",    ID_SELECTION_EXPORTPREFAB,MFT_STRING,MFS_ENABLED
-        END
         MENUITEM MFT_SEPARATOR
         MENUITEM "&Pointfile",                  ID_FILE_POINTFILE,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR

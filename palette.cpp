@@ -34,7 +34,7 @@ bool Palette::LoadFromFileImpl(const char* file)
 	qeBuffer lmp(768);
 	byte	gammatable[256];
 
-	lenf = LoadFile(file, lmp);
+	lenf = IO_LoadFile(file, lmp);
 	if (lenf != 768)
 	{
 		if (lenf <= 0)

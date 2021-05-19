@@ -41,6 +41,7 @@ public:
 	static bool		eccmp(const EntClass* a, const EntClass* b) { return (strcmp(a->name, b->name) < 0); }
 	static std::vector<EntClass*>::iterator begin() { return entclasses.begin(); }
 	static std::vector<EntClass*>::iterator end() { return entclasses.end(); }
+	static EntClass	*worldspawn;
 
 private:
 	static void		ScanFile(const char *filename);

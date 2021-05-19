@@ -8,6 +8,8 @@
 #include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <exception>
+
 /*
 // sikk---> Mousewheel Handling
 #include <zmouse.h>
@@ -356,23 +358,25 @@ void Error (char *error, ...)
 {
 	va_list argptr;
 	char	text[1024];
-	char	text2[1024];
-	int		err;
-
-	err = GetLastError();
+//	char	text2[1024];
+//	int		err;
 
 	va_start(argptr,error);
 	vsprintf(text, error,argptr);
 	va_end(argptr);
 
-	sprintf(text2, "%s\nGetLastError() = %d", text, err);
-    MessageBox(g_qeglobals.d_hwndMain, text2, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
+	Sys_Printf("EXCEPTION: %s\n", text);
+	throw std::exception(text);
+
+//	err = GetLastError();
+//	sprintf(text2, "%s\nGetLastError() = %d", text, err);
+//	MessageBox(g_qeglobals.d_hwndMain, text2, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
 
 	// close logging if necessary
-	g_qeglobals.d_savedinfo.bLogConsole = false;
-	Sys_LogFile();
+//	g_qeglobals.d_savedinfo.bLogConsole = false;
+//	Sys_LogFile();
 
-	exit(1);
+//	exit(1);
 }
 
 /*
@@ -438,7 +442,7 @@ void OpenDialog ()
 	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
 
 	// Open the file.
-	Map_LoadFile(ofn.lpstrFile);	
+	g_map.LoadFromFile(ofn.lpstrFile);
 }
 
 /*
@@ -476,7 +480,7 @@ void SaveAsDialog ()
 		return;	// canceled
   
 	DefaultExtension(ofn.lpstrFile, ".map");
-	strcpy(g_szCurrentMap, ofn.lpstrFile);
+	strcpy(g_map.name, ofn.lpstrFile);
 
 	// Add the file in MRU.
 	AddNewItem(g_qeglobals.d_lpMruMenu, ofn.lpstrFile);
@@ -484,7 +488,7 @@ void SaveAsDialog ()
 	// Refresh the File menu.
 	PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), 0), ID_FILE_EXIT);
 
-	Map_SaveFile(ofn.lpstrFile, false);	// ignore region
+	g_map.SaveToFile(ofn.lpstrFile, false);	// ignore region
 }
 
 /*
@@ -586,17 +590,17 @@ bool ConfirmModified ()
 {
 	char szMessage[128];
 
-	if (!g_bModified)
+	if (!g_map.modified)
 		return true;
 
-	sprintf(szMessage, "Save Changes to %s?", g_szCurrentMap);
+	sprintf(szMessage, "Save Changes to %s?", g_map.name);
 	switch (MessageBox(g_qeglobals.d_hwndMain, szMessage, "QuakeEd 3: Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION))
 	{
 	case IDYES:
-		if (!strcmp(g_szCurrentMap, "unnamed.map"))
+		if (!strcmp(g_map.name, "unnamed.map"))
 			SaveAsDialog();
 		else
-			Map_SaveFile(g_szCurrentMap, false);	// ignore region
+			g_map.SaveToFile(g_map.name, false);	// ignore region
 		
 		return true;
 		break;
@@ -666,7 +670,7 @@ void ImportDialog (bool bCheck)
 		return;	// canceled
  
 	// Open the file.
-	Map_ImportFile(ofn.lpstrFile, bCheck);	
+	g_map.ImportFromFile(ofn.lpstrFile);	
 }
 
 /*
@@ -720,12 +724,12 @@ void ExportDialog (bool bCheck)
 	if (!GetSaveFileName(&ofn))
 		return;	// canceled
   
-	if (bCheck)
+	//if (bCheck)
 		DefaultExtension(ofn.lpstrFile, ".map");
-	else
-		DefaultExtension(ofn.lpstrFile, ".pfb");
+	//else
+	//	DefaultExtension(ofn.lpstrFile, ".pfb");
 
-	Map_ExportFile(ofn.lpstrFile, bCheck);	// ignore region
+	g_map.ExportToFile(ofn.lpstrFile);	// ignore region
 }
 // <---sikk
 
@@ -800,21 +804,21 @@ void CheckBspProcess (void)
 // sikk - TODO: This will be changed when I find a way for realtime progress to console
 	GetTempPath(1024, temppath);
 	sprintf(outputpath, "%sjunk.txt", temppath);
-	LoadFile(outputpath, (void **)&out);
+	IO_LoadFile(outputpath, (void **)&out);
 	Sys_Printf("%s", out);
 
 /*	Sys_Printf("\n\n======================================\nMSG: BSP Output\n");
 	sprintf(outputpath, "%sqbsp.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-	LoadFile(outputpath, (void **)&out);
+	IO_LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
 	sprintf(outputpath, "%svis.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-	LoadFile(outputpath, (void **)&out);
+	IO_LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
 	sprintf(outputpath, "%slight.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-	LoadFile(outputpath, (void **)&out);
+	IO_LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
 	sprintf(outputpath, "%sremove_skip.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
-	LoadFile(outputpath, (void **)&out);
+	IO_LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
 	Sys_Printf("\n======================================\nMSG: BSP Completed.\n");
 */
@@ -993,93 +997,108 @@ int WINAPI WinMain (
 
 	// sikk - Load Last Map if option is set in Preferences
 	if (g_qeglobals.d_savedinfo.bLoadLastMap && strcmp(g_qeglobals.d_savedinfo.szLastMap, "unnamed.map"))
-		Map_LoadFile(g_qeglobals.d_savedinfo.szLastMap);
+		g_map.LoadFromFile(g_qeglobals.d_savedinfo.szLastMap);
 
 	while (!g_bHaveQuit)
 	{
 		Sys_EndWait();	// remove wait cursor if active
-
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{
-			// lunaran - this magically makes tab work in the surface dialog
-			if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
-			{
-				// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
-				if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
-					(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
-				{
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				}
-			}
-
-			if (msg.message == WM_QUIT)
-				g_bHaveQuit = true;
-		}
-
-		// lunaran - all consequences of selection alteration put in one place for consistent behavior
-		Select_HandleChange();
-
-		CheckBspProcess();
-
-		curtime = Sys_DoubleTime();
-		delta = curtime - oldtime;
-		oldtime = curtime;
-		if (delta > 0.2)
-			delta = 0.2;
-
-// sikk---> Quickly made Splash Screen
 #ifndef _DEBUG
-		if (hwndSplash)
-			if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
-				DestroyWindow(hwndSplash);
+		try
+		{
 #endif
-// <---sikk
-
-		// run time dependant behavior
-		g_qeglobals.d_camera.MouseControl(delta);
-
-		// update any windows now
-		if (g_nUpdateBits & W_CAMERA)
-		{
-			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndCamera);
-		}
-		if (g_nUpdateBits & (W_XY))
-		{
-			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-// sikk---> Multiple Orthographic Views
-			if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
-				InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
+				// lunaran - this magically makes tab work in the surface dialog
+				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
+				{
+					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
+					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
+						(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
+					{
+						TranslateMessage(&msg);
+						DispatchMessage(&msg);
+					}
+				}
+
+				if (msg.message == WM_QUIT)
+					g_bHaveQuit = true;
 			}
-			if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
+
+			// lunaran - all consequences of selection alteration put in one place for consistent behavior
+			Select_HandleChange();
+
+			CheckBspProcess();
+
+			curtime = Sys_DoubleTime();
+			delta = curtime - oldtime;
+			oldtime = curtime;
+			if (delta > 0.2)
+				delta = 0.2;
+
+			// sikk---> Quickly made Splash Screen
+#ifndef _DEBUG
+			if (hwndSplash)
+				if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
+					DestroyWindow(hwndSplash);
+#endif
+			// <---sikk
+
+					// run time dependant behavior
+			g_qeglobals.d_camera.MouseControl(delta);
+
+			// update any windows now
+			if (g_nUpdateBits & W_CAMERA)
 			{
-				InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
+				InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndCamera);
 			}
-// <---sikk
-		}
-		if (g_nUpdateBits & (W_Z))
-		{
-			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndZ);
-		}
-		if (g_nUpdateBits & W_TEXTURE)
-		{
-			InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndInspector);
-		}
+			if (g_nUpdateBits & (W_XY))
+			{
+				InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
+				// sikk---> Multiple Orthographic Views
+				if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
+				{
+					InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
+					UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
+				}
+				if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
+				{
+					InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
+					UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
+				}
+				// <---sikk
+			}
+			if (g_nUpdateBits & (W_Z))
+			{
+				InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndZ);
+			}
+			if (g_nUpdateBits & W_TEXTURE)
+			{
+				InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndInspector);
+			}
 
-		g_nUpdateBits = 0;
+			g_nUpdateBits = 0;
 
-		// if not driving in the camera view, block
-		if (!g_qeglobals.d_camera.nCamButtonState && !g_bHaveQuit)
-			WaitMessage();
+			// if not driving in the camera view, block
+			if (!g_qeglobals.d_camera.nCamButtonState && !g_bHaveQuit)
+				WaitMessage();
+#ifndef _DEBUG
+		}
+		catch (std::exception &ex)
+		{
+			MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
+
+			// close logging if necessary
+			g_qeglobals.d_savedinfo.bLogConsole = false;
+			Sys_LogFile();
+
+			exit(1);
+		}
+#endif
 	}
-
     /* return success of application */
     return TRUE;
 }

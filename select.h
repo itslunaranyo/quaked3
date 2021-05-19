@@ -96,7 +96,7 @@ void	Select_MatchingKeyValue (char *szKey, char *szValue);	// sikk - Select Matc
 // sikk---> Cut/Copy/Paste
 void	Select_Cut ();
 void	Select_Copy ();
-void	Select_Paste ();
+//void	Select_Paste ();
 // returns true if pFind is in pList
 bool	OnEntityList (Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize);
 // <---sikk

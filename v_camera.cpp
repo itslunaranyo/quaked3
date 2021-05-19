@@ -111,7 +111,7 @@ void CameraView::ChangeFloor (bool up)
 	else
 		bestd = 16384;
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = b->next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = b->next)
 	{
 		if (!b->RayTest(start, dir, &d))
 			continue;
@@ -745,7 +745,7 @@ void CameraView::Draw ()
 	Brush	   *brush;
 	Face	   *face;
 
-	if (!g_brActiveBrushes.next)
+	if (!g_map.brActive.next)
 		return;	// not valid yet
 
 	if (timing)
@@ -853,7 +853,7 @@ void CameraView::Draw ()
 
 	g_nNumTransBrushes = 0;	// sikk - Transparent Brushes
 
-	for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
+	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
 		if (CullBrush(brush))
 			continue;

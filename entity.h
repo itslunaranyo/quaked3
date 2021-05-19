@@ -65,7 +65,9 @@ public:
 
 	// sikk---> Undo/Redo
 	int		MemorySize();
+	void	CloseLinks();
 	void	AddToList(Entity *list);
+	static void	MergeListIntoList(Entity *src, Entity *dest);
 	void	RemoveFromList();
 	void	FreeEpairs();
 	// <---sikk
@@ -75,8 +77,11 @@ public:
 	static Entity* Find (char *pszKey, int iValue);
 
 	static Entity* Parse (bool onlypairs);
-	void	Write (FILE *f, bool use_region);
-	void	WriteSelected (FILE *f);	// sikk - Export Selection (Map/Prefab)
+	void	CheckOrigin();
+	void	Write(std::ostream & stream, bool use_region);
+	//void	Write (FILE *f, bool use_region);
+	void	WriteSelected(std::ostream & out);
+	//void	WriteSelected (FILE *f);	// sikk - Export Selection (Map/Prefab)
 };
 
 //========================================================================

@@ -7,7 +7,7 @@
 
 char	g_szToken[MAXTOKEN];
 bool	g_bUnget;
-char   *g_pszScript;
+const char   *g_pszScript;
 int		g_nScriptLine;
 
 /*
@@ -15,7 +15,7 @@ int		g_nScriptLine;
 StartTokenParsing
 ==================
 */
-void StartTokenParsing (char *data)
+void StartTokenParsing (const char *data)
 {
 	g_nScriptLine = 1;
 	g_pszScript = data;
@@ -31,40 +31,44 @@ bool GetToken (bool crossline)
 {
 	char *token_p;
 
-	if (g_bUnget)			// is a token already waiting?
+	if (g_bUnget)	// is a token already waiting?
 		return true;
 
-// skip space
-skipspace:
-	while (*g_pszScript <= 32)
+	bool skip = true;
+	while (skip)
 	{
-		if (!*g_pszScript)
+		skip = false;
+		while (*g_pszScript <= 32)
 		{
-			if (!crossline)
-				Error("Line %d is incomplete.", g_nScriptLine);
-			return false;
-		}
-		if (*g_pszScript++ == '\n')
-		{
-			if (!crossline)
-				Error("Line %d is incomplete.", g_nScriptLine);
-			g_nScriptLine++;
-		}
-	}
-
-	if (g_pszScript[0] == '/' && g_pszScript[1] == '/')	// comment field
-	{
-		if (!crossline)
-			Error("Line %d is incomplete.", g_nScriptLine);
-
-		while (*g_pszScript++ != '\n')
 			if (!*g_pszScript)
 			{
 				if (!crossline)
 					Error("Line %d is incomplete.", g_nScriptLine);
 				return false;
 			}
-		goto skipspace;
+			if (*g_pszScript++ == '\n')
+			{
+				if (!crossline)
+					Error("Line %d is incomplete.", g_nScriptLine);
+				g_nScriptLine++;
+			}
+		}
+
+		if (g_pszScript[0] == '/' && g_pszScript[1] == '/')	// comment field
+		{
+			if (!crossline)
+				Error("Line %d is incomplete.", g_nScriptLine);
+
+			while (*g_pszScript++ != '\n')
+				if (!*g_pszScript)
+				{
+					if (!crossline)
+						Error("Line %d is incomplete.", g_nScriptLine);
+					return false;
+				}
+			skip = true;
+			continue;
+		}
 	}
 
 	// copy token
@@ -118,7 +122,7 @@ Returns true if there is another token on the line
 */
 bool TokenAvailable ()
 {
-	char *search_p;
+	const char *search_p;
 
 	search_p = g_pszScript;
 

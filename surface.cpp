@@ -222,7 +222,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 	Brush	*pBrush, *pList;
 	Face	*pFace;
 
-	pList = (bSelected) ? &g_brSelectedBrushes : &g_brActiveBrushes;
+	pList = (bSelected) ? &g_brSelectedBrushes : &g_map.brActive;
 	if (!bSelected)
 		Select_DeselectAll(true);
 

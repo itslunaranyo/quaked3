@@ -26,7 +26,7 @@
 #include <cassert>	// lunaran - for my own sanity
 #include <string>
 
-#include "qeBuffer.h"	// lunaran - generic heap space, malloc as an object
+#include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "cmdlib.h"
 #include "lbmlib.h"
 #include "mathlib.h"
@@ -231,7 +231,6 @@ extern HANDLE	g_hBSP_Process;
 /*
 ** global declarations
 */
-extern int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
 extern bool	g_bSnapCheck;
 
 //========================================================================

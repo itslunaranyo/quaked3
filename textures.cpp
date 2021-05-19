@@ -74,7 +74,7 @@ void Textures::Flush()
 
 	// if a map is loaded, we must force all brushes to refresh their texture assignments to 
 	// properly populate the unknown wad and redo texture projections for the 64x64 notexture
-	Map_BuildBrushData();
+	g_map.BuildBrushData();
 	Sys_UpdateWindows(W_CAMERA);
 }
 
@@ -267,7 +267,7 @@ void Textures::LoadWad(const char* wadfile)
 	TextureGroup* wad;
 	bool refresh = false;
 
-	Sys_Printf("CMD: Loading all textures...\n");
+	Sys_Printf("CMD: Loading all textures from %s...\n", wadfile);
 
 	auto tgIt = groups.begin();
 	// check if the wad is already loaded and trash it first
@@ -310,8 +310,8 @@ void Textures::LoadWad(const char* wadfile)
 	Sys_UpdateWindows(W_TEXTURE|W_CAMERA);
 
 	// select the first texture in the list
-	if (!g_qeglobals.d_workTexDef.name[0])
-		g_qeglobals.d_texturewin.SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
+	//if (!g_qeglobals.d_workTexDef.name[0])
+	//	g_qeglobals.d_texturewin.SelectTexture(16, 16);// g_qeglobals.d_texturewin.height - 16);
 }
 
 /*
@@ -325,7 +325,7 @@ void Textures::MenuLoadWad(const int menunum)
 
 	// refresh texture assignments on all brushes after a manual wad load, since
 	// the loaded wad might refresh an existing wad or fill in some broken textures
-	Map_BuildBrushData();
+	g_map.BuildBrushData();
 	Sys_UpdateWindows(W_CAMERA);
 }
 
@@ -561,7 +561,7 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 
 	sprintf(filepath, "%s/%s", g_qeglobals.d_entityProject->GetKeyValue("texturepath"), filename);
 
-	if (LoadFile(filepath, wadFileBuf) <= 0)
+	if (IO_LoadFile(filepath, wadFileBuf) <= 0)
 	{
 		Sys_Printf("WARNING: %s could not be loaded.\n", filename);
 		return false;
@@ -797,14 +797,14 @@ void Texture_SetMode (int iMenu)
 	if (!texturing && iMenu == ID_TEXTURES_WIREFRAME)
 	{
 		g_qeglobals.d_camera.draw_mode = cd_wire;
-		Map_BuildBrushData();
+		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
 	else if (!texturing && iMenu == ID_TEXTURES_FLATSHADE)
 	{
 		g_qeglobals.d_camera.draw_mode = cd_solid;
-		Map_BuildBrushData();
+		g_map.BuildBrushData();
 		Sys_UpdateWindows(W_ALL);
 		return;
 	}
@@ -823,7 +823,7 @@ void Texture_SetMode (int iMenu)
 	if (g_qeglobals.d_camera.draw_mode != cd_texture)
 	{
 		g_qeglobals.d_camera.draw_mode = cd_texture;
-		Map_BuildBrushData();
+		g_map.BuildBrushData();
 	}
 
 	Sys_UpdateWindows(W_ALL);

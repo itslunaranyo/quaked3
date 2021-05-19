@@ -50,7 +50,7 @@ void View::DrawPathLines()
 		return;
 
 	num_entities = 0;
-	for (te = g_entEntities.next; te != &g_entEntities && num_entities != MAX_MAP_ENTITIES; te = te->next)
+	for (te = g_map.entities.next; te != &g_map.entities && num_entities != MAX_MAP_ENTITIES; te = te->next)
 	{
 		ent_target[num_entities] = te->GetKeyValue("target");
 		if (ent_target[num_entities][0])
@@ -60,7 +60,7 @@ void View::DrawPathLines()
 		}
 	}
 
-	for (se = g_entEntities.next; se != &g_entEntities; se = se->next)
+	for (se = g_map.entities.next; se != &g_map.entities; se = se->next)
 	{
 
 		psz = se->GetKeyValue("targetname");
@@ -85,7 +85,7 @@ void View::DrawPathLines()
 			// sikk---> Don't Draw Path Line if entity on either side is hidden/filtered/regioned off
 			if (tb->IsFiltered() || se->brushes.onext->IsFiltered())
 				continue;
-			if (Map_IsBrushFiltered(tb) || Map_IsBrushFiltered(se->brushes.onext))
+			if (g_map.IsBrushFiltered(tb) || g_map.IsBrushFiltered(se->brushes.onext))
 				continue;
 			// <---sikk
 

@@ -96,7 +96,7 @@ void QE_Init ()
 	//	XYZ_Init(&g_qeglobals.d_xyz[i]);
 	//Z_Init();
 
-	Map_RegionOff();	// sikk - For initiating Map Size change
+	g_map.RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface
 	QE_UpdateCommandUI();
@@ -484,7 +484,7 @@ void QE_CheckAutoSave ()
 
 	now = clock();
 
-	if (g_bModified != 1 || !s_start)
+	if (g_map.modified != 1 || !s_start)
 	{
 		s_start = now;
 		return;
@@ -495,12 +495,12 @@ void QE_CheckAutoSave ()
 		Sys_Printf("CMD: Autosaving...\n");
 		Sys_Status("Autosaving...", 0);
 
-		Map_SaveFile(g_qeglobals.d_entityProject->GetKeyValue("autosave"), false);
+		g_map.SaveToFile(g_qeglobals.d_entityProject->GetKeyValue("autosave"), false);
 
 		Sys_Printf("MSG: Autosave successful.\n");
 		Sys_Status("Autosave successful.", 0);
 
-		g_bModified = 2;
+		g_map.modified = 2;
 		s_start = now;
 	}
 }
@@ -516,7 +516,7 @@ bool QE_LoadProject (char *projectfile)
 
 	Sys_Printf("CMD: QE_LoadProject (%s)\n", projectfile);
 
-	if (LoadFileNoCrash(projectfile, (void**)&data) == -1)
+	if (IO_LoadFileNoCrash(projectfile, (void**)&data) == -1)
 		return false;
 	StartTokenParsing(data);
 	g_qeglobals.d_entityProject = Entity::Parse(true);
@@ -541,7 +541,7 @@ bool QE_LoadProject (char *projectfile)
 	FillTextureMenu();
 	FillBSPMenu();
 
-	Map_New();
+	g_map.New();
 
 	return true;
 }
@@ -668,21 +668,21 @@ void QE_CountBrushesAndUpdateStatusBar ()
 	Brush		*b, *next;
 	Texture	*q;
 
-	g_nNumBrushes = 0;
-	g_nNumEntities = 0;
-	g_nNumTextures = 0;
+	g_map.numBrushes = 0;
+	g_map.numEntities = 0;
+	g_map.numTextures = 0;
 	
-	if (g_brActiveBrushes.next != NULL)
+	if (g_map.brActive.next != NULL)
 	{
-		for (b = g_brActiveBrushes.next; b != NULL && b != &g_brActiveBrushes; b = next)
+		for (b = g_map.brActive.next; b != NULL && b != &g_map.brActive; b = next)
 		{
 			next = b->next;
 			if (b->brush_faces)
 			{
 				if (b->owner->eclass->IsFixedSize())
-					g_nNumEntities++;
+					g_map.numEntities++;
 				else
-					g_nNumBrushes++;
+					g_map.numBrushes++;
 			}
 		}
 	}
@@ -693,26 +693,26 @@ void QE_CountBrushesAndUpdateStatusBar ()
 			continue; // don't count entity textures
 
 		if (q->used)
-			g_nNumTextures++;
+			g_map.numTextures++;
 	}
 
-	if (((g_nNumBrushes != s_lastbrushcount) || 
-		(g_nNumEntities != s_lastentitycount) || 
-		(g_nNumTextures != s_lasttexturecount)) || 
+	if (((g_map.numBrushes != s_lastbrushcount) || 
+		(g_map.numEntities != s_lastentitycount) || 
+		(g_map.numTextures != s_lasttexturecount)) || 
 		(!s_didonce))
 	{
 		Sys_UpdateBrushStatusBar();
 
-		s_lastbrushcount = g_nNumBrushes;
-		s_lastentitycount = g_nNumEntities;
-		s_lasttexturecount = g_nNumTextures;
+		s_lastbrushcount = g_map.numBrushes;
+		s_lastentitycount = g_map.numEntities;
+		s_lasttexturecount = g_map.numTextures;
 		s_didonce = true;
 	}
 
-	if (g_bModified)
+	if (g_map.modified)
 	{
 		char title[1024];
-		sprintf(title, "%s *", g_szCurrentMap);
+		sprintf(title, "%s *", g_map.name);
 		QE_ConvertDOSToUnixName(title, title);
 		Sys_SetTitle(title);
 	}
@@ -738,8 +738,8 @@ void QE_UpdateCommandUI ()
 	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
 	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Paste
-	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_brCopiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_brCopiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
+//	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Undo
 	EnableMenuItem(hMenu, ID_EDIT_UNDO, Undo_UndoAvailable() ? MF_ENABLED : MF_GRAYED);
 	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo_UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);

@@ -266,7 +266,7 @@ void XYZView::DragNewBrush (int x, int y)
 		return;
 
 	n->AddToList(&g_brSelectedBrushes);
-	g_peWorldEntity->LinkBrush(n);
+	g_map.world->LinkBrush(n);
 	n->Build();
 
 	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
@@ -868,23 +868,23 @@ void XYZView::DrawGrid ()
 	nDim2 = (dViewType == XY) ? 1 : 2;
 
 	xb = origin[nDim1] - w;
-	if (xb < g_v3RegionMins[nDim1])
-		xb = g_v3RegionMins[nDim1];
+	if (xb < g_map.regionMins[nDim1])
+		xb = g_map.regionMins[nDim1];
 	xb = nSize * floor(xb / nSize);
 
 	xe = origin[nDim1] + w;
-	if (xe > g_v3RegionMaxs[nDim1])
-		xe = g_v3RegionMaxs[nDim1];
+	if (xe > g_map.regionMaxs[nDim1])
+		xe = g_map.regionMaxs[nDim1];
 	xe = nSize * ceil(xe / nSize);
 
 	yb = origin[nDim2] - h;
-	if (yb < g_v3RegionMins[nDim2])
-		yb = g_v3RegionMins[nDim2];
+	if (yb < g_map.regionMins[nDim2])
+		yb = g_map.regionMins[nDim2];
 	yb = nSize * floor(yb / nSize);
 
 	ye = origin[nDim2] + h;
-	if (ye > g_v3RegionMaxs[nDim2])
-		ye = g_v3RegionMaxs[nDim2];
+	if (ye > g_map.regionMaxs[nDim2])
+		ye = g_map.regionMaxs[nDim2];
 	ye = nSize * ceil(ye / nSize);
 
 	// draw major blocks
@@ -992,23 +992,23 @@ void XYZView::DrawBlockGrid ()
 	nDim2 = (dViewType == XY) ? 1 : 2;
 	
 	xb = origin[nDim1] - w;
-	if (xb < g_v3RegionMins[nDim1])
-		xb = g_v3RegionMins[nDim1];
+	if (xb < g_map.regionMins[nDim1])
+		xb = g_map.regionMins[nDim1];
 	xb = 1024 * floor(xb / 1024);
 
 	xe = origin[nDim1] + w;
-	if (xe > g_v3RegionMaxs[nDim1])
-		xe = g_v3RegionMaxs[nDim1];
+	if (xe > g_map.regionMaxs[nDim1])
+		xe = g_map.regionMaxs[nDim1];
 	xe = 1024 * ceil(xe / 1024);
 
 	yb = origin[nDim2] - h;
-	if (yb < g_v3RegionMins[nDim2])
-		yb = g_v3RegionMins[nDim2];
+	if (yb < g_map.regionMins[nDim2])
+		yb = g_map.regionMins[nDim2];
 	yb = 1024 * floor(yb / 1024);
 
 	ye = origin[nDim2] + h;
-	if (ye > g_v3RegionMaxs[nDim2])
-		ye = g_v3RegionMaxs[nDim2];
+	if (ye > g_map.regionMaxs[nDim2])
+		ye = g_map.regionMaxs[nDim2];
 	ye = 1024 * ceil(ye / 1024);
 
 	// draw major blocks
@@ -1076,23 +1076,23 @@ void XYZView::DrawCoords()
 	nDim2 = (dViewType == XY) ? 1 : 2;
 
 	xb = origin[nDim1] - w;
-	if (xb < g_v3RegionMins[nDim1])
-		xb = g_v3RegionMins[nDim1];
+	if (xb < g_map.regionMins[nDim1])
+		xb = g_map.regionMins[nDim1];
 	xb = nSize * floor(xb / nSize);
 
 	xe = origin[nDim1] + w;
-	if (xe > g_v3RegionMaxs[nDim1])
-		xe = g_v3RegionMaxs[nDim1];
+	if (xe > g_map.regionMaxs[nDim1])
+		xe = g_map.regionMaxs[nDim1];
 	xe = nSize * ceil(xe / nSize);
 
 	yb = origin[nDim2] - h;
-	if (yb < g_v3RegionMins[nDim2])
-		yb = g_v3RegionMins[nDim2];
+	if (yb < g_map.regionMins[nDim2])
+		yb = g_map.regionMins[nDim2];
 	yb = nSize * floor(yb / nSize);
 
 	ye = origin[nDim2] + h;
-	if (ye > g_v3RegionMaxs[nDim2])
-		ye = g_v3RegionMaxs[nDim2];
+	if (ye > g_map.regionMaxs[nDim2])
+		ye = g_map.regionMaxs[nDim2];
 	ye = nSize * ceil(ye / nSize);
 
 // sikk---> Filter Coords so they don't become bunched and unreadable 
@@ -1113,23 +1113,23 @@ void XYZView::DrawCoords()
 			nSize = 1024;
 
 		xb = origin[nDim1] - w;
-		if (xb < g_v3RegionMins[nDim1])
-			xb = g_v3RegionMins[nDim1];
+		if (xb < g_map.regionMins[nDim1])
+			xb = g_map.regionMins[nDim1];
 		xb = nSize * floor(xb / nSize);
 
 		xe = origin[nDim1] + w;
-		if (xe > g_v3RegionMaxs[nDim1])
-			xe = g_v3RegionMaxs[nDim1];
+		if (xe > g_map.regionMaxs[nDim1])
+			xe = g_map.regionMaxs[nDim1];
 		xe = nSize * ceil(xe / nSize);
 
 		yb = origin[nDim2] - h;
-		if (yb < g_v3RegionMins[nDim2])
-			yb = g_v3RegionMins[nDim2];
+		if (yb < g_map.regionMins[nDim2])
+			yb = g_map.regionMins[nDim2];
 		yb = nSize * floor(yb / nSize);
 
 		ye = origin[nDim2] + h;
-		if (ye > g_v3RegionMaxs[nDim2])
-			ye = g_v3RegionMaxs[nDim2];
+		if (ye > g_map.regionMaxs[nDim2])
+			ye = g_map.regionMaxs[nDim2];
 		ye = nSize * ceil(ye / nSize);
 
 		for (x = xb; x <= xe; x += nSize)	// sikk - 'x <= xe' instead of 'x < xe' so last coord is drawn 
@@ -1604,7 +1604,7 @@ void XYZView::Draw ()
 	bool		bFixedSize;
 	vec3_t		vMinBounds, vMaxBounds;
 
-	if (!g_brActiveBrushes.next)
+	if (!g_map.brActive.next)
 		return;	// not valid yet
 
 	if (timing)
@@ -1663,8 +1663,8 @@ void XYZView::Draw ()
 	}
 
 //	e = NULL;
-	e = g_peWorldEntity;
-	for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
+	e = g_map.world;
+	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
 		if (brush->mins[nDim1] > maxs[0] || 
 			brush->mins[nDim2] > maxs[1] || 

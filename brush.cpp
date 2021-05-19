@@ -6,7 +6,6 @@
 #include "qe3.h"
 #include "io.h"
 
-
 vec3_t  g_v3Vecs[2];
 float	g_fShift[2];
 
@@ -28,18 +27,14 @@ int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 Brush::Brush
 =============
 */
-Brush::Brush()
+Brush::Brush() : 
+	prev(nullptr), next(nullptr), 
+	oprev(nullptr), onext(nullptr),
+	owner(nullptr), brush_faces(nullptr),
+	undoId(0), redoId(0), ownerId(0)
 {
-	prev = next = oprev = onext = nullptr;
-	owner = nullptr;
-
-	brush_faces = nullptr;
-
 	ClearBounds(mins, maxs);
-
 	hiddenBrush = false;
-
-	undoId = redoId = ownerId = 0;
 }
 
 /*
@@ -170,7 +165,7 @@ bool Brush::IsFiltered() const
 		if (!strncmp(owner->eclass->name, "func_detail", 11))
 			return true;
 
-	if (owner == g_peWorldEntity)
+	if (owner == g_map.world)
 	{
 		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD)
 			return true;
@@ -431,7 +426,7 @@ void Brush::Build()
 		face->ColorAndTexture();
 	}
 
-	g_bModified = true;	// mark the map as changed
+	g_map.modified = true;	// mark the map as changed
 
 	// move the points and edges if in select mode
 	if (g_qeglobals.d_selSelectMode == sel_vertex || g_qeglobals.d_selSelectMode == sel_edge)
@@ -1330,7 +1325,7 @@ void Brush::MakeSided(int sides)
 	}
 
 	Select_SelectBrush(b);
-	g_peWorldEntity->LinkBrush(b);
+	g_map.world->LinkBrush(b);
 	b->Build();
 }
 
@@ -1431,7 +1426,7 @@ void Brush::MakeSidedCone(int sides)
 	}
 
 	Select_SelectBrush(b);
-	g_peWorldEntity->LinkBrush(b);
+	g_map.world->LinkBrush(b);
 	b->Build();
 }
 
@@ -1528,7 +1523,7 @@ void Brush::MakeSidedSphere(int sides)
 	}
 
 	Select_SelectBrush(b);
-	g_peWorldEntity->LinkBrush(b);
+	g_map.world->LinkBrush(b);
 	b->Build();
 }
 // <---sikk
@@ -1566,6 +1561,17 @@ void Brush::RemoveFromList()
 	next->prev = prev;
 	prev->next = next;
 	next = prev = NULL;
+}
+
+void Brush::CloseLinks()
+{
+	if (next == prev && prev == this)
+		return;	// done
+
+	if (next || prev)
+		Error("Entity: tried to close non-empty linked list.");
+
+	next = prev = this;
 }
 
 /*
@@ -1880,7 +1886,7 @@ void Brush::DrawEntityName ()
 	if (!owner)
 		return;	// during contruction
 
-	if (owner == g_peWorldEntity)
+	if (owner == g_map.world)
 		return;
 
 	if (this != owner->brushes.onext)
@@ -2043,14 +2049,7 @@ void Brush::DrawLight()
 	glEnd();
 }
 
-
-
-
-
-
 //==========================================================================
-
-
 
 /*
 =================
@@ -2138,6 +2137,44 @@ Brush *Brush::Parse ()
 Brush::Write
 =================
 */
+void Brush::Write(std::ostream& out)
+{
+	int		i;
+	char   *pname;
+	Face *fa;
+
+	out << "{\n";
+	for (fa = brush_faces; fa; fa = fa->next)
+	{
+		for (i = 0; i < 3; i++)
+			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision
+				out << "( " << fa->planepts[i][0] << " " << fa->planepts[i][1] << " " << fa->planepts[i][2] << " ) ";
+			else
+				out << "( " << (int)fa->planepts[i][0] << " " << (int)fa->planepts[i][1] << " " << (int)fa->planepts[i][2] << " ) ";
+
+		pname = fa->texdef.name;
+		if (pname[0] == 0)
+			pname = "unnamed";
+
+		CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
+
+		out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << (int)fa->texdef.rotate << " ";
+
+		if (fa->texdef.scale[0] == (int)fa->texdef.scale[0])
+			out << (int)fa->texdef.scale[0] << " ";
+		else
+			out << (float)fa->texdef.scale[0] << " ";
+
+		if (fa->texdef.scale[1] == (int)fa->texdef.scale[1])
+			out << (int)fa->texdef.scale[1] << " ";
+		else
+			out << (float)fa->texdef.scale[1] << " ";
+
+		out << "\n";
+	}
+	out << "}\n";
+}
+/*
 void Brush::Write (FILE *f)
 {
 	int		i;
@@ -2175,7 +2212,7 @@ void Brush::Write (FILE *f)
 	}
 	fprintf(f, "}\n");
 }
-
+*/
 
 
 

@@ -66,7 +66,7 @@ interface functions
 */
 bool Select_HasBrushes()
 {
-	return (g_brSelectedBrushes.next != &g_brSelectedBrushes);
+	return (g_brSelectedBrushes.next && (g_brSelectedBrushes.next != &g_brSelectedBrushes));
 }
 int Select_FaceCount()
 {
@@ -131,7 +131,7 @@ void Select_SelectBrushSorted(Brush* b)
 
 	// world brushes, point entities, and brush ents with only one brush go to the end 
 	// of the list, so we don't keep looping over them looking for buddies
-	if (b->owner == g_peWorldEntity || b->owner->eclass->IsFixedSize() || b->onext == b)
+	if (b->owner == g_map.world || b->owner->eclass->IsFixedSize() || b->onext == b)
 	{
 		b->AddToList(g_brSelectedBrushes.prev);
 		return;
@@ -167,7 +167,7 @@ void Select_HandleBrush (Brush *brush, bool bComplete)
 	if (e)
 	{
 		// select complete entity on first click
-		if (e != g_peWorldEntity && bComplete == true)
+		if (e != g_map.world && bComplete == true)
 		{
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 			{
@@ -300,7 +300,7 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 		Select_DeselectAll(true);
 
 		// go through active brushes and accumulate all "hit" brushes
-		for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
+		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 		{
 			if (brush->IsFiltered())
 				continue;
@@ -354,9 +354,9 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 
 	if (!(flags & SF_SELECTED_ONLY))
 	{
-		for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
+		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 		{
-			if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_peWorldEntity)
+			if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_map.world)
 				continue;
 			if (brush->IsFiltered())
 				continue;
@@ -375,7 +375,7 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_peWorldEntity)
+		if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_map.world)
 			continue;
 		if (brush->IsFiltered())
 			continue;
@@ -434,7 +434,7 @@ void Select_Ray (vec3_t origin, vec3_t dir, int flags)
 	if (t.selected)
 	{		
 		t.brush->RemoveFromList();
-		t.brush->AddToList(&g_brActiveBrushes);
+		t.brush->AddToList(&g_map.brActive);
 		g_bSelectionChanged = true;
 	}
 	else
@@ -510,7 +510,7 @@ void Select_BrushesToFaces()
 			Select_SelectFace(f);
 		}
 	}
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_brActiveBrushes);
+	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
 	g_bSelectionChanged = true;
 }
 
@@ -525,7 +525,7 @@ void Select_All()
 	// sikk---> Select All
 	Brush	*b, *next;
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		Select_SelectBrush(b);
@@ -535,7 +535,7 @@ void Select_All()
 
 	Select_DeselectAllFaces();
 
-	Brush::MergeListIntoList(&g_brActiveBrushes, &g_brSelectedBrushes);
+	Brush::MergeListIntoList(&g_map.brActive, &g_brSelectedBrushes);
 
 	g_bSelectionChanged = true;
 }
@@ -556,7 +556,7 @@ void Select_DeselectFiltered()
 		if (b->IsFiltered())
 		{
 			b->RemoveFromList();
-			b->AddToList(&g_brActiveBrushes);
+			b->AddToList(&g_map.brActive);
 			g_bSelectionChanged = true;
 		}
 	}
@@ -582,7 +582,7 @@ void Select_DeselectAll (bool bDeselectFaces)
 
 	UpdateWorkzone(g_brSelectedBrushes.next);
 
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_brActiveBrushes);
+	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
 	g_bSelectionChanged = true;
 }
 
@@ -706,7 +706,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 	if (strlen(szKey) && strlen(szValue))	// if both "key" & "value" are declared
 	{
-		for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = bnext)
+		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
 
@@ -718,7 +718,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 	}
 	else if (strlen(szKey))	// if only "key" is declared
 	{
-		for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = bnext)
+		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
 
@@ -730,7 +730,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 	}
 	else if (strlen(szValue))	// if only "value" is declared
 	{
-		for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = bnext)
+		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
 			bFound = false;
@@ -768,7 +768,7 @@ void Select_MatchingTextures()
 
 	Select_DeselectAll(true);
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (f = b->brush_faces; f; f = f->next)
@@ -794,23 +794,23 @@ void Select_Invert()
 
 	//Sys_Printf("CMD: Inverting selection...\n");
 
-	next = g_brActiveBrushes.next;
-	prev = g_brActiveBrushes.prev;
+	next = g_map.brActive.next;
+	prev = g_map.brActive.prev;
 
 	if (g_brSelectedBrushes.next != &g_brSelectedBrushes)
 	{
-		g_brActiveBrushes.next = g_brSelectedBrushes.next;
-		g_brActiveBrushes.prev = g_brSelectedBrushes.prev;
-		g_brActiveBrushes.next->prev = &g_brActiveBrushes;
-		g_brActiveBrushes.prev->next = &g_brActiveBrushes;
+		g_map.brActive.next = g_brSelectedBrushes.next;
+		g_map.brActive.prev = g_brSelectedBrushes.prev;
+		g_map.brActive.next->prev = &g_map.brActive;
+		g_map.brActive.prev->next = &g_map.brActive;
 	}
 	else
 	{
-		g_brActiveBrushes.next = &g_brActiveBrushes;
-		g_brActiveBrushes.prev = &g_brActiveBrushes;
+		g_map.brActive.next = &g_map.brActive;
+		g_map.brActive.prev = &g_map.brActive;
 	}
 
-	if (next != &g_brActiveBrushes)
+	if (next != &g_map.brActive)
 	{
 		g_brSelectedBrushes.next = next;
 		g_brSelectedBrushes.prev = prev;
@@ -843,7 +843,7 @@ Select_AllType
 	if (selected == &g_brSelectedBrushes)
 		return;
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 
@@ -888,7 +888,7 @@ void Select_CompleteTall()
 		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 
@@ -936,7 +936,7 @@ void Select_PartialTall()
 		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 
@@ -970,7 +970,7 @@ void Select_Touching()
 	VectorCopy(g_brSelectedBrushes.next->mins, mins);
 	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
@@ -1003,7 +1003,7 @@ void Select_Inside()
 	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
 	Select_Delete();
 
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
@@ -1088,10 +1088,9 @@ void Select_Delete ()
 		delete brush;
 
 		// remove any (not-worldspawn) entities with no brushes
-		if (e->brushes.onext == &e->brushes && e != g_peWorldEntity)
+		if (e->brushes.onext == &e->brushes && e != g_map.world)
 			delete e;
 	}
-
 
 	Sys_UpdateWindows(W_ALL);
 }
@@ -1171,12 +1170,12 @@ void Select_Clone ()
 		Undo_EndEntity(b->owner);
 		Undo_EndBrush(b);
 		// if the brush is a world brush, handle simply
-		if (b->owner == g_peWorldEntity)
+		if (b->owner == g_map.world)
 		{
 //		Undo_EndBrush(n);
 			n = b->Clone();
 			n->AddToList(&templist);
-			g_peWorldEntity->LinkBrush(n);
+			g_map.world->LinkBrush(n);
 			n->Build();
 			n->Move(delta);
 			continue;
@@ -1228,7 +1227,7 @@ void Select_Clone ()
 	}
 
 	// lunaran - select and offset the new brushes, not the old ones
-	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_brActiveBrushes);
+	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
 	Brush::MergeListIntoList(&templist, &g_brSelectedBrushes);
 
 	g_bSelectionChanged = true;
@@ -1525,7 +1524,7 @@ void Select_Ungroup ()
 
 	e = g_brSelectedBrushes.next->owner;
 
-	if (!e || e == g_peWorldEntity || e->eclass->IsFixedSize())
+	if (!e || e == g_map.world || e->eclass->IsFixedSize())
 	{
 		Sys_Printf("WARNING: Not a grouped entity.\n");
 		return;
@@ -1534,11 +1533,11 @@ void Select_Ungroup ()
 	for (b = e->brushes.onext; b != &e->brushes; b = e->brushes.onext)
 	{
 		b->RemoveFromList();
-		b->AddToList(&g_brActiveBrushes);
+		b->AddToList(&g_map.brActive);
 		Entity::UnlinkBrush(b);
-		g_peWorldEntity->LinkBrush(b);
+		g_map.world->LinkBrush(b);
 		b->Build();
-		b->owner = g_peWorldEntity;
+		b->owner = g_map.world;
 		Select_HandleBrush(b, true);	// sikk - reselect the ungrouped brush  
 	}
 
@@ -1577,7 +1576,7 @@ void Select_InsertBrush ()
 	// find first brush that's an entity, pull info and continue
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner != g_peWorldEntity)
+		if (b->owner != g_map.world)
 		{
 			e2 = b->owner;
 			ec = b->owner->eclass;
@@ -1594,7 +1593,7 @@ void Select_InsertBrush ()
 	// check whether we are inserting a brush or just reordering (for console text only)
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner == g_peWorldEntity)
+		if (b->owner == g_map.world)
 		{
 			bInserting = true;
 			continue;
@@ -1606,10 +1605,10 @@ void Select_InsertBrush ()
 	e->eclass = ec;
 	e->epairs = ep;
 
-	e->next = g_entEntities.next;
-	g_entEntities.next = e;
+	e->next = g_map.entities.next;
+	g_map.entities.next = e;
 	e->next->prev = e;
-	e->prev = &g_entEntities;
+	e->prev = &g_map.entities;
 	
 	// change the selected brushes over to the new entity
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -1671,7 +1670,7 @@ void Select_ShowAllHidden ()
 	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
 		b->hiddenBrush = false;
 
-	for (b = g_brActiveBrushes.next; b && b != &g_brActiveBrushes; b = b->next)
+	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
 		b->hiddenBrush = false;
 
 	Sys_UpdateWindows(W_ALL);
@@ -1707,7 +1706,7 @@ void Select_ConnectEntities ()
 	}
 	e2 = b->owner;
 
-	if (e1 == g_peWorldEntity || e2 == g_peWorldEntity)
+	if (e1 == g_map.world || e2 == g_map.world)
 	{
 		Sys_Printf("WARNING: Cannot connect to the world.\n");
 		Sys_Beep();
@@ -1727,7 +1726,7 @@ void Select_ConnectEntities ()
 			int maxtarg, targetnum;
 			// make a unique target value
 			maxtarg = 0;
-			for (e = g_entEntities.next; e != &g_entEntities; e = e->next)
+			for (e = g_map.entities.next; e != &g_map.entities; e = e->next)
 			{
 				tn = e->GetKeyValue("targetname");
 				if (tn && tn[0])
@@ -1766,17 +1765,17 @@ void Select_Cut ()
 	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
 
-	Brush::FreeList(&g_brCopiedBrushes);
-	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
+	Brush::FreeList(&g_map.copiedBrushes);
+	g_map.copiedBrushes.next = g_map.copiedBrushes.prev = &g_map.copiedBrushes;
 	Entity::CleanCopiedList();
 
 	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner == g_peWorldEntity)
+		if (b->owner == g_map.world)
 		{
 			b2 = b->Clone();
 			b2->owner = NULL;
-			b2->AddToList(&g_brCopiedBrushes);
+			b2->AddToList(&g_map.copiedBrushes);
 		}
 		else
 		{
@@ -1790,7 +1789,7 @@ void Select_Cut ()
 				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
 				{
 					eb2 = eb->Clone();
-//					Brush_AddToList(eb2, &g_brCopiedBrushes);
+//					Brush_AddToList(eb2, &g_map.copiedBrushes);
 					e2->LinkBrush(eb2);
 					eb2->Build();
 				}
@@ -1815,17 +1814,17 @@ void Select_Copy ()
 	Brush		*b, *b2, *eb, *eb2;
 	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
-	Brush::FreeList(&g_brCopiedBrushes);
-	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
+	Brush::FreeList(&g_map.copiedBrushes);
+	g_map.copiedBrushes.next = g_map.copiedBrushes.prev = &g_map.copiedBrushes;
 	Entity::CleanCopiedList();
 
 	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner == g_peWorldEntity)
+		if (b->owner == g_map.world)
 		{
 			b2 = b->Clone();
 			b2->owner = NULL;
-			b2->AddToList(&g_brCopiedBrushes);
+			b2->AddToList(&g_map.copiedBrushes);
 		}
 		else
 		{
@@ -1839,7 +1838,7 @@ void Select_Copy ()
 				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
 				{
 					eb2 = eb->Clone();
-//					Brush_AddToList(eb2, &g_brCopiedBrushes);
+//					Brush_AddToList(eb2, &g_map.copiedBrushes);
 					e2->LinkBrush(eb2);
 					eb2->Build();
 				}
@@ -1854,28 +1853,29 @@ void Select_Copy ()
 Select_Paste
 ==================
 */
+/*
 void Select_Paste ()
 {
 	Brush		*b, *b2, *eb, *eb2;
 	Entity	*e, *e2;
 
-//	if (g_brCopiedBrushes.next != &g_brCopiedBrushes || g_entCopiedEntities.next != &g_entCopiedEntities)
-	if (g_brCopiedBrushes.next != NULL)
+//	if (g_map.copiedBrushes.next != &g_map.copiedBrushes || g_map.copiedEntities.next != &g_map.copiedEntities)
+	if (g_map.copiedBrushes.next != NULL)
 	{
 		Select_DeselectAll(true);
 
-		for (b = g_brCopiedBrushes.next; b != NULL && b != &g_brCopiedBrushes; b = b->next)
+		for (b = g_map.copiedBrushes.next; b != NULL && b != &g_map.copiedBrushes; b = b->next)
 		{
 			b2 = b->Clone();
 			Undo_EndBrush(b2);
 //			pClone->owner = pBrush->owner;
 			if (b2->owner == NULL)
-				g_peWorldEntity->LinkBrush(b2);
+				g_map.world->LinkBrush(b2);
 			b2->AddToList(&g_brSelectedBrushes);
 			b2->Build();
 		}
 
-		for (e = g_entCopiedEntities.next; e != NULL && e != &g_entCopiedEntities; e = e->next)
+		for (e = g_map.copiedEntities.next; e != NULL && e != &g_map.copiedEntities; e = e->next)
 		{
 			e2 = e->Clone();
 			Undo_EndEntity(e2);
@@ -1897,5 +1897,5 @@ void Select_Paste ()
 		Sys_Printf("MSG: Nothing to paste...\n");
 }
 // <---sikk
-
+*/
 

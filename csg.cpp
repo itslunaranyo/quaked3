@@ -820,7 +820,7 @@ void CSG_Subtract ()
 		}
 
 		// chop any active brushes up
-		for (s = g_brActiveBrushes.next; s != &g_brActiveBrushes; s = snext)
+		for (s = g_map.brActive.next; s != &g_map.brActive; s = snext)
 		{
 			snext = s->next;
 
@@ -868,7 +868,7 @@ void CSG_Subtract ()
 		nextfragment = frag->next;
 		numfragments++;
 		frag->RemoveFromList();
-		frag->AddToList( &g_brActiveBrushes);
+		frag->AddToList( &g_map.brActive);
 		Undo_EndBrush(frag);	// sikk - Undo/Redo
 	}
 

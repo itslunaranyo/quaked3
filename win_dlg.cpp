@@ -105,14 +105,14 @@ void FindBrush (int entitynum, int brushnum)
 	Entity   *e;
 
 	if (entitynum == 0)
-		e = g_peWorldEntity;
+		e = g_map.world;
 	else
 	{
-		e = g_entEntities.next;
+		e = g_map.entities.next;
 		while (--entitynum)
 		{
 			e = e->next;
-			if (e == &g_entEntities)
+			if (e == &g_map.entities)
 			{
 				Sys_Printf("WARNING: No such entity.\n");
 				return;
@@ -162,10 +162,10 @@ void GetSelectionIndex (int *entity, int *brush)
 		return;
 
 	// find entity
-	if (b->owner != g_peWorldEntity)
+	if (b->owner != g_map.world)
 	{
 		(*entity)++;
-		for (e = g_entEntities.next; e != &g_entEntities; e = e->next, (*entity)++)
+		for (e = g_map.entities.next; e != &g_map.entities; e = e->next, (*entity)++)
 			;
 	}
 
@@ -1104,9 +1104,9 @@ BOOL CALLBACK MapInfoDlgProc (
 		hList = GetDlgItem(hwndDlg, IDC_LIST_ENTITYBREAKDOWN);
 		SendMessage(hList, LB_SETTABSTOPS, (WPARAM)1, (LPARAM)(LPINT)nTabs);
 
-		for (pBrush = g_brActiveBrushes.next; pBrush != &g_brActiveBrushes; pBrush = pBrush->next)
+		for (pBrush = g_map.brActive.next; pBrush != &g_map.brActive; pBrush = pBrush->next)
 		{
-			if (pBrush->owner == g_peWorldEntity)
+			if (pBrush->owner == g_map.world)
 			{
 				// we don't want to count point entity faces 
 				for (pFace = pBrush->brush_faces; pFace; pFace = pFace->next)
@@ -1129,7 +1129,7 @@ BOOL CALLBACK MapInfoDlgProc (
 		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++) 
 		{
 			pEClass = *ecIt;
-			for (pEntity = g_entEntities.next; pEntity != &g_entEntities; pEntity = pEntity->next)
+			for (pEntity = g_map.entities.next; pEntity != &g_map.entities; pEntity = pEntity->next)
 				if (pEntity->eclass->name == pEClass->name)
 					nCount++;
 
@@ -1149,7 +1149,7 @@ BOOL CALLBACK MapInfoDlgProc (
 		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALPOINTENTS, sz);
 		sprintf(sz, "%d", nTotalFaces);
 		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALFACES, sz);
-		sprintf(sz, "%d", g_nNumTextures);
+		sprintf(sz, "%d", g_map.numTextures);
 		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALTEXTURES, sz);
 		sprintf(sz, "%d", nSkyBrushes);
 		SetDlgItemText(hwndDlg, IDC_EDIT_SKYBRUSHES, sz);
@@ -1419,15 +1419,15 @@ BOOL CALLBACK EntityInfoDlgProc (
 		ListView_DeleteColumn(hList, 2);
 
 		// add worldspawn entity first
-		hTRoot = AddOneItem(hTree, TVI_ROOT, (HTREEITEM)TVI_ROOT, g_peWorldEntity->eclass->name, g_peWorldEntity);
-		AddOneItem(hTree, hTRoot, (HTREEITEM)TVI_LAST, g_peWorldEntity->eclass->name, g_peWorldEntity);
+		hTRoot = AddOneItem(hTree, TVI_ROOT, (HTREEITEM)TVI_ROOT, g_map.world->eclass->name, g_map.world);
+		AddOneItem(hTree, hTRoot, (HTREEITEM)TVI_LAST, g_map.world->eclass->name, g_map.world);
 
 		// Nested for loop to group entites. Take each avalible entity class
 		// and check them with all active entites, pulling matches into an array.
 		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 		{
 			pEClass = *ecIt;
-			for (pEntity = g_entEntities.next; pEntity != &g_entEntities; pEntity = pEntity->next)
+			for (pEntity = g_map.entities.next; pEntity != &g_map.entities; pEntity = pEntity->next)
 			{
 				if (pEntity->eclass->name == pEClass->name)
 				{
@@ -1676,7 +1676,7 @@ BOOL CALLBACK PreferencesDlgProc (
 			GetDlgItemText(hwndDlg, IDC_COMBO_MAPSIZE, sz, 8);
 			g_qeglobals.d_savedinfo.nMapSize = atoi(sz);
 			if (nMapSize != g_qeglobals.d_savedinfo.nMapSize)
-				Map_RegionOff();
+				g_map.RegionOff();
 			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, g_qeglobals.d_savedinfo.szHeapsize, 8);
 			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMSKILL, g_qeglobals.d_savedinfo.szSkill, 2);
 

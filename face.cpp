@@ -140,8 +140,8 @@ winding_t *Plane::BasePoly()
 	CrossProduct(vup, normal, vright);
 
 	// These are to keep the brush restrained within the Map Size limit
-	VectorScale(vup, g_qeglobals.d_savedinfo.nMapSize * 0.5, vup);	// sikk - Map Size was 8192
-	VectorScale(vright, g_qeglobals.d_savedinfo.nMapSize * 0.5, vright);
+	VectorScale(vup, g_qeglobals.d_savedinfo.nMapSize, vup);	// sikk - Map Size was 8192
+	VectorScale(vright, g_qeglobals.d_savedinfo.nMapSize, vright);
 
 	// project a really big	axis aligned box onto the plane
 	w = Winding::Alloc(4);

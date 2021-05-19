@@ -22,8 +22,7 @@ std::vector<EntClass*> EntClass::pointclasses;
 std::vector<EntClass*> EntClass::brushclasses;
 std::vector<EntClass*> EntClass::entclasses;
 EntClass	*EntClass::badclass;
-
-
+EntClass	*EntClass::worldspawn;
 
 /*
 ==============
@@ -295,7 +294,7 @@ void EntClass::ScanFile(const char *filename)
 	QE_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("CMD: ScanFile: %s\n", temp);
 
-	size = LoadFile(filename, fdata);
+	size = IO_LoadFile(filename, fdata);
 
 	for (i = 0; i < size; i++)
 	{
@@ -350,6 +349,10 @@ void EntClass::InitForSourceDirectory(const char *path)
 	}
 
 	Sort();
+
+	worldspawn = ForName("worldspawn", true, true);
+	if (!worldspawn)
+		Error("No worldspawn definition found in source!\n");
 
 	badclass = EntClass::InitFromText("/*QUAKED UNKNOWN_CLASS (0 0.5 0) ?");
 }

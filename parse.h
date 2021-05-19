@@ -15,7 +15,7 @@ extern int	g_nScriptLine;
 
 //========================================================================
 
-void StartTokenParsing (char *data);
+void StartTokenParsing (const char *data);
 bool GetToken (bool crossline);
 void UngetToken ();
 bool TokenAvailable ();

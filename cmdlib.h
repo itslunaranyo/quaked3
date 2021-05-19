@@ -47,7 +47,7 @@ char   *COM_Parse (char *data);
 int		Q_strncasecmp (char *s1, char *s2, int n);
 int		Q_strcasecmp (char *s1, char *s2);
 
-int		Q_filelength (FILE *f);
+int		IO_FileLength (FILE *f);
 
 double	I_FloatTime (void);
 
@@ -55,15 +55,15 @@ void	Error (char *error, ...);
 int		CheckParm (char *check);
 void	ParseCommandLine (char *lpCmdLine);
 
-FILE   *SafeOpenWrite (char *filename);
-FILE   *SafeOpenRead (char *filename);
-void	SafeRead (FILE *f, void *buffer, int count);
-void	SafeWrite (FILE *f, void *buffer, int count);
+FILE   *IO_SafeOpenWrite (char *filename);
+FILE   *IO_SafeOpenRead (char *filename);
+void	IO_SafeRead (FILE *f, void *buffer, int count);
+void	IO_SafeWrite (FILE *f, void *buffer, int count);
 
-int		LoadFile(char *filename, void **bufferptr);
-int		LoadFile(const char *filename, qeBuffer &fileBuf);
-int		LoadFileNoCrash (char *filename, void **bufferptr);
-void	SaveFile (char *filename, void *buffer, int count);
+int		IO_LoadFile(const char *filename, void **bufferptr);
+int		IO_LoadFile(const char *filename, qeBuffer &fileBuf);
+int		IO_LoadFileNoCrash (char *filename, void **bufferptr);
+void	IO_SaveFile (char *filename, void *buffer, int count);
 
 void 	DefaultExtension (char *path, char *extension);
 void 	DefaultPath (char *path, char *basepath);

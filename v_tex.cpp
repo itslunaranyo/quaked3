@@ -398,7 +398,6 @@ By mouse click
 void TextureView::SelectTexture(int x, int y)
 {
 	texdef_t	texdef;
-
 	Texture*	tw;
 
 	tw = TexAtPos(x, y);
@@ -415,8 +414,6 @@ void TextureView::SelectTexture(int x, int y)
 
 	Sys_Printf("WARNING: Did not select a texture.\n");
 }
-
-
 
 
 

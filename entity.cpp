@@ -5,15 +5,17 @@
 #include "qe3.h"
 #include "io.h"
 
-int g_nEntityId = 1;	// sikk - Undo/Redo
+int g_nEntityId = 0;	// sikk - Undo/Redo
 
 //===================================================================
 
 
-Entity::Entity() : undoId(0), redoId(0), ownerId(0),
-	eclass(nullptr), epairs(nullptr)
+Entity::Entity() :
+	next(nullptr), prev(nullptr), 
+	eclass(nullptr), epairs(nullptr), 
+	undoId(0), redoId(0), ownerId(0)
 {
-	entityId = g_nEntityId++;
+	entityId = ++g_nEntityId;
 	brushes.onext = brushes.oprev = &brushes;
 	brushes.owner = this;
 	origin[0] = origin[1] = origin[2] = 0;
@@ -104,7 +106,7 @@ void Entity::SetKeyValue(const char *key, const char *value)
 	}
 
 	strcpy((char*)*ep->value, value);
-	g_bModified = true;
+	g_map.modified = true;
 }
 
 /*
@@ -276,6 +278,42 @@ void Entity::AddToList (Entity *list)
 }
 
 /*
+=================
+Entity::MergeListIntoList
+=================
+*/
+void Entity::MergeListIntoList(Entity *src, Entity *dest)
+{
+	// properly doubly-linked lists only
+	if (!src->next || !src->prev)
+	{
+		Error("Tried to merge a list with NULL links!\n");
+		return;
+	}
+
+	if (src->next == src || src->prev == src)
+	{
+		Sys_Printf("WARNING: Tried to merge an empty list.\n");
+		return;
+	}
+	// merge at head of list
+	src->next->prev = dest;
+	src->prev->next = dest->next;
+	dest->next->prev = src->prev;
+	dest->next = src->next;
+
+	/*
+	// merge at tail of list
+	dest->prev->next = src->next;
+	src->next->prev = dest->prev;
+	dest->prev = src->prev;
+	src->prev->next = dest;
+	*/
+
+	src->prev = src->next = src;
+}
+
+/*
 ===========
 Entity::RemoveFromList
 ===========
@@ -288,6 +326,23 @@ void Entity::RemoveFromList ()
 	prev->next = next;
 	next = prev = NULL;
 }
+
+/*
+===========
+Entity::CloseLinks
+===========
+*/
+void Entity::CloseLinks()
+{
+	if (next == prev && prev == this)
+		return;	// done
+
+	if (next || prev)
+		Error("Entity: tried to close non-empty linked list.");
+
+	next = prev = this;
+}
+
 
 /*
 =================
@@ -354,6 +409,7 @@ Entity *Entity::Parse (bool onlypairs)
 		Error("Entity_Parse: { not found.");
 	
 	ent = new Entity();
+	ent->brushes.CloseLinks();
 
 	do
 	{
@@ -400,16 +456,27 @@ Entity *Entity::Parse (bool onlypairs)
 		ent->MakeBrush();
 	}
 
-	// add all the brushes to the main list
-	for (b = ent->brushes.onext; b != &ent->brushes; b = b->onext)
-	{
-		b->next = g_brActiveBrushes.next;
-		g_brActiveBrushes.next->prev = b;
-		b->prev = &g_brActiveBrushes;
-		g_brActiveBrushes.next = b;
-	}
-
+	// lunaran - entities do not add their brushes to a list by default now, map::load/save/etc does it
+	// this is to keep loads/pastes/etc isolated until the parse is complete for exception guarantee
 	return ent;
+}
+
+
+void Entity::CheckOrigin()
+{
+	// if fixedsize, calculate a new origin based on the current brush position
+	if (eclass->IsFixedSize())
+	{
+		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
+		vec3_t testorg, org;
+		GetKeyValueVector("origin", testorg);
+		// but let's be sure for now
+		if (!VectorCompare(origin, testorg))
+		{
+			SetOriginFromBrush();
+			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
+		}
+	}
 }
 
 /*
@@ -417,6 +484,57 @@ Entity *Entity::Parse (bool onlypairs)
 Entity::Write
 ============
 */
+void Entity::Write(std::ostream &out, bool use_region)
+{
+	EPair	*ep;
+	Brush	*b;
+	int		count;
+
+	if (use_region)
+	{
+		// in region mode, save the camera position as playerstart
+		if (!strcmp(GetKeyValue("classname"), "info_player_start"))
+		{
+			out << "{\n";
+			out << "\"classname\" \"info_player_start\"\n";
+			out << "\"origin\" \"" << (int)g_qeglobals.d_camera.origin[0] << " " << 
+									(int)g_qeglobals.d_camera.origin[1] << " " << 
+									(int)g_qeglobals.d_camera.origin[2] << "\"\n";
+			out << "\"angle\" \"" << (int)g_qeglobals.d_camera.angles[YAW] << "\"\n";
+			out << "}\n";
+			return;
+		}
+
+		for (b = brushes.onext; b != &brushes; b = b->onext)
+			if (!g_map.IsBrushFiltered(b))
+				break;	// got one
+
+		if (b == &brushes)
+			return;	// nothing visible
+	}
+
+	CheckOrigin();
+
+	out << "{\n";
+	for (ep = epairs; ep; ep = ep->next)
+		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
+
+	if (!eclass->IsFixedSize())
+	{
+		count = 0;
+		for (b = brushes.onext; b != &brushes; b = b->onext)
+		{
+			if (!use_region || !g_map.IsBrushFiltered(b))
+			{
+				out << "// brush " << count << "\n";
+				count++;
+				b->Write(out);
+			}
+		}
+	}
+	out << "}\n";
+}
+/*
 void Entity::Write (FILE *f, bool use_region)
 {
 	EPair	*ep;
@@ -441,26 +559,14 @@ void Entity::Write (FILE *f, bool use_region)
 		}
 
 		for (b = brushes.onext; b != &brushes; b = b->onext)
-			if (!Map_IsBrushFiltered(b))
+			if (!g_map.IsBrushFiltered(b))
 				break;	// got one
 
 		if (b == &brushes)
 			return;	// nothing visible
 	}
 
-	// if fixedsize, calculate a new origin based on the current brush position
-	if (eclass->IsFixedSize())
-	{
-		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
-		vec3_t testorg, org;
-		GetKeyValueVector("origin", testorg);
-		// but let's be sure for now
-		if (!VectorCompare(origin, testorg))
-		{
-			SetOriginFromBrush();
-			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
-		}
-	}
+	CheckOrigin();
 
 	fprintf(f, "{\n");
 	for (ep = epairs; ep; ep = ep->next)
@@ -471,7 +577,7 @@ void Entity::Write (FILE *f, bool use_region)
 		count = 0;
 		for (b = brushes.onext; b != &brushes; b = b->onext)
 		{
-			if (!use_region || !Map_IsBrushFiltered (b))
+			if (!use_region || !g_map.IsBrushFiltered (b))
 			{
 				fprintf(f, "// brush %d\n", count);
 				count++;
@@ -481,7 +587,7 @@ void Entity::Write (FILE *f, bool use_region)
 	}
 	fprintf(f, "}\n");
 }
-
+*/
 // sikk---> Export Selection (Map/Prefab)
 
 /*
@@ -489,6 +595,45 @@ void Entity::Write (FILE *f, bool use_region)
 Entity::WriteSelected
 =================
 */
+void Entity::WriteSelected(std::ostream &out)
+{
+	Brush	*b;
+	EPair	*ep;
+	int		count;
+
+	// a .map with no worldspawn is broken, so always write worldspawn even if it's empty
+	if (eclass == EntClass::worldspawn)
+		b = brushes.onext;
+	else
+		for (b = brushes.onext; b != &brushes; b = b->onext)
+			if (Select_IsBrushSelected(b))
+				break;
+
+	if (b == &brushes)
+		return;		// no part of this entity selected, don't write it at all
+
+	out << "{\n";
+	for (ep = epairs; ep; ep = ep->next)
+		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
+
+	CheckOrigin();
+
+	if (!eclass->IsFixedSize())
+	{
+		count = 0;
+		for (b; b != &brushes; b = b->onext)
+		{
+			if (Select_IsBrushSelected(b))
+			{
+				out << "// brush " << count << "\n";
+				count++;
+				b->Write(out);
+			}
+		}
+	}
+	out << "}\n";
+}
+/*
 void Entity::WriteSelected (FILE *f)
 {
 	Brush	*b;
@@ -502,19 +647,7 @@ void Entity::WriteSelected (FILE *f)
 	if (b == &brushes)
 		return;		// nothing selected
 
-	// if fixedsize, calculate a new origin based on the current brush position
-	if (eclass->IsFixedSize())
-	{
-		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
-		vec3_t testorg, org;
-		GetKeyValueVector("origin", testorg);
-		// but let's be sure for now
-		if (!VectorCompare(origin, testorg))
-		{
-			SetOriginFromBrush();
-			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
-		}
-	}
+	CheckOrigin();
 
 	fprintf (f, "{\n");
 	for (ep = epairs; ep; ep = ep->next)
@@ -535,6 +668,7 @@ void Entity::WriteSelected (FILE *f)
 	}
 	fprintf(f, "}\n");
 }
+*/
 // <---sikk
 
 
@@ -651,7 +785,7 @@ Entity *Entity::Create (EntClass *ecIn)
 
 	// check to make sure the brushes are ok
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		if (b->owner != g_peWorldEntity)
+		if (b->owner != g_map.world)
 		{
 			Sys_Printf("WARNING: Entity NOT created, brushes not all from world.\n");
 			Sys_Beep();
@@ -676,10 +810,10 @@ Entity *Entity::Create (EntClass *ecIn)
 	e->SetKeyValue("classname", c->name);
 
 	// add the entity to the entity list
-	e->next = g_entEntities.next;
-	g_entEntities.next = e;
+	e->next = g_map.entities.next;
+	g_map.entities.next = e;
 	e->next->prev = e;
-	e->prev = &g_entEntities;
+	e->prev = &g_map.entities;
 
 	if (c->IsFixedSize())
 	{
@@ -775,10 +909,10 @@ Entity *Entity::Clone()
 	n->eclass = eclass;
 
 	// add the entity to the entity list
-	n->next = g_entEntities.next;
-	g_entEntities.next = n;
+	n->next = g_map.entities.next;
+	g_map.entities.next = n;
 	n->next->prev = n;
-	n->prev = &g_entEntities;
+	n->prev = &g_map.entities;
 
 	for (ep = epairs; ep; ep = ep->next)
 	{
@@ -801,9 +935,9 @@ Entity *Entity::Find (char *pszKey, char *pszValue)
 {
 	Entity *pe;
 	
-	pe = g_entEntities.next;
+	pe = g_map.entities.next;
 	
-	for ( ; pe != NULL && pe != &g_entEntities; pe = pe->next)
+	for ( ; pe != NULL && pe != &g_map.entities; pe = pe->next)
 		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
 			return pe;
 
@@ -819,9 +953,9 @@ Entity *Entity::Find(char *pszKey, int iValue)
 {
 	Entity *pe;
 	
-	pe = g_entEntities.next;
+	pe = g_map.entities.next;
 	
-	for ( ; pe != NULL && pe != &g_entEntities; pe = pe->next)
+	for ( ; pe != NULL && pe != &g_map.entities; pe = pe->next)
 		if (pe->GetKeyValueInt(pszKey) == iValue)
 			return pe;
 
@@ -839,9 +973,9 @@ void Entity::CleanCopiedList ()
 	Entity	*pe, *next;
 	EPair		*ep, *enext;
 
-	pe = g_entCopiedEntities.next;
+	pe = g_map.copiedEntities.next;
 
-	while (pe != NULL && pe != &g_entCopiedEntities)
+	while (pe != NULL && pe != &g_map.copiedEntities)
 	{
 		next = pe->next;
 		enext = NULL;
@@ -853,7 +987,8 @@ void Entity::CleanCopiedList ()
 		free (pe);
 		pe = next;
 	}
-	g_entCopiedEntities.next = g_entCopiedEntities.prev = &g_entCopiedEntities;
+	g_map.copiedEntities.CloseLinks();
+//	g_map.copiedEntities.next = g_map.copiedEntities.prev = &g_map.copiedEntities;
 }
 
 /*
@@ -870,10 +1005,10 @@ Entity *Entity::Copy ()
 	n->eclass = eclass;
 
 	// add the entity to the entity list
-	n->next = g_entCopiedEntities.next;
-	g_entCopiedEntities.next = n;
+	n->next = g_map.copiedEntities.next;
+	g_map.copiedEntities.next = n;
 	n->next->prev = n;
-	n->prev = &g_entCopiedEntities;
+	n->prev = &g_map.copiedEntities;
 
 	for (ep = epairs; ep; ep = ep->next)
 	{

@@ -3,453 +3,54 @@
 //============================== 
 
 #include "qe3.h"
+#include <fstream>
+#include <sstream>
+#include <string>
 
-
-BOOL		g_bModified;		// for quit confirmation (0 = clean, 1 = unsaved,
-								// 2 = autosaved, but not regular saved) 
-
-char		g_szCurrentMap[MAX_PATH];
-
-Brush		g_brActiveBrushes;		// brushes currently being displayed
-Brush		g_brFilteredBrushes;	// brushes that have been filtered or regioned
-
-Entity	g_entEntities;			// head/tail of doubly linked list
-Entity   *g_peWorldEntity;
-
-Brush		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
-Entity	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
-
+qeMap	g_map;
 
 // Cross map selection saving
 // this could fuck up if you have only part of a complex entity selected...
 Brush		g_brBetweenBrushes;
-Entity	g_entBetweenEntities;
+Entity		g_entBetweenEntities;
 
-int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
+Brush	   *g_pbrRegionSides[4];
 
-
-/*
-==================
-Map_SaveBetween
-==================
-*/
-void Map_SaveBetween ()
+qeMap::qeMap() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
 {
-	Brush		*b;
-	Entity	*e, *e2;
+	regionMins[0] = regionMins[1] = regionMins[2] = -4096;
+	regionMaxs[0] = regionMaxs[1] = regionMaxs[2] = 4096;
+	g_brSelectedBrushes.CloseLinks();
+	/*
+	entities.CloseLinks();
+	brActive.CloseLinks();
+	brRegioned.CloseLinks();
 
-	g_brBetweenBrushes.next = g_brSelectedBrushes.next;
-	g_brBetweenBrushes.prev = g_brSelectedBrushes.prev;
-	g_brBetweenBrushes.next->prev = &g_brBetweenBrushes;
-	g_brBetweenBrushes.prev->next = &g_brBetweenBrushes;
-
-	g_entBetweenEntities.next = g_entBetweenEntities.prev = &g_entBetweenEntities;
-	g_brSelectedBrushes.next = g_brSelectedBrushes.prev = &g_brSelectedBrushes;
-
-	for (b = g_brBetweenBrushes.next; b != &g_brBetweenBrushes; b = b->next)
-	{
-		e = b->owner;
-		if (e == g_peWorldEntity)
-			b->owner = NULL;
-		else
-		{
-			for (e2 = g_entBetweenEntities.next; e2 != &g_entBetweenEntities; e2 = e2->next)
-				if (e2 == e)
-					goto next;	// already got the entity
-
-			// move the entity over
-			e->prev->next = e->next;
-			e->next->prev = e->prev;
-			e->next = g_entBetweenEntities.next;
-			e->prev = &g_entBetweenEntities;
-			e->next->prev = e;
-			e->prev->next = e;
-		}
-next: ;
-	}
-}
-
-/*
-==================
-Map_RestoreBetween
-==================
-*/
-void Map_RestoreBetween ()
-{
-	Entity	*head, *tail;
-	Brush		*b;
-
-	if (!g_brBetweenBrushes.next)
-		return;
-
-	for (b = g_brBetweenBrushes.next; b != &g_brBetweenBrushes; b = b->next)
-	{
-		if (!b->owner)
-		{
-			b->owner = g_peWorldEntity;
-			b->onext = g_peWorldEntity->brushes.onext;
-			b->oprev = &g_peWorldEntity->brushes;
-			b->onext->oprev = b;
-			b->oprev->onext = b;
-		}
-	}
-
-	g_brSelectedBrushes.next = g_brBetweenBrushes.next;
-	g_brSelectedBrushes.prev = g_brBetweenBrushes.prev;
-	g_brSelectedBrushes.next->prev = &g_brSelectedBrushes;
-	g_brSelectedBrushes.prev->next = &g_brSelectedBrushes;
-
-	head = g_entBetweenEntities.next;
-	tail = g_entBetweenEntities.prev;
-
-	if (head != tail)
-	{
-		g_entEntities.prev->next = head;
-		head->prev = g_entEntities.prev;
-		tail->next = &g_entEntities;
-		g_entEntities.prev = tail;
-	}
-
-	g_brBetweenBrushes.next = NULL;
-	g_entBetweenEntities.next = NULL;
-}
-
-//============================================================================
-
-/*
-==================
-Map_BuildBrushData
-==================
-*/
-void Map_BuildBrushData ()
-{
-	Brush	*b, *next;
-	double time;
-
-	if (!g_brActiveBrushes.next || g_brActiveBrushes.next == &g_brActiveBrushes)
-		return;
-
-	Sys_BeginWait();	// this could take a while
-	time = Sys_DoubleTime();
-
-	for (b = g_brActiveBrushes.next; b != NULL && b != &g_brActiveBrushes; b = next)
-	{
-		next = b->next;
-		b->Build();
-		if (!b->brush_faces)
-		{
-			delete b;
-			Sys_Printf("MSG: Removed degenerate brush.\n");
-		}
-	}
-
-	time = Sys_DoubleTime() - time;
-	Sys_Printf("Brush data built in %f seconds\n", time);
-	Sys_EndWait();
-}
-
-/*
-==================
-Map_FindClass
-==================
-*/
-Entity *Map_FindClass (char *cname)
-{
-	Entity *ent;
-
-	for (ent = g_entEntities.next; ent != &g_entEntities; ent = ent->next)
-		if (!strcmp(ent->GetKeyValue("classname"), cname))
-			return ent;
-
-	return NULL;
-}
-
-/*
-================
-Map_Free
-================
-*/
-void Map_Free ()
-{
-	if (g_brSelectedBrushes.next && (g_brSelectedBrushes.next != &g_brSelectedBrushes))
-	    if (MessageBox(g_qeglobals.d_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDYES)
-			Map_SaveBetween();
-
-	Pointfile_Clear();
-	strcpy(g_szCurrentMap, "unnamed.map");
-	Sys_SetTitle(g_szCurrentMap);
-	g_qeglobals.d_nNumEntities = 0;
-
-	if (!g_brActiveBrushes.next)
-	{	// first map
-		g_brActiveBrushes.prev = g_brActiveBrushes.next = &g_brActiveBrushes;
-		g_brSelectedBrushes.prev = g_brSelectedBrushes.next = &g_brSelectedBrushes;
-		g_brFilteredBrushes.prev = g_brFilteredBrushes.next = &g_brFilteredBrushes;
-		g_entEntities.prev = g_entEntities.next = &g_entEntities;
-	}
-	else
-	{
-		while (g_brActiveBrushes.next != &g_brActiveBrushes)
-			delete g_brActiveBrushes.next;
-		while (g_brSelectedBrushes.next != &g_brSelectedBrushes)
-			delete g_brSelectedBrushes.next;
-		while (g_brFilteredBrushes.next != &g_brFilteredBrushes)
-			delete g_brFilteredBrushes.next;
-		while (g_entEntities.next != &g_entEntities)
-			delete g_entEntities.next;
-	}
-
-	g_peWorldEntity = NULL;
-
-	// dump the wads after we dump the geometry, because flush calls MapRebuild 
-	// which will generate a bunch of notextures that just get thrown away
-	Textures::Flush();
-	Winding::Clear();
-}
-
-/*
-================
-Map_LoadFile
-================
-*/
-void Map_LoadFile (char *filename)
-{
-    char	   *buf;
-	char		temp[1024];
-	char	   *tempwad, wadkey[1024];
-	Entity   *ent;
-	bool		bSnapCheck = false;
-
-	Sys_BeginWait();
-
-// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-	if (!g_qeglobals.d_savedinfo.bNoClamp)
-	{
-		g_qeglobals.d_savedinfo.bNoClamp = true;
-		bSnapCheck = true;
-	}
-// <---sikk
-
-	InspWnd_SetMode(W_CONSOLE);
-
-	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: Map_LoadFile: %s\n", temp );
-
-	Map_Free();
-
-	g_qeglobals.d_nParsedBrushes = 0;
-	strcpy(g_szCurrentMap, filename);
-    LoadFile(filename, (void **)&buf);
-
-	StartTokenParsing(buf);
- 
-	g_qeglobals.d_nNumEntities = 0;
-
-	while (1)
-	{
-		ent = Entity::Parse(false);
-		if (!ent)
-			break;
-		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
-		{
-			if (g_peWorldEntity)
-				Sys_Printf("WARNING: Multiple worldspawn.\n");
-			g_peWorldEntity = ent;
-		}
-		else
-		{
-			// add the entity to the end of the entity list
-			ent->next = &g_entEntities;
-			ent->prev = g_entEntities.prev;
-			g_entEntities.prev->next = ent;
-			g_entEntities.prev = ent;
-			g_qeglobals.d_nNumEntities++;
-		}
-	}
-
-    free(buf);
-
-	if (!g_peWorldEntity)
-	{
-		Sys_Printf("WARNING: No worldspawn in map.\n");
-		Map_New();
-		return;
-	}
-
-	if (!*g_peWorldEntity->GetKeyValue("wad"))
-		Sys_Printf("WARNING: No \"wad\" key.\n");
-	else
-	{
-		strcpy(wadkey, g_peWorldEntity->GetKeyValue("wad"));
-
-		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-			Textures::LoadWad(tempwad);
-	}
-
-    Sys_Printf("--- LoadMapFile ---\n");
-    Sys_Printf("%s\n", temp );
-    Sys_Printf("%5i brushes\n", g_qeglobals.d_nParsedBrushes);
-    Sys_Printf("%5i entities\n", g_qeglobals.d_nNumEntities);
-
-	Map_RestoreBetween();
-
-	Sys_Printf("CMD: Map_BuildBrushData\n");
-    Map_BuildBrushData();
-
-	// move the view to a start position
-	ent = Map_FindClass("info_player_start");
-	if (!ent)
-		ent = Map_FindClass("info_player_deathmatch");
-
-	g_qeglobals.d_camera.angles[PITCH] = 0;
-
-	if (ent)
-	{
-		ent->GetKeyValueVector("origin", g_qeglobals.d_camera.origin);
-		ent->GetKeyValueVector("origin", g_qeglobals.d_xyz[0].origin);
-		g_qeglobals.d_camera.angles[YAW] = ent->GetKeyValueFloat("angle");
-	}
-	else
-	{
-		g_qeglobals.d_camera.angles[YAW] = 0;
-		VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
-		VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
-	}
-
-	Sys_UpdateWindows(W_ALL);
-
-	Map_RegionOff();
-
-	g_bModified = false;
-	Sys_SetTitle(temp);
-
-	//Texture_ShowInuse();
-	Textures::FlushUnused();
-
-	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-		g_qeglobals.d_savedinfo.bNoClamp = false;
-
-	Sys_EndWait();
+	copiedBrushes.CloseLinks();
+	copiedEntities.CloseLinks();
+	*/
 }
 
 /*
 ===========
-Map_SaveFile
+qeMap::New
 ===========
 */
-void Map_SaveFile (char *filename, bool use_region)
-{
-	Entity   *e, *next;
-	FILE	   *f;
-	char        temp[1024];
-	int			count;
-
-	QE_ConvertDOSToUnixName(temp, filename);
-
-	if (!use_region)
-	{
-		char backup[1024];
-
-		// rename current to .bak
-		strcpy(backup, filename);
-		StripExtension(backup);
-		strcat(backup, ".bak");
-		_unlink(backup);
-		rename(filename, backup);
-	}
-
-	Sys_Printf("CMD: Map_SaveFile: %s\n", filename);
-
-	f = fopen(filename, "w");
-	if (!f)
-	{
-		Sys_Printf("ERROR: Could not open %s\n", filename);
-		return;
-	}
-
-	if (use_region)
-		Map_AddRegionBrushes();
-
-	// write world entity first
-	g_peWorldEntity->Write(f, use_region);
-
-	// then write all other ents
-	count = 1;
-	for (e = g_entEntities.next; e != &g_entEntities; e = next)
-	{
-		fprintf(f, "// entity %d\n", count);
-		count++;
-		next = e->next;
-		if (e->brushes.onext == &e->brushes)
-		{
-			delete e;	// no brushes left, so remove it
-
-			// lunaran - for the love of god why would it happen in the first place
-			assert(e->brushes.onext != &e->brushes);
-		}
-		else
-			e->Write(f, use_region);
-	}
-
-	fclose(f);
-
-	if (use_region)
-		Map_RemoveRegionBrushes();
-
-	g_bModified = false;
-
-	if (!strstr(temp, "autosave"))
-		Sys_SetTitle(temp);
-
-	if (!use_region)
-	{
-		MessageBeep(MB_ICONEXCLAMATION);
-		/*
-		time_t	timer;
-		FILE   *f;
-		char	logname[1024];
-
-		strcpy(logname, filename);
-		StripExtension(logname);
-		strcat(logname, ".log");
-
-		time(&timer);
-//		f = fopen("c:/tstamps.log", "a");
-		f = fopen(logname, "a");
-		if (f)
-		{
-			fprintf(f, "%4i : %35s : %s", g_qeglobals.d_nWorkCount, filename, ctime(&timer));
-			fclose(f);
-			g_qeglobals.d_nWorkCount = 0;
-		}
-		fclose(f);
-		*/
-	}
-
-	g_bMBCheck = false;	// sikk - Reset this to false
-	g_nBrushNumCheck = -1;	// sikk - Reset this to -1
-
-	Sys_Printf("MSG: Saved.\n");
-	Sys_Status("Saved.", 0);
-}
-
-/*
-===========
-Map_New
-===========
-*/
-void Map_New ()
+void qeMap::New()
 {
 	char buf[1024];
+	qeBuffer between(0);
 
-	Sys_Printf("CMD: Map_New\n");
-	Map_Free();
+	Sys_Printf("CMD: Map::New\n");
 
-	g_peWorldEntity = new Entity();
-	g_peWorldEntity->SetKeyValue("classname", "worldspawn");
+	SaveBetween(between);
+	Free();
 
-// sikk---> Wad Loading
-	//	SetKeyValue(g_peWorldEntity, "wad", g_szWadString);
+	world = new Entity();
+	world->SetKeyValue("classname", "worldspawn");
+	world->CloseLinks();
+
+	// sikk---> Wad Loading
 	strcpy(buf, g_qeglobals.d_entityProject->GetKeyValue("defaultwads"));
 	if (strlen(buf))
 	{
@@ -464,465 +65,307 @@ void Map_New ()
 			strcat(tempwads, texpath);
 			strcat(tempwads, temp);
 		}
-		g_peWorldEntity->SetKeyValue("wad", tempwads);
+		world->SetKeyValue("wad", tempwads);
 	}
-// <---sikk
+	// <---sikk
 
-	g_peWorldEntity->eclass = EntClass::ForName("worldspawn", true, true);
-	
+	world->eclass = EntClass::ForName("worldspawn", true, true);
+
 	g_qeglobals.d_camera.angles[YAW] = 0;
 	VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
 	g_qeglobals.d_camera.origin[2] = 48;
 	VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
 
-	Map_RestoreBetween();
+	LoadBetween(between);
+	BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
 
 	Sys_UpdateWindows(W_ALL);
-	g_bModified = false;
+	modified = false;
 }
 
-
 /*
-===========================================================
+================
+qeMap::Free
 
-  REGION
-
-===========================================================
+trashes all map data, but does not restore a workable blank state (use New() for that)
+================
 */
-
-bool		g_bRegionActive;
-vec3_t		g_v3RegionMins = {-4096, -4096, -4096};
-vec3_t		g_v3RegionMaxs = {4096, 4096, 4096};
-Brush	   *g_pbrRegionSides[4];
-
-/*
-===========
-Map_AddRegionBrushes
-
-a regioned map will have temp walls put up at the region boundary
-===========
-*/
-void Map_AddRegionBrushes ()
+void qeMap::Free()
 {
-	vec3_t		mins, maxs;
-	int			i;
-	texdef_t	texdef;
+	Pointfile_Clear();
+	strcpy(name, "unnamed.map");
+	Sys_SetTitle(name);
+	g_qeglobals.d_nNumEntities = 0;
 
-	if (!g_bRegionActive)
-		return;
+	if (brActive.next)
+		while (brActive.next != &brActive)
+			delete brActive.next;
+	else
+		brActive.CloseLinks();
 
-	memset(&texdef, 0, sizeof(texdef));
-	strcpy(texdef.name, "REGION");
+	if (brRegioned.next)
+		while (brRegioned.next != &brRegioned)
+			delete brRegioned.next;
+	else
+		brRegioned.CloseLinks();
 
-	mins[0] = g_v3RegionMins[0] - 16;
-	maxs[0] = g_v3RegionMins[0] + 1;
-	mins[1] = g_v3RegionMins[1] - 16;
-	maxs[1] = g_v3RegionMaxs[1] + 16;
-	mins[2] = -2048;
-	maxs[2] = 2048;
-	g_pbrRegionSides[0] = Brush::Create(mins, maxs, &texdef);
+	if (entities.next)
+		while (entities.next != &entities)
+			delete entities.next;
+	else
+		entities.CloseLinks();
 
-	mins[0] = g_v3RegionMaxs[0] - 1;
-	maxs[0] = g_v3RegionMaxs[0] + 16;
-	g_pbrRegionSides[1] = Brush::Create(mins, maxs, &texdef);
+	if (g_brSelectedBrushes.next)
+		while (g_brSelectedBrushes.next != &g_brSelectedBrushes)
+			delete g_brSelectedBrushes.next;
+	else
+		g_brSelectedBrushes.CloseLinks();
 
-	mins[0] = g_v3RegionMins[0] - 16;
-	maxs[0] = g_v3RegionMaxs[0] + 16;
-	mins[1] = g_v3RegionMins[1] - 16;
-	maxs[1] = g_v3RegionMins[1] + 1;
-	g_pbrRegionSides[2] = Brush::Create(mins, maxs, &texdef);
+	if (world)
+		delete world;
+	world = nullptr;
 
-	mins[1] = g_v3RegionMaxs[1] - 1;
-	maxs[1] = g_v3RegionMaxs[1] + 16;
-	g_pbrRegionSides[3] = Brush::Create(mins, maxs, &texdef);
-
-	for (i = 0; i < 4; i++)
-	{
-		g_pbrRegionSides[i]->AddToList(&g_brSelectedBrushes);
-		g_peWorldEntity->LinkBrush(g_pbrRegionSides[i]);
-		g_pbrRegionSides[i]->Build();
-	}
+	// dump the wads after we dump the geometry, because flush calls MapRebuild 
+	// which will generate a bunch of notextures that just get thrown away
+	Textures::Flush();
+	Winding::Clear();
 }
 
 /*
 ==================
-Map_RemoveRegionBrushes
+qeMap::BuildBrushData
 ==================
 */
-void Map_RemoveRegionBrushes ()
-{
-	int	i;
-
-	if (!g_bRegionActive)
-		return;
-	for (i = 0; i < 4; i++)
-		delete g_pbrRegionSides[i];
-}
-
-/*
-==================
-Map_IsBrushFiltered
-==================
-*/
-bool Map_IsBrushFiltered (Brush *b)
-{
-	int	i;
-
-	for (i = 0; i < 3; i++)
-	{
-		if (b->mins[i] > g_v3RegionMaxs[i])
-			return true;
-		if (b->maxs[i] < g_v3RegionMins[i])
-			return true;
-	}
-	return false;
-}
-
-/*
-===========
-Map_RegionOff
-
-Other filtering options may still be on
-===========
-*/
-void Map_RegionOff ()
-{
-	int			i;
-	Brush	   *b, *next;
-
-	g_bRegionActive = false;
-	for (i = 0; i < 3; i++)
-	{
-		g_v3RegionMaxs[i] =  g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[i] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	}
-	
-	for (b = g_brFilteredBrushes.next; b != &g_brFilteredBrushes; b = next)
-	{
-		next = b->next;
-		if (Map_IsBrushFiltered(b))
-			continue;		// still filtered
-		b->RemoveFromList();
-		b->AddToList(&g_brActiveBrushes);
-	}
-
-	Sys_UpdateWindows(W_ALL);
-}
-
-/*
-==================
-Map_ApplyRegion
-==================
-*/
-void Map_ApplyRegion ()
+void qeMap::BuildBrushData(Brush &blist)
 {
 	Brush	*b, *next;
 
-	g_bRegionActive = true;
-	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
+	if (!blist.next || blist.next == &blist)
+		return;
+
+	for (b = blist.next; b != NULL && b != &blist; b = next)
 	{
 		next = b->next;
-		if (!Map_IsBrushFiltered(b))
-			continue;		// still filtered
-		b->RemoveFromList();
-		b->AddToList(&g_brFilteredBrushes);
+		b->Build();
+		if (!b->brush_faces)
+		{
+			delete b;
+			Sys_Printf("MSG: Removed degenerate brush.\n");
+		}
 	}
-
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
-========================
-Map_RegionSelectedBrushes
-========================
+==================
+qeMap::BuildBrushData
+==================
 */
-void Map_RegionSelectedBrushes ()
+void qeMap::BuildBrushData()
 {
-	Map_RegionOff();
+	double time;
 
-	if (!Select_HasBrushes())
-		return;
+	Sys_Printf("CMD: Map::BuildBrushData\n");
 
-	g_bRegionActive = true;
-	Select_GetBounds(g_v3RegionMins, g_v3RegionMaxs);
+	Sys_BeginWait();	// this could take a while
+	time = Sys_DoubleTime();
 
-	// move the entire active_brushes list to filtered_brushes
-	g_brFilteredBrushes.next = g_brActiveBrushes.next;
-	g_brFilteredBrushes.prev = g_brActiveBrushes.prev;
-	g_brFilteredBrushes.next->prev = &g_brFilteredBrushes;
-	g_brFilteredBrushes.prev->next = &g_brFilteredBrushes;
+	BuildBrushData(brActive);
+	BuildBrushData(g_brSelectedBrushes);
+	BuildBrushData(brRegioned);
 
-	// move the entire g_brSelectedBrushes list to g_brActiveBrushes
-	g_brActiveBrushes.next = g_brSelectedBrushes.next;
-	g_brActiveBrushes.prev = g_brSelectedBrushes.prev;
-	g_brActiveBrushes.next->prev = &g_brActiveBrushes;
-	g_brActiveBrushes.prev->next = &g_brActiveBrushes;
-
-	// clear g_brSelectedBrushes
-	g_brSelectedBrushes.next = g_brSelectedBrushes.prev = &g_brSelectedBrushes;
-
-	Sys_UpdateWindows(W_ALL);
+	time = Sys_DoubleTime() - time;
+	if (time)
+		Sys_Printf("Brush data built in %f seconds\n", time);
+	Sys_EndWait();
 }
 
-/*
-===========
-Map_RegionXY
-===========
-*/
-void Map_RegionXY ()
-{
-	Map_RegionOff();
+//================================================================
 
-	float w, h;
-
-	w = 0.5 * g_qeglobals.d_xyz[0].width / g_qeglobals.d_xyz[0].scale;
-	h = 0.5 * g_qeglobals.d_xyz[0].height / g_qeglobals.d_xyz[0].scale;
-
-// sikk---> Proper Regioning for XZ & YZ Views
-
-	if (g_qeglobals.d_xyz[0].dViewType == XY)
-	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
-		g_v3RegionMins[1] = g_qeglobals.d_xyz[0].origin[1] - h;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + h;
-		g_v3RegionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		g_v3RegionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	}
-	if (g_qeglobals.d_xyz[0].dViewType == XZ)
-	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
-		g_v3RegionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		g_v3RegionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
-	}
-	if (g_qeglobals.d_xyz[0].dViewType == YZ)
-	{
-		g_v3RegionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-		g_v3RegionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[1] = g_qeglobals.d_xyz[0].origin[1] - w;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + w;
-		g_v3RegionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
-	}
-// <---sikk
-	Map_ApplyRegion();
-}
-
-/*
-===========
-Map_RegionXZ
-===========
-*/
-void Map_RegionXZ ()
-{
-	Map_RegionOff();
-	g_v3RegionMins[0] = g_qeglobals.d_xyz[2].origin[0] - 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
-	g_v3RegionMaxs[0] = g_qeglobals.d_xyz[2].origin[0] + 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
-	g_v3RegionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	g_v3RegionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	g_v3RegionMins[2] = g_qeglobals.d_xyz[2].origin[2] - 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
-	g_v3RegionMaxs[2] = g_qeglobals.d_xyz[2].origin[2] + 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
-	Map_ApplyRegion();
-}
-
-/*
-===========
-Map_RegionYZ
-===========
-*/
-void Map_RegionYZ ()
-{
-	Map_RegionOff();
-	g_v3RegionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	g_v3RegionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	g_v3RegionMins[1] = g_qeglobals.d_xyz[1].origin[1] - 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
-	g_v3RegionMaxs[1] = g_qeglobals.d_xyz[1].origin[1] + 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
-	g_v3RegionMins[2] = g_qeglobals.d_xyz[1].origin[2] - 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
-	g_v3RegionMaxs[2] = g_qeglobals.d_xyz[1].origin[2] + 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
-	Map_ApplyRegion();
-}
-
-/*
-===========
-Map_RegionTallBrush
-===========
-*/
-void Map_RegionTallBrush ()
-{
-	Brush	*b;
-
-	if (!QE_SingleBrush())
-		return;
-
-	b = g_brSelectedBrushes.next;
-
-	Map_RegionOff();
-
-	VectorCopy(b->mins, g_v3RegionMins);
-	VectorCopy(b->maxs, g_v3RegionMaxs);
-	g_v3RegionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
-	g_v3RegionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-
-	Select_Delete();
-	Map_ApplyRegion();
-}
-
-/*
-===========
-Map_RegionBrush
-===========
-*/
-void Map_RegionBrush ()
-{
-	Brush	*b;
-
-	if (!QE_SingleBrush())
-		return;
-
-	b = g_brSelectedBrushes.next;
-
-	Map_RegionOff();
-
-	VectorCopy(b->mins, g_v3RegionMins);
-	VectorCopy(b->maxs, g_v3RegionMaxs);
-
-	Select_Delete();
-	Map_ApplyRegion();
-}
-
-//=====================================================================
-
-// sikk---> Import/Export Selection (Map/Prefab)
 /*
 ================
-Map_ImportFile
+qeMap::ParseBufferReplace
+
+parse all entities and brushes from the text buffer, assuming the scene is not empty
 ================
 */
-void Map_ImportFile (char *filename, bool bCheck)
+bool qeMap::ParseBufferMerge(const char *data)
 {
-	int			i, nCount = 0;
-	char	   *buf;
-	char		temp[1024];
-	char	   *tempwad, wadkey[1024];
-	Brush	   *b = NULL, *bNext;
-	Brush    *brArray[MAX_MAP_BRUSHES];
-	Entity   *ent;
-	bool		bSnapCheck = false;	// sikk
+	Entity elist;
+	Brush blist;
+	elist.CloseLinks();
+	blist.CloseLinks();
+
+	try
+	{
+		Read(data, blist, elist);
+		for (Entity *ent = elist.next; ent != &elist; ent = ent->next)
+		{
+			// world brushes need to be merged into the existing worldspawn
+			if (ent->eclass == EntClass::worldspawn)
+			{
+				ent->RemoveFromList();
+				Brush *b, *next;
+				for (b = ent->brushes.onext; b != &ent->brushes; b = next)
+				{
+					next = b->onext;
+					Entity::UnlinkBrush(b);
+					world->LinkBrush(b);
+				}
+				delete ent;
+				break;
+			}
+		}
+	}
+	catch (std::exception &ex)
+	{
+		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Exception", MB_OK | MB_ICONEXCLAMATION);
+		return false;
+	}
+
+	Select_DeselectAll(true);
+	Entity::MergeListIntoList(&elist, &entities);
+	Brush::MergeListIntoList(&blist, &g_brSelectedBrushes);	// merge to selection
+	return true;
+}
+
+/*
+================
+qeMap::ParseBufferReplace
+
+parse all entities and brushes from the text buffer, assuming the scene is empty
+================
+*/
+bool qeMap::ParseBufferReplace(const char *data)
+{
+	Entity elist;
+	Brush blist;
+
+	elist.CloseLinks();
+	blist.CloseLinks();
+
+	try
+	{
+		Read(data, blist, elist);
+		for (Entity *ent = elist.next; ent != &elist; ent = ent->next)
+		{
+			if (ent->eclass == EntClass::worldspawn)
+			{
+				ent->RemoveFromList();
+				world = ent;
+				break;
+			}
+		}
+	}
+	catch (std::exception &ex)
+	{
+		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Exception", MB_OK | MB_ICONEXCLAMATION);
+		return false;
+	}
+
+	// now merge the fully loaded data into the scene
+	Entity::MergeListIntoList(&elist, &entities);
+	Brush::MergeListIntoList(&blist, &brActive);
+	return true;
+}
+
+/*
+================
+qeMap::LoadFromFile
+
+replace all current map data with the contents of a file
+================
+*/
+void qeMap::LoadFromFile(const char *filename)
+{
+	char	temp[1024];
+	char	*tempwad, wadkey[1024];
+	Entity	*ent;
+	bool	bSnapCheck = false;
+	qeBuffer between(0);
 
 	Sys_BeginWait();
 
-// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
+	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
 	if (!g_qeglobals.d_savedinfo.bNoClamp)
 	{
 		g_qeglobals.d_savedinfo.bNoClamp = true;
 		bSnapCheck = true;
 	}
-// <---sikk
-
-	Select_DeselectAll(true);
-
-	Undo_Start("Import File");	// sikk - Undo/Redo
+	// <---sikk
 
 	InspWnd_SetMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("CMD: Map_ImportFile: %s\n", temp);
+	Sys_Printf("CMD: Map::LoadFromFile: %s\n", temp);
+
+	SaveBetween(between);
+	Free();
 
 	g_qeglobals.d_nParsedBrushes = 0;
 
-    LoadFile(filename, (void **)&buf);
+	qeBuffer buf;
+	IO_LoadFile(filename, buf);
 
-	StartTokenParsing(buf);
- 
-	g_qeglobals.d_nNumEntities = 0;
-
-	while (1)
+	if (ParseBufferReplace((char*)*buf))
 	{
-		ent = Entity::Parse(false);
-		if (!ent)
-			break;
-		
-		//end entity for undo
-		Undo_EndEntity(ent);	// sikk - Undo/Redo
-		//end brushes for undo
-		for(b = ent->brushes.onext; b && b != &ent->brushes; b = b->onext)
-			Undo_EndBrush(b);	// sikk - Undo/Redo
+		strcpy(name, filename);
 
-		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
+		if (!world)
 		{
-			// world brushes need to be added to the current world entity
-			b = ent->brushes.onext;
-			while (b && b != &ent->brushes)
-			{
-				bNext = b->onext;
-				b->RemoveFromList();
-				b->AddToList(&g_brActiveBrushes);
-				Entity::UnlinkBrush(b);
-				g_peWorldEntity->LinkBrush(b);
-				b->Build();
-				brArray[nCount] = b;
-				nCount++;
-				b = bNext;
-			}
+			Sys_Printf("WARNING: No worldspawn in map! Creating new empty worldspawn ...\n");
+
+			world = new Entity();
+			world->SetKeyValue("classname", "worldspawn");
+		}
+		world->CloseLinks();
+
+		if (!*world->GetKeyValue("wad"))
+			Sys_Printf("WARNING: No \"wad\" key.\n");
+		else
+		{
+			strcpy(wadkey, world->GetKeyValue("wad"));
+
+			for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
+				Textures::LoadWad(tempwad);
+		}
+
+		Sys_Printf("--- LoadMapFile ---\n");
+		Sys_Printf("%s\n", temp);
+		Sys_Printf("%5i brushes\n", g_qeglobals.d_nParsedBrushes);
+		Sys_Printf("%5i entities\n", g_qeglobals.d_nNumEntities);
+
+		LoadBetween(between);
+
+		BuildBrushData();
+
+		// move the view to a start position
+		ent = Map_FindClass("info_player_start");
+		if (!ent)
+			ent = Map_FindClass("info_player_deathmatch");
+
+		g_qeglobals.d_camera.angles[PITCH] = 0;
+
+		if (ent)
+		{
+			ent->GetKeyValueVector("origin", g_qeglobals.d_camera.origin);
+			ent->GetKeyValueVector("origin", g_qeglobals.d_xyz[0].origin);
+			g_qeglobals.d_camera.angles[YAW] = ent->GetKeyValueFloat("angle");
 		}
 		else
 		{
-			// add the entity to the end of the entity list
-			ent->next = &g_entEntities;
-			ent->prev = g_entEntities.prev;
-			g_entEntities.prev->next = ent;
-			g_entEntities.prev = ent;
-			g_qeglobals.d_nNumEntities++;
-
-			for (b = ent->brushes.onext; b != &ent->brushes; b = b->onext)
-			{
-				brArray[nCount] = b;
-				nCount++;
-			}
+			g_qeglobals.d_camera.angles[YAW] = 0;
+			VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
+			VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
 		}
+
+		//Texture_ShowInuse();
+		Textures::FlushUnused();
+		modified = false;
+		Sys_SetTitle(temp);
+		RegionOff();
 	}
-
-	for (i = 0; i < nCount; i++)
-	{
-		brArray[i]->Build();
-		Select_HandleBrush(brArray[i], true);
-	}
-
-    free(buf);
-
-	if (!*g_peWorldEntity->GetKeyValue("wad"))
-		Sys_Printf("WARNING: No \"wad\" key.\n");
-	else
-	{
-		strcpy(wadkey, g_peWorldEntity->GetKeyValue("wad"));
-		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-			Textures::LoadWad(tempwad);
-	}
-
-	if (bCheck)
-		Sys_Printf("--- ImportMapFile ---\n");
-	else
-		Sys_Printf("--- ImportPrefab ---\n");
-
-    Sys_Printf("%s\n", temp );
-
-    Sys_Printf("%5i brushes\n", g_qeglobals.d_nParsedBrushes);
-    Sys_Printf("%5i entities\n", g_qeglobals.d_nNumEntities);
-
-	Sys_Printf("CMD: Map_BuildBrushData\n");
-    Map_BuildBrushData();
-
-	Undo_End();	// sikk - Undo/Redo
 
 	Sys_UpdateWindows(W_ALL);
-
-	g_bModified = true;
-
-//	Texture_ShowInuse();
-//	Texture_FlushUnused();
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
 		g_qeglobals.d_savedinfo.bNoClamp = false;
@@ -932,42 +375,646 @@ void Map_ImportFile (char *filename, bool bCheck)
 
 /*
 ================
-Map_ExportFile
+qeMap::ImportFromFile
+
+merge the contents of a file into the current map data
 ================
 */
-void Map_ExportFile (char *filename, bool bCheck)
+void qeMap::ImportFromFile(const char *filename)
 {
-	Entity   *e, *next;
-	FILE	   *f;
-	char		temp[1024];
-	int			nCount;
+	char	temp[1024];
+	bool	bSnapCheck = false;
+
+	Sys_BeginWait();
+
+	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
+	if (!g_qeglobals.d_savedinfo.bNoClamp)
+	{
+		g_qeglobals.d_savedinfo.bNoClamp = true;
+		bSnapCheck = true;
+	}
+	// <---sikk
+
+	InspWnd_SetMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
-	f = fopen(filename, "w");
+	Sys_Printf("CMD: Map::ImportFromFile: %s\n", temp);
 
+	g_qeglobals.d_nParsedBrushes = 0;
+
+	qeBuffer buf;
+	IO_LoadFile(filename, buf);
+	if (ParseBufferMerge((char*)*buf))
+	{
+		g_bSelectionChanged = true;
+		modified = true;
+		BuildBrushData(g_brSelectedBrushes);
+	}
+
+	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
+		g_qeglobals.d_savedinfo.bNoClamp = false;
+
+	Sys_EndWait();
+	Sys_UpdateWindows(W_ALL);
+}
+
+/*
+================
+qeMap::SaveToFile
+
+write entire contents of the scene to a file
+================
+*/
+void qeMap::SaveToFile(const char *filename, bool use_region)
+{
+//	Entity   *e, *next;
+	std::ofstream	   *f;
+	char        temp[1024];
+//	int			count;
+
+	QE_ConvertDOSToUnixName(temp, filename);
+
+	if (!use_region)
+	{
+		char backup[MAX_PATH];
+
+		// rename current to .bak
+		strcpy(backup, filename);
+		StripExtension(backup);
+		strcat(backup, ".bak");
+		_unlink(backup);
+		rename(filename, backup);
+	}
+
+	Sys_Printf("CMD: Map::SaveToFile: %s\n", filename);
+
+	f = new std::ofstream(filename);
 	if (!f)
 	{
 		Sys_Printf("ERROR: Could not open %s\n", filename);
 		return;
 	}
 
+	if (use_region)
+		RegionAdd();
+
+	WriteAll(*f, use_region);
+
+	f->close();
+
+	if (use_region)
+		RegionRemove();
+
+	modified = false;
+
+	if (!strstr(temp, "autosave"))
+		Sys_SetTitle(temp);
+
+	g_bMBCheck = false;	// sikk - Reset this to false
+	g_nBrushNumCheck = -1;	// sikk - Reset this to -1
+
+	Sys_Printf("MSG: Saved.\n");
+	Sys_Status("Saved.", 0);
+}
+
+/*
+================
+qeMap::ExportToFile
+
+write selected brushes and entities to a file
+================
+*/
+void qeMap::ExportToFile(const char *filename)
+{
+//	Entity   *e, *next;
+	std::ofstream	   *f;
+//	int			count;
+
+	Sys_Printf("CMD: Map::ExportToFile: %s\n", filename);
+
+	f = new std::ofstream(filename);
+	if (!f)
+	{
+		Sys_Printf("ERROR: Could not open %s\n", filename);
+		return;
+	}
+	WriteSelected(*f);
+	f->close();
+
+	Sys_Printf("MSG: Selection exported.\n", filename);
+}
+
+/*
+================
+qeMap::Cut
+
+write selected brushes and entities to the windows clipboard and delete them
+================
+*/
+void qeMap::Cut()
+{
+	Copy();
+	Select_Delete();
+}
+
+/*
+================
+qeMap::Copy
+
+write selected brushes and entities to the windows clipboard
+================
+*/
+void qeMap::Copy()
+{
+	HGLOBAL hglbCopy;
+	int copylen;
+
+	if (!Select_HasBrushes())
+		return;
+	if (!OpenClipboard(g_qeglobals.d_hwndMain))
+		return;
+
+	std::stringstream sstr;
+	WriteSelected(sstr);
+
+	copylen = (int)sstr.tellp();
+	hglbCopy = GlobalAlloc(GMEM_MOVEABLE, copylen + 1);
+	if (hglbCopy)
+	{
+		char* cpbuf;
+		EmptyClipboard();
+		cpbuf = (char*)GlobalLock(hglbCopy);
+		// copy stringstream buffer straight to clipboard mem so we don't copy twice through an intermediate std::string
+		sstr.read(cpbuf, copylen);
+		cpbuf[copylen] = 0;
+		GlobalUnlock(hglbCopy);
+		SetClipboardData(CF_TEXT, hglbCopy);
+	}
+	CloseClipboard();
+}
+
+/*
+================
+qeMap::Paste
+
+merge the contents of the windows clipboard into the current map data
+================
+*/
+void qeMap::Paste()
+{
+	HGLOBAL hglb;
+	char*	cbdata;
+
+	if (!IsClipboardFormatAvailable(CF_TEXT)) return;
+	if (!OpenClipboard(g_qeglobals.d_hwndMain)) return;
+
+	Sys_BeginWait();
+	hglb = GetClipboardData(CF_TEXT);
+	if (hglb != nullptr)
+	{
+		cbdata = (char*)GlobalLock(hglb);
+		if (cbdata != nullptr && cbdata[0] == '{')	// no opening brace = definitely not map data, don't even complain
+		{
+			bool	bSnapCheck = false;
+
+			// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
+			if (!g_qeglobals.d_savedinfo.bNoClamp)
+			{
+				g_qeglobals.d_savedinfo.bNoClamp = true;
+				bSnapCheck = true;
+			}
+			// <---sikk
+
+			g_qeglobals.d_nParsedBrushes = 0;
+
+			if (ParseBufferMerge(cbdata))
+			{
+				g_bSelectionChanged = true;
+				modified = true;
+				BuildBrushData(g_brSelectedBrushes);
+			}
+
+			if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
+				g_qeglobals.d_savedinfo.bNoClamp = false;
+
+			Sys_UpdateWindows(W_ALL);
+		}
+		GlobalUnlock(hglb);
+	}
+	CloseClipboard();
+	Sys_EndWait();
+}
+
+//================================================================
+
+/*
+================
+qeMap::Read
+
+parse the map data and link all brushes and entities to the provided lists
+================
+*/
+void qeMap::Read(const char *data, Brush &blist, Entity &elist)
+{
+	int numEntities;
+	Entity* ent;
+	StartTokenParsing(data);
+	bool foundWorld = false;
+
+	numEntities = 0;
+
+	while (1)
+	{
+		ent = Entity::Parse(false);
+		if (!ent)
+			break;
+
+		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
+		{
+			if (foundWorld)
+				Sys_Printf("WARNING: Multiple worldspawn.\n");
+			foundWorld = true;
+
+			// add the worldspawn to the beginning of the entity list so it's easy to find
+			ent->prev = &elist;
+			ent->next = elist.next;
+			elist.next->prev = ent;
+			elist.next = ent;
+		}
+		else
+		{
+			// add the entity to the end of the entity list
+			ent->next = &elist;
+			ent->prev = elist.prev;
+			elist.prev->next = ent;
+			elist.prev = ent;
+			numEntities++;
+		}
+
+		// add all the brushes to the brush list
+		for (Brush* b = ent->brushes.onext; b != &ent->brushes; b = b->onext)
+		{
+			b->next = blist.next;
+			blist.next->prev = b;
+			b->prev = &blist;
+			blist.next = b;
+		}
+	}
+}
+
+/*
+================
+qeMap::WriteSelected
+
+map-print only selected brushes and entities to the buffer
+================
+*/
+void qeMap::WriteSelected(std::ostream &out)
+{
+	int count;
+	Entity *e, *next;
+
 	// write world entity first
-	g_peWorldEntity->WriteSelected(f);
+	world->WriteSelected(out);
 
 	// then write all other ents
-	nCount = 1;
-	for (e = g_entEntities.next; e != &g_entEntities; e = next)
+	count = 1;
+	for (e = entities.next; e != &entities; e = next)
 	{
-  		fprintf(f, "// entity %d\n", nCount);
-   		nCount++;
-		e->WriteSelected(f);
+		out << "// entity " << count << "\n";
+		count++;
 		next = e->next;
+		if (e->brushes.onext == &e->brushes)
+		{
+			assert(0);
+			delete e;	// no brushes left, so remove it
+		}
+		else
+			e->WriteSelected(out);
 	}
-	fclose(f);
-
-	if (bCheck)
-		Sys_Printf("MSG: Selection Exported to map file: \"%s\"\n", filename);
-	else
-		Sys_Printf("MSG: Selection Exported to prefab file: \"%s\"\n", filename);
 }
-// <---sikk
+
+/*
+================
+qeMap::WriteSelected
+
+map-print all brushes and entities to the buffer
+================
+*/
+void qeMap::WriteAll(std::ostream &out, bool use_region)
+{
+	int count;
+	Entity *e, *next;
+
+	// write world entity first
+	world->Write(out, use_region);
+
+	// then write all other ents
+	count = 1;
+	for (e = entities.next; e != &entities; e = next)
+	{
+		out << "// entity " << count << "\n";
+		count++;
+		next = e->next;
+		if (e->brushes.onext == &e->brushes)
+		{
+			assert(0);
+			delete e;	// no brushes left, so remove it
+		}
+		else
+			e->Write(out, use_region);
+	}
+}
+
+/*
+==================
+qeMap::SaveBetween
+==================
+*/
+void qeMap::SaveBetween(qeBuffer &buf)
+{
+	int copylen;
+
+	if (!Select_HasBrushes())
+		return;
+	if (MessageBox(g_qeglobals.d_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
+		return;
+
+	std::stringstream sstr;
+	WriteSelected(sstr);
+
+//	sstr.seekp(sstr.end);
+	copylen = (int)sstr.tellp();
+	buf.resize(copylen + 1);
+
+	char* cpbuf = (char*)*buf;
+	sstr.read(cpbuf, copylen);
+	cpbuf[copylen] = 0;
+}
+
+/*
+==================
+qeMap::LoadBetween
+==================
+*/
+void qeMap::LoadBetween(qeBuffer &buf)
+{
+	if (!buf.size())
+		return;		// nothing saved in it
+
+	if (ParseBufferMerge((char*)*buf))
+	{
+		//BuildBrushData(g_brSelectedBrushes);
+		g_bSelectionChanged = true;
+		modified = true;
+	}
+}
+
+//================================================================
+
+void qeMap::RegionOff()
+{
+	Brush	*b, *next;
+
+	regionActive = false;
+
+	for (int i = 0; i < 3; i++)
+	{
+		regionMaxs[i] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[i] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+	}
+
+	for (b = brRegioned.next; b != &brRegioned; b = next)
+	{
+		next = b->next;
+		if (IsBrushFiltered(b))
+			continue;		// still filtered
+		b->RemoveFromList();
+		b->AddToList(&brActive);
+	}
+
+	Sys_UpdateWindows(W_ALL);
+}
+
+void qeMap::RegionXY()
+{
+	RegionOff();
+
+	float w, h;
+
+	w = 0.5 * g_qeglobals.d_xyz[0].width / g_qeglobals.d_xyz[0].scale;
+	h = 0.5 * g_qeglobals.d_xyz[0].height / g_qeglobals.d_xyz[0].scale;
+
+	// sikk---> Proper Regioning for XZ & YZ Views
+
+	if (g_qeglobals.d_xyz[0].dViewType == XY)
+	{
+		regionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
+		regionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
+		regionMins[1] = g_qeglobals.d_xyz[0].origin[1] - h;
+		regionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + h;
+		regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+		regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	}
+	if (g_qeglobals.d_xyz[0].dViewType == XZ)
+	{
+		regionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
+		regionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
+		regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+		regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
+		regionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
+	}
+	if (g_qeglobals.d_xyz[0].dViewType == YZ)
+	{
+		regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+		regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+		regionMins[1] = g_qeglobals.d_xyz[0].origin[1] - w;
+		regionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + w;
+		regionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
+		regionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
+	}
+	// <---sikk
+	RegionApply();
+}
+
+void qeMap::RegionXZ()
+{
+	RegionOff();
+	regionMins[0] = g_qeglobals.d_xyz[2].origin[0] - 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
+	regionMaxs[0] = g_qeglobals.d_xyz[2].origin[0] + 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
+	regionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+	regionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	regionMins[2] = g_qeglobals.d_xyz[2].origin[2] - 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
+	regionMaxs[2] = g_qeglobals.d_xyz[2].origin[2] + 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
+	RegionApply();
+}
+
+void qeMap::RegionYZ()
+{
+	RegionOff();
+	regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+	regionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+	regionMins[1] = g_qeglobals.d_xyz[1].origin[1] - 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
+	regionMaxs[1] = g_qeglobals.d_xyz[1].origin[1] + 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
+	regionMins[2] = g_qeglobals.d_xyz[1].origin[2] - 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
+	regionMaxs[2] = g_qeglobals.d_xyz[1].origin[2] + 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
+	RegionApply();
+}
+
+void qeMap::RegionTallBrush()
+{
+	Brush	*b;
+
+	if (!QE_SingleBrush())
+		return;
+
+	b = g_brSelectedBrushes.next;
+
+	RegionOff();
+
+	VectorCopy(b->mins, regionMins);
+	VectorCopy(b->maxs, regionMaxs);
+	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
+	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
+
+	Select_Delete();
+	RegionApply();
+}
+
+void qeMap::RegionBrush()
+{
+	Brush	*b;
+
+	if (!QE_SingleBrush())
+		return;
+
+	b = g_brSelectedBrushes.next;
+
+	RegionOff();
+
+	VectorCopy(b->mins, regionMins);
+	VectorCopy(b->maxs, regionMaxs);
+
+	Select_Delete();
+	RegionApply();
+}
+
+void qeMap::RegionSelectedBrushes()
+{
+	RegionOff();
+
+	if (!Select_HasBrushes())
+		return;
+
+	regionActive = true;
+	Select_GetBounds(regionMins, regionMaxs);
+
+	// move the entire active_brushes list to filtered_brushes
+	Brush::MergeListIntoList(&brActive, &brRegioned);
+
+	// move the entire g_brSelectedBrushes list to brActive
+	Brush::MergeListIntoList(&g_brSelectedBrushes, &brActive);
+
+	Sys_UpdateWindows(W_ALL);
+}
+
+void qeMap::RegionApply()
+{
+	Brush	*b, *next;
+
+	regionActive = true;
+	for (b = brActive.next; b != &brActive; b = next)
+	{
+		next = b->next;
+		if (!IsBrushFiltered(b))
+			continue;		// still filtered
+		b->RemoveFromList();
+		b->AddToList(&brRegioned);
+	}
+
+	Sys_UpdateWindows(W_ALL);
+}
+
+void qeMap::RegionAdd()
+{
+	vec3_t		mins, maxs;
+	int			i;
+	texdef_t	texdef;
+
+	if (!regionActive)
+		return;
+
+	memset(&texdef, 0, sizeof(texdef));
+	strcpy(texdef.name, "REGION");
+
+	mins[0] = regionMins[0] - 16;
+	maxs[0] = regionMins[0] + 1;
+	mins[1] = regionMins[1] - 16;
+	maxs[1] = regionMaxs[1] + 16;
+	mins[2] = -2048;
+	maxs[2] = 2048;
+	g_pbrRegionSides[0] = Brush::Create(mins, maxs, &texdef);
+
+	mins[0] = regionMaxs[0] - 1;
+	maxs[0] = regionMaxs[0] + 16;
+	g_pbrRegionSides[1] = Brush::Create(mins, maxs, &texdef);
+
+	mins[0] = regionMins[0] - 16;
+	maxs[0] = regionMaxs[0] + 16;
+	mins[1] = regionMins[1] - 16;
+	maxs[1] = regionMins[1] + 1;
+	g_pbrRegionSides[2] = Brush::Create(mins, maxs, &texdef);
+
+	mins[1] = regionMaxs[1] - 1;
+	maxs[1] = regionMaxs[1] + 16;
+	g_pbrRegionSides[3] = Brush::Create(mins, maxs, &texdef);
+
+	for (i = 0; i < 4; i++)
+	{
+		g_pbrRegionSides[i]->AddToList(&g_brSelectedBrushes);
+		world->LinkBrush(g_pbrRegionSides[i]);
+		g_pbrRegionSides[i]->Build();
+	}
+}
+
+void qeMap::RegionRemove()
+{
+	if (!regionActive)
+		return;
+	for (int i = 0; i < 4; i++)
+		delete g_pbrRegionSides[i];
+}
+
+bool qeMap::IsBrushFiltered(Brush *b)
+{
+	if (regionActive == false)
+		return false;
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (b->mins[i] > regionMaxs[i])
+			return true;
+		if (b->maxs[i] < regionMins[i])
+			return true;
+	}
+	return false;
+}
+
+//================================================================
+
+/*
+==================
+Map_FindClass
+==================
+*/
+Entity *Map_FindClass (char *cname)
+{
+	Entity *ent;
+
+	for (ent = g_map.entities.next; ent != &g_map.entities; ent = ent->next)
+		if (!strcmp(ent->GetKeyValue("classname"), cname))
+			return ent;
+
+	return NULL;
+}

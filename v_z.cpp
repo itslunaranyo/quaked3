@@ -218,13 +218,13 @@ void ZView::DrawGrid ()
 	h = height / 2 / scale;
 
 	zb = origin[2] - h;
-	if (zb < g_v3RegionMins[2])
-		zb = g_v3RegionMins[2];
+	if (zb < g_map.regionMins[2])
+		zb = g_map.regionMins[2];
 	zb = nSize * floor(zb / nSize);
 
 	ze = origin[2] + h;
-	if (ze > g_v3RegionMaxs[2])
-		ze = g_v3RegionMaxs[2];
+	if (ze > g_map.regionMaxs[2])
+		ze = g_map.regionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
 
 	// draw major blocks
@@ -280,13 +280,13 @@ void ZView::DrawCoords ()
 	h = height / 2 / scale;
 
 	zb = origin[2] - h;
-	if (zb < g_v3RegionMins[2])
-		zb = g_v3RegionMins[2];
+	if (zb < g_map.regionMins[2])
+		zb = g_map.regionMins[2];
 	zb = nSize * floor(zb / nSize);
 
 	ze = origin[2] + h;
-	if (ze > g_v3RegionMaxs[2])
-		ze = g_v3RegionMaxs[2];
+	if (ze > g_map.regionMaxs[2])
+		ze = g_map.regionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
 
 	glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT]);
@@ -345,7 +345,7 @@ void ZView::Draw ()
 
 	int xCam = width / 3;
 
-	if (!g_brActiveBrushes.next)
+	if (!g_map.brActive.next)
 		return;	// not valid yet
 
 	if (timing)
@@ -405,7 +405,7 @@ void ZView::Draw ()
 	VectorCopy(origin, org_bottom);
 	org_bottom[2] = -4096;
 
-	for (brush = g_brActiveBrushes.next; brush != &g_brActiveBrushes; brush = brush->next)
+	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
 		if (brush->mins[0] >= origin[0] || 
 			brush->maxs[0] <= origin[0]	|| 

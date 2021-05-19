@@ -135,7 +135,7 @@ void LoadLBM (char *filename, byte **picture, byte **palette)
 	cmapbuffer = NULL;
 
 	// load the LBM
-	LoadFile(filename, (void **)&LBMbuffer);
+	IO_LoadFile(filename, (void **)&LBMbuffer);
 
 	// parse the LBM header
 	LBM_P = LBMbuffer;
@@ -325,7 +325,7 @@ void WriteLBMfile (char *filename, byte *data,
 		*lbmptr++ = 0;			// pad chunk to even offset
 
 	// write output file
-	SaveFile(filename, lbm, lbmptr - lbm);
+	IO_SaveFile(filename, lbm, lbmptr - lbm);
 	free(lbm);
 }
 
@@ -379,7 +379,7 @@ void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *heigh
 		*height = 0;
 
 	// load the file
-	len = LoadFile(filename, (void **)&raw);
+	len = IO_LoadFile(filename, (void **)&raw);
 	if (len == -1)
 		return;
 
@@ -503,7 +503,7 @@ void WritePCXfile (char *filename, byte *data, int width, int height, byte *pale
 		
 	// write output file 
 	length = pack - (byte *)pcx;
-	SaveFile(filename, pcx, length);
+	IO_SaveFile(filename, pcx, length);
 
 	free(pcx);
 } 

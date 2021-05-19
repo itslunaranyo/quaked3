@@ -10,7 +10,7 @@
 //	<-g_undolist---------g_lastundo> <---map data---> <-g_lastredo---------g_redolist->
 //
 //
-//	undo/redo on the g_peWorldEntity is special, only the epair changes
+//	undo/redo on the g_map.world is special, only the epair changes
 //	are remembered and the world entity never gets deleted.
 //	
 //	FIXME: maybe reset the Undo system at map load
@@ -78,7 +78,7 @@ void Undo_GeneralStart (char *operation)
 	undo->operation = operation;
 
 	// reset the undo IDs of all brushes using the new ID
-	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush = pBrush->next)
+	for (pBrush = g_map.brActive.next; pBrush != NULL && pBrush != &g_map.brActive; pBrush = pBrush->next)
 		if (pBrush->undoId == undo->id)
 			pBrush->undoId = 0;
 
@@ -87,7 +87,7 @@ void Undo_GeneralStart (char *operation)
 			pBrush->undoId = 0;
 
 	// reset the undo IDs of all entities using thew new ID
-	for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pEntity->next)
+	for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pEntity->next)
 		if (pEntity->undoId == undo->id)
 			pEntity->undoId = 0;
 
@@ -338,7 +338,7 @@ void Undo_EndEntity (Entity *entity)
 #endif
 		return;
 	}
-	if (entity == g_peWorldEntity)
+	if (entity == g_map.world)
 	{
 //		Sys_Printf("WARNING: Undo_AddEntity: Undo on world entity.\n");
 		// NOTE: we never delete the world entity when undoing an operation
@@ -437,7 +437,7 @@ void Undo_Undo ()
 	redo->operation = undo->operation;
 
 	// reset the redo IDs of all brushes using the new ID
-	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush = pBrush->next)
+	for (pBrush = g_map.brActive.next; pBrush != NULL && pBrush != &g_map.brActive; pBrush = pBrush->next)
 		if (pBrush->redoId == redo->id)
 			pBrush->redoId = 0;
 
@@ -446,7 +446,7 @@ void Undo_Undo ()
 			pBrush->redoId = 0;
 
 	// reset the redo IDs of all entities using thew new ID
-	for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pEntity->next)
+	for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pEntity->next)
 		if (pEntity->redoId == redo->id)
 			pEntity->redoId = 0;
 
@@ -454,7 +454,7 @@ void Undo_Undo ()
 	Select_DeselectAll(true);
 
 	// move "created" brushes to the redo
-	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush=pNextBrush)
+	for (pBrush = g_map.brActive.next; pBrush != NULL && pBrush != &g_map.brActive; pBrush=pNextBrush)
 	{
 		pNextBrush = pBrush->next;
 		if (pBrush->undoId == undo->id)
@@ -474,7 +474,7 @@ void Undo_Undo ()
 	}
 	
 	// move "created" entities to the redo
-	for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pNextEntity)
+	for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pNextEntity)
 	{
 		pNextEntity = pEntity->next;
 		if (pEntity->undoId == undo->id)
@@ -505,22 +505,22 @@ void Undo_Undo ()
 		g_undoMemorySize -= pEntity->MemorySize();
 		
 		// if this is the world entity
-		if (pEntity->entityId == g_peWorldEntity->entityId)
+		if (pEntity->entityId == g_map.world->entityId)
 		{
 			// free the epairs of the world entity
-			g_peWorldEntity->FreeEpairs();
+			g_map.world->FreeEpairs();
 			
 			// set back the original epairs
-			g_peWorldEntity->epairs = pEntity->epairs;
+			g_map.world->epairs = pEntity->epairs;
 			
-			// unhook the epairs and free the g_peWorldEntity clone that stored the epairs
+			// unhook the epairs and free the g_map.world clone that stored the epairs
 			pEntity->epairs = NULL;
 			delete pEntity;
 		}
 		else
 		{
 			pEntity->RemoveFromList();
-			pEntity->AddToList(&g_entEntities);
+			pEntity->AddToList(&g_map.entities);
 			pEntity->redoId = redo->id;
 		}
 	}
@@ -530,9 +530,9 @@ void Undo_Undo ()
 	{
 		g_undoMemorySize -= pBrush->MemorySize();
 		pBrush->RemoveFromList();
-		pBrush->AddToList(&g_brActiveBrushes);
+		pBrush->AddToList(&g_map.brActive);
 
-		for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pNextEntity)
+		for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pNextEntity)
 		{
 			if (pEntity->entityId == pBrush->ownerId)
 			{
@@ -543,8 +543,8 @@ void Undo_Undo ()
 
 		// if the brush is not linked then it should be linked into the world entity
 		// ++timo FIXME: maybe not, maybe we've lost this entity's owner!
-		if (pEntity == NULL || pEntity == &g_entEntities)
-			g_peWorldEntity->LinkBrush(pBrush);
+		if (pEntity == NULL || pEntity == &g_map.entities)
+			g_map.world->LinkBrush(pBrush);
 
 		// build the brush
 //		Brush_Build(pBrush);
@@ -603,7 +603,7 @@ void Undo_Redo()
 	Select_DeselectAll(true);
 
 	// move "created" brushes back to the last undo
-	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush = pNextBrush)
+	for (pBrush = g_map.brActive.next; pBrush != NULL && pBrush != &g_map.brActive; pBrush = pNextBrush)
 	{
 		pNextBrush = pBrush->next;
 		if (pBrush->redoId == redo->id)
@@ -618,7 +618,7 @@ void Undo_Redo()
 	}
 
 	// move "created" entities back to the last undo
-	for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pNextEntity)
+	for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pNextEntity)
 	{
 		pNextEntity = pEntity->next;
 		if (pEntity->redoId == redo->id)
@@ -649,21 +649,21 @@ void Undo_Redo()
 	for (pEntity = redo->entitylist.next; pEntity != NULL && pEntity != &redo->entitylist; pEntity = redo->entitylist.next)
 	{
 		// if this is the world entity
-		if (pEntity->entityId == g_peWorldEntity->entityId)
+		if (pEntity->entityId == g_map.world->entityId)
 		{
 			// free the epairs of the world entity
-			g_peWorldEntity->FreeEpairs();
+			g_map.world->FreeEpairs();
 
 			// set back the original epairs
-			g_peWorldEntity->epairs = pEntity->epairs;
+			g_map.world->epairs = pEntity->epairs;
 
-			// free the g_peWorldEntity clone that stored the epairs
+			// free the g_map.world clone that stored the epairs
 			delete pEntity;
 		}
 		else
 		{
 			pEntity->RemoveFromList();
-			pEntity->AddToList(&g_entEntities);
+			pEntity->AddToList(&g_map.entities);
 		}
 	}
 
@@ -671,8 +671,8 @@ void Undo_Redo()
 	for (pBrush = redo->brushlist.next; pBrush != NULL && pBrush != &redo->brushlist; pBrush = redo->brushlist.next)
 	{
 		pBrush->RemoveFromList();
-		pBrush->AddToList(&g_brActiveBrushes);
-		for (pEntity = g_entEntities.next; pEntity != NULL && pEntity != &g_entEntities; pEntity = pNextEntity)
+		pBrush->AddToList(&g_map.brActive);
+		for (pEntity = g_map.entities.next; pEntity != NULL && pEntity != &g_map.entities; pEntity = pNextEntity)
 		{
 			if (pEntity->entityId == pBrush->ownerId)
 			{
@@ -682,8 +682,8 @@ void Undo_Redo()
 		}
 
 		// if the brush is not linked then it should be linked into the world entity
-		if (pEntity == NULL || pEntity == &g_entEntities)
-			g_peWorldEntity->LinkBrush(pBrush);
+		if (pEntity == NULL || pEntity == &g_map.entities)
+			g_map.world->LinkBrush(pBrush);
 
 		// build the brush
 //		Brush_Build(pBrush);
