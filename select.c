@@ -24,7 +24,8 @@ bool	g_bSelectFlipOrder;
 ================
 Select_HandleChange
 
-lunaran: global selection-changed handling so ui updates aren't inconsistently scattered all over
+lunaran: handle all consequences of the selection changing in one place, so that
+ui updates are consistent, centralized, and not repeated unnecessarily
 ================
 */
 void Select_HandleChange()
@@ -49,7 +50,7 @@ void Select_HandleChange()
 	{
 		Sys_Status("", 3);
 	}
-	EntWnd_UpdateEntitySel();
+	EntWnd_UpdateUI();
 
 	Sys_UpdateWindows(W_ALL);
 	g_bSelectionChanged = false;
@@ -101,6 +102,38 @@ void Select_SelectBrush(brush_t* b)
 
 /*
 ================
+Select_SelectBrushSorted
+add a brush to the selected list, but adjacent to other brushes in the same entity
+================
+*/
+void Select_SelectBrushSorted(brush_t* b)
+{
+	if (b->next && b->prev)
+		Brush_RemoveFromList(b);
+
+	// world brushes, point entities, and brush ents with only one brush go to the end 
+	// of the list, so we don't keep looping over them looking for buddies
+	if (b->owner == g_peWorldEntity || b->owner->eclass->fixedsize || b->onext == b)
+	{
+		Brush_AddToList(b, g_brSelectedBrushes.prev);
+		return;
+	}
+
+	brush_t* bCur;
+
+	for (bCur = g_brSelectedBrushes.next; bCur != &g_brSelectedBrushes; bCur = bCur->next)
+	{
+		if (bCur->owner == b->owner)
+			break;
+	}
+
+	Brush_AddToList(b, bCur);
+
+	g_bSelectionChanged = true;
+}
+
+/*
+================
 Select_HandleBrush
 ================
 */
@@ -115,6 +148,7 @@ void Select_HandleBrush (brush_t *brush, bool bComplete)
 		g_qeglobals.d_pbrSelectOrder[g_qeglobals.d_nSelectCount] = brush;
 	g_qeglobals.d_nSelectCount++;
 
+	// we have hit an unselected brush
 	e = brush->owner;
 	if (e)
 	{
@@ -122,8 +156,17 @@ void Select_HandleBrush (brush_t *brush, bool bComplete)
 		if (e != g_peWorldEntity && bComplete == true)
 		{
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-				if (b->owner == e)
-					goto singleselect;
+			{
+				if (b->owner != e) continue;
+
+				// current entity is partially selected, select just this brush
+				//Select_SelectBrush(brush);
+				Brush_RemoveFromList(brush);
+				Brush_AddToList(brush, b);	// add next to its partners to minimize entity fragmentation in the list
+				g_bSelectionChanged = true;
+				return;
+			}
+			// current entity is not selected at all, select the whole thing
 			for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
 			{
 				Select_SelectBrush(b);
@@ -131,12 +174,10 @@ void Select_HandleBrush (brush_t *brush, bool bComplete)
 		}
 		else
 		{
-singleselect:
+			// select just this brush
 			Select_SelectBrush(brush);
 		}
 	}
-
-	g_bSelectionChanged = true;
 }
 
 /*
@@ -584,7 +625,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 			if (!strcmp(ValueForKey(b->owner, szKey), szValue))
 			{
-				Select_SelectBrush(b);
+				Select_SelectBrushSorted(b);
 			}
 		}
 	}
@@ -596,7 +637,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 			if (strlen(ValueForKey(b->owner, szKey)))
 			{
-				Select_SelectBrush(b);
+				Select_SelectBrushSorted(b);
 			}
 		}
 	}
@@ -611,7 +652,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 			{
 				if (!strcmp(ep->value, szValue))
 				{
-					Select_SelectBrush(b);
+					Select_SelectBrushSorted(b);
 					bFound = true;	// this is so an entity with two different keys 
 				}					// with identical values are not selected twice
 			}
@@ -720,10 +761,9 @@ Select_AllType
 
 		if (!strcmp(b->owner->eclass->name, selected->owner->eclass->name))
 		{
-			Select_SelectBrush(b);
+			Select_SelectBrushSorted(b);
 		}
 	}
-	Sys_UpdateWindows(W_ALL);
 }
 // <---sikk
 
@@ -777,20 +817,8 @@ void Select_CompleteTall()
 		if (FilterBrush(b))
 			continue;
 
-		Select_SelectBrush(b);
-		/*
-		// old stuff
-		for (i = 0; i < 2; i++)
-		if (b->maxs[i] > maxs[i] || b->mins[i] < mins[i])
-		break;
-		if (i == 2)
-		{
-		Brush_RemoveFromList(b);
-		Brush_AddToList(b, &g_brSelectedBrushes);
-		}
-		*/
+		Select_SelectBrushSorted(b);
 	}
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -843,20 +871,8 @@ void Select_PartialTall()
 		if (FilterBrush(b))
 			continue;
 
-		Select_SelectBrush(b);
-		/*
-		// old stuff
-		for (i = 0; i < 2; i++)
-		if (b->mins[i] > maxs[i] || b->maxs[i] < mins[i])
-		break;
-		if (i == 2)
-		{
-		Brush_RemoveFromList(b);
-		Brush_AddToList(b, &g_brSelectedBrushes);
-		}
-		*/
+		Select_SelectBrushSorted(b);
 	}
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -886,10 +902,9 @@ void Select_Touching()
 				break;
 		if (i == 3)
 		{
-			Select_SelectBrush(b);
+			Select_SelectBrushSorted(b);
 		}
 	}
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -920,10 +935,9 @@ void Select_Inside()
 				break;
 		if (i == 3)
 		{
-			Select_SelectBrush(b);
+			Select_SelectBrushSorted(b);
 		}
 	}
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -959,7 +973,6 @@ void Select_NextBrushInGroup()
 				b2 = b2->onext;
 
 			Select_HandleBrush(b2, false);
-			Sys_UpdateWindows(W_ALL);
 		}
 	}
 }

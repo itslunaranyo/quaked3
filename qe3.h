@@ -108,6 +108,7 @@ typedef struct
 			bNoStipple,
 			bRadiantLights,
 			bVertexSplitsFace,
+			bSortTexByWad,
 			bModName,
 			bHeapsize,
 			bSkill,
@@ -297,7 +298,7 @@ void	ExportDialog (bool bCheck);	// sikk - Export Dialog for map/prefab
 //
 HWND TexWnd_Create (HINSTANCE hInstance);
 LONG WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void TexWnd_Resize(int nWidth, int nHeight);
+void TexWnd_Resize(RECT rc);
 
 //
 // win_insp.c
@@ -311,13 +312,13 @@ void InspWnd_Move(HWND hwnd, int x, int y, int w, int h);
 void InspWnd_MoveRect(HWND hwnd, RECT r);
 
 void ConsoleWnd_Create(HINSTANCE hInstance);
-void ConsoleWnd_Resize(int nWidth, int nHeight);
+void ConsoleWnd_Resize(RECT rc);
 
 //
 // win_ent.c
 //
 void EntWnd_Create (HINSTANCE hInstance);
-void EntWnd_Resize(int nWidth, int nHeight);
+void EntWnd_Resize(RECT rc);
 
 BOOL CALLBACK FieldWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK EntityListWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -326,15 +327,15 @@ BOOL CALLBACK EntityWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 LRESULT (CALLBACK* OldFieldWindowProc) (HWND, UINT, WPARAM, LPARAM);
 LRESULT (CALLBACK* OldEntityListWindowProc) (HWND, UINT, WPARAM, LPARAM);
 
-bool EntWnd_UpdateEntitySel();	
-bool EntWnd_UpdateSel (int nIndex, eclass_t *pec);
+void EntWnd_RefreshEditEntity();
+void EntWnd_UpdateListSel();
+void EntWnd_UpdateUI();
 void EntWnd_CreateEntity ();
 void EntWnd_FillClassList ();
 void EntWnd_AddKeyValue ();
 void EntWnd_RemoveKeyValue ();
 void EntWnd_EditKeyValue ();
 void EntWnd_CreateControls (HINSTANCE hInstance);
-void EntWnd_FlagsToEnt ();
 void EntWnd_FlagsFromEnt ();
 void EntWnd_RefreshKeyValues ();
 

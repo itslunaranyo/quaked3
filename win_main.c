@@ -2486,7 +2486,7 @@ LONG WINAPI WMain_WndProc (
 
 	switch (uMsg)
 	{
-	case WM_TIMER:
+	case WM_TIMER:	// 1/sec
 		QE_CountBrushesAndUpdateStatusBar();
 		QE_CheckAutoSave();
 		return 0;

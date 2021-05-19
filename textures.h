@@ -30,7 +30,7 @@ typedef struct qtexture_s
 	int		texture_number;	// gl bind number
 	vec3_t	color;			// for flat shade mode
 	bool	inuse;			// true = is present on the level
-
+	char*	wad;			// lunaran: wad the texture was sourced from, for sorting
 //	int			contents;
 //	int			flags;
 //	int			value;

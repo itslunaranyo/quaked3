@@ -707,6 +707,14 @@ void QE_CountBrushesAndUpdateStatusBar ()
 		s_lasttexturecount = g_nNumTextures;
 		s_didonce = true;
 	}
+
+	if (g_bModified)
+	{
+		char title[1024];
+		sprintf(title, "%s *", g_szCurrentMap);
+		QE_ConvertDOSToUnixName(title, title);
+		Sys_SetTitle(title);
+	}
 }
 
 // sikk--->	Update Menu Items & Toolbar Buttons

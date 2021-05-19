@@ -72,15 +72,17 @@ int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 			 
 //========================================================================
 
-brush_t	   *Brush_Alloc ();
 void		Brush_AddToList (brush_t *b, brush_t *list);
+void		Brush_RemoveFromList (brush_t *b);
 void		Brush_MergeListIntoList(brush_t *src, brush_t *dest);
+void		Brush_CleanList (brush_t *pList);
+void		Brush_CopyList (brush_t *pFrom, brush_t *pTo);
+
+brush_t	   *Brush_Alloc ();
 void		Brush_Build (brush_t *b);
 void		Brush_BuildWindings (brush_t *b);
 void		Brush_CheckTexdef (brush_t *b, face_t *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 brush_t	   *Brush_Clone (brush_t *b);
-void		Brush_CleanList (brush_t *pList);
-void		Brush_CopyList (brush_t *pFrom, brush_t *pTo);
 brush_t	   *Brush_Create (vec3_t mins, vec3_t maxs, texdef_t *texdef);
 void		Brush_Draw (brush_t *b);
 void		Brush_DrawFacingAngle (brush_t *b);
@@ -98,7 +100,6 @@ void		Brush_Move (brush_t *b, vec3_t move);
 brush_t    *Brush_Parse ();
 face_t     *Brush_Ray (vec3_t origin, vec3_t dir, brush_t *b, float *dist);
 void		Brush_RemoveEmptyFaces (brush_t *b);
-void		Brush_RemoveFromList (brush_t *b);
 void		Brush_SelectFaceForDragging (brush_t *b, face_t *f, bool shear);
 void		Brush_SetTexture (brush_t *b, texdef_t *texdef);
 void		Brush_SideSelect (brush_t *b, vec3_t origin, vec3_t dir, bool shear);

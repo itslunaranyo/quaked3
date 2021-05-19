@@ -50,12 +50,19 @@ void Texture_Init ()
 
 	// load the palette
 	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
-	// lunaran - reverted, it was hardcoded because that's where quake.exe expects it to be
-	sprintf(name, "%s/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
-
+	// lunaran - check both, old location was hardcoded because that's where quake.exe expects it to be
+	sprintf(name, "%s/gfx/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
 	LoadFile(name, &pal);
 	if (!pal)
-		Error("Could not load %s", name);
+	{
+		Sys_Printf("Could not load %s, trying texturepath ...\n", name);
+		sprintf(name, "%s/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
+		LoadFile(name, &pal);
+		if (!pal)
+		{
+			Error("Could not load %s", name);
+		}
+	}
 	Texture_InitPalette(pal);
 	free(pal);
 
@@ -64,6 +71,18 @@ void Texture_Init ()
 
 	g_qeglobals.d_qtextures = NULL;
 	g_qeglobals.d_texturewin.scale = 1.0f;	// sikk - Mouse Zoom Texture Window
+}
+
+int texcmp(qtexture_t* a, qtexture_t* b)
+{
+	if (g_qeglobals.d_savedinfo.bSortTexByWad)
+	{
+		int cmp;
+		cmp = strcmp(a->wad, b->wad);
+		if (cmp != 0)
+			return cmp;
+	}
+	return strcmp(a->name, b->name);
 }
 
 /*
@@ -98,7 +117,7 @@ void SortTextures ()
 		while (qcur)
 		{
 			// Insert it here?
-			if (strcmp(qtemp->name, qcur->name) < 0)
+			if (texcmp(qtemp, qcur) < 0)
 			{
 				qtemp->next = qcur;
 				if (qprev)
@@ -672,6 +691,7 @@ void Texture_InitFromWad (char *file)
 
 		strncpy(q->name, lumpinfo->name, sizeof(q->name) - 1);
 		q->inuse = false;
+		q->wad = file;
 		q->next = g_qeglobals.d_qtextures;
 		g_qeglobals.d_qtextures = q;
 
@@ -688,22 +708,19 @@ Texture_ShowWad
 void Texture_ShowWad (int menunum)
 {
 	char	name[1024];
-	char	wadname[1024];
+	//char	wadname[1024];
 
 	g_qeglobals.d_texturewin.originy = 0;
 	Sys_Printf("CMD: Loading all textures...\n");
 
 	// load .wad file
-	strcpy(wadname, g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
+	//strcpy(wadname, g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
 
-	Texture_InitFromWad(wadname);
+	Texture_InitFromWad(g_szTextureMenuNames[menunum - CMD_TEXTUREWAD]);
 
 	SortTextures();
 	InspWnd_SetMode(W_TEXTURE);
 	Sys_UpdateWindows(W_TEXTURE);
-
-	//sprintf(name, "Textures: %s", g_szCurrentWad);
-	//SetWindowText(g_qeglobals.d_hwndInspector, name);
 
 	// select the first texture in the list
 	if (!g_qeglobals.d_texturewin.texdef.name[0])
@@ -773,7 +790,8 @@ Texture_NextPos
 */
 qtexture_t *Texture_NextPos (int *x, int *y)
 {
-	qtexture_t	*q;
+	qtexture_t	*q, *qPrev;
+	qPrev = g_qtCurrentTexture;
 
 	while (1)
 	{
@@ -788,8 +806,10 @@ qtexture_t *Texture_NextPos (int *x, int *y)
 		break;
 	}
 
-	if (g_nCurrentX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8 && g_nCurrentRow)	// sikk - Mouse Zoom Texture Window
-	{	// go to the next row unless the texture is the first on the row
+	// go to the next row unless the texture is the first on the row
+	// lunaran TODO: row breaks for new wads when sorted
+	if (g_nCurrentX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8 && g_nCurrentRow)
+	{	
 		g_nCurrentX = 8;
 		g_nCurrentY -= g_nCurrentRow + FONT_HEIGHT + 4;
 		g_nCurrentRow = 0;
@@ -1337,7 +1357,7 @@ HWND TexWnd_Create (HINSTANCE hInstance)
 	g_qeglobals.d_hwndTexture = CreateWindowEx(0,//WS_EX_CLIENTEDGE,	// extended window style
 		TEXTURE_WINDOW_CLASS,				// registered class name
 		"Texture View",						// window name
-		WS_BORDER | WS_CHILD | WS_VISIBLE,	// window style
+		WS_BORDER | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,	// window style
 		20,	20,	64,	64,						// size and position of window
 		g_qeglobals.d_hwndInspector,		// parent or owner window
 		0,									// menu or child-window identifier
@@ -1356,9 +1376,9 @@ HWND TexWnd_Create (HINSTANCE hInstance)
 TexWnd_Resize
 ===============
 */
-void TexWnd_Resize(int nWidth, int nHeight)
+void TexWnd_Resize(RECT rc)
 {
-	InspWnd_Move(g_qeglobals.d_hwndTexture, 0, 0, nWidth, nHeight);
+	InspWnd_MoveRect(g_qeglobals.d_hwndTexture, rc);
 }
 
 

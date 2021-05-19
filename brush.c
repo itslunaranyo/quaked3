@@ -25,7 +25,7 @@ vec3_t g_v3BaseAxis[18] =
 	{ 0,-1, 0}, {1, 0, 0}, {0, 0,-1}	// north wall
 };
 
-const float g_fLightAxis[3] = {0.6f, 0.8f, 1.0f};
+const float g_fLightAxis[3] = {0.8f, 0.9f, 1.0f};	// lunaran: lightened a bit
 //vec_t g_vLightAxis[3] = {(vec_t)0.6, (vec_t)0.8, (vec_t)1.0};
 vec3_t  g_v3Vecs[2];
 float	g_fShift[2];
@@ -637,14 +637,14 @@ void Brush_MergeListIntoList(brush_t *src, brush_t *dest)
 		Sys_Printf("WARNING: Tried to merge an empty list.\n");
 		return;
 	}
-	// merge at head of list - preferred for shorter search time to recently manipulated brushes
+	// merge at head of list
 	src->next->prev = dest;
 	src->prev->next = dest->next;
 	dest->next->prev = src->prev;
 	dest->next = src->next;
 
 	/*
-	// for merge at tail of list
+	// merge at tail of list
 	dest->prev->next = src->next;
 	src->next->prev = dest->prev;
 	dest->prev = src->prev;
@@ -665,15 +665,8 @@ Builds a brush rendering data and also sets the min/max bounds
 */
 void Brush_Build (brush_t *b)
 {
-	char title[1024];
-
-	if (g_bModified != 1)
-	{
-		g_bModified = true;	// mark the map as changed
-		sprintf(title, "%s *", g_szCurrentMap);
-		QE_ConvertDOSToUnixName(title, title);
-		Sys_SetTitle(title);
-	}
+	// lunaran - moved to undo_start
+	//g_bModified = true;	// mark the map as changed
 
 	// build the windings and generate the bounding box
 	Brush_BuildWindings(b);
@@ -1741,6 +1734,7 @@ void Brush_Move (brush_t *b, vec3_t move)
 {
 	int		i;
 	face_t *f;
+	char	szOrg[32];
 
 	for (f = b->brush_faces; f; f = f->next)
 	{
@@ -1754,9 +1748,18 @@ void Brush_Move (brush_t *b, vec3_t move)
 	Brush_Build(b);
 
 	// PGM - keep the origin vector up to date on fixed size entities.
-	if (b->owner->eclass->fixedsize)
+	if (b->owner->eclass->fixedsize && b->onext != b)
+	{
 		VectorAdd(b->owner->origin, move, b->owner->origin);
-	// lunaran TODO: update the keyvalue dammit
+
+		// lunaran: update the keyvalue too
+		vec3_t origin;
+		VectorSubtract(b->mins, b->owner->eclass->mins, origin);
+		SetKeyValueIVector(b->owner, "origin", origin);
+
+		// lunaran TODO: update only once at the end of a drag or the window flickers too much
+		//EntWnd_UpdateUI();
+	}
 }
 
 /*

@@ -16,6 +16,8 @@ ENTITY WINDOW
 
 #define DLGBORDER_X		4
 #define DLGBORDER_Y		4
+#define KVMIXED			"__QE3MIXEDVALUES_"
+#define KVMIXEDLABEL	"[multiple values]"
 
 int g_nEntDlgIds[ENT_LAST] = 
 {
@@ -57,9 +59,14 @@ int g_nEntDlgIds[ENT_LAST] =
 };
 
 HWND		g_hwndEnt[ENT_LAST];
-bool		g_bMultipleEntities;
-entity_t   *g_peEditEntity;
 
+// lunaran - entity window now interacts through a dummy entity that acts as the union of 
+// all selected entities (for displaying mixed selections)
+//bool		g_bMultipleEntities;
+//entity_t   *g_peEditEntity;
+entity_t	g_eEditEntity;
+char		g_nEditEntFlags[12];	// spawnflags in the entity inspector can be off/on/ambiguous
+char		g_szEditFlagNames[8][32];
 
 /*
 =========================
@@ -241,7 +248,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		Error("CreateWindowEx: Failed.");
 
 	g_hwndEnt[ENT_KEYFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE,
-		"RichEdit",	// lunaran TODO: what
+		"RichEdit",
 		NULL,
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
@@ -253,7 +260,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		Error("CreateWindowEx: Failed.");
 
 	g_hwndEnt[ENT_VALUEFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE,
-		"RichEdit",	// lunaran TODO: why
+		"RichEdit",
 		NULL,
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
@@ -287,8 +294,6 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 	SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
-
-
 }
 
 
@@ -321,7 +326,7 @@ void EntWnd_Create (HINSTANCE hInstance)
 	g_qeglobals.d_hwndEntity = CreateWindowEx(0,//WS_EX_CLIENTEDGE,	// extended window style
 		ENTITY_WINDOW_CLASS,				// registered class name
 		"Entity View",						// window name
-		WS_BORDER | WS_CHILD | WS_VISIBLE,	// window style
+		WS_BORDER | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,	// window style
 		20, 20, 64, 64,						// size and position of window
 		g_qeglobals.d_hwndInspector,		// parent or owner window
 		0,									// menu or child-window identifier
@@ -344,8 +349,6 @@ void EntWnd_Create (HINSTANCE hInstance)
 
 }
 
-
-
 /*
 ==============
 EntWnd_FillClassList
@@ -363,9 +366,120 @@ void EntWnd_FillClassList()
 		iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)pec->name);
 		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)pec);
 	}
-
 }
 
+
+
+
+
+
+/*
+==============
+EntWnd_UpdateListSel
+==============
+*/
+void EntWnd_UpdateListSel()
+{
+	int			iIndex;
+	eclass_t   *pec;
+	iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETCURSEL, 0, 0);
+	pec = (eclass_t *)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETITEMDATA, iIndex, 0);
+
+	if (iIndex != LB_ERR)
+		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, iIndex, 0);
+
+	if (pec)
+		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
+}
+
+/*
+==============
+EntWnd_RefreshEditEntityFlags
+==============
+*/
+void EntWnd_RefreshEditEntityFlags(int inFlags, bool first)
+{
+	int f;
+
+	for (int i = 0; i < 12; i++)
+	{
+		if (g_nEditEntFlags[i] == BST_INDETERMINATE)
+			continue;
+
+		f = !!(inFlags & (1 << i));
+		if (first)
+		{
+			g_nEditEntFlags[i] = f;
+		}
+		else if (f != g_nEditEntFlags[i])
+		{
+			g_nEditEntFlags[i] = BST_INDETERMINATE;
+		}
+	}
+}
+
+/*
+==============
+EntWnd_RefreshEditEntity
+==============
+*/
+void EntWnd_RefreshEditEntity()
+{
+	entity_t *eo;
+	epair_t *ep;
+	bool first;
+
+	Entity_FreeEpairs(&g_eEditEntity);
+	g_eEditEntity.eclass = NULL;
+	memset(g_nEditEntFlags, 0, 12 * sizeof(char));
+
+	eo = NULL;
+	first = true;
+	for (brush_t* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		// since brushes in the selection are (mostly) sorted by entity, this is a 
+		// decent enough way to shuffle through them, but it does no harm if a 
+		// fragmented brush entity contributes its own values more than once
+		if (b->owner == eo)
+			continue;
+
+		eo = b->owner;
+		if (first)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				strncpy(g_szEditFlagNames[i], eo->eclass->flagnames[i], 32);
+			}
+			for (ep = eo->epairs; ep; ep = ep->next)
+			{
+				if (!strcmpi(ep->key, "spawnflags"))
+				{
+					EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), true);
+				}
+				SetKeyValue(&g_eEditEntity, ep->key, ep->value);
+			}
+			first = false;
+		}
+		else for (ep = eo->epairs; ep; ep = ep->next)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				if (stricmp(g_szEditFlagNames[i], eo->eclass->flagnames[i]))
+					strncpy(g_szEditFlagNames[i], "~\0", 2);
+			}
+			if (!strcmpi(ep->key, "spawnflags"))
+			{
+				EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), false);
+			}
+			if (!*ValueForKey(&g_eEditEntity, ep->key))
+				SetKeyValue(&g_eEditEntity, ep->key, ep->value);
+			else if (strcmpi(ValueForKey(&g_eEditEntity, ep->key), ep->value) == 0)
+				continue;
+			else
+				SetKeyValue(&g_eEditEntity, ep->key, KVMIXED);
+		}
+	}
+}
 
 
 /*
@@ -380,10 +494,7 @@ void EntWnd_RefreshKeyValues ()
 	epair_t	   *pep;
 	RECT		rc;
 	char		sz[4096];
-	int			nTabs[] = {96};	// sikk - Tab fix
-
-	if (g_peEditEntity == NULL)
-		return;
+	int			nTabs[] = {64};	// sikk - Tab fix
 
 	// set key/value pair list
 	GetWindowRect(g_hwndEnt[ENT_PROPS], &rc);
@@ -392,9 +503,13 @@ void EntWnd_RefreshKeyValues ()
 	SendMessage(g_hwndEnt[ENT_PROPS], LB_SETTABSTOPS, (WPARAM)1, (LPARAM)(LPINT)nTabs);	// sikk - Tab fix
 
 	// Walk through list and add pairs
-	for (pep = g_peEditEntity->epairs; pep; pep = pep->next)
+	for (pep = g_eEditEntity.epairs; pep; pep = pep->next)
 	{
-		sprintf(sz, "%s\t%s", pep->key, pep->value);
+		if (!strcmpi(pep->value, KVMIXED))
+			sprintf(sz, "%s\t%s", pep->key, KVMIXEDLABEL);
+		else
+			sprintf(sz, "%s\t%s", pep->key, pep->value);
+
 		SendMessage(g_hwndEnt[ENT_PROPS], LB_ADDSTRING, 0, (LPARAM)sz);
 	}
 }
@@ -412,18 +527,12 @@ static void EntWnd_ApplyAngle(int ang)
 	char sz[8];
 	sprintf(sz, "%d", ang);
 
-	if (g_bMultipleEntities)
-	{
-		for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			SetKeyValue(b->owner, "angle", sz);
-	}
-	else
-	{
-		SetKeyValue(g_peEditEntity, "angle", sz);
-	}
+	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		SetKeyValue(b->owner, "angle", sz);
+	SetKeyValue(&g_eEditEntity, "angle", sz);
 
 	EntWnd_RefreshKeyValues();
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	Sys_UpdateWindows(W_CAMERA);
 }
 
 /*
@@ -438,20 +547,24 @@ static void EntWnd_FlagChecked(int flag)
 	if (flag < 1 || flag > 12)
 		return;	// sanity check, no such flag
 
-	bool on = (SendMessage(g_hwndEnt[ENT_CHECK1 + flag-1], BM_GETCHECK, 0, 0) == BST_CHECKED);
+	bool on = !(SendMessage(g_hwndEnt[ENT_CHECK1 + flag - 1], BM_GETCHECK, 0, 0) == BST_CHECKED);
+	SendMessage(g_hwndEnt[ENT_CHECK1 + flag - 1], BM_SETCHECK, on, 0);
+
 	int f = 1 << (flag-1);
 
-	if (g_bMultipleEntities)
+	entity_t *eo;
+	eo = NULL;
+	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			SetSpawnFlag(b->owner, f, on);
-	}
-	else
-	{
-		SetSpawnFlag(g_peEditEntity, f, on);
+		if (b->owner == eo)
+			continue;
+		else
+			eo = b->owner;
+
+		SetSpawnFlag(b->owner, f, on);
 	}
 
-	EntWnd_RefreshKeyValues();
+	EntWnd_UpdateUI();
 }
 
 /*
@@ -463,87 +576,45 @@ Update the checkboxes to reflect the flag state of the entity
 */
 void EntWnd_FlagsFromEnt ()
 {
-	int		f, i, v;
-
-	f = atoi(ValueForKey(g_peEditEntity, "spawnflags"));
-	for (i = 0; i < 12; i++)
+	for (int i = 0; i < 12; i++)
 	{
-		v = !!(f & (1 << i));
-		SendMessage(g_hwndEnt[ENT_CHECK1 + i], BM_SETCHECK, v, 0);
+		SendMessage(g_hwndEnt[ENT_CHECK1 + i], BM_SETCHECK, g_nEditEntFlags[i], 0);
 	}
 }
 
 /*
 ==============
-EntWnd_FlagsToEnt
-
-Update the entity flags to reflect the state of the checkboxes
-==============
-*/
-void EntWnd_FlagsToEnt ()
-{
-	int		f;
-	int		i, v;
-	char	sz[32];
-
-	f = 0;
-	for (i = 0; i < 12; i++)
-	{
-		v = SendMessage(g_hwndEnt[ENT_CHECK1 + i], BM_GETCHECK, 0, 0);
-		f |= v << i;
-	}
-
-	sprintf(sz, "%d", f);
-
-	if (g_bMultipleEntities)
-	{
-		brush_t	*b;
-
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			SetKeyValue(b->owner, "spawnflags", sz);
-	}
-	else
-		SetKeyValue(g_peEditEntity, "spawnflags", sz);
-
-	EntWnd_RefreshKeyValues();
-}
-
-/*
-==============
-EntWnd_UpdateSel
+EntWnd_UpdateUI
 
 Update the listbox, checkboxes and k/v pairs to reflect the new selection
 ==============
 */
-bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
+void EntWnd_UpdateUI ()
 {
 	int			i;
-	brush_t	   *b;
 
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
+	// clear the window
+	EntWnd_RefreshEditEntity();
+
 	if (!Select_HasBrushes())
 	{
-		g_peEditEntity = g_peWorldEntity;
-		g_bMultipleEntities = false;
+		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)"");
+		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, -1, 0);
+		for (i = 0; i < 8; i++)
+		{
+			HWND hwnd = g_hwndEnt[ENT_CHECK1 + i];
+			// disable check box
+			SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)" ");
+			EnableWindow(hwnd, FALSE);
+		}
 	}
 	else
 	{
-		g_peEditEntity = g_brSelectedBrushes.next->owner;
-		for (b = g_brSelectedBrushes.next->next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			if (b->owner != g_peEditEntity)
-			{
-				g_bMultipleEntities = true;
-				break;
-			}
-		}
-	}
-
-	if (nIndex != LB_ERR)
-		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
-
-	if (pec)
-	{
+		eclass_t *pec = g_brSelectedBrushes.next->owner->eclass;
+		int nIndex = (int)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
+		if (nIndex != LB_ERR)
+			SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
 
 		// Set up the description
 		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
@@ -551,10 +622,11 @@ bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
 		for (i = 0; i < 8; i++)
 		{
 			HWND hwnd = g_hwndEnt[ENT_CHECK1 + i];
-			if (pec->flagnames[i] && pec->flagnames[i][0] != 0 && pec->flagnames[i][0] != '?')	// lunaran - respect ? convention for unused spawnflags
+
+			if (*g_szEditFlagNames[i])
 			{
 				EnableWindow(hwnd, TRUE);
-				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)pec->flagnames[i]);
+				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)g_szEditFlagNames[i]);
 			}
 			else
 			{
@@ -563,31 +635,18 @@ bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
 				EnableWindow(hwnd, FALSE);
 			}
 		}
-
-		EntWnd_FlagsFromEnt();
-		EntWnd_RefreshKeyValues();
 	}
+	EntWnd_FlagsFromEnt();
+	EntWnd_RefreshKeyValues();
+
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
 	RedrawWindow(g_qeglobals.d_hwndInspector, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
-	return false;
 }
 
-/*
-==============
-EntWnd_UpdateEntitySel
-==============
-*/
-bool EntWnd_UpdateEntitySel ()
-{
-	int iIndex;
-	// lunaran TODO: clear entity inspector when no selection
-	if (Select_HasBrushes())
-	{
-		eclass_t *pec = g_brSelectedBrushes.next->owner->eclass;
-		iIndex = (int)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
-		return EntWnd_UpdateSel(iIndex, pec);
-	}
-}
+
+
+
+
 
 /*
 ==============
@@ -644,14 +703,8 @@ void EntWnd_CreateEntity ()
 		return;
 	}
 
-	if (!Select_HasBrushes())
-		g_peEditEntity = g_peWorldEntity;
-	else
-		g_peEditEntity = g_brSelectedBrushes.next->owner;
-
-	EntWnd_RefreshKeyValues();
 	Select_DeselectAll(true);
-	Select_HandleBrush(g_peEditEntity->brushes.onext, true);
+	Select_HandleBrush(petNew->brushes.onext, true);
 
 	Undo_EndBrushList(&g_brSelectedBrushes);
 	Undo_End();	// sikk - Undo/Redo
@@ -667,22 +720,13 @@ void EntWnd_AddKeyValue ()
 	char	key[4096];
 	char	value[4096];
 
-	if (g_peEditEntity == NULL)
-		return;
-
 	// Get current selection text
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);	
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);	
 
-	if (g_bMultipleEntities)
-	{
-		brush_t	*b;
-
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			SetKeyValue(b->owner, key, value);
-	}
-	else
-		SetKeyValue(g_peEditEntity, key, value);
+	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		SetKeyValue(b->owner, key, value);
+	SetKeyValue(&g_eEditEntity, key, value);
 
 	// refresh the prop listbox
 	EntWnd_RefreshKeyValues();
@@ -697,21 +741,12 @@ void EntWnd_RemoveKeyValue ()
 {
 	char	sz[4096];
 
-	if (g_peEditEntity == NULL)
-		return;
-
 	// Get current selection text
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(sz) - 1, (LPARAM)sz);	
 
-	if (g_bMultipleEntities)
-	{
-		brush_t	*b;
-
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-			DeleteKey(b->owner, sz);
-	}
-	else
-		DeleteKey(g_peEditEntity, sz);
+	for (brush_t *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		DeleteKey(b->owner, sz);
+	DeleteKey(&g_eEditEntity, sz);
 
 	// refresh the prop listbox
 	EntWnd_RefreshKeyValues();	
@@ -728,9 +763,6 @@ void EntWnd_EditKeyValue ()
 	HWND	hwnd;
 	char	sz[4096];
 	char   *val;
-
-	if (g_peEditEntity == NULL)
-		return;
 
 	hwnd = g_hwndEnt[ENT_PROPS];
 
@@ -752,8 +784,11 @@ void EntWnd_EditKeyValue ()
 	if (*val == '\t')
 		val++;
 
-	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)sz);	
-	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)val);	
+	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)sz);
+	if (strcmpi(val, KVMIXEDLABEL))
+		SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)val);
+	else
+		SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)"");
 }
 
 //HDWP	defer;	// sikk - unused
@@ -763,15 +798,19 @@ void EntWnd_EditKeyValue ()
 EntWnd_Resize
 ===============
 */
-void EntWnd_Resize(int nWidth, int nHeight) 
+void EntWnd_Resize(RECT rc)
 {
-	int		i, x, y, w, h;
+	int nWidth, nHeight;
+	nWidth = rc.right;
+	nHeight = rc.bottom;
+
+	int		i, x, y, w;
 	int		xCheck, yCheck, fold;
 	RECT	rectClasses, rectComment, rectProps, rectFlags, rectKV, rectAngle;
 	int		flagRows, flagCols, flagOffset;
 
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
-	InspWnd_Move(g_qeglobals.d_hwndEntity, 0, 0, nWidth, nHeight);
+	InspWnd_MoveRect(g_qeglobals.d_hwndEntity, rc);
 
 	yCheck = 20;	// distance from top of one check to the next
 
@@ -1052,16 +1091,12 @@ BOOL CALLBACK EntityWndProc (
 			{ 
 			case LBN_SELCHANGE: 
 				{
-					int			iIndex;
-					eclass_t   *pec;
 
 					if (GetTopWindow(g_qeglobals.d_hwndMain) != hwndDlg)
 						BringWindowToTop(hwndDlg);
 
-					iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETCURSEL, 0, 0);	
-					pec = (eclass_t *)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETITEMDATA, iIndex, 0); 
 				
-					EntWnd_UpdateSel(iIndex, pec);
+					EntWnd_UpdateListSel();
 
 					return TRUE; 
 					break; 

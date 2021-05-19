@@ -101,7 +101,6 @@
 
 #define	W_ALL			0xFFFFFFFF
 
-#define WM_SELECTIONCHANGED	(WM_USER + 266)
 #define WM_BENCHMARK		(WM_USER + 267)
 
 // toolbar ID's

@@ -938,6 +938,9 @@ int WINAPI WinMain (
 
 	Sys_LogFile();
 
+	// lunaran TEMP
+	g_qeglobals.d_savedinfo.bSortTexByWad = true;
+
 	WCam_Create(hInstance);
 	WXY_Create(hInstance);
 	WXZ_Create(hInstance);	// sikk - Multiple Orthographic Views
@@ -1011,6 +1014,7 @@ int WINAPI WinMain (
 				g_bHaveQuit = true;
 		}
 
+		// lunaran - all consequences of selection alteration put in one place for consistent behavior
 		Select_HandleChange();
 
 		CheckBspProcess();

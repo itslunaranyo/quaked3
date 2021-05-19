@@ -138,7 +138,6 @@ void FindBrush (int entitynum, int brushnum)
 
 	Select_SelectBrush(b);
 
-	Sys_UpdateWindows(W_ALL);
 	for (i = 0; i < 3; i++)
 		g_qeglobals.d_xyz.origin[i] = (b->mins[i] + b->maxs[i]) / 2;
 
@@ -1710,7 +1709,6 @@ void OnDelete (HWND hTree, HWND hList)
 		Select_Delete();
 		TreeView_DeleteItem(hTree, hItem);
 		ListView_DeleteAllItems(hList);
-		g_bModified = true;
 	}
 	InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);

@@ -74,6 +74,7 @@ void InspWnd_Create(HINSTANCE hInstance)
 	InspWnd_SetMode(W_CONSOLE);
 }
 
+
 /*
 ==============
 InspWnd_SetMode
@@ -100,17 +101,17 @@ void InspWnd_SetMode(int nType)
 	{
 	case W_ENTITY:
 		SetWindowText(g_qeglobals.d_hwndInspector, "Entities");
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndTexture, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndConsole, SW_HIDE);
+		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
 		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_ENABLED);
 		break;
 
 	case W_TEXTURE:
 		SetWindowText(g_qeglobals.d_hwndInspector, "Textures"); // title is set by textures.c
 		ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
-		ShowWindow(g_qeglobals.d_hwndTexture, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndConsole, SW_HIDE);
+		ShowWindow(g_qeglobals.d_hwndTexture, SW_SHOW);
 		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
 		break;
 
@@ -157,33 +158,22 @@ InspWnd_Resize
 */
 void InspWnd_Resize()
 {
-	RECT rc;
-	int w, h;
+	RECT rcOn, rcOff;
 
-	GetClientRect(g_qeglobals.d_hwndInspector, &rc);
-	w = rc.right - rc.left;
-	h = rc.bottom - rc.top;
+	// use right/bottom as width/height:
+	GetClientRect(g_qeglobals.d_hwndInspector, &rcOn);
+	rcOn.right -= rcOn.left;
+	rcOn.bottom -= rcOn.top;
+	rcOff = rcOn;
+	rcOff.left += rcOn.right;
 
-	if (w < 100 || h < 100)
+	if (rcOn.right < 100 || rcOn.bottom < 100)
 		return;
 
-	switch (g_qeglobals.d_nInspectorMode)
-	{
-	case W_ENTITY:
-		EntWnd_Resize(w, h);
-		break;
+	EntWnd_Resize((g_qeglobals.d_nInspectorMode == W_ENTITY) ? rcOn : rcOff);
+	TexWnd_Resize((g_qeglobals.d_nInspectorMode == W_TEXTURE) ? rcOn : rcOff);
+	ConsoleWnd_Resize((g_qeglobals.d_nInspectorMode == W_CONSOLE) ? rcOn : rcOff);
 
-	case W_TEXTURE:
-		TexWnd_Resize(w, h);
-		break;
-
-	case W_CONSOLE:
-		ConsoleWnd_Resize(w, h);
-		break;
-
-	default:
-		break;
-	}
 	//RedrawWindow(g_qeglobals.d_hwndInspector, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
@@ -272,9 +262,9 @@ void ConsoleWnd_Create(HINSTANCE hInstance)
 ConsoleWnd_Resize
 ===============
 */
-void ConsoleWnd_Resize(int nWidth, int nHeight)
+void ConsoleWnd_Resize(RECT rc)
 {
-	InspWnd_Move(g_qeglobals.d_hwndConsole, 0, 0, nWidth, nHeight);
+	InspWnd_MoveRect(g_qeglobals.d_hwndConsole, rc);
 }
 
 

@@ -107,6 +107,11 @@ eclass_t *Eclass_InitFromText (char *text)
 		p = COM_Parse(p);
 		if (!p)
 			break;
+		if (!strcmp(g_szComToken, "?"))		// lunaran - respect ? convention for unused spawnflags
+		{
+			e->flagnames[i][0] = 0;
+			continue;
+		}
 		strcpy(e->flagnames[i], g_szComToken);
 	} 
 
@@ -371,6 +376,30 @@ void SetKeyValue (entity_t *ent, char *key, char *value)
 	strcpy(ep->key, key);
 	ep->value = qmalloc(strlen(value) + 1);
 	strcpy(ep->value, value);
+}
+
+/*
+==============
+SetKeyValueVector
+==============
+*/
+void SetKeyValueIVector(entity_t *ent, char *key, vec3_t vec)
+{
+	char szVec[256];
+	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
+	SetKeyValue(ent, key, szVec);
+}
+
+/*
+==============
+SetKeyValueFVector
+==============
+*/
+void SetKeyValueFVector(entity_t *ent, char *key, vec3_t vec)
+{
+	char szVec[256];
+	sprintf(szVec, "%f %f %f", vec[0], vec[1], vec[2]);
+	SetKeyValue(ent, key, szVec);
 }
 
 /*
@@ -696,7 +725,6 @@ void Entity_Write (entity_t *e, FILE *f, bool use_region)
 	epair_t	   *ep;
 	brush_t	   *b;
 	vec3_t		origin;
-	char		text[128];
 	int			count;
 
 	// if none of the entities brushes are in the region,
@@ -729,8 +757,7 @@ void Entity_Write (entity_t *e, FILE *f, bool use_region)
 	if (e->eclass->fixedsize || *ValueForKey(e, "origin"))	// sikk - Point Entity->Brush Entity Hack (added ValueForKey check)
 	{
 		VectorSubtract(e->brushes.onext->mins, e->eclass->mins, origin);
-		sprintf(text, "%d %d %d", (int)origin[0], (int)origin[1], (int)origin[2]);
-		SetKeyValue(e, "origin", text);
+		SetKeyValueIVector(e, "origin", origin);
 	}
 
 	fprintf(f, "{\n");

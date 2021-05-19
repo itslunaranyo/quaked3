@@ -946,7 +946,7 @@ void Cam_Draw ()
 	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
 			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
-			0.5f);
+			0.3f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glDisable(GL_TEXTURE_2D);
 
