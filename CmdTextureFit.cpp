@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdTextureFit::CmdTextureFit()
+CmdTextureFit::CmdTextureFit() : Command("Fit Texture")
 {
 	// state = LIVE;
 }
@@ -32,7 +32,7 @@ void CmdTextureFit::UseBrushes(Brush *brList)
 	std::vector<Face*> fq;
 	for (Brush* b = brList->next; b != brList; b = b->next)
 	{
-		for (Face* f = b->basis.faces; f; f = f->fnext)
+		for (Face* f = b->faces; f; f = f->fnext)
 			fq.push_back(f);
 	}
 	UseFaces(fq);

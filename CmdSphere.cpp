@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdSphere::CmdSphere() : sides(0), target(nullptr) {}
+CmdSphere::CmdSphere() : sides(0), target(nullptr), Command("Make Sphere") {}
 CmdSphere::~CmdSphere() {}
 
 void CmdSphere::SetSides(int s)
@@ -36,9 +36,9 @@ void CmdSphere::Do_Impl()
 	float dt, dp, t, p;
 	int i, j;
 
-	td = target->basis.faces->texdef;
-	mins = target->basis.mins;
-	maxs = target->basis.maxs;
+	td = target->faces->texdef;
+	mins = target->mins;
+	maxs = target->maxs;
 
 	cmdBM.ModifyBrush(target);
 	target->ClearFaces();

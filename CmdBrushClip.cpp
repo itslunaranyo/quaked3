@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdBrushClip::CmdBrushClip() : side(CLIP_FRONT), pointsSet(false)
+CmdBrushClip::CmdBrushClip() : side(CLIP_FRONT), pointsSet(false), Command("Brush Clip")
 {
 	selectOnDo = true;
 	selectOnUndo = true;
@@ -71,7 +71,6 @@ void CmdBrushClip::CreateSplitLists()
 
 	Face splitf;
 	splitf.texdef = g_qeglobals.d_workTexDef;
-	//splitf.DEPtexture = Textures::ForName(splitf.texdef.name);
 	splitf.plane.FromPoints(cp1, cp2, cp3);
 
 	for (auto brIt = brIn.begin(); brIt != brIn.end(); ++brIt)

@@ -101,7 +101,7 @@ void MoveSelection (const vec3 move)
 		{
 			b->Build();
 			for (i = 0; i < 3; i++)
-				if (b->basis.mins[i] > b->basis.maxs[i]	|| b->basis.maxs[i] - b->basis.mins[i] > MAX_BRUSH_SIZE)
+				if (b->mins[i] > b->maxs[i]	|| b->maxs[i] - b->mins[i] > MAX_BRUSH_SIZE)
 					break;	// dragged backwards or fucked up
 			if (i != 3)
 				break;
@@ -131,11 +131,11 @@ void MoveSelection (const vec3 move)
 
 		// if there are lots of brushes selected, just translate instead
 		// of rebuilding the brushes
-		if (g_v3DragYVec[2] == 0 && g_brSelectedBrushes.next->next != &g_brSelectedBrushes)
-		{
-			g_qeglobals.d_v3SelectTranslate = g_qeglobals.d_v3SelectTranslate + move;
-		}
-		else
+		//if (g_v3DragYVec[2] == 0 && g_brSelectedBrushes.next->next != &g_brSelectedBrushes)
+		//{
+		//	g_qeglobals.d_v3SelectTranslate = g_qeglobals.d_v3SelectTranslate + move;
+		//}
+		//else
  			Transform_Move(move);
 	}
 }
@@ -209,7 +209,7 @@ void Drag_Setup(int x, int y, int buttons,
 			// be pressed before Shift or the brush is deselected.
 			// But it is a useful command to leave hidden as it is.  
 			Sys_Printf("CMD: Sticky dragging brush.\n");
-			for (f = t.brush->basis.faces; f; f = f->fnext)
+			for (f = t.brush->faces; f; f = f->fnext)
 				t.brush->SelectFaceForDragging(f, false);
 		}
 		else
@@ -330,7 +330,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '#')
+				if (t.brush->faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -350,7 +350,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '#')
+				if (t.brush->faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -372,7 +372,7 @@ void Drag_Begin(int x, int y, int buttons,
 			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->basis.faces->texdef.name[0] == '#')
+				if (t.brush->faces->texdef.name[0] == '#')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -443,10 +443,12 @@ Drag_MouseUp
 void Drag_MouseUp ()
 {
 //	Sys_Printf("MSG: Drag completed.\n");	// sikk - I Consider it Console Spamming
+	/*
 	if (g_qeglobals.d_v3SelectTranslate[0] || g_qeglobals.d_v3SelectTranslate[1] || g_qeglobals.d_v3SelectTranslate[2])
 	{
 		Transform_Move(g_qeglobals.d_v3SelectTranslate);
 		g_qeglobals.d_v3SelectTranslate = vec3(0);
 		Sys_UpdateWindows(W_CAMERA);
 	}
+	*/
 }

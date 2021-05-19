@@ -27,17 +27,19 @@ void *qmalloc (int size)
 
 /*
 ==================
-CopyString
+pointOnGrid
 ==================
 */
-char *CopyString (char *s)
+vec3 pointOnGrid(const vec3 point)
 {
-	char *b;
-
-	b = (char*)malloc(strlen(s) + 1);
-	strcpy(b, s);
-
-	return b;
+	// glm's round proved to be kind of funky
+	//point = glm::round(point / (float)g_qeglobals.d_nGridSize + 0.5f) * (float)g_qeglobals.d_nGridSize;
+	vec3 out;
+	for (int i = 0; i < 3; i++)
+	{
+		out[i] = qround(point[i], g_qeglobals.d_nGridSize);
+	}
+	return out;
 }
 
 /*
@@ -739,7 +741,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 		for (b = g_map.brActive.next; b != NULL && b != &g_map.brActive; b = next)
 		{
 			next = b->next;
-			if (b->basis.faces)
+			if (b->faces)
 			{
 				if (b->owner->IsPoint())
 					g_map.numEntities++;

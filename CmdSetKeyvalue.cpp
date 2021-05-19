@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value)
+CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value) : Command("Set Keyvalue")
 {
 	if (!key[0])
 		Error("No key specified");

@@ -36,9 +36,9 @@ void CameraView::PositionCenter ()
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		origin[0] = b->basis.mins[0] - 64;
-		origin[1] = b->basis.mins[1] - 64;
-		origin[2] = b->basis.mins[2] + 64;
+		origin[0] = b->mins[0] - 64;
+		origin[1] = b->mins[1] - 64;
+		origin[2] = b->mins[2] + 64;
 		angles[0] = -22.5;
 		angles[1] = 45;
 		angles[2] = 0;
@@ -229,10 +229,10 @@ void CameraView::PositionRotate ()
 		{
 			for (i = 0; i < 3; i++)
 			{
-				if (b->basis.maxs[i] > maxs[i])
-					maxs[i] = b->basis.maxs[i];
-				if (b->basis.mins[i] < mins[i])
-					mins[i] = b->basis.mins[i];
+				if (b->maxs[i] > maxs[i])
+					maxs[i] = b->maxs[i];
+				if (b->mins[i] < mins[i])
+					mins[i] = b->mins[i];
 			}
 		}
 		sorigin = (mins + maxs) / 2.0f;
@@ -496,14 +496,14 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 			b = t.brush;
 			for (i = 0; i < 3; i++)
 			{
-				if (b->basis.mins[i] < mins[i])
-					mins[i] = b->basis.mins[i];
-				if (b->basis.maxs[i] > maxs[i])
-					maxs[i] = b->basis.maxs[i];
+				if (b->mins[i] < mins[i])
+					mins[i] = b->mins[i];
+				if (b->maxs[i] > maxs[i])
+					maxs[i] = b->maxs[i];
 			}
 			size = maxs - mins;
 			*/
-			size = t.brush->basis.maxs - t.brush->basis.mins;
+			size = t.brush->maxs - t.brush->mins;
 			if (t.brush->owner->IsPoint())
 				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
 			else
@@ -586,7 +586,7 @@ void CameraView::GetAimPoint(vec3 &pt)
 	t = Selection::TestRay(origin, vpn, SF_NOFIXEDSIZE);
 	dist = min(240.0f, t.dist);
 	pt = origin + dist * vpn;
-	SnapToPoint(pt);
+	pt = pointOnGrid(pt);
 }
 
 
@@ -637,7 +637,7 @@ bool CameraView::CullBrush (Brush *b)
 		point[2] = origin[2] - fLevel;
 
 		for (i = 0; i < 3; i++)
-			if (b->basis.mins[i] < point[i] && b->basis.maxs[i] < point[i])
+			if (b->mins[i] < point[i] && b->maxs[i] < point[i])
 				return true;
 
 		point[0] = origin[0] + fLevel;
@@ -645,20 +645,20 @@ bool CameraView::CullBrush (Brush *b)
 		point[2] = origin[2] + fLevel;
 	
 		for (i = 0; i < 3; i++)
-			if (b->basis.mins[i] > point[i] && b->basis.maxs[i] > point[i])
+			if (b->mins[i] > point[i] && b->maxs[i] > point[i])
 				return true;
 	}
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->basis.mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this hack
+		point[i] = ((float*)&b->mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this hack
 
 	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->basis.mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this hack too
+		point[i] = ((float*)&b->mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this hack too
 
 	d = DotProduct(point, v3Cull2);
 	if (d < -1)
@@ -718,12 +718,12 @@ void CameraView::DrawActive()
 			continue;
 	// sikk---> Transparent Brushes
 		// TODO: Make toggle via Preferences Option. 
-		assert(brush->basis.faces->texdef.tex);
+		assert(brush->faces->texdef.tex);
 		/*
-		if (!strncmp(brush->basis.faces->texdef.tex->name, "*", 1) ||
-			!strcmp(brush->basis.faces->texdef.tex->name, "clip") ||
-			!strncmp(brush->basis.faces->texdef.tex->name, "hint", 4) ||
-			!strcmp(brush->basis.faces->texdef.tex->name, "trigger"))
+		if (!strncmp(brush->faces->texdef.tex->name, "*", 1) ||
+			!strcmp(brush->faces->texdef.tex->name, "clip") ||
+			!strncmp(brush->faces->texdef.tex->name, "hint", 4) ||
+			!strcmp(brush->faces->texdef.tex->name, "trigger"))
 			*/
 		if (brush->showFlags & BFL_TRANS)
 			g_pbrTransBrushes[numTransBrushes++] = brush;
@@ -779,7 +779,7 @@ void CameraView::DrawSelected(Brush	*pList)
 
 	// fully selected brushes, then loose faces
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->fnext)
+		for (face = brush->faces; face; face = face->fnext)
 			face->Draw();
 
 	for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
@@ -792,7 +792,7 @@ void CameraView::DrawSelected(Brush	*pList)
 	glColor3f(1, 1, 1);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->fnext)
+		for (face = brush->faces; face; face = face->fnext)
 			face->Draw();
 }
 

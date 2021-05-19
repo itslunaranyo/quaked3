@@ -51,7 +51,7 @@ void Transform_ApplyMatrix()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f = b->faces; f; f = f->fnext)
 		{
 			for (i = 0; i < 3; i++)
 			{
@@ -247,7 +247,7 @@ void Transform_Scale(float x, float y, float z)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f = b->faces; f; f = f->fnext)
 		{
 			f->plane.Translate(-g_v3SelectOrigin);
 			for (i = 0; i < 3; i++)

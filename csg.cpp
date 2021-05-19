@@ -24,14 +24,14 @@ void CSG::SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 		b = in->Clone();
 		nf = f->Clone();
 
-		nf->texdef = b->basis.faces->texdef;
-		nf->fnext = b->basis.faces;
-		b->basis.faces = nf;
+		nf->texdef = b->faces->texdef;
+		nf->fnext = b->faces;
+		b->faces = nf;
 
 		b->Build();
 		b->RemoveEmptyFaces();
 
-		if (!b->basis.faces)
+		if (!b->faces)
 		{	// completely clipped away
 			delete b;
 			*back = nullptr;
@@ -47,14 +47,14 @@ void CSG::SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	// swap the plane winding
 	nf->plane.Flip();
 
-	nf->texdef = b->basis.faces->texdef;
-	nf->fnext = b->basis.faces;
-	b->basis.faces = nf;
+	nf->texdef = b->faces->texdef;
+	nf->fnext = b->faces;
+	b->faces = nf;
 
 	b->Build();
 	b->RemoveEmptyFaces();
 
-	if (!b->basis.faces)
+	if (!b->faces)
 	{	// completely clipped away
 		delete b;
 		*front = nullptr;
@@ -79,9 +79,9 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 	Face *f1, *f2;
 	std::vector<Face*> faces, skipfaces;
 
-	for (f1 = a->basis.faces; f1; f1 = f1->fnext)
+	for (f1 = a->faces; f1; f1 = f1->fnext)
 	{
-		for (f2 = b->basis.faces; f2; f2 = f2->fnext)
+		for (f2 = b->faces; f2; f2 = f2->fnext)
 		{
 			if (!f1->plane.EqualTo(&f2->plane, true))
 				continue;	// windings can't be equal if planes aren't
@@ -99,12 +99,12 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 		return nullptr;	// no common faces to glue together
 
 	bool match;
-	for (f1 = a->basis.faces; f1; f1 = f1->fnext)
+	for (f1 = a->faces; f1; f1 = f1->fnext)
 	{
 		if (std::find(skipfaces.begin(), skipfaces.end(), f1) == skipfaces.end())
 			faces.push_back(f1);
 	}
-	for (f2 = b->basis.faces; f2; f2 = f2->fnext)
+	for (f2 = b->faces; f2; f2 = f2->fnext)
 	{
 		if (std::find(skipfaces.begin(), skipfaces.end(), f2) != skipfaces.end())
 			continue;
@@ -162,7 +162,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 	{
 		b = *brIt;
-		for (bf = b->basis.faces; bf; bf = bf->fnext)
+		for (bf = b->faces; bf; bf = bf->fnext)
 			pointBufSize += bf->face_winding->numpoints;	// buffer size is very greedy
 	}
 	pointBuf = new vec3[pointBufSize]();
@@ -172,7 +172,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 	{
 		b = *brIt;
-		for (bf = b->basis.faces; bf; bf = bf->fnext)
+		for (bf = b->faces; bf; bf = bf->fnext)
 		{
 			for (int i = 0; i < bf->face_winding->numpoints; i++)
 			{
@@ -261,7 +261,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 	delete pointBuf;
 	delete planeBuf;
 
-	for (f = result->basis.faces; f; f = f->fnext)
+	for (f = result->faces; f; f = f->fnext)
 	{
 		// compare result planes to original brush planes, preserve texdefs from matching planes
 		bool match = false;
@@ -269,7 +269,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 		{
 			b = *brIt;
-			for (bf = b->basis.faces; bf; bf = bf->fnext)
+			for (bf = b->faces; bf; bf = bf->fnext)
 			{
 				if (bf->plane.EqualTo(&f->plane, false))
 				{
@@ -291,15 +291,8 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		}
 		if (!match)
 		{
-		/*	if (!convex)
-			{
-				// a concave-only merge wouldn't create any new planes
-				delete result;
-				return nullptr;
-			}*/
 			// apply workzone texdef to the rest
 			f->texdef = g_qeglobals.d_workTexDef;
-			//f->DEPtexture = Textures::ForName(f->texdef.name);
 		}
 	}
 
@@ -439,13 +432,13 @@ Brush *CSG_BrushSubtract (Brush *a, Brush *b)
 	Face	*f;
 
 	for (int i = 0; i < 3; i++)
-		if (b->basis.mins[i] >= a->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= a->basis.mins[i] + ON_EPSILON)
+		if (b->mins[i] >= a->maxs[i] - ON_EPSILON || b->maxs[i] <= a->mins[i] + ON_EPSILON)
 			return a;	// definately don't touch
 
 	in = a;
 	out = nullptr;
 
-	for (f = b->basis.faces; f && in; f = f->fnext)
+	for (f = b->faces; f && in; f = f->fnext)
 	{
 		CSG::SplitBrushByFace(in, f, &front, &back);
 		if (in != a)

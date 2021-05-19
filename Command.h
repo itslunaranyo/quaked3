@@ -12,7 +12,7 @@
 class Command
 {
 public:
-	Command();
+	Command(const char* nameIn);
 	virtual ~Command();
 
 	enum { NOOP, LIVE, DONE, UNDONE } state;
@@ -25,7 +25,9 @@ public:
 	void Undo();
 	void Redo();
 	void Select();
+
 	unsigned id;
+	const char *name;
 
 protected:
 	bool selectOnDo;

@@ -4,48 +4,117 @@
 
 #include "qe3.h"
 
-CmdBrushMod::CmdBrushMod()
+CmdBrushMod::CmdBrushMod() : Command("Brush Mod")
 {
 }
 
 CmdBrushMod::~CmdBrushMod()
 {
 	if (state == LIVE)
-		Swap();	// we aren't done, so restore the geometry that was backed up
+		SwapAll();	// we aren't done, so restore the geometry that was backed up
 
 	// now manually delete whichever set of brush geometry we don't want
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
-		brbIt->br_basis.clear();
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
+		brbIt->clear();
 }
 
-void CmdBrushMod::brbasis_pair_s::swap()
+
+CmdBrushMod::brBasis_s::brBasis_s(Brush *bOrig) :
+	br(bOrig), mins(bOrig->mins), maxs(bOrig->maxs), faces(nullptr)
 {
-	Brush::brbasis_s temp;
-
-	// =assigning the basis copies pointers but doesn't clone faces
-	temp = br->basis;
-	br->basis = br_basis;
-	br_basis = temp;
-
-	// important: null this pointer, because the swapped faces belong to someone else
-	temp.faces = nullptr;
+	Face *f, *nf;
+	// important safety tip: this produces a face list in reverse order
+	// but you weren't trying to index a linked list by position anyway, right?
+	for (f = bOrig->faces; f; f = f->fnext)
+	{
+		nf = f->Clone();	// clones texdef and plane, but not winding
+		nf->fnext = faces;
+		faces = nf;
+	}
 }
 
+CmdBrushMod::brBasis_s::~brBasis_s()
+{
+	Face *f, *fnext;
+	for (f = faces; f; f = fnext)
+	{
+		fnext = f->fnext;
+		delete f;
+	}
+}
 
-// call BEFORE modifying a brush - clones its geometry into storage outside the scene
+void CmdBrushMod::brBasis_s::clear()
+{
+	// free faces
+	Face *f, *fnext;
+	for (f = faces; f; f = fnext)
+	{
+		fnext = f->fnext;
+		delete f;
+	}
+	faces = nullptr;
+}
+
+//================================================================
+
+void CmdBrushMod::Swap(brBasis_t &brb)
+{
+	/*
+	vec3 tmpv;
+	Face* tmpf;
+
+	// swap pointers but don't copy faces
+	tmpf = brb.br->faces;
+	brb.br->faces = brb.faces;
+	brb.faces = tmpf;
+
+	tmpv = brb.br->mins;
+	brb.br->mins = brb.mins;
+	brb.mins = tmpv;
+	tmpv = brb.br->maxs;
+	brb.br->maxs = brb.maxs;
+	brb.maxs = tmpv;
+	*/
+
+	std::swap(brb.br->faces, brb.faces);
+	std::swap(brb.br->mins, brb.mins);
+	std::swap(brb.br->maxs, brb.maxs);
+}
+
+void CmdBrushMod::SwapAll()
+{
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
+	{
+		Swap(*brbIt);
+	}
+}
+
+//================================================================
+
+// call BEFORE modifying a brush - clones its geometry, then moves existing geometry
+// into storage outside the scene
 void CmdBrushMod::ModifyBrush(Brush *br)
 {
 	assert(state == LIVE || state == NOOP);
 
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 		if (brbIt->br == br)
-			return;	// must avoid duplicates in the list, or duplicate restores will stomp each other
+			return;	// must avoid duplicates, or restores will stomp each other
 			
-	brbasisCache.emplace_back();
-	brbasis_pair_t &basispair = brbasisCache.back();
+	brushCache.emplace_back(br);
 
-	basispair.br = br;
-	br->CopyBasis(basispair.br_basis);
+	// the brush in the scene must be left pointing to the cloned set of Faces
+	/*
+	Face *f = br->faces;
+	br->faces = brushCache.back().faces;
+	brushCache.back().faces = f;
+	*/
+	std::swap(brushCache.back().faces, br->faces);
+	// the original faces are those saved in storage, so that if an undo happens the
+	// faces which prior undo steps point to in memory are the ones which are restored
+	// to the scene. commands and tools that wrap CmdBrushMod must be aware of this
+	// and act accordingly.
+
 	state = LIVE;
 }
 
@@ -55,16 +124,27 @@ void CmdBrushMod::ModifyBrushes(Brush *brList)
 		ModifyBrush(b);
 }
 
+//================================================================
+
 void CmdBrushMod::RestoreBrush(Brush *br)
 {
-	assert(state == LIVE || state == NOOP);
+	assert(state == LIVE);
 
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 	{
 		if (brbIt->br == br)
 		{
-			br->basis.clear();	// delete modified geometry
-			br->basis = brbIt->br_basis.clone();	// recopy backup geometry
+			Face *f, *nf;
+			br->ClearFaces();	// delete modified geometry
+
+			// recopy backup geometry
+			for (f = brbIt->faces; f; f = f->fnext)
+			{
+				nf = f->Clone();	// clones texdef and plane, but not winding
+				nf->fnext = br->faces;
+				br->faces = nf;
+			}
+			br->Build();
 			break;
 		}
 	}
@@ -78,65 +158,44 @@ void CmdBrushMod::RestoreBrushes(Brush *brList)
 
 void CmdBrushMod::RestoreAll()
 {
-	assert(state == LIVE || state == NOOP);
+	assert(state == LIVE);
 
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 	{
-		brbIt->br->basis.clear();	// delete modified geometry
-		brbIt->br->basis = brbIt->br_basis.clone();	// recopy backup geometry
-	}
-	state = NOOP;
-}
+		Face *f, *nf;
+		brbIt->br->ClearFaces();	// delete modified geometry
 
-// only call if the brush hasn't been changed after all and you don't need the backup
-void CmdBrushMod::UnmodifyBrush(Brush *br)
-{
-	assert(state == LIVE || state == NOOP);
-
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
-	{
-		if (brbIt->br == br)
+		// recopy backup geometry
+		for (f = brbIt->faces; f; f = f->fnext)
 		{
-			// deletes entry as well as the cloned geometry in the basis
-			brbasisCache.erase(brbIt);
-			break;
+			nf = f->Clone();	// clones texdef and plane, but not winding
+			nf->fnext = brbIt->br->faces;
+			brbIt->br->faces = nf;
 		}
+		brbIt->br->Build();
+		break;
 	}
-	if (brbasisCache.size() == 0)
-		state = NOOP;
+	//state = NOOP;
 }
 
-void CmdBrushMod::UnmodifyBrushes(Brush *brList)
-{
-	for (Brush* b = brList->next; b != brList; b = b->next)
-		UnmodifyBrush(b);
-}
-
-void CmdBrushMod::UnmodifyAll()
-{
-	assert(state == LIVE || state == NOOP);
-
-	// deletes entry as well as the cloned geometry in the basis
-	brbasisCache.clear();
-
-	state = NOOP;
-}
+//================================================================
 
 // call if you screwed up a brush and you want things to go back to the way they were
 void CmdBrushMod::RevertBrush(Brush *br)
 {
-	assert(state == LIVE || state == NOOP);
+	assert(state == LIVE);
 
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 	{
 		if (brbIt->br == br)
 		{
-			brbIt->swap();	// switch old geometry back into the scene first
-			brbasisCache.erase(brbIt);	// deletes entry as well as the swapped garbage
+			Swap(*brbIt);	// switch original geometry back into the scene first
+			br->Build();
+			brushCache.erase(brbIt);	// deletes entry and takes the swapped garbage with it
 			break;
 		}
 	}
-	if (brbasisCache.size() == 0)
+	if (brushCache.empty())
 		state = NOOP;
 }
 
@@ -149,35 +208,25 @@ void CmdBrushMod::RevertBrushes(Brush *brList)
 void CmdBrushMod::RevertAll()
 {
 	assert(state == LIVE || state == NOOP);
+	if (brushCache.empty())
+		return;
 
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
-		brbIt->swap();	// switch old geometry back into the scene first
-
-	brbasisCache.clear();
-
+	SwapAll();
+	brushCache.clear();
 	state = NOOP;
 }
 
 //==============================
 
-void CmdBrushMod::Swap()
-{
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
-	{
-		brbIt->swap();
-		brbIt->br->Build();
-	}
-}
-
 void CmdBrushMod::Do_Impl() {}	// nothing to do here, changes were already made outside this command
 
 // undo and redo are the same: switch all sequestered geometry with the scene geometry
-void CmdBrushMod::Undo_Impl() { Swap(); }
-void CmdBrushMod::Redo_Impl() { Swap(); }
+void CmdBrushMod::Undo_Impl() { SwapAll(); }
+void CmdBrushMod::Redo_Impl() { SwapAll(); }
 
 void CmdBrushMod::Sel_Impl()
 {
-	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
+	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 		Selection::SelectBrush(brbIt->br);
 }
 

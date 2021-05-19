@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdCone::CmdCone() : sides(0), target(nullptr), axis(2) {}
+CmdCone::CmdCone() : sides(0), target(nullptr), axis(2), Command("Make Cone") {}
 CmdCone::~CmdCone() {}
 
 void CmdCone::SetSides(int s)
@@ -49,9 +49,9 @@ void CmdCone::Do_Impl()
 	right = (axis + 1) % 3;
 	fwd = (axis + 2) % 3;
 
-	td = target->basis.faces->texdef;
-	mins = target->basis.mins;
-	maxs = target->basis.maxs;
+	td = target->faces->texdef;
+	mins = target->mins;
+	maxs = target->maxs;
 
 	cmdBM.ModifyBrush(target);
 	target->ClearFaces();

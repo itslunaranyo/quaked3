@@ -11,35 +11,37 @@ public:
 	CmdBrushMod();
 	~CmdBrushMod();
 
-	typedef struct brbasis_pair_s {
-		Brush* br;
-		Brush::brbasis_s br_basis;
-		void swap();
-	} brbasis_pair_t;
-
 	// clone off the geometry of these brushes and keep it
+	// -> original faces wind up outside the scene <-
 	void ModifyBrush(Brush* br);
 	void ModifyBrushes(Brush* brList);
 
-	// restore cloned geometry from these brushes
+	// restore geometry for these brushes back to their state when Modify()ed
+	// -> original faces stay outside the scene <-
 	void RestoreBrush(Brush* br);
 	void RestoreBrushes(Brush* brList);
 	void RestoreAll();
 
-	// throw away cloned geometry from these brushes and stop tracking - does NOT restore
-	void UnmodifyBrush(Brush* br);
-	void UnmodifyBrushes(Brush* brList);
-	void UnmodifyAll();
-
 	// restore cloned geometry from these brushes and stop tracking
+	// -> original faces are put back in the scene <-
 	void RevertBrush(Brush* br);
 	void RevertBrushes(Brush* brList);
 	void RevertAll();
 
 private:
-	std::vector<brbasis_pair_t> brbasisCache;
+	typedef struct brBasis_s {
+		brBasis_s(Brush *bOrig);
+		~brBasis_s();
+		Brush* br;
+		Face *faces;
+		vec3 mins, maxs;
+		void clear();
+	} brBasis_t;
 
-	void Swap();
+	std::vector<brBasis_t> brushCache;
+
+	void Swap(brBasis_t &brb);
+	void SwapAll();
 
 	void Do_Impl();
 	void Undo_Impl();

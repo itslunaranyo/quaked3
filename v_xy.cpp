@@ -66,8 +66,8 @@ void XYZView::PositionView()
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		origin[nDim1] = b->basis.mins[nDim1];
-		origin[nDim2] = b->basis.mins[nDim2];
+		origin[nDim1] = b->mins[nDim1];
+		origin[nDim2] = b->mins[nDim2];
 	}
 	else
 	{
@@ -154,16 +154,16 @@ XYZView::ToGridPoint
 void const XYZView::ToGridPoint (const int x, const int y, vec3 &point)
 {
 	ToPoint(x, y, point);
-	point[nDim1] = round(point[nDim1], g_qeglobals.d_nGridSize);
-	point[nDim2] = round(point[nDim2], g_qeglobals.d_nGridSize);
+	point[nDim1] = qround(point[nDim1], g_qeglobals.d_nGridSize);
+	point[nDim2] = qround(point[nDim2], g_qeglobals.d_nGridSize);
 	return;
 }
 
 void const XYZView::ToGridPoint(const int xIn, const int yIn, int &xOut, int &yOut)
 {
 	ToPoint(xIn, yIn, xOut, yOut);
-	xOut = round(xOut, g_qeglobals.d_nGridSize);
-	yOut = round(yOut, g_qeglobals.d_nGridSize);
+	xOut = qround(xOut, g_qeglobals.d_nGridSize);
+	yOut = qround(yOut, g_qeglobals.d_nGridSize);
 	return;
 }
 
@@ -367,7 +367,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			SnapToPoint( x, y, v1);
 
 			b = g_brSelectedBrushes.next;
-			v2 = v1 - b->basis.mins;
+			v2 = v1 - b->mins;
 
 			v2[dViewType] = 0;
 
@@ -1186,6 +1186,7 @@ void XYZView::DrawZIcon ()
 	x = g_qeglobals.d_vZ.origin[0];
 	y = g_qeglobals.d_vZ.origin[1];
 
+	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1326,6 +1327,8 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
+		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
+
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / scale, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
@@ -1362,6 +1365,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
+		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, 0.0f, vMinBounds[nDim2] - 20.0  / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
@@ -1398,6 +1402,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
+		glColor3fv((GLfloat*)&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
 		glRasterPos3f(0.0f, (vMinBounds[nDim1]+ vMaxBounds[nDim1]) * 0.5f,  vMinBounds[nDim2] - 20.0 / scale);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
 		glCallLists(strlen(dimstr), GL_UNSIGNED_BYTE, dimstr);
@@ -1420,23 +1425,26 @@ XYZView::DrawLightRadius
 */
 void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 {
-	float		f, fRadius;
+	float		f, fRadius, fWait;
 	float		fOrigX, fOrigY, fOrigZ;
 	double		fStep = (2.0f * Q_PI) / 200.0f;
 
-	if (strncmp(pBrush->owner->eclass->name, "light", 5))
+	if (!(pBrush->owner->eclass->showFlags & EFL_LIGHT))
 		return;
 
 	// get the value of the "light" key
 	fRadius = pBrush->owner->GetKeyValueFloat("light");
+	fWait = pBrush->owner->GetKeyValueFloat("wait");
 	// if entity's "light" key is not found, default to 300
 	if (!fRadius)
 		fRadius = 300;
+	if (fWait)
+		fRadius /= fWait;
 
 	// find the center
-	fOrigX = (pBrush->basis.mins[0] + ((pBrush->basis.maxs[0] - pBrush->basis.mins[0]) / 2));
-	fOrigY = (pBrush->basis.mins[1] + ((pBrush->basis.maxs[1] - pBrush->basis.mins[1]) / 2));
-	fOrigZ = (pBrush->basis.mins[2] + ((pBrush->basis.maxs[2] - pBrush->basis.mins[2]) / 2));
+	fOrigX = (pBrush->mins[0] + ((pBrush->maxs[0] - pBrush->mins[0]) / 2));
+	fOrigY = (pBrush->mins[1] + ((pBrush->maxs[1] - pBrush->mins[1]) / 2));
+	fOrigZ = (pBrush->mins[2] + ((pBrush->maxs[2] - pBrush->mins[2]) / 2));
 
 	glDisable(GL_LINE_STIPPLE);
 	glLineWidth(1);
@@ -1519,10 +1527,10 @@ bool XYZView::CullBrush(Brush *b)
 {
 	if (b->IsFiltered())
 		return true;
-	if (b->basis.mins[nDim1] > vMaxs[nDim1] ||
-		b->basis.mins[nDim2] > vMaxs[nDim2] ||
-		b->basis.maxs[nDim1] < vMins[nDim1] ||
-		b->basis.maxs[nDim2] < vMins[nDim2])
+	if (b->mins[nDim1] > vMaxs[nDim1] ||
+		b->mins[nDim2] > vMaxs[nDim2] ||
+		b->maxs[nDim1] < vMins[nDim1] ||
+		b->maxs[nDim2] < vMins[nDim2])
 		return true;
 	return false;
 }
@@ -1589,8 +1597,8 @@ void XYZView::DrawSelection()
 					bFixedSize = true;
 				for (int i = 0; i < 3; i++)
 				{
-					vMinBounds[i] = min(vMinBounds[i], brush->basis.mins[i]);
-					vMaxBounds[i] = max(vMaxBounds[i], brush->basis.maxs[i]);
+					vMinBounds[i] = min(vMinBounds[i], brush->mins[i]);
+					vMaxBounds[i] = max(vMaxBounds[i], brush->maxs[i]);
 				}
 			}
 		}
@@ -1682,11 +1690,11 @@ void XYZView::Draw ()
 	if (g_qeglobals.d_nPointfileDisplayList)
 		glCallList(g_qeglobals.d_nPointfileDisplayList);
 
+	/*
 	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
 				 g_qeglobals.d_v3SelectTranslate[1], 
 				 g_qeglobals.d_v3SelectTranslate[2]);
 
-	/*
 	if (g_bRotateCheck)	// sikk - Free Rotate
 		glColor3f(0.8f, 0.1f, 0.9f);
 	else if (g_bScaleCheck)	// sikk - Free Scaling
@@ -1732,16 +1740,19 @@ void XYZView::Draw ()
 		glPointSize(1);
 	}
 
+	/*
 	glTranslatef(-g_qeglobals.d_v3SelectTranslate[0], 
 		         -g_qeglobals.d_v3SelectTranslate[1], 
 				 -g_qeglobals.d_v3SelectTranslate[2]);
-
+	*/
 
 	if (!(dViewType == XY))
 		glPopMatrix();
 
+	/*
 	if (GetKeyState(VK_MENU) < 0)
 		DrawRotateIcon();
+	*/
 
 	// now draw camera point
 	DrawCameraIcon();

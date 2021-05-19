@@ -352,7 +352,7 @@ void Selection::BrushesToFaces()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f = b->faces; f; f = f->fnext)
 		{
 			SelectFace(f);
 		}
@@ -713,10 +713,10 @@ void Selection::GetBounds(vec3 &mins, vec3 &maxs)
 	{
 		for (i = 0; i < 3; i++)
 		{
-			if (b->basis.mins[i] < mins[i])
-				mins[i] = b->basis.mins[i];
-			if (b->basis.maxs[i] > maxs[i])
-				maxs[i] = b->basis.maxs[i];
+			if (b->mins[i] < mins[i])
+				mins[i] = b->mins[i];
+			if (b->maxs[i] > maxs[i])
+				maxs[i] = b->maxs[i];
 		}
 	}
 }
@@ -762,7 +762,7 @@ void Selection::GetMid(vec3 &mid)
 		mid[i] = roundf((mins[i] + maxs[i]) * 0.5f);
 	}
 	//for (i = 0; i < 3; i++)
-	//	mid[i] = g_qeglobals.d_nGridSize * floor(((basis.mins[i] + basis.maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
+	//	mid[i] = g_qeglobals.d_nGridSize * floor(((mins[i] + maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
 }
 
 
@@ -851,7 +851,7 @@ void Selection::MatchingTextures()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f = b->faces; f; f = f->fnext)
 		{
 			if (f->texdef.tex == txfind)
 			{
@@ -953,8 +953,8 @@ void Selection::CompleteTall()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->basis.mins;
-	maxs = g_brSelectedBrushes.next->basis.maxs;
+	mins = g_brSelectedBrushes.next->mins;
+	maxs = g_brSelectedBrushes.next->maxs;
 	Modify_Delete();
 
 	// lunaran - grid view reunification
@@ -969,8 +969,8 @@ void Selection::CompleteTall()
 	{
 		next = b->next;
 
-		if ((b->basis.maxs[nDim1] > maxs[nDim1] || b->basis.mins[nDim1] < mins[nDim1]) ||
-			(b->basis.maxs[nDim2] > maxs[nDim2] || b->basis.mins[nDim2] < mins[nDim2]))
+		if ((b->maxs[nDim1] > maxs[nDim1] || b->mins[nDim1] < mins[nDim1]) ||
+			(b->maxs[nDim2] > maxs[nDim2] || b->mins[nDim2] < mins[nDim2]))
 			continue;
 
 		if (b->IsFiltered())
@@ -997,8 +997,8 @@ void Selection::PartialTall()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->basis.mins;
-	maxs = g_brSelectedBrushes.next->basis.maxs;
+	mins = g_brSelectedBrushes.next->mins;
+	maxs = g_brSelectedBrushes.next->maxs;
 	Modify_Delete();
 
 	// lunaran - grid view reunification
@@ -1013,8 +1013,8 @@ void Selection::PartialTall()
 	{
 		next = b->next;
 
-		if ((b->basis.mins[nDim1] > maxs[nDim1] || b->basis.maxs[nDim1] < mins[nDim1]) ||
-			(b->basis.mins[nDim2] > maxs[nDim2] || b->basis.maxs[nDim2] < mins[nDim2]))
+		if ((b->mins[nDim1] > maxs[nDim1] || b->maxs[nDim1] < mins[nDim1]) ||
+			(b->mins[nDim2] > maxs[nDim2] || b->maxs[nDim2] < mins[nDim2]))
 			continue;
 
 		if (b->IsFiltered())
@@ -1040,14 +1040,14 @@ void Selection::Touching()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->basis.mins;
-	maxs = g_brSelectedBrushes.next->basis.maxs;
+	mins = g_brSelectedBrushes.next->mins;
+	maxs = g_brSelectedBrushes.next->maxs;
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
-			if (b->basis.mins[i] > maxs[i] + 1 || b->basis.maxs[i] < mins[i] - 1)
+			if (b->mins[i] > maxs[i] + 1 || b->maxs[i] < mins[i] - 1)
 				break;
 		if (i == 3)
 		{
@@ -1072,15 +1072,15 @@ void Selection::Inside()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->basis.mins;
-	maxs = g_brSelectedBrushes.next->basis.maxs;
+	mins = g_brSelectedBrushes.next->mins;
+	maxs = g_brSelectedBrushes.next->maxs;
 	Modify_Delete();
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
-			if (b->basis.maxs[i] > maxs[i] || b->basis.mins[i] < mins[i])
+			if (b->maxs[i] > maxs[i] || b->mins[i] < mins[i])
 				break;
 		if (i == 3)
 		{
@@ -1164,7 +1164,7 @@ void UpdateWorkzone(Brush* b)
 	assert(b != &g_brSelectedBrushes);
 
 	// will update the workzone to the given brush
-	g_qeglobals.d_v3WorkMin = b->basis.mins;
-	g_qeglobals.d_v3WorkMax = b->basis.maxs;
+	g_qeglobals.d_v3WorkMin = b->mins;
+	g_qeglobals.d_v3WorkMax = b->maxs;
 }
 

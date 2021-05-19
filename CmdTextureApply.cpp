@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdTextureApply::CmdTextureApply()
+CmdTextureApply::CmdTextureApply() : Command("Apply Texture")
 {
 	// state = LIVE;
 }
@@ -31,7 +31,7 @@ void CmdTextureApply::UseFaces(std::vector<Face*> &fList)
 void CmdTextureApply::UseBrush(Brush *br)
 {
 	std::vector<Face*> fq;
-	for (Face* f = br->basis.faces; f; f = f->fnext)
+	for (Face* f = br->faces; f; f = f->fnext)
 		fq.push_back(f);
 	UseFaces(fq);
 }
@@ -41,7 +41,7 @@ void CmdTextureApply::UseBrushes(Brush *brList)
 	std::vector<Face*> fq;
 	for (Brush* b = brList->next; b != brList; b = b->next)
 	{
-		for (Face* f = b->basis.faces; f; f = f->fnext)
+		for (Face* f = b->faces; f; f = f->fnext)
 			fq.push_back(f);
 	}
 	UseFaces(fq);

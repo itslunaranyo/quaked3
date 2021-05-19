@@ -90,10 +90,10 @@ void View::DrawPathLines()
 			// <---sikk
 
 			for (i = 0; i < 3; i++)
-				mid[i] = (sb->basis.mins[i] + sb->basis.maxs[i]) * 0.5;
+				mid[i] = (sb->mins[i] + sb->maxs[i]) * 0.5;
 
 			for (i = 0; i < 3; i++)
-				mid1[i] = (tb->basis.mins[i] + tb->basis.maxs[i]) * 0.5;
+				mid1[i] = (tb->mins[i] + tb->maxs[i]) * 0.5;
 
 			dir = mid1 - mid;
 			len = VectorNormalize(dir);

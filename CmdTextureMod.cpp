@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdTextureMod::CmdTextureMod() : action(TM_NOTSET)
+CmdTextureMod::CmdTextureMod() : action(TM_NOTSET), Command("Modify Texture")
 {
 	// 
 }
@@ -38,7 +38,7 @@ void CmdTextureMod::UseBrushes(Brush *brList)
 
 	for (Brush* b = brList->next; b != brList; b = b->next)
 	{
-		for (Face* f = b->basis.faces; f; f = f->fnext)
+		for (Face* f = b->faces; f; f = f->fnext)
 			fq.push_back(f);
 	}
 	UseFaces(fq);

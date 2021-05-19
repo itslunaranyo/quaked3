@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdReparentBrush::CmdReparentBrush() : newowner(nullptr) {}
+CmdReparentBrush::CmdReparentBrush() : newowner(nullptr), Command("Reparent Brush") {}
 
 CmdReparentBrush::~CmdReparentBrush()
 {

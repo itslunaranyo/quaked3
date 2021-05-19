@@ -27,7 +27,7 @@ map data agnostic, are not Commands, and cannot be undone.
 
 CommandQueue g_cmdQueue;
 
-Command::Command() : selectOnDo(false), selectOnUndo(false), state(NOOP) {}
+Command::Command(const char* nameIn) : name(nameIn), selectOnDo(false), selectOnUndo(false), state(NOOP) {}
 Command::~Command() {}
 
 /*
@@ -190,6 +190,7 @@ void CommandQueue::Undo()
 
 	Command* cmd = undoQueue.back();
 	undoQueue.pop_back();
+	Sys_Printf("Undo: %s\n", cmd->name);
 	cmd->Undo();
 	redoQueue.push_back(cmd);
 
@@ -212,6 +213,7 @@ void CommandQueue::Redo()
 
 	Command* cmd = redoQueue.back();
 	redoQueue.pop_back();
+	Sys_Printf("Redo: %s\n", cmd->name);
 	cmd->Redo();
 	undoQueue.push_back(cmd);
 

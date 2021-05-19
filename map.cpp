@@ -152,7 +152,7 @@ void Map::BuildBrushData(Brush &blist)
 		b->RefreshTexdefs();
 
 		b->Build();
-		if (!b->basis.faces)
+		if (!b->faces)
 		{
 			delete b;
 			Sys_Printf("MSG: Removed degenerate brush.\n");
@@ -900,8 +900,8 @@ void Map::RegionTallBrush()
 
 	RegionOff();
 
-	regionMins = b->basis.mins;
-	regionMaxs = b->basis.maxs;
+	regionMins = b->mins;
+	regionMaxs = b->maxs;
 	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 
@@ -920,8 +920,8 @@ void Map::RegionBrush()
 
 	RegionOff();
 
-	regionMins = b->basis.mins;
-	regionMaxs = b->basis.maxs;
+	regionMins = b->mins;
+	regionMaxs = b->maxs;
 
 	Modify_Delete();
 	RegionApply();
@@ -1020,9 +1020,9 @@ bool Map::IsBrushFiltered(Brush *b)
 
 	for (int i = 0; i < 3; i++)
 	{
-		if (b->basis.mins[i] > regionMaxs[i])
+		if (b->mins[i] > regionMaxs[i])
 			return true;
-		if (b->basis.maxs[i] < regionMins[i])
+		if (b->maxs[i] < regionMins[i])
 			return true;
 	}
 	return false;

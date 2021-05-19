@@ -244,7 +244,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 		{
 			for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
 			{
-				for (f = br->basis.faces; f; f = f->fnext)
+				for (f = br->faces; f; f = f->fnext)
 				{
 					if (f->texdef.tex == txFind)
 						cmdTA->UseFace(f);
@@ -275,7 +275,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 			{
 				if (!br->IsFiltered())
 				{
-					for (f = br->basis.faces; f; f = f->fnext)
+					for (f = br->faces; f; f = f->fnext)
 					{
 						if (f->texdef.tex == txFind)
 							cmdTA->UseFace(f);
@@ -414,7 +414,7 @@ void Surf_RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f = b->faces; f; f = f->fnext)
 		{
 			RotateFaceTexture(f, nAxis, fDeg, vOrigin);
 			b->Build();

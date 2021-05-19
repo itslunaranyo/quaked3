@@ -9,6 +9,8 @@
 #include "qedefs.h"
 #include <assert.h>
 
+
+
 bool VectorCompare(const vec3 v1, const vec3 v2)
 {
 	for (int i = 0; i < 3; i++)

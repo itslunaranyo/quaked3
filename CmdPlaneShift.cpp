@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdPlaneShift::CmdPlaneShift() {}
+CmdPlaneShift::CmdPlaneShift() : Command("Plane Shift") {}
 CmdPlaneShift::~CmdPlaneShift() {}
 
 

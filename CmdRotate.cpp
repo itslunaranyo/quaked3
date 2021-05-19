@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdRotate::CmdRotate()
+CmdRotate::CmdRotate() : Command("Rotate")
 {
 	// state = LIVE;
 }

@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname)
+CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Create Brush Entity")
 {
 	selectOnDo = true;
 	selectOnUndo = true;

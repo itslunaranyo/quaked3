@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdPaste::CmdPaste()
+CmdPaste::CmdPaste() : Command("Paste")
 {
 	selectOnDo = true;
 	state = LIVE;

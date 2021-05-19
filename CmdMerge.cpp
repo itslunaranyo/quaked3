@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdMerge::CmdMerge() : convex(false)
+CmdMerge::CmdMerge() : convex(false), Command("CSG Merge")
 {
 	selectOnDo = true;
 	selectOnUndo = true;

@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdScale::CmdScale()
+CmdScale::CmdScale() : Command("Scale")
 {
 	// state = LIVE;
 }

@@ -67,7 +67,6 @@ void MakeFace (Face *f)
 	int			pnum[128];
 	winding_t  *w;
 
-	//w = g_brSelectedBrushes.next->MakeFaceWinding(f);
 	w = f->MakeWinding();
 	if (!w)
 		return;
@@ -97,7 +96,7 @@ void SetupVertexSelection ()
 	
 	b = g_brSelectedBrushes.next;
 	
-	for (f = b->basis.faces; f; f = f->fnext)
+	for (f = b->faces; f; f = f->fnext)
 		MakeFace(f);
 
 	Sys_UpdateWindows(W_SCENE);
@@ -114,7 +113,6 @@ void SelectFaceEdge (Face *f, int p1, int p2)
 	int			pnum[128];
 	winding_t  *w;
 
-	//w = g_brSelectedBrushes.next->MakeFaceWinding(f);
 	w = f->MakeWinding();
 
 	if (!w)
@@ -127,16 +125,6 @@ void SelectFaceEdge (Face *f, int p1, int p2)
 	{
 		if (pnum[i] == p1 && pnum[(i + 1) % w->numpoints] == p2)
 		{
-			/*
-			f->plane.pts[0] = g_qeglobals.d_v3Points[pnum[i]];
-			f->plane.pts[1] = g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]];
-			f->plane.pts[2] = g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]];
-			
-			for (j = 0; j < 3; j++)
-				for (k = 0; k < 3; k++)
-					f->plane.pts[j][k] = floor(f->plane.pts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-			*/
-
 			f->plane.FromPoints(g_qeglobals.d_v3Points[pnum[i]],
 								g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]],
 								g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]]);
@@ -167,7 +155,7 @@ void SelectVertex (int p1)
 	winding_t  *w;
 
 	b = g_brSelectedBrushes.next;
-	for (f = b->basis.faces; f; f = f->fnext)
+	for (f = b->faces; f; f = f->fnext)
 	{
 		//w = b->MakeFaceWinding(f);
 		w = f->MakeWinding();
@@ -179,16 +167,6 @@ void SelectVertex (int p1)
 		{
 			if (FindPoint(w->points[i].point) == p1)
 			{ 
-				/*
-				f->plane.pts[0] = w->points[(i + w->numpoints - 1) % w->numpoints].point;
-				f->plane.pts[1] = w->points[i].point;
-				f->plane.pts[2] = w->points[(i + 1) % w->numpoints].point;
-				
-				for (j = 0; j < 3; j++)
-					for (k = 0; k < 3; k++)
-						f->plane.pts[j][k] = floor(f->plane.pts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
-				*/
-
 				f->plane.FromPoints(w->points[(i + w->numpoints - 1) % w->numpoints].point,
 									w->points[i].point,
 									w->points[(i + 1) % w->numpoints].point);
@@ -243,7 +221,6 @@ void SelectEdgeByRay (const vec3 org, const vec3 dir)
 	}
 
 	SetCursor(LoadCursor(NULL, IDC_CROSS)); // sikk - Set Cursor to Cross when moving point
-//	Sys_Printf("MSG: Hit edge.\n");
 	Sys_Printf("CMD: Dragging edge.\n");
 
 	// make the two faces that border the edge use the two edge points
@@ -291,7 +268,6 @@ void SelectVertexByRay (const vec3 org, const vec3 dir)
 	}
 
 	SetCursor(LoadCursor(NULL, IDC_CROSS)); // sikk - Set Cursor to Cross when moving point
-//	Sys_Printf("MSG: Hit vertex.\n");
 	Sys_Printf("CMD: Dragging vertex.\n");
 
 	// sikk---> Vertex Editing Splits Face
@@ -302,3 +278,23 @@ void SelectVertexByRay (const vec3 org, const vec3 dir)
 		SelectVertex(besti);
 // <---sikk
 }
+
+
+/*
+=================
+AddPlanePoint
+=================
+*/
+int AddPlanePoint(vec3 *f)
+{
+	int i;
+
+	for (i = 0; i < g_qeglobals.d_nNumMovePoints; i++)
+		if (g_qeglobals.d_fMovePoints[i] == f)
+			return 0;
+
+	g_qeglobals.d_fMovePoints[g_qeglobals.d_nNumMovePoints++] = f;
+
+	return 1;
+}
+

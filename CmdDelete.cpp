@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdDelete::CmdDelete(Brush* brList)
+CmdDelete::CmdDelete(Brush* brList) : Command("Delete")
 {
 	selectOnUndo = true;
 

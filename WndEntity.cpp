@@ -897,7 +897,7 @@ void WndEntity::CreateEntity()
 
 	if (!Selection::HasBrushes())
 	{
-		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.basis.mins);	// FIXME: dum
+		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum
 	}
 	else if (Selection::OnlyPointEntities())
 	{

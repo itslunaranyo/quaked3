@@ -106,7 +106,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		hot = true;
 
 		// lunaran - alt quick clip
-		if (wParam & MK_ALT)
+		if (AltDown())
 			StartQuickClip(&v, x, y);
 		else
 			DropPoint(&v, x, y);
@@ -118,7 +118,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
-		if (wParam & MK_ALT)
+		if (AltDown())
 			EndQuickClip();
 		else
 			EndPoint();
@@ -428,7 +428,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 			*outAxis = XY;
 
 		pt = g_qeglobals.d_vCamera.origin + t.dist * dir;
-		SnapToPoint(pt);
+		pt = pointOnGrid(pt);
 		ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pt);
 		out = pt;
 		return true;
@@ -738,7 +738,12 @@ bool ClipTool::Draw3D(CameraView &v)
 		return false;
 	if (!points[0].set)
 		return false;
-	Draw();
+
+	if (points[1].set)
+		Draw();
+	else
+		v.DrawSelected(&g_brSelectedBrushes);
+
 	DrawPoints();
 	glEnable(GL_DEPTH_TEST);
 	return true;
@@ -751,7 +756,9 @@ bool ClipTool::Draw2D(XYZView &v)
 	if (!points[0].set)
 		return false;
 	v.DrawSelection();
-	Draw();
+	
+	DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);
+
 	DrawPoints();
 	return true;
 }
@@ -783,89 +790,54 @@ void ClipTool::DrawPoints()
 		sprintf(strMsg, "%i", i);
 		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
 	}
+	glEnable(GL_DEPTH_TEST);
 }
 
+void ClipTool::DrawClipWire(std::vector<Brush*> *brList)
+{
+	Face* face;
+
+	// draw yellow wireframe of carved brushes
+	glDisable(GL_DEPTH_TEST);
+	glColor3f(1, 1, 0);
+	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
+		for (face = (*brIt)->faces; face; face = face->fnext)
+			face->DrawWire();
+	glEnable(GL_DEPTH_TEST);
+}
 
 /*
 ==============
 ClipTool::Draw
 ==============
 */
-void ClipTool::Draw ()
+void ClipTool::Draw()
 {
-	Brush		*brush;
-	Face		*face;
+	Face *face;
 
-	if (points[1].set)
-	{
-		std::vector<Brush*> *brList = (backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
-		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
-			(*brIt)->Draw();
+	// draw carved brushes textured
+	std::vector<Brush*> *brList = (backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
+	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
+		(*brIt)->Draw();
 
-		glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_2D);
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
-					g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
-					g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
-					0.3f);
-		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
-			for (face = (*brIt)->basis.faces; face; face = face->fnext)
-				face->Draw();
-		glDisable(GL_BLEND);
-
-		glDisable(GL_DEPTH_TEST);
-		glColor3f(1, 1, 0);
-		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
-			for (face = (*brIt)->basis.faces; face; face = face->fnext)
-				face->DrawWire();
-
-	}
-	else
-	{
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-			brush->Draw();
-
-		glDisable(GL_TEXTURE_2D);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
+	// draw red highlight over carved brushes
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
 				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
 				g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
 				0.3f);
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-			for (face = brush->basis.faces; face; face = face->fnext)
-				face->Draw();
-		glDisable(GL_BLEND);
+	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
+		for (face = (*brIt)->faces; face; face = face->fnext)
+			face->Draw();
+	glDisable(GL_BLEND);
 
-		glDisable(GL_DEPTH_TEST);
-		glColor3f(1, 1, 0);
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-			for (face = brush->basis.faces; face; face = face->fnext)
-				face->DrawWire();
-	}
-
+	DrawClipWire(brList);
 	glEnable(GL_TEXTURE_2D);
 }
 
 
-
-
-
-
-/*
-==================
-SnapToPoint
-
-TODO: find me a real home
-==================
-*/
-void SnapToPoint(vec3 &point)
-{
-	for (int i = 0; i < 3; i++)
-		point[i] = floor(point[i] / g_qeglobals.d_nGridSize + 0.5f) * g_qeglobals.d_nGridSize;
-}
 
 

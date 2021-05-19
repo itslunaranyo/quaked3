@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdImportMap::CmdImportMap()
+CmdImportMap::CmdImportMap() : Command("Import Map")
 {
 	selectOnDo = true;
 }

@@ -69,12 +69,8 @@ private:
 
 	void Draw();
 	void DrawPoints();
+	void DrawClipWire(std::vector<Brush*> *brList);
 };
 
-
-
-//========================================================================
-
-void SnapToPoint(vec3 &point);
 
 #endif

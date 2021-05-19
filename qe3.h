@@ -27,6 +27,7 @@
 #include <cassert>	// lunaran - for my own sanity
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "mathlib.h"
@@ -39,6 +40,7 @@
 
 #include "palette.h"
 #include "textures.h"
+#include "plane.h"
 #include "face.h"
 #include "brush.h"
 #include "csg.h"
@@ -80,6 +82,9 @@
 
 //========================================================================
 
+// persistent preferences saved into the registry
+// lunaran TODO: move a bunch of this stuff into a text config, because starting QE
+// to find 100% of your settings are gone because of a tiny change really sucks
 typedef struct
 {
 	int		nSize;				// structure size
@@ -153,9 +158,9 @@ typedef struct
 	bool		d_bShowGrid;
 	int			d_nGridSize;
 
-	vec3		d_v3WorkMin, 			// defines the boundaries of the current work area is used to guess
+	vec3		d_v3WorkMin, 			// defines the boundaries of the current work area, used to guess
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
-	TexDef	d_workTexDef;			// lunaran: moved out of texturewin_t
+	TexDef		d_workTexDef;			// lunaran: moved out of texturewin_t
 
 	HGLRC		d_hglrcBase;
 	HDC			d_hdcBase;
@@ -171,7 +176,6 @@ typedef struct
 				d_hwndStatus,
 				d_hwndToolbar[11],
 				d_hwndRebar,			// sikk - Rebar 
-				d_hwndSplash,			// sikk - Splash screen
 				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
 
 	WndCamera	*d_wndCamera;
@@ -208,7 +212,6 @@ typedef struct
 
 	//int         d_nWorkCount;		// no longer necessary for punishing jromero unproductivity
 
-	vec3		d_v3SelectTranslate;    // for dragging w/o making new display lists
 	select_t    d_selSelectMode;
 
 	int		    d_nFontList;
@@ -218,7 +221,6 @@ typedef struct
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
 
 	std::vector<Tool*> d_tools;
-	//bool	    d_bClipMode;
 	ClipTool	*d_clipTool;
 	TextureTool	*d_texTool;
 
@@ -268,11 +270,7 @@ void	QE_UpdateCommandUI ();
 char   *QE_ExpandRelativePath (char *p);
 void	QE_SetInspectorMode(int nType);
 
-// QE Win32 function declarations
-//int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
-//void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
-
-char	*CopyString (char *s);
+vec3	pointOnGrid(const vec3 point);
 
 // system functions
 void    Sys_UpdateBrushStatusBar ();

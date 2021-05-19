@@ -5,7 +5,7 @@
 #include "qe3.h"
 
 
-CmdHollow::CmdHollow()
+CmdHollow::CmdHollow() : Command("CSG Hollow")
 {
 	selectOnDo = true;
 	selectOnUndo = true;
@@ -41,7 +41,7 @@ void CmdHollow::Do_Impl()
 	for (auto brIt = brHollowed.begin(); brIt != brHollowed.end(); ++brIt)
 	{
 		Brush *br = *brIt;
-		for (f = br->basis.faces; f; f = f->fnext)
+		for (f = br->faces; f; f = f->fnext)
 		{
 			split = f->Clone();
 			move = f->plane.normal * (float)g_qeglobals.d_nGridSize;

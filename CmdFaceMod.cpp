@@ -5,7 +5,7 @@
 #include "qe3.h"
 #include <algorithm>
 
-CmdFaceMod::CmdFaceMod()
+CmdFaceMod::CmdFaceMod() : Command("Face Mod")
 {
 }
 

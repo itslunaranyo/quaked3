@@ -26,7 +26,7 @@ typedef glm::vec3	vec3;
 
 //========================================================================
 
-inline int round(const float i, const int r) { return std::lroundf(i / r) * r; }
+inline int qround(const float i, const int r) { return std::lroundf(i / r) * r; }
 
 // lunaran: glm blows these defines away somehow
 inline int min(int a, int b) { if (a < b) return a; return b; }

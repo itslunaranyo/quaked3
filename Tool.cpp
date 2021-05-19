@@ -181,8 +181,3 @@ bool Tool::FilterInput(UINT uMsg)
 			(uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) ||
 			(uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) );
 }
-
-vec3 Tool::pointOnGrid(const vec3 v)
-{
-	return glm::round(v / (float)g_qeglobals.d_nGridSize) * (float)g_qeglobals.d_nGridSize;
-}

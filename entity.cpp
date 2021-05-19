@@ -569,62 +569,8 @@ void Entity::Write(std::ostream &out, bool use_region)
 	}
 	out << "}\n";
 }
-/*
-void Entity::Write (FILE *f, bool use_region)
-{
-	EPair	*ep;
-	Brush	*b;
-	int		count;
 
-	// if none of the entities brushes are in the region,
-	// don't write the entity at all
-	if (use_region)
-	{
-		// in region mode, save the camera position as playerstart
-		if (!strcmp(GetKeyValue("classname"), "info_player_start"))
-		{
-			fprintf(f, "{\n");
-			fprintf(f, "\"classname\" \"info_player_start\"\n");
-			fprintf(f, "\"origin\" \"%d %d %d\"\n", (int)g_qeglobals.d_vCamera.origin[0], 
-													(int)g_qeglobals.d_vCamera.origin[1], 
-													(int)g_qeglobals.d_vCamera.origin[2]);
-			fprintf(f, "\"angle\" \"%d\"\n", (int)g_qeglobals.d_vCamera.angles[YAW]);
-			fprintf(f, "}\n");
-			return;
-		}
-
-		for (b = brushes.onext; b != &brushes; b = b->onext)
-			if (!g_map.IsBrushFiltered(b))
-				break;	// got one
-
-		if (b == &brushes)
-			return;	// nothing visible
-	}
-
-	CheckOrigin();
-
-	fprintf(f, "{\n");
-	for (ep = epairs; ep; ep = ep->next)
-		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
-
-	if (IsBrush())
-	{
-		count = 0;
-		for (b = brushes.onext; b != &brushes; b = b->onext)
-		{
-			if (!use_region || !g_map.IsBrushFiltered (b))
-			{
-				fprintf(f, "// brush %d\n", count);
-				count++;
-				b->Write(f);
-			}
-		}
-	}
-	fprintf(f, "}\n");
-}
-*/
 // sikk---> Export Selection (Map/Prefab)
-
 /*
 =================
 Entity::WriteSelected
@@ -668,42 +614,6 @@ void Entity::WriteSelected(std::ostream &out)
 	}
 	out << "}\n";
 }
-/*
-void Entity::WriteSelected (FILE *f)
-{
-	Brush	*b;
-	EPair	*ep;
-	int		count;
-
-	for (b = brushes.onext; b != &brushes; b = b->onext)
-		if (Selection::IsBrushSelected(b))
-			break;	// got one
-
-	if (b == &brushes)
-		return;		// nothing selected
-
-	CheckOrigin();
-
-	fprintf (f, "{\n");
-	for (ep = epairs; ep; ep = ep->next)
-		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
-
-	if (IsBrush())
-	{
-		count = 0;
-		for (b = brushes.onext; b != &brushes; b = b->onext)
-		{
-			if (Selection::IsBrushSelected(b))
-			{
-				fprintf(f, "// brush %d\n", count);
-				count++;
-				b->Write(f);
-			}
-		}
-	}
-	fprintf(f, "}\n");
-}
-*/
 // <---sikk
 
 
@@ -753,7 +663,7 @@ void Entity::SetOriginFromBrush()
 	if (IsBrush()) return;
 	if (brushes.onext == &brushes) return;
 
-	org = brushes.onext->basis.mins - eclass->mins;
+	org = brushes.onext->mins - eclass->mins;
 	SetKeyValueIVector("origin", org);
 	origin = org;
 }
@@ -888,11 +798,11 @@ bool Entity::Create (EntClass *ecIn)
 	else
 	{
 		// TODO: pass the location of the right-click via an appropriate method
-		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.basis.mins);
+		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.mins);
 		//Selection::DeselectAll();
 		g_cmdQueue.Complete(cmd);
 		//cmd->Select();
-		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
+		g_brSelectedBrushes.mins = vec3(0);	// reset
 	}
 
 	/*
@@ -916,9 +826,9 @@ bool Entity::Create (EntClass *ecIn)
 	if (c->IsPointClass())
 	{
 		// TODO: pass the location of the right-click via an appropriate method
-		e->origin = g_brSelectedBrushes.basis.mins;
+		e->origin = g_brSelectedBrushes.mins;
 		e->SetKeyValueIVector("origin", e->origin);
-		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
+		g_brSelectedBrushes.mins = vec3(0);	// reset
 
 		e->MakeBrush();
 
@@ -960,7 +870,7 @@ void Entity::ChangeClassname(EntClass* ec)
 void Entity::ChangeClassname(const char *classname)
 {
 	// lunaran TODO: jesus christ there has to be a better way
-	bool hasbrushes = (brushes.onext->basis.faces->texdef.tex->name[0] != '#');
+	bool hasbrushes = (brushes.onext->faces->texdef.tex->name[0] != '#');
 
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
 	ChangeClassname(ec);

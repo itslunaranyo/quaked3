@@ -10,7 +10,7 @@
 // for restoration.
 // point entity fixedsize brushes are never unlinked from their owner entities.
 
-CmdAddRemove::CmdAddRemove()
+CmdAddRemove::CmdAddRemove() : Command("Add/Remove")
 {
 }
 

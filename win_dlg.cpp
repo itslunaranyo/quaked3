@@ -140,7 +140,7 @@ void FindBrush (int entitynum, int brushnum)
 	Selection::SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
-		g_qeglobals.d_vXYZ[0].origin[i] = (b->basis.mins[i] + b->basis.maxs[i]) / 2;
+		g_qeglobals.d_vXYZ[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
 
 	Sys_Printf("MSG: Selected.\n");
 }
@@ -1037,7 +1037,7 @@ void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 o
 	g_bBrushBased = bBrushbased;
 	g_bFromSelection = bSel;
 	//if (!bSel)
-		g_brSelectedBrushes.basis.mins = origin;
+		g_brSelectedBrushes.mins = origin;
 
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CREATEENTITY), g_qeglobals.d_hwndMain, CreateEntityDlgProc);
 }
@@ -1092,7 +1092,7 @@ BOOL CALLBACK MapInfoDlgProc (
 			if (pBrush->owner->IsWorld())
 			{
 				// we don't want to count point entity faces 
-				for (pFace = pBrush->basis.faces; pFace; pFace = pFace->fnext)
+				for (pFace = pBrush->faces; pFace; pFace = pFace->fnext)
 					nTotalFaces++;
 				nTotalBrushes++;
 			}
@@ -1101,11 +1101,11 @@ BOOL CALLBACK MapInfoDlgProc (
 			else
 				nTotalBrushEnts++;
 
-			if (!strncmp(pBrush->basis.faces->texdef.name, "sky", 3))
+			if (!strncmp(pBrush->faces->texdef.name, "sky", 3))
 				nSkyBrushes++;
-			if (pBrush->basis.faces->texdef.name[0] == '*')
+			if (pBrush->faces->texdef.name[0] == '*')
 				nWaterBrushes++;
-			if (!strncmp(pBrush->basis.faces->texdef.name, "clip", 4))
+			if (!strncmp(pBrush->faces->texdef.name, "clip", 4))
 				nClipBrushes++;
 		}
 

@@ -17,25 +17,10 @@ public:
 	Brush	*prev, *next;	// links in active/selected
 	Brush	*oprev, *onext;	// links in entity
 	Entity	*owner;
-
-	struct brbasis_s {
-		brbasis_s();
-		~brbasis_s();
-		brbasis_s clone() const;
-		void	clear();
-
-		Face	*faces;
-		vec3	mins, maxs;
-	} basis;
+	Face	*faces;
+	vec3	mins, maxs;
 
 	unsigned int showFlags;	// lunaran: hiddenBrush now rolled into a whole set of bitflags
-
-	// lunaran TODO: go away
-	// sikk---> Undo/Redo
-	int undoId;			// undo ID		
-	int redoId;			// redo ID
-	int ownerId;		// entityId of the owner entity for undo
-	// <---sikk
 
 	//====================================
 
@@ -48,8 +33,7 @@ public:
 	static Brush *Create (const vec3 inMins, const vec3 inMaxs, TexDef *texdef);
 	void	Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef);
 	Brush	*Clone() const;
-	Brush	*FullClone() const;	// sikk - Undo/Redo
-	void	CopyBasis(brbasis_s &brb);
+	//Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	ClearFaces();
 	void	Move(const vec3 move, const bool texturelock);
 	void	Transform(const glm::mat4 mat, const bool textureLock);
@@ -69,7 +53,7 @@ public:
 	void	SelectFaceForDragging(Face *f, bool shear);
 	void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
 	bool	PointTest(const vec3 origin);
-	vec3	Center() { return (basis.maxs + basis.mins) * 0.5f; }
+	vec3	Center() { return (maxs + mins) * 0.5f; }
 
 	// sikk---> Vertex Editing Splits Face
 	bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);

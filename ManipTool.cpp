@@ -223,11 +223,11 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 			ray = (b->Center() - mc.org) * vec3(1, 1, 0);
 			if (!VectorNormalize(ray))	// z-center is centered on this brush
 			{
-				ray = (b->basis.maxs - mc.org) * vec3(1, 1, 0);
+				ray = (b->maxs - mc.org) * vec3(1, 1, 0);
 				if (!VectorNormalize(ray))
 					Error("literally impossible raytest failure on z plane detect\n");
 			}
-			for (Face *f = b->basis.faces; f; f = f->fnext)
+			for (Face *f = b->faces; f; f = f->fnext)
 			{
 				if (f->TestSideSelect(mc.org, ray))
 					fSides.push_back(f);
@@ -240,7 +240,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 		// match backfaces to sliding front faces, so brush contacts move with their planes
 		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			for (Face *f = b->basis.faces; f; f = f->fnext)
+			for (Face *f = b->faces; f; f = f->fnext)
 			{
 				for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)
 				{
@@ -338,15 +338,15 @@ void ManipTool::DragStart(const mouseContext_t &mc)
 		// missed selection, select nearby faces for slide
 		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			for (Face *f = b->basis.faces; f; f = f->fnext)
+			for (Face *f = b->faces; f; f = f->fnext)
 			{
 				if (f->TestSideSelect(mc.org, mc.ray))
 					fSides.push_back(f);
 			}
 			if (mc.dims == 3)
 			{
-				selmins = glm::min(selmins, b->basis.mins);
-				selmaxs = glm::max(selmaxs, b->basis.maxs);
+				selmins = glm::min(selmins, b->mins);
+				selmaxs = glm::max(selmaxs, b->maxs);
 			}
 		}
 
@@ -356,7 +356,7 @@ void ManipTool::DragStart(const mouseContext_t &mc)
 		// match backfaces to sliding front faces, so brush contacts move with their planes
 		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			for (Face *f = b->basis.faces; f; f = f->fnext)
+			for (Face *f = b->faces; f; f = f->fnext)
 			{
 				for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)
 				{
@@ -395,8 +395,8 @@ void ManipTool::DragMove(const mouseContext_t &mc)
 		vec3 mins, maxs;
 		float dMin, dMax;
 
-		dMin = round(DotProduct(g_qeglobals.d_v3WorkMin, mc.ray), g_qeglobals.d_nGridSize);
-		dMax = round(DotProduct(g_qeglobals.d_v3WorkMax, mc.ray), g_qeglobals.d_nGridSize);
+		dMin = qround(DotProduct(g_qeglobals.d_v3WorkMin, mc.ray), g_qeglobals.d_nGridSize);
+		dMax = qround(DotProduct(g_qeglobals.d_v3WorkMax, mc.ray), g_qeglobals.d_nGridSize);
 		if (dMin == dMax)
 			dMax -= g_qeglobals.d_nGridSize;	// subtract because mc.ray is negative
 
@@ -522,18 +522,18 @@ bool ManipTool::Draw3D(CameraView &v)
 				0.3f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDisable(GL_TEXTURE_2D);
-		for (Face *face = brDragNew->basis.faces; face; face = face->fnext)
+		for (Face *face = brDragNew->faces; face; face = face->fnext)
 			face->Draw();
-		/*
+		
 		// non-zbuffered outline
 		glDisable(GL_BLEND);
 		glDisable(GL_DEPTH_TEST);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glColor3f(1, 1, 1);
 
-		for (Face *face = brDragNew->basis.faces; face; face = face->fnext)
+		for (Face *face = brDragNew->faces; face; face = face->fnext)
 			face->Draw();
-		*/
+		
 		return true;
 
 	case DRAGMOVE:
@@ -563,7 +563,7 @@ bool ManipTool::Draw2D(XYZView &v)
 		v.BeginDrawSelection();
 		brDragNew->DrawXY(v.GetAxis());
 		v.EndDrawSelection();
-		v.DrawSizeInfo(brDragNew->basis.mins, brDragNew->basis.maxs);
+		v.DrawSizeInfo(brDragNew->mins, brDragNew->maxs);
 		return true;
 
 	case DRAGMOVE:

@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdCzgCylinder::CmdCzgCylinder() : degree(1), target(nullptr), axis(2) {}
+CmdCzgCylinder::CmdCzgCylinder() : degree(1), target(nullptr), axis(2), Command("Make CZG Cylinder") {}
 CmdCzgCylinder::~CmdCzgCylinder() {}
 
 void CmdCzgCylinder::SetDegree(int d)
@@ -96,9 +96,9 @@ void CmdCzgCylinder::Do_Impl()
 	sides = 6 * (1 << degree);	// 12, 24, 48
 	pattern = PatternForDegree(degree);
 
-	td = target->basis.faces->texdef;
-	mins = target->basis.mins;
-	maxs = target->basis.maxs;
+	td = target->faces->texdef;
+	mins = target->mins;
+	maxs = target->maxs;
 	size = maxs - mins;
 
 	// find center of brush

@@ -8,7 +8,7 @@
 // which assumes that whatever classname it is asked to create as a point entity
 // is what was actually desired
 
-CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 origin) : ent(nullptr)
+CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 origin) : ent(nullptr), Command("Create Point Entity")
 {
 	selectOnDo = true;
 

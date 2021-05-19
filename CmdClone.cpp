@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdClone::CmdClone(Brush *brList, const vec3 offset)
+CmdClone::CmdClone(Brush *brList, const vec3 offset) : Command("Clone")
 {
 	selectOnDo = true;
 	Clone(brList, offset);
