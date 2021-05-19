@@ -493,8 +493,8 @@ void Map::SaveToFile(const char *filename, bool use_region)
 	//if (!strstr(temp, "autosave"))
 	//	Sys_SetTitle(temp);
 
-	g_bMBCheck = false;	// sikk - Reset this to false
-	g_nBrushNumCheck = -1;	// sikk - Reset this to -1
+	//g_bMBCheck = false;	// sikk - Reset this to false
+	//g_nBrushNumCheck = -1;	// sikk - Reset this to -1
 
 	Sys_Printf("MSG: Saved.\n");
 	Sys_Status("Saved.", 0);

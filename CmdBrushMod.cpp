@@ -22,25 +22,43 @@ CmdBrushMod::~CmdBrushMod()
 CmdBrushMod::brBasis_s::brBasis_s(Brush *bOrig) :
 	br(bOrig), mins(bOrig->mins), maxs(bOrig->maxs), faces(nullptr)
 {
-	Face *f, *nf;
+	Face *of, *nf;
+
 	// important safety tip: this produces a face list in reverse order
-	// but you weren't trying to index a linked list by position anyway, right?
-	for (f = bOrig->faces; f; f = f->fnext)
+	for (of = bOrig->faces; of; of = of->fnext)
 	{
-		nf = f->Clone();	// clones texdef and plane, but not winding
+		nf = of->Clone();	// clones texdef and plane, but not winding
+		nf->d_color = of->d_color;	// or noops will turn the brush black
+
+		// give the existing windings back, ours will need to be rebuilt on an undo anyway
+		std::swap(of->face_winding, nf->face_winding);
+		//f->face_winding = nullptr;
+
 		nf->fnext = faces;
 		faces = nf;
 	}
+
+	// reverse the list again
+	of = faces;
+	faces = nullptr;
+	while (of)
+	{
+		nf = of->fnext;
+		of->fnext = faces;
+		faces = of;
+		of = nf;
+	}
+
+	// the brush in the scene must be left pointing to the cloned set of Faces
+	std::swap(faces, bOrig->faces);
+	// the original faces are those saved in storage, so that if an undo happens the
+	// faces which prior undo steps point to in memory are the ones which are restored
+	// to the scene. commands and tools that wrap CmdBrushMod must be aware of this
+	// and act accordingly.
 }
 
 CmdBrushMod::brBasis_s::~brBasis_s()
 {
-	Face *f, *fnext;
-	for (f = faces; f; f = fnext)
-	{
-		fnext = f->fnext;
-		delete f;
-	}
 }
 
 void CmdBrushMod::brBasis_s::clear()
@@ -59,26 +77,10 @@ void CmdBrushMod::brBasis_s::clear()
 
 void CmdBrushMod::Swap(brBasis_t &brb)
 {
-	/*
-	vec3 tmpv;
-	Face* tmpf;
-
-	// swap pointers but don't copy faces
-	tmpf = brb.br->faces;
-	brb.br->faces = brb.faces;
-	brb.faces = tmpf;
-
-	tmpv = brb.br->mins;
-	brb.br->mins = brb.mins;
-	brb.mins = tmpv;
-	tmpv = brb.br->maxs;
-	brb.br->maxs = brb.maxs;
-	brb.maxs = tmpv;
-	*/
-
 	std::swap(brb.br->faces, brb.faces);
 	std::swap(brb.br->mins, brb.mins);
 	std::swap(brb.br->maxs, brb.maxs);
+	brb.br->FullBuild();
 }
 
 void CmdBrushMod::SwapAll()
@@ -93,28 +95,18 @@ void CmdBrushMod::SwapAll()
 
 // call BEFORE modifying a brush - clones its geometry, then moves existing geometry
 // into storage outside the scene
-void CmdBrushMod::ModifyBrush(Brush *br)
+void CmdBrushMod::ModifyBrush(Brush *brIn)
 {
 	assert(state == LIVE || state == NOOP);
 
 	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
-		if (brbIt->br == br)
+		if (brbIt->br == brIn)
 			return;	// must avoid duplicates, or restores will stomp each other
-			
-	brushCache.emplace_back(br);
-
-	// the brush in the scene must be left pointing to the cloned set of Faces
-	/*
-	Face *f = br->faces;
-	br->faces = brushCache.back().faces;
-	brushCache.back().faces = f;
-	*/
-	std::swap(brushCache.back().faces, br->faces);
-	// the original faces are those saved in storage, so that if an undo happens the
-	// faces which prior undo steps point to in memory are the ones which are restored
-	// to the scene. commands and tools that wrap CmdBrushMod must be aware of this
-	// and act accordingly.
-
+	
+	// moves br's faces into storage, gives us back clones of those faces, but
+	// with the faces' original windings
+	brushCache.emplace_back(brIn);
+	
 	state = LIVE;
 }
 
@@ -122,6 +114,12 @@ void CmdBrushMod::ModifyBrushes(Brush *brList)
 {
 	for (Brush* b = brList->next; b != brList; b = b->next)
 		ModifyBrush(b);
+}
+
+void CmdBrushMod::ModifyBrushes(std::vector<Brush*> brList)
+{
+	for (auto brbIt = brList.begin(); brbIt != brList.end(); ++brbIt)
+		ModifyBrush(*brbIt);
 }
 
 //================================================================
@@ -154,6 +152,12 @@ void CmdBrushMod::RestoreBrushes(Brush *brList)
 {
 	for (Brush* b = brList->next; b != brList; b = b->next)
 		RestoreBrush(b);
+}
+
+void CmdBrushMod::RestoreBrushes(std::vector<Brush*> brList)
+{
+	for (auto brbIt = brList.begin(); brbIt != brList.end(); ++brbIt)
+		RestoreBrush(*brbIt);
 }
 
 void CmdBrushMod::RestoreAll()
@@ -203,6 +207,12 @@ void CmdBrushMod::RevertBrushes(Brush *brList)
 {
 	for (Brush* b = brList->next; b != brList; b = b->next)
 		RevertBrush(b);
+}
+
+void CmdBrushMod::RevertBrushes(std::vector<Brush*> brList)
+{
+	for (auto brbIt = brList.begin(); brbIt != brList.end(); ++brbIt)
+		RevertBrushes(*brbIt);
 }
 
 void CmdBrushMod::RevertAll()

@@ -402,11 +402,11 @@ mouseContext_t const CameraView::GetMouseContext(const int x, const int y)
 {
 	mouseContext_t mc;
 
+	mc.pt = vec3(x, y, 0);
 	mc.org = origin;
 	mc.up = mpUp;
 	mc.right = mpRight;
 	PointToRay(x, y, mc.ray);
-	mc.scale = 1;	// what use?
 	mc.dims = 3;	// 3D view
 	return mc;
 }
@@ -651,14 +651,14 @@ bool CameraView::CullBrush (Brush *b)
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this hack
+		point[i] = ((float*)&b->mins)[nCullv1[i]] - origin[i];
 
 	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = ((float*)&b->mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this hack too
+		point[i] = ((float*)&b->mins)[nCullv2[i]] - origin[i];
 
 	d = DotProduct(point, v3Cull2);
 	if (d < -1)
@@ -818,7 +818,7 @@ CameraView::Draw
 */
 void CameraView::Draw ()
 {
-	int		i;
+	int		i, bound;
 	double	start, end;
 	float	screenaspect;
 	float	yfov;
@@ -924,24 +924,25 @@ void CameraView::Draw ()
 	DrawGrid();
 
 	// TODO: Display Axis in lower left corner of window and rotate with camera orientation (e.g. blender)
+	bound = g_qeglobals.d_savedinfo.nMapSize / 2;
 	if (g_qeglobals.d_savedinfo.bShow_Axis)
 	{
 		glColor3f(1.0, 0.0, 0.0);
 		glBegin(GL_LINES);
-		glVertex2i(-g_qeglobals.d_savedinfo.nMapSize / 2, 0);
-		glVertex2i(g_qeglobals.d_savedinfo.nMapSize / 2, 0);
+		glVertex2i(-bound, 0);
+		glVertex2i(bound, 0);
 		glEnd();
 				
 		glColor3f(0.0, 1.0, 0.0);
 		glBegin(GL_LINES);
-		glVertex2i(0, -g_qeglobals.d_savedinfo.nMapSize / 2);
-		glVertex2i(0, g_qeglobals.d_savedinfo.nMapSize / 2);
+		glVertex2i(0, -bound);
+		glVertex2i(0, bound);
 		glEnd();
 
 		glColor3f(0.0, 0.0, 1.0);
 		glBegin(GL_LINES);
-		glVertex3i(0, 0, -g_qeglobals.d_savedinfo.nMapSize / 2);
-		glVertex3i(0, 0, g_qeglobals.d_savedinfo.nMapSize / 2);
+		glVertex3i(0, 0, -bound);
+		glVertex3i(0, 0, bound);
 		glEnd();
 	}
 
@@ -949,28 +950,28 @@ void CameraView::Draw ()
 	{
 		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY].r);
 		glBegin(GL_LINE_LOOP);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
+		glVertex3f(-bound, -bound, -bound);
+		glVertex3f(bound, -bound, -bound);
+		glVertex3f(bound, bound, -bound);
+		glVertex3f(-bound, bound, -bound);
 		glEnd();
 
 		glBegin(GL_LINE_LOOP);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
+		glVertex3f(-bound, -bound, bound);
+		glVertex3f(bound, -bound, bound);
+		glVertex3f(bound, bound, bound);
+		glVertex3f(-bound, bound, bound);
 		glEnd();
 
 		glBegin(GL_LINES);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
-		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5, g_qeglobals.d_savedinfo.nMapSize * 0.5);
+		glVertex3f(-bound, -bound, -bound);
+		glVertex3f(-bound, -bound, bound);
+		glVertex3f(bound, -bound, -bound);
+		glVertex3f(bound, -bound, bound);
+		glVertex3f(-bound, bound, -bound);
+		glVertex3f(-bound, bound, bound);
+		glVertex3f(bound, bound, -bound);
+		glVertex3f(bound, bound, bound);
 		glEnd();
 	}
 // <---sikk

@@ -21,9 +21,9 @@ typedef enum
 {
 	sel_brush,
 	sel_face,
+	sel_component,
 	sel_vertex,
 	sel_edge
-//	sel_sticky_brush,
 } select_t;
 
 typedef struct trace_s
@@ -83,9 +83,9 @@ namespace Selection
 	void	SelectAll();	// sikk - Select All
 	void	DeselectFiltered();
 	void	DeselectAll();
-	void	GetBounds(vec3 &mins, vec3 &maxs);
-	void	GetTrueMid(vec3 &mid);
-	void	GetMid(vec3 &mid);
+	bool	GetBounds(vec3 &mins, vec3 &maxs);
+	vec3	GetTrueMid();
+	vec3	GetMid();
 
 	void	MatchingKeyValue(char *szKey, char *szValue);	// sikk - Select Matching Key/Value
 	void	MatchingTextures();	// sikk - Select All Matching Textures

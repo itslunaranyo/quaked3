@@ -43,9 +43,9 @@ public:
 	bool	CullBrush(Brush *b);
 	void	DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds);
 
+	int		dViewType;	// current orientation of this view
 private:
 	int		nRotate;
-	int		dViewType;	// current orientation of this view
 	int		nDim1, nDim2;
 			// XY - dim1: 0 dim2: 1
 			// YZ - dim1: 1 dim2: 2

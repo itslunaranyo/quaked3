@@ -6,9 +6,7 @@
 #include "qe3.h"
 #include "io.h"
 
-vec3	g_v3Vecs[2];
-float	g_fShift[2];
-
+/*
 bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when
 					// a bad inTexDef is found during saving map so it doesn't
 					// continuously popup with each bad face. It's reset to 
@@ -17,7 +15,7 @@ bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when
 int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 						// brush from spamming the console from bad texture name 
 						// warnings when saving.
-
+*/
 
 
 //=========================================================================
@@ -353,6 +351,8 @@ Brush::ClearFaces
 */
 void Brush::ClearFaces()
 {
+	Face::ClearChain(&faces);
+	/*
 	Face *f, *fnext;
 	for (f = faces; f; f = fnext)
 	{
@@ -360,6 +360,7 @@ void Brush::ClearFaces()
 		delete f;
 	}
 	faces = nullptr;
+	*/
 }
 
 /*
@@ -481,9 +482,10 @@ bool Brush::Build()
 	//g_map.modified = true;	// mark the map as changed
 
 	// move the points and edges if in select mode
+	/*
 	if (g_qeglobals.d_selSelectMode == sel_vertex || g_qeglobals.d_selSelectMode == sel_edge)
 		SetupVertexSelection();
-
+	*/
 	return true;
 }
 
@@ -517,7 +519,7 @@ void Brush::SnapPlanePoints()
 ==================
 Brush::RemoveEmptyFaces
 
-HEY: this changes the face pointer makeup of a brush, so it must only
+lunaran FIXME: this changes the face pointer makeup of a brush, so it must only
 be used in the context of a CmdBrushMod
 ==================
 */
@@ -566,6 +568,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 		return;
 	}
 */
+	/*
 	// Check for texture names containing "(" (parentheses) or " " (spaces) in their maps
 	if (f->texdef.name[0] == '#' || strchr(f->texdef.name, ' '))
 	{
@@ -609,6 +612,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 	}
 
 //	strcpy(pszName, f->inTexDef.name);
+*/
 }
 
 /*
@@ -719,6 +723,7 @@ rotates and adds the plane.pts of adjacent face if shear is set
 */
 void Brush::SelectFaceForDragging(Face *f, bool shear)
 {
+	/*
 	int			i;
 	int			c;
 	float		d;
@@ -806,6 +811,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 
 		Winding::Free(w);
 	}
+	*/
 }
 
 
@@ -818,12 +824,12 @@ planes for dragging
 ==============
 */
 void Brush::SideSelect(const vec3 origin, const vec3 dir, bool shear)
-{
+{/*
 	for (Face *f = faces; f; f = f->fnext)
 	{
 		if (f->TestSideSelect(origin, dir))
 			SelectFaceForDragging(f, shear);
-	}
+	}*/
 }
 
 /*
@@ -1923,7 +1929,7 @@ void Brush::Write(std::ostream& out)
 		if (pname[0] == 0)
 			pname = "unnamed";
 
-		CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
+		//CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 
 		out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << (int)fa->texdef.rotate << " ";
 

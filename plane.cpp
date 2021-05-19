@@ -32,7 +32,7 @@ Plane::Plane() : dist(0), normal(0)
 Plane::EqualTo
 =============
 */
-bool Plane::EqualTo(Plane *b, int flip)
+bool Plane::EqualTo(const Plane *b, const int flip)
 {
 	float	tdist;
 	vec3	tnormal;
@@ -55,6 +55,36 @@ bool Plane::EqualTo(Plane *b, int flip)
 		return true;
 
 	return false;
+}
+
+/*
+=============
+Plane::ConvexTo
+
+any two non-coincident planes in space aren't really concave or convex to
+each other, since they extend to infinity and thus are concave in half
+of infinity and convex in the other half. thus any convexity test for two
+planes must be made relative to points somewhere on that plane, to determine
+which half of infinity those points are in, which is just a sidedness test.
+
+this function assumes the plane points are in the neighborhood the calling
+code is interested in (ideally corresponding to face winding points), 
+otherwise the result is fairly meaningless.
+=============
+*/
+bool Plane::ConvexTo(const Plane *other)
+{
+	vec3 p;
+
+	p = (pts[0] + pts[1] + pts[2]) / 3.0f;
+	if (DotProduct(p, other->normal) >= other->dist)
+		return false;
+
+	p = (other->pts[0] + other->pts[1] + other->pts[2]) / 3.0f;
+	if (DotProduct(p, normal) >= dist)
+		return false;
+
+	return true;
 }
 
 /*
@@ -81,6 +111,35 @@ bool Plane::FromPoints(const vec3 p0, const vec3 p1, const vec3 p2)
 	return true;
 }
 
+bool Plane::FromNormDist(const vec3 n, const double d)
+{
+	normal = n;
+	dist = d;
+	return true;
+}
+
+bool Plane::FromNormPoint(const vec3 n, const vec3 pt)
+{
+	normal = n;
+	dist = DotProduct(pt, normal);
+	return true;
+}
+
+bool Plane::TestRay(const vec3 org, const vec3 dir, vec3 &out)
+{
+	float	d1, d2, fr;
+
+	d1 = DotProduct(org, normal) - dist;
+	d2 = DotProduct(org + dir * 1024.0f, normal) - dist;
+	if (d1 == d2)
+		return false;	// parallel to plane
+
+	fr = d1 / (d1 - d2);
+
+	out = org + dir * 1024.0f * fr;
+	return true;
+}
+
 bool Plane::ClipLine(vec3 &p1, vec3 &p2)
 {
 	int		i;
@@ -104,6 +163,7 @@ bool Plane::ClipLine(vec3 &p1, vec3 &p2)
 
 	for (i = 0; i < 3; i++)
 		(*v)[i] = p1[i] + fr * (p2[i] - p1[i]);
+	//(*v) = p1 + fr * (p2 - p1);
 
 	return true;
 }
@@ -136,10 +196,13 @@ Plane::Flip
 */
 void Plane::Flip()
 {
+	/*
 	vec3 temp;
 	temp = pts[0];
 	pts[0] = pts[1];
 	pts[1] = temp;
+	*/
+	std::swap(pts[0], pts[1]);
 	Make();
 }
 
@@ -148,12 +211,11 @@ void Plane::Flip()
 Plane::Translate
 =================
 */
-void Plane::Translate(vec3 move)
+void Plane::Translate(const vec3 move)
 {
-	for (int i = 0; i < 3; i++)
-	{
-		pts[i] += move;
-	}
+	pts[0] += move;
+	pts[1] += move;
+	pts[2] += move;
 	dist = DotProduct(pts[0], normal);
 }
 
@@ -174,6 +236,8 @@ void Plane::Snap(int increment)
 /*
 =================
 Plane::BasePoly
+
+lunaran TODO: this could be much better
 =================
 */
 winding_t *Plane::BasePoly()

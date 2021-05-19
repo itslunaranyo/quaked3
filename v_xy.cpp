@@ -220,11 +220,11 @@ mouseContext_t const XYZView::GetMouseContext(const int x, const int y)
 
 	ToPoint(x, y, mc.org);
 
+	mc.pt = vec3(x, y, 0);
 	mc.org[dViewType] = g_qeglobals.d_savedinfo.nMapSize / 2;
 	mc.ray[dViewType] = -1;
 	mc.right[nDim1] = 1;
 	mc.up[nDim2] = 1;
-	mc.scale = 1 / scale;
 	mc.dims = 2;	// 2D view
 
 	return mc;
@@ -370,7 +370,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			MoveSelection(v2);
 
 			// update g_v3RotateOrigin to selection
-			Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+			g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 		}
 // <---sikk
 		else
@@ -378,7 +378,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
 
 			// update g_v3RotateOrigin to selection
-			Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+			g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 		}
 		return;
 	}
@@ -517,7 +517,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	//	DragNewBrush(x, y);
 
 		// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
-		Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 		return;
 	}
 
@@ -528,7 +528,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		Drag_MouseMoved(x, y, buttons);
 		
 		// update g_v3RotateOrigin to new brush
-		Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
 
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;

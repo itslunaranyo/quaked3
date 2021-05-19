@@ -4,11 +4,9 @@
 
 #include "qe3.h"
 
-
 ManipTool::ManipTool() :
-	state(NONE),
-	//xDown(0), yDown(0), 
-	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr),
+	state(MT_OFF),
+	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr),
 	Tool("Manipulate", false)	// not modal
 {
 }
@@ -30,24 +28,25 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	//case WM_COMMAND:
 	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
-		if (keys & (MK_SHIFT | MK_CONTROL | MK_ALT))
+		if (ShiftDown() || AltDown())
 			return false;
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
 
-		// do stuff
 		vWnd.GetMsgXY(lParam, mx, my);
 		mc = v.GetMouseContext(mx, my);
-		DragStart(mc);
+		DragStart3D(mc);
 
 		Sys_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
 		if (keys & MK_LBUTTON)
 		{
+			vec3 pt;
 			vWnd.GetMsgXY(lParam, mx, my);
 			mc = v.GetMouseContext(mx, my);
-			DragMove(mc);
+			mousePlane.TestRay(mc.org, mc.ray, pt);
+			DragMove(mc, pt);
 
 			Sys_UpdateWindows(W_SCENE);
 			return true;
@@ -56,7 +55,6 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	case WM_LBUTTONUP:
 		if (!hot) return false;
 
-		// do stuff
 		vWnd.GetMsgXY(lParam, mx, my);
 		mc = v.GetMouseContext(mx, my);
 		DragFinish(mc);
@@ -81,7 +79,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	//case WM_COMMAND:
 	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
-		if (keys & (MK_SHIFT | MK_CONTROL | MK_ALT ))
+		if (ShiftDown() || (!CtrlDown() && AltDown()))
 			return false;
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -89,10 +87,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 		vWnd.GetMsgXY(lParam, mx, my);
 		v.ToPoint(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
-		//ptDown = (float)x * mc.right + (float)y * mc.up;
-		ptDown = mc.org;
-
-		DragStart(mc);
+		DragStart2D(mc, v.dViewType);
 		Sys_UpdateWindows(W_SCENE);
 		return true;
 
@@ -103,7 +98,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 			vWnd.GetMsgXY(lParam, mx, my);
 			v.ToPoint(mx, my, x, y);
 			mc = v.GetMouseContext(mx, my);
-			DragMove(mc);
+			DragMove(mc, mc.org);
 			Sys_UpdateWindows(W_SCENE);
 			return true;
 		}
@@ -136,7 +131,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 	//case WM_COMMAND:
 	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
-		if (keys & (MK_SHIFT | MK_CONTROL | MK_ALT))
+		if (ShiftDown() || CtrlDown() || AltDown())
 			return false;
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -153,7 +148,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 		{
 			vWnd.GetMsgXY(lParam, mx, my);
 			mc = v.GetMouseContext(mx, my);
-			DragMove(mc);
+			DragMove(mc, mc.org);
 
 			Sys_UpdateWindows(W_SCENE);
 			return true;
@@ -211,7 +206,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 				// set tlock on the command once up front rather than letting it ping the 
 				// setting itself, so it remains contained
 				cmdTr->TextureLock(g_qeglobals.d_bTextureLock);
-				state = DRAGMOVE;
+				state = MT_TRANSLATE;
 				return;
 			}
 
@@ -251,145 +246,149 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 	if (fSides.empty())
 		return;
 
-	state = DRAGPLANE;
+	state = MT_PLANESHIFT;
 	cmdPS = new CmdPlaneShift();
 	cmdPS->SetFaces(fSides);
 }
 
-void ManipTool::DragStart(const mouseContext_t &mc)
+void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 {
 	// no selection: in 2D view, start dragging new brush
 	if (Selection::IsEmpty())
 	{
-		if (mc.dims == 2)
-		{
-			// set state but don't make a new brush until a significant enough mouse move has happened
-			state = DRAGNEW;
-			ptDown = pointOnGrid(ptDown);
-			ptDown = ptDown * (mc.ray + vec3(1));	// null out the extra large third dimension
-		}
+		// set state but don't make a new brush until a significant enough mouse move has happened
+		ptDown = pointOnGrid(mc.org);
+		ptDown[vDim] = 0;
+		state = MT_NEW;
 		return;
 	}
 
-	// ----------------
-
-	mousePlane.normal = CrossProduct(mc.right, mc.up);
-
-	trace_t t;
-	vec3 tpoint, selmins, selmaxs;
-	std::vector<Face*> fSides, fBackSides;
-	ClearBounds(selmins, selmaxs);
-
-	// faces selected: always go for a plane drag
-	if (Selection::NumFaces())
+	if (Selection::HasBrushes())
 	{
-		t = Selection::TestRay(mc.org, mc.ray, SF_FACES);
-		if (t.face && Selection::IsFaceSelected(t.face))
+		// ctrl-alt-click to start a translate with an offset, for 'teleporting' the selection
+		if (CtrlDown() && AltDown())
 		{
-			tpoint = mc.org + mc.ray * t.dist;
+			vec3 ptDelta;
+			ptDown = Selection::GetMid();
+			ptDown[vDim] = mc.org[vDim];
+			ptDelta = ptDown - pointOnGrid(mc.org);
 
-			//for (int i = 0; i < Selection::NumFaces(); i++)
-			//{
-			//	fSides.push_back(g_vfSelectedFaces[i]);
-			//}
-		}
-		else
-		{
-			for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
-			{
-				(*fIt)->AddBounds(selmins, selmaxs);
-				//fSides.push_back(g_vfSelectedFaces[i]);
-			}
-			tpoint = (selmins + selmaxs) * 0.5f;
-		}
-		fSides = Selection::faces;
-	}
-	else	// ----------------
-	{
-		// lunaran TODO: reimplement sikkpin's ctrl-alt-click to slam-move selection - override
-		// ptdown to force a baseline offset on the translate
-
-		// brushes selected: translate if click hit the selection, side-detect for auto plane drag otherwise
-		t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);
-
-		// hit selection, translate it
-		if (t.selected)
-		{
-			assert(!cmdTr);
-			if (mc.dims == 3)
-			{
-				// we'll trace future mouse events against an implied plane centered on where we hit
-				// the selection, so it feels like we're dragging the selection by the point we 'grabbed'
-				tpoint = mc.org + mc.ray * t.dist;
-				ptDown = tpoint;
-				mousePlane.dist = DotProduct(tpoint, mousePlane.normal);
-			}
-			cmdTr = new CmdTranslate();
-			cmdTr->UseBrushes(&g_brSelectedBrushes);
-			// set tlock on the command once up front rather than letting it ping the 
-			// setting itself, so it remains contained
-			cmdTr->TextureLock(g_qeglobals.d_bTextureLock);
-
-			state = DRAGMOVE;
+			StartTranslate();
+			cmdTr->Translate(ptDelta);
 			return;
 		}
 
-		// missed selection, select nearby faces for slide
-		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			for (Face *f = b->faces; f; f = f->fnext)
-			{
-				if (f->TestSideSelect(mc.org, mc.ray))
-					fSides.push_back(f);
-			}
-			if (mc.dims == 3)
-			{
-				selmins = glm::min(selmins, b->mins);
-				selmaxs = glm::max(selmaxs, b->maxs);
-			}
-		}
-
-		if (fSides.empty())
-			return;		// is this even possible
-
-		// match backfaces to sliding front faces, so brush contacts move with their planes
-		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			for (Face *f = b->faces; f; f = f->fnext)
-			{
-				for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)
-				{
-					if (f->plane.EqualTo(&(*fsIt)->plane, true))
-						fBackSides.push_back(f);
-				}
-			}
-		}
-		fSides.insert(fSides.end(), fBackSides.begin(), fBackSides.end());
-		tpoint = (selmins + selmaxs) * 0.5f;
-	}
-
-	if (fSides.empty())
-		return;
-	if (mc.dims == 3)
-	{
-		mousePlane.dist = DotProduct(tpoint, mousePlane.normal);
-
 		ptDown = mc.org;
-		tpoint = mc.org + mc.ray * (float)g_qeglobals.d_savedinfo.nMapSize;
-		mousePlane.ClipLine(ptDown, tpoint);
+
+		// translate if click hit the selection, side-detect for auto plane drag otherwise
+		trace_t t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);	
+		if (t.selected)
+		{
+			StartTranslate();
+			return;
+		}
+		else
+		{
+			std::vector<Face*> fSides;
+			if (CtrlDown())
+			{
+				SideSelectShearFaces(mc.org, mc.ray, fSides);
+				StartQuickShear(fSides);
+			}
+			else
+			{
+				SideSelectFaces(mc.org, mc.ray, fSides);
+				StartPlaneShift(fSides);
+			}
+			return;
+		}
 	}
-	state = DRAGPLANE;
-	cmdPS = new CmdPlaneShift();
-	cmdPS->SetFaces(fSides);
+	else if (Selection::NumFaces())
+	{
+		ptDown = mc.org;
+		if (CtrlDown())
+			//StartQuickShear(Selection::faces);
+			return;	// can't shear w/selected faces because CmdGeoMod replaces face pointers,
+					// which would have to nuke the selection annoyingly
+		else
+			StartPlaneShift(Selection::faces);
+	}
 }
 
-void ManipTool::DragMove(const mouseContext_t &mc)
+void ManipTool::DragStart3D(const mouseContext_t &mc)
+{
+	mousePlane.normal = CrossProduct(mc.right, mc.up);
+
+	trace_t t;
+
+	// brushes selected: translate if click hit the selection, shear if ctrl-click, side-detect for auto plane drag otherwise
+	if (Selection::HasBrushes())
+	{
+		std::vector<Face*> fSides;
+		t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);
+		if (t.selected)
+		{
+			// we'll trace future mouse events against an implied plane centered on where we hit
+			// the selection, so it feels like we're dragging the selection by the point we 'grabbed'
+			ptDown = mc.org + mc.ray * t.dist;
+			mousePlane.dist = DotProduct(ptDown, mousePlane.normal);
+
+			if (CtrlDown())
+			{
+				FrontSelectShearFaces(t.face, fSides);
+				StartQuickShear(fSides);
+			}
+			else
+				StartTranslate();
+		}
+		else
+		{
+			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.TestRay(mc.org, mc.ray, ptDown);
+
+			if (CtrlDown())
+			{
+				SideSelectShearFaces(mc.org, mc.ray, fSides);
+				StartQuickShear(fSides);
+			}
+			else
+			{
+				SideSelectFaces(mc.org, mc.ray, fSides);
+				StartPlaneShift(fSides);
+			}
+		}
+		return;
+	}
+	else if (Selection::NumFaces())
+	{
+		// faces selected: always go for a plane drag
+		t = Selection::TestRay(mc.org, mc.ray, SF_FACES);
+		if (t.face && Selection::IsFaceSelected(t.face))
+		{
+			ptDown = mc.org + mc.ray * t.dist;
+			mousePlane.dist = DotProduct(ptDown, mousePlane.normal);
+		}
+		else
+		{
+			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.TestRay(mc.org, mc.ray, ptDown);
+		}
+		if (CtrlDown())
+			//StartQuickShear(Selection::faces);
+			return;	// can't shear w/selected faces because CmdGeoMod replaces face pointers,
+					// which would have to nuke the selection annoyingly
+		else
+			StartPlaneShift(Selection::faces);
+	}
+}
+
+void ManipTool::DragMove(const mouseContext_t &mc, vec3 point)
 {
 	vec3 ptDelta;
 
 	switch (state)
 	{
-	case DRAGNEW:
+	case MT_NEW:
 	{
 		vec3 mins, maxs;
 		float dMin, dMax;
@@ -422,41 +421,20 @@ void ManipTool::DragMove(const mouseContext_t &mc)
 		}
 		return;
 	}
-	case DRAGMOVE:
+	case MT_TRANSLATE:
 		assert(cmdTr);
-		if (mc.dims == 3)
-		{
-			vec3 pt1, pt2;
-			pt1 = mc.org;
-			pt2 = mc.org + mc.ray * (float)g_qeglobals.d_savedinfo.nMapSize;
-			mousePlane.ClipLine(pt1, pt2);
-			ptDelta = pointOnGrid(pt1 - ptDown);
-		}
-		else
-		{
-			ptDelta = pointOnGrid(mc.org - ptDown);
-		}
+		ptDelta = pointOnGrid(point - ptDown);
 		cmdTr->Translate(ptDelta);
 		return;
-	case DRAGPLANE:
-	{
+	case MT_PLANESHIFT:
 		assert(cmdPS);
-		if (mc.dims == 3)
-		{
-			vec3 pt1, pt2;
-			pt1 = mc.org;
-			pt2 = mc.org + mc.ray * (float)g_qeglobals.d_savedinfo.nMapSize;
-			mousePlane.ClipLine(pt1, pt2);
-			ptDelta = pointOnGrid(pt1 - ptDown);
-		}
-		else
-		{
-			ptDelta = pointOnGrid(mc.org - ptDown);
-		}
+		ptDelta = pointOnGrid(point - ptDown);
 		cmdPS->Translate(ptDelta);
 		return;
-	}
-	default:
+	case MT_SHEAR:
+		assert(cmdGM);
+		ptDelta = pointOnGrid(point - ptDown);
+		cmdGM->Translate(ptDelta);
 		return;
 	}
 }
@@ -465,7 +443,7 @@ void ManipTool::DragFinish(const mouseContext_t &vc)
 {
 	switch (state)
 	{
-	case DRAGNEW:
+	case MT_NEW:
 	{
 		if (!brDragNew)
 			break;	// didn't drag a valid brush
@@ -479,21 +457,139 @@ void ManipTool::DragFinish(const mouseContext_t &vc)
 		brDragNew = nullptr;
 		break;
 	}
-	case DRAGMOVE:
+	case MT_TRANSLATE:
 		assert(cmdTr);
 		g_cmdQueue.Complete(cmdTr);
 		cmdTr = nullptr;
 		break;
-
-	case DRAGPLANE:
+	case MT_PLANESHIFT:
 		assert(cmdPS);
 		g_cmdQueue.Complete(cmdPS);
 		cmdPS = nullptr;
 		break;
+	case MT_SHEAR:
+		assert(cmdGM);
+		g_cmdQueue.Complete(cmdGM);
+		cmdGM = nullptr;
+		break;
 	default:
 		break;
 	}
-	state = NONE;
+	state = MT_OFF;
+}
+
+// ----------------------------------------------------------------
+
+void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
+{
+	assert(!cmdGM);
+	if (fSides.empty())
+		return;
+	cmdGM = new CmdGeoMod();
+	std::vector<vec3> points;
+	std::vector<Brush*> brList;
+	if (Selection::HasBrushes())
+	{
+		cmdGM->SetBrushes(&g_brSelectedBrushes);
+	}
+	else
+	{
+		for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
+		{
+			// face list is probably sorted by brush, but might not be, so verify but in reverse
+			// so we at least pick up the most recently added brush first
+			if (std::find(brList.rbegin(), brList.rend(), (*fIt)->owner) == brList.rend())
+				brList.push_back((*fIt)->owner);
+		}
+		cmdGM->SetBrushes(brList);
+	}
+	for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
+	{
+		points.clear();
+		for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
+			points.push_back((*fIt)->face_winding->points[i].point);
+		cmdGM->SetPoints((*fIt)->owner, points);
+	}
+	state = MT_SHEAR;
+}
+
+void ManipTool::StartPlaneShift(std::vector<Face*> &fSides)
+{
+	assert(!cmdPS);
+	if (fSides.empty())
+		return;
+	cmdPS = new CmdPlaneShift();
+	cmdPS->SetFaces(fSides);
+	state = MT_PLANESHIFT;
+}
+
+void ManipTool::StartTranslate()
+{
+	assert(!cmdTr);
+	cmdTr = new CmdTranslate();
+	cmdTr->UseBrushes(&g_brSelectedBrushes);
+	cmdTr->TextureLock(g_qeglobals.d_bTextureLock);
+	state = MT_TRANSLATE;
+}
+
+void ManipTool::SideSelectFaces(const vec3 org, const vec3 ray, std::vector<Face*> &fSides)
+{
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (Face *f = b->faces; f; f = f->fnext)
+		{
+			if (f->TestSideSelect(org, ray))
+				fSides.push_back(f);
+		}
+	}
+
+	SideSelectBackFaces(fSides);
+}
+
+void ManipTool::SideSelectShearFaces(const vec3 org, const vec3 ray, std::vector<Face*> &fSides)
+{
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (Face *f = b->faces; f; f = f->fnext)
+		{
+			if (f->TestSideSelect(org, ray))
+				fSides.push_back(f);
+		}
+	}
+}
+
+void ManipTool::SideSelectBackFaces(std::vector<Face*> &fSides)
+{
+	if (fSides.empty())
+		return;
+
+	std::vector<Face*> backSides;
+	// match backfaces to sliding front faces, so brush contacts move with their planes
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (Face *f = b->faces; f; f = f->fnext)
+		{
+			for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)
+			{
+				if (f->plane.EqualTo(&(*fsIt)->plane, true))
+					backSides.push_back(f);
+			}
+		}
+	}
+	fSides.insert(fSides.end(), backSides.begin(), backSides.end());
+}
+
+void ManipTool::FrontSelectShearFaces(const Face *hit, std::vector<Face*> &fSides)
+{
+	// match backfaces to sliding front faces, so brush contacts move with their planes
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (Face *f = b->faces; f; f = f->fnext)
+		{
+			if (f->plane.EqualTo(&hit->plane, false))
+				fSides.push_back(f);
+		}
+	}
 }
 
 // ----------------------------------------------------------------
@@ -502,7 +598,7 @@ bool ManipTool::Draw3D(CameraView &v)
 {
 	switch (state)
 	{
-	case DRAGNEW:
+	case MT_NEW:
 		if (!brDragNew)
 			break;
 
@@ -535,7 +631,7 @@ bool ManipTool::Draw3D(CameraView &v)
 		
 		return true;
 
-	case DRAGMOVE:
+	case MT_TRANSLATE:
 		assert(cmdTr);
 		if (!cmdTr->postDrag)
 			return false;
@@ -544,7 +640,7 @@ bool ManipTool::Draw3D(CameraView &v)
 		glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		return true;
 
-	case DRAGPLANE:
+	case MT_PLANESHIFT:
 	default:
 		break;
 	}
@@ -555,7 +651,7 @@ bool ManipTool::Draw2D(XYZView &v)
 {
 	switch (state)
 	{
-	case DRAGNEW:
+	case MT_NEW:
 		if (!brDragNew)
 			break;
 
@@ -565,7 +661,7 @@ bool ManipTool::Draw2D(XYZView &v)
 		v.DrawSizeInfo(brDragNew->mins, brDragNew->maxs);
 		return true;
 
-	case DRAGMOVE:
+	case MT_TRANSLATE:
 		assert(cmdTr);
 		if (!cmdTr->postDrag)
 			return false;
@@ -574,7 +670,7 @@ bool ManipTool::Draw2D(XYZView &v)
 		glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		return true;
 
-	case DRAGPLANE:
+	case MT_PLANESHIFT:
 	default:
 		return false;
 	}
@@ -585,7 +681,8 @@ bool ManipTool::Draw1D(ZView &v)
 {
 	switch (state)
 	{
-	case DRAGMOVE:
+	// lunaran TODO: draw the MT_NEW brush if it intersects the z-core
+	case MT_TRANSLATE:
 		assert(cmdTr);
 		if (!cmdTr->postDrag)
 			return false;

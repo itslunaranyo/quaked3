@@ -39,9 +39,9 @@ public:
 	void	Transform(const glm::mat4 mat, const bool textureLock);
 	void	RefreshFlags();
 
-	bool	FullBuild();
+	bool	FullBuild();	// lunaran: full refreshes texture pointers/flags, regular is just windings
+	bool	Build();		// lunaran: now returns false if brush disappeared when built
 
-	bool	Build();	// lunaran: now returns false if brush disappeared when built
 	void	MakeFacePlanes();
 	void	SnapPlanePoints();
 	void	RemoveEmptyFaces();
@@ -89,8 +89,8 @@ public:
 
 //========================================================================
 
-extern bool g_bMBCheck;
-extern int	g_nBrushNumCheck;
+//extern bool g_bMBCheck;
+//extern int	g_nBrushNumCheck;
 			 
 //========================================================================
 

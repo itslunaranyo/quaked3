@@ -79,7 +79,7 @@ void Transform_FlipAxis(int axis)
 {
 	int		i;
 
-	Selection::GetMid(g_v3SelectOrigin);
+	g_v3SelectOrigin = Selection::GetMid();
 	for (i = 0; i < 3; i++)
 	{
 		g_v3SelectMatrix[i] = vec3(0);
@@ -108,7 +108,7 @@ void Transform_RotateAxis(int axis, float deg, bool bMouse)
 	if (deg == 0)
 	return;
 
-	Selection::GetMid(g_v3SelectOrigin);
+	g_v3SelectOrigin = Selection::GetMid();
 	g_bSelectFlipOrder = false;
 
 	if (deg == 90)
@@ -189,7 +189,7 @@ void Transform_RotateAxis(int axis, float deg, bool bMouse)
 		g_v3SelectOrigin = g_v3RotateOrigin;
 	}
 	else
-		Selection::GetMid(g_v3SelectOrigin);
+		g_v3SelectOrigin = Selection::GetMid();
 	g_bSelectFlipOrder = false;
 
 	deg = -deg;
@@ -243,7 +243,7 @@ void Transform_Scale(float x, float y, float z)
 	Brush	   *b;
 	Face	   *f;
 
-	Selection::GetMid(g_v3SelectOrigin);
+	g_v3SelectOrigin = Selection::GetMid();
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{

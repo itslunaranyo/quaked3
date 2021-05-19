@@ -1579,7 +1579,7 @@ BOOL CALLBACK PreferencesDlgProc (
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bLogConsole		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bNoStipple		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bRadiantLights	? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_VERTEXSPLITSFACE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bVertexSplitsFace	? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bVFEModesExclusive ? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bBrushPrecision	? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bTestAfterBSP		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastProject	? BST_CHECKED : BST_UNCHECKED), 0);
@@ -1627,7 +1627,7 @@ BOOL CALLBACK PreferencesDlgProc (
 			g_qeglobals.d_savedinfo.bLogConsole			= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,			BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bNoStipple			= SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,			BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bRadiantLights		= SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bVertexSplitsFace	= SendDlgItemMessage(hwndDlg, IDC_CHECK_VERTEXSPLITSFACE,	BM_GETCHECK, 0, 0);
+			g_qeglobals.d_savedinfo.bVFEModesExclusive	= SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bBrushPrecision		= SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bTestAfterBSP		= SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastProject	= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_GETCHECK, 0, 0);

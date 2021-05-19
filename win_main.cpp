@@ -1644,7 +1644,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_VIEW_HIDESHOW_HIDESELECTED:
-			Modify_Hide();
+			Modify_HideSelected();
+			Selection::DeselectAll();
+			break;
+		case ID_VIEW_HIDESHOW_HIDEUNSELECTED:
+			Modify_HideUnselected();
 			Selection::DeselectAll();
 			break;
 		case ID_VIEW_HIDESHOW_SHOWHIDDEN:
@@ -1655,6 +1659,9 @@ LONG WINAPI CommandHandler (
 // Selection menu
 //===================================
 		case ID_SELECTION_DRAGEDGES:
+			GeoTool::ToggleMode(GeoTool::GT_EDGE);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			/*
 			if (g_qeglobals.d_selSelectMode == sel_edge)
 			{
 				g_qeglobals.d_selSelectMode = sel_brush;
@@ -1662,14 +1669,16 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
-				if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
-					delete g_qeglobals.d_clipTool;
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_edge;
 			}
+			*/
 			break;
 		case ID_SELECTION_DRAGVERTICES:
+			GeoTool::ToggleMode(GeoTool::GT_VERTEX);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			/*
 			if (g_qeglobals.d_selSelectMode == sel_vertex)
 			{
 				g_qeglobals.d_selSelectMode = sel_brush;
@@ -1677,22 +1686,32 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
-				if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
-					delete g_qeglobals.d_clipTool;
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_vertex;
 			}
+			*/
 			break;
-
+		case ID_SELECTION_DRAGFACES:
+			GeoTool::ToggleMode(GeoTool::GT_FACE);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+			
 		case ID_SELECTION_CLONE:
 			Modify_Clone();
 			break;
 		case ID_SELECTION_DESELECT:
-			if (g_qeglobals.d_clipTool)	// lunaran TODO: cancel any modal tool
-				delete g_qeglobals.d_clipTool;
-			else
-				Selection::DeselectAll();
+			if (!Tool::HotTool())
+			{
+				Tool *mt = Tool::ModalTool();
+				if (mt)
+				{
+					delete mt;
+					Sys_UpdateWindows(W_SCENE);
+				}
+				else
+					Selection::DeselectAll();
+			}
 			break;
 		case ID_SELECTION_DELETE:
 			Modify_Delete();
@@ -2533,7 +2552,7 @@ void WMain_Create ()
 // sikk---> Preferences Dialog
 		g_qeglobals.d_savedinfo.bAutosave			= true;
 		g_qeglobals.d_savedinfo.bRadiantLights		= true;
-		g_qeglobals.d_savedinfo.bVertexSplitsFace	= true;
+		g_qeglobals.d_savedinfo.bVFEModesExclusive	= true;
 		g_qeglobals.d_savedinfo.nAutosave			= 5;
 		g_qeglobals.d_savedinfo.nMapSize			= 8192;
 		g_qeglobals.d_savedinfo.nUndoLevels			= 32;

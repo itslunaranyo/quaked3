@@ -184,6 +184,8 @@ void CommandQueue::Complete(Command *cmd)
 	if ((int)undoQueue.size() > g_qeglobals.d_savedinfo.nUndoLevels)
 		ClearOldestUndo();
 
+	Selection::Changed();
+
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
 }
@@ -226,6 +228,7 @@ void CommandQueue::Undo()
 	Sys_Printf("Undo: %s\n", cmd->name);
 	cmd->Undo();
 	redoQueue.push_back(cmd);
+	Selection::Changed();
 
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
@@ -253,6 +256,7 @@ void CommandQueue::Redo()
 	Sys_Printf("Redo: %s\n", cmd->name);
 	cmd->Redo();
 	undoQueue.push_back(cmd);
+	Selection::Changed();
 
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);

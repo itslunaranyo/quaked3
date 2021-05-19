@@ -29,6 +29,7 @@ public:
 	Face(Brush* b);	// no orphan (brushless) faces
 	Face(Face* f);	// copy face
 	Face(Brush* b, Face* f);	// copy face to new brush
+	Face(Plane &p, TexDef &td);
 	~Face();
 
 	Face		*fnext;
@@ -40,6 +41,7 @@ public:
 	vec3		d_color;
 
 	Face	*Clone();
+	static void	ClearChain(Face **f);
 	//Face	*FullClone(Brush *own);	// sikk - Undo/Redo
 	int		MemorySize();	// sikk - Undo/Redo
 	winding_t *MakeWinding();

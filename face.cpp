@@ -40,6 +40,11 @@ Face::Face(Brush *b, Face *f) :
 	b->faces = this;
 }
 
+Face::Face(Plane &p, TexDef &td) : 
+	owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr),
+	plane(p), texdef(td)
+{}
+
 /*
 ================
 Face::~Face
@@ -72,6 +77,22 @@ Face *Face::Clone()
 
 	// all other fields are derived, and will be set by Brush_Build
 	return n;
+}
+
+void Face::ClearChain(Face **f)
+{
+	if (*f)
+	{
+		Face *fn, *fp;
+		fn = *f;
+		while (fn)
+		{
+			fp = fn;
+			fn = fn->fnext;
+			delete fp;
+		}
+		*f = nullptr;
+	}
 }
 
 /*

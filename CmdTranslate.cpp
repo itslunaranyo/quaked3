@@ -72,7 +72,8 @@ void CmdTranslate::Translate(vec3 tr, const bool relative)
 			(*eIt)->Move(tMod);
 		}
 	}
-
+	if (trans == vec3(0, 0, 0))
+		state = NOOP;
 	//mat = glm::translate(glm::mat4(1), trans);
 }
 
@@ -80,6 +81,11 @@ void CmdTranslate::Translate(vec3 tr, const bool relative)
 
 void CmdTranslate::Do_Impl()
 {
+	if (trans == vec3(0, 0, 0) || state == NOOP)
+	{
+		state = NOOP;
+		return;
+	}
 	if (postDrag)
 	{
 		for (auto brIt = brMoved.begin(); brIt != brMoved.end(); ++brIt)

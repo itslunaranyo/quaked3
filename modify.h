@@ -9,7 +9,8 @@ void	Modify_Clone();
 
 void	Modify_Ungroup();
 void	Modify_InsertBrush();
-void	Modify_Hide();
+void	Modify_HideSelected();
+void	Modify_HideUnselected();
 void	Modify_ShowHidden();
 
 void	Modify_ConnectEntities();

@@ -702,23 +702,33 @@ void Selection::DeselectAll()
 Selection::GetBounds
 ===============
 */
-void Selection::GetBounds(vec3 &mins, vec3 &maxs)
+bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
 {
-	int			i;
-	Brush	   *b;
-
 	ClearBounds(mins, maxs);
 
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	if (IsEmpty())
+		return false;
+
+	if (HasBrushes())
 	{
-		for (i = 0; i < 3; i++)
+		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			if (b->mins[i] < mins[i])
-				mins[i] = b->mins[i];
-			if (b->maxs[i] > maxs[i])
-				maxs[i] = b->maxs[i];
+			mins = glm::min(mins, b->mins);
+			maxs = glm::max(maxs, b->maxs);
 		}
 	}
+	else if (NumFaces())
+	{
+		for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
+		{
+			for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
+			{
+				mins = glm::min(mins, (*fIt)->face_winding->points[i].point);
+				maxs = glm::max(maxs, (*fIt)->face_winding->points[i].point);
+			}
+		}
+	}
+	return true;
 }
 
 /*
@@ -726,15 +736,13 @@ void Selection::GetBounds(vec3 &mins, vec3 &maxs)
 Selection::GetTrueMid
 ===============
 */
-void Selection::GetTrueMid(vec3 &mid)
+vec3 Selection::GetTrueMid()
 {
 	vec3	mins, maxs;
-	int		i;
 
 	GetBounds(mins, maxs);
 
-	for (i = 0; i < 3; i++)
-		mid[i] = (mins[i] + ((maxs[i] - mins[i]) / 2));
+	return (mins + maxs) * 0.5f;
 }
 
 /*
@@ -742,27 +750,24 @@ void Selection::GetTrueMid(vec3 &mid)
 Selection::GetMid
 ===============
 */
-void Selection::GetMid(vec3 &mid)
+vec3 Selection::GetMid()
 {
+	vec3	mid;
 	vec3	mins, maxs;
-	int		i;
 
 	if (g_qeglobals.d_savedinfo.bNoClamp)
 	{
-		GetTrueMid(mid);
-		return;
+		return GetTrueMid();
 	}
 
 	GetBounds(mins, maxs);
+
 	// lunaran: don't snap the midpoint to the grid, snap the bounds first so selections don't wander when rotated
-	for (i = 0; i < 3; i++)
-	{
-		mins[i] = g_qeglobals.d_nGridSize * floor(mins[i] / g_qeglobals.d_nGridSize);
-		maxs[i] = g_qeglobals.d_nGridSize * ceil(maxs[i] / g_qeglobals.d_nGridSize);
-		mid[i] = roundf((mins[i] + maxs[i]) * 0.5f);
-	}
-	//for (i = 0; i < 3; i++)
-	//	mid[i] = g_qeglobals.d_nGridSize * floor(((mins[i] + maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
+	mins = pointOnGrid(mins);
+	maxs = pointOnGrid(maxs);
+	mid = (mins + maxs) * 0.5f;
+
+	return mid;
 }
 
 

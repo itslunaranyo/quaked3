@@ -10,6 +10,62 @@
 qeglobals_t  g_qeglobals;
 
 
+GeoTool *g_gt = nullptr;
+// it can test aaanything you want
+void QE_TestSomething()
+{
+	if (!g_gt)
+		g_gt = new GeoTool(GeoTool::GT_VERTEX);
+	else
+	{
+		delete g_gt;
+		g_gt = nullptr;
+	}
+	/*
+	static int testycool = 0;
+	CmdGeoMod *cmdGM;
+	cmdGM = new CmdGeoMod();
+	std::vector<vec3> pts;
+	cmdGM->SetBrushes(&g_brSelectedBrushes);
+	if (testycool == 0)
+	{
+//		pts.push_back(vec3(0, 0, 0));
+//		pts.push_back(vec3(0, 64, 0));
+		int i = 0;
+		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+			cmdGM->SetPoint(br, br->faces->face_winding->points[0].point);
+
+		if (!cmdGM->Translate(vec3(-16, 0, 16)))
+			Sys_Printf("NOPE\n");
+		//testycool++;
+	}
+	else if (testycool == 1)
+	{
+		pts.push_back(vec3(-16, 32, -16));
+		pts.push_back(vec3(-16, 96, -16));
+		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+			cmdGM->SetPoints(br, pts);
+
+		if (!cmdGM->Translate(vec3(16, -32, 0)))
+			Sys_Printf("NOPE\n");
+	//	testycool++;
+	}
+	else if (testycool == 2)
+	{
+		pts.push_back(vec3(0, 16, 0));
+		pts.push_back(vec3(0, 80, 0));
+		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+			cmdGM->SetPoints(br, pts);
+
+		if (!cmdGM->Translate(vec3(0, -32, 0)))
+			Sys_Printf("NOPE\n");
+	}
+	g_cmdQueue.Complete(cmdGM);
+	*/
+}
+
+
+
 /*
 ==================
 qmalloc
@@ -118,7 +174,7 @@ void QE_Init ()
 
 	// sikk - For bad texture name check during map save. Setting it to
 	// -1 insures that if brush #0 has bad face, it'll be listed in console
-	g_nBrushNumCheck = -1;
+	//g_nBrushNumCheck = -1;
 
 // sikk---> Save Rebar Band Info
 	for (i = 0; i < 11; i++)
@@ -289,7 +345,10 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGEDGES, 0);
 		break;
 	case 'F':	// sikk - added shortcut key
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_TEXTURES_FLUSH_UNUSED, 0);
+		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGFACES, 0);
+		break;
+	case 'V':
+		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGVERTICES, 0);
 		break;
 		/*
 	case 'G':	// sikk - added shortcut key
@@ -317,9 +376,11 @@ bool QE_KeyDown (int key)
 	case 'O':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CONSOLE, 0);
 		break;
-	//case 'P':
-	//	PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_FILE_IMPORTPREFAB, 0);
-	//	break;
+#ifdef _DEBUG
+	case 'P':
+		QE_TestSomething();
+		break;
+#endif
 	case 'Q':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CAMERA, 0);
 		break;
@@ -334,9 +395,6 @@ bool QE_KeyDown (int key)
 		break;
 	case 'U':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_TEXTURES_SHOWINUSE, 0);
-		break;
-	case 'V':
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGVERTICES, 0);
 		break;
 	case 'X':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);

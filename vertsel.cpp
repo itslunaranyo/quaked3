@@ -274,8 +274,8 @@ void SelectVertexByRay (const vec3 org, const vec3 dir)
 	g_qeglobals.d_fMovePoints[g_qeglobals.d_nNumMovePoints++] = &g_qeglobals.d_v3Points[besti];
 
 	// old vertex editing mode
-	if (!g_qeglobals.d_savedinfo.bVertexSplitsFace)
-		SelectVertex(besti);
+	//if (!g_qeglobals.d_savedinfo.bVertexSplitsFace)
+	//	SelectVertex(besti);
 // <---sikk
 }
 

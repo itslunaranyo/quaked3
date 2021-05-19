@@ -169,6 +169,13 @@ int Tool::HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+Tool* Tool::ModalTool()
+{
+	if (g_qeglobals.d_tools.back()->modal)
+		return g_qeglobals.d_tools.back();
+	return nullptr;
+}
+
 Tool* Tool::HotTool()
 {
 	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)

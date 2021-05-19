@@ -9,9 +9,25 @@
 #include "qedefs.h"
 #include <assert.h>
 
+// for sorting arrays/lists of vectors with intent to strip duplicates
+bool VectorCompareLT(const vec3 &v1, const vec3 &v2)
+{
+	if (v1.x < v2.x)
+		return true;
+	if (v1.x == v2.x)
+	{
+		if (v1.y < v2.y)
+			return true;
+		if (v1.y == v2.y)
+		{
+			if (v1.z < v2.z)
+				return true;
+		}
+	}
+	return false;
+}
 
-
-bool VectorCompare(const vec3 v1, const vec3 v2)
+bool VectorCompare(const vec3 &v1, const vec3 &v2)
 {
 	for (int i = 0; i < 3; i++)
 		if (fabs(v1[i] - v2[i]) > EQUAL_EPSILON)

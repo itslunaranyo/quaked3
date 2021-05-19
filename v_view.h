@@ -7,12 +7,12 @@
 // window system independent view code
 
 typedef struct mouseContext_s {
-	mouseContext_s() : up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), scale(1.0f), dims(0) {}
+	mouseContext_s() : pt(vec3(0)), up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), dims(0) {}
+	vec3 pt;
 	vec3 up;
 	vec3 right;
 	vec3 ray;
 	vec3 org;
-	float scale;
 	int dims;
 } mouseContext_t;
 

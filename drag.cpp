@@ -82,7 +82,7 @@ void MoveSelection (const vec3 move)
 	if (g_qeglobals.d_nNumMovePoints)
 	{
 // sikk---> Vertex Editing Splits Face
-		if (g_qeglobals.d_selSelectMode == sel_vertex && g_qeglobals.d_savedinfo.bVertexSplitsFace)
+		if (g_qeglobals.d_selSelectMode == sel_vertex)// && g_qeglobals.d_savedinfo.bVertexSplitsFace)
 		{
 			success = true;
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -169,7 +169,7 @@ void Drag_Setup(int x, int y, int buttons,
 
 	g_v3DragXVec = AxializeVector(xaxis);
 	g_v3DragYVec = AxializeVector(yaxis);
-
+	/*
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
 	{
 		SelectVertexByRay(origin, dir);
@@ -188,7 +188,7 @@ void Drag_Setup(int x, int y, int buttons,
 			return;
 		}
 	}
-
+	*/
 	// check for direct hit first
 	t = Selection::TestRay(origin, dir, true);
 	if (t.selected)

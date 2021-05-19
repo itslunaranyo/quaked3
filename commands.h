@@ -36,6 +36,7 @@
 #include "CmdSphere.h"
 #include "CmdHollow.h"
 #include "CmdMerge.h"
+#include "CmdGeoMod.h"
 
 // face edits
 #include "CmdPlaneShift.h"

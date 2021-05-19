@@ -53,8 +53,8 @@ mouseContext_t const ZView::GetMouseContext(const int x, const int y)
 
 	// .ray and .right are 0,0,0 because their direction is meaningless
 
+	mc.pt = vec3(x, y, 0);
 	mc.up = vec3(0,0,1);
-	mc.scale = 1 / scale;
 	mc.dims = 1;	// 1D view
 
 	return mc;

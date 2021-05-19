@@ -29,24 +29,27 @@ public:
 	// -> original faces wind up outside the scene <-
 	void ModifyBrush(Brush* br);
 	void ModifyBrushes(Brush* brList);
+	void ModifyBrushes(std::vector<Brush*> brList);
 
 	// restore geometry for these brushes back to their state when Modify()ed
 	// -> original faces stay outside the scene <-
 	void RestoreBrush(Brush* br);
 	void RestoreBrushes(Brush* brList);
+	void RestoreBrushes(std::vector<Brush*> brList);
 	void RestoreAll();
 
 	// restore cloned geometry from these brushes and stop tracking
 	// -> original faces are put back in the scene <-
 	void RevertBrush(Brush* br);
 	void RevertBrushes(Brush* brList);
+	void RevertBrushes(std::vector<Brush*> brList);
 	void RevertAll();
 
 private:
 	typedef struct brBasis_s {
 		brBasis_s(Brush *bOrig);
 		~brBasis_s();
-		Brush* br;
+		Brush *br;
 		Face *faces;
 		vec3 mins, maxs;
 		void clear();

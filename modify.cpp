@@ -147,21 +147,36 @@ void Modify_InsertBrush()
 
 /*
 ===============
-Modify_Hide
+Modify_HideSelected
 ===============
 */
-void Modify_Hide()
+void Modify_HideSelected()
 {
 	Brush *b;
 
 	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
 	{
-		//b->hiddenBrush = true;
 		b->showFlags |= BFL_HIDDEN;
 	}
 
 	Selection::Changed();
 }
+
+/*
+===============
+Modify_HideUnselected
+===============
+*/
+void Modify_HideUnselected()
+{
+	Brush *b;
+
+	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
+	{
+		b->showFlags |= BFL_HIDDEN;
+	}
+}
+
 
 /*
 ===============

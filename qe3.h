@@ -53,7 +53,7 @@
 #include "modify.h"
 #include "transform.h"
 #include "surface.h"
-#include "vertsel.h"
+//#include "vertsel.h"
 #include "winding.h"
 
 #include "v_view.h"
@@ -79,6 +79,7 @@
 #include "ManipTool.h"
 #include "TextureTool.h"
 #include "ClipTool.h"
+#include "GeoTool.h"
 
 //========================================================================
 
@@ -137,7 +138,7 @@ typedef struct
 			bLogConsole,
 			bNoStipple,
 			bRadiantLights,
-			bVertexSplitsFace,
+			bVFEModesExclusive,
 			bSortTexByWad,
 			bModName,
 			bHeapsize,
@@ -252,6 +253,8 @@ extern bool	g_bSnapCheck;
 //========================================================================
 
 // QE function declarations
+void	QE_TestSomething();
+
 void	QE_CheckAutoSave ();
 void	QE_CheckOpenGLForErrors (void);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
