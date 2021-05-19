@@ -116,7 +116,7 @@ EntClass *EntClass::InitFromText(char *text)
 	text = COM_Parse(text);
 	if (g_szComToken[0] == '(')
 	{	// parse the size as two vectors
-		e->form = ECF_FIXED;
+		e->form = ECF_POINT;
 
 		r = sscanf(text, "%f %f %f) (%f %f %f)", 
 			&e->mins[0], &e->mins[1], &e->mins[2], 
@@ -229,12 +229,12 @@ EntClass *EntClass::CreateOppositeForm(EntClass *e)
 
 	if (dupe->form & ECF_BRUSH)
 	{
-		dupe->form = (ECF_FIXED | ECF_HACKED);
+		dupe->form = (ECF_POINT | ECF_HACKED);
 		dupe->mins[0] = dupe->mins[1] = dupe->mins[2] = -8;
 		dupe->maxs[0] = dupe->maxs[1] = dupe->maxs[2] = 8;
 		Sys_Printf("Creating fixed-size %s entity class definition\n", dupe->name);
 	}
-	else if (dupe->form & ECF_FIXED)
+	else if (dupe->form & ECF_POINT)
 	{
 		dupe->form = (ECF_BRUSH | ECF_HACKED);
 		Sys_Printf("Creating brush-based %s entity class definition\n", dupe->name);
@@ -253,7 +253,7 @@ EntClass::AddToClassList
 */
 void EntClass::AddToClassList()
 {
-	if (IsFixedSize())
+	if (IsPointClass())
 		pointclasses.push_back(this);
 	else
 		brushclasses.push_back(this);

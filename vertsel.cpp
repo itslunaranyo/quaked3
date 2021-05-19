@@ -96,7 +96,7 @@ void SetupVertexSelection ()
 	
 	b = g_brSelectedBrushes.next;
 	
-	for (f = b->brush_faces; f; f = f->next)
+	for (f = b->basis.faces; f; f = f->next)
 		MakeFace(f);
 
 	Sys_UpdateWindows(W_ALL);
@@ -158,7 +158,7 @@ void SelectVertex (int p1)
 	winding_t  *w;
 
 	b = g_brSelectedBrushes.next;
-	for (f = b->brush_faces; f; f = f->next)
+	for (f = b->basis.faces; f; f = f->next)
 	{
 		w = b->MakeFaceWinding(f);
 

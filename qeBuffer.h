@@ -22,7 +22,7 @@ public:
 	}
 	~qeBuffer() { destroy(); }
 
-	size_t size() { return len; }
+	size_t size() const { return len; }
 	void* operator*() const { return reinterpret_cast<void*>(buf); }
 //	operator char*() const { return reinterpret_cast<char*>(buf); }	// this is not a string class, cast it manually if you want to pretend it is
 	byte& operator[](unsigned i) { assert(i < len); return buf[i]; }

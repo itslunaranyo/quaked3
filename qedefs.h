@@ -76,9 +76,9 @@
 #define	EXCLUDE_ANGLES		512
 #define	EXCLUDE_HINT		1024
 
-#define	ECLASS_LIGHT		0x00000001
-#define	ECLASS_ANGLE		0x00000002
-#define	ECLASS_PATH			0x00000004
+#define	ECLASS_LIGHT		0x0001
+#define	ECLASS_ANGLE		0x0002
+#define	ECLASS_PATH			0x0004
 
 // menu indexes for modifying menus
 #define	MENU_VIEW		2
@@ -95,14 +95,15 @@
 // window bits
 #define	W_CAMERA		0x0001
 #define	W_XY			0x0002
-#define	W_Z				0x0008
+#define	W_Z				0x0004
+#define W_SCENE			0x0007
 #define	W_TEXTURE		0x0010
-#define W_CONSOLE		0x0040
-#define W_ENTITY		0x0080
+#define W_CONSOLE		0x0020
+#define W_ENTITY		0x0040
 
-#define	W_ALL			0xFFFFFFFF
+#define	W_ALL			0xFFFF
 
-#define WM_BENCHMARK		(WM_USER + 267)
+#define WM_BENCHMARK	(WM_USER + 267)
 
 // toolbar ID's
 #define ID_REBAR		1000

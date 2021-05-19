@@ -15,8 +15,14 @@ public:
 	Brush	*prev, *next;	// links in active/selected
 	Brush	*oprev, *onext;	// links in entity
 	Entity	*owner;
-	Face	*brush_faces;
-	vec3_t	mins, maxs;
+	struct brbasis_s {
+		brbasis_s();
+		brbasis_s(const brbasis_s& other);
+		brbasis_s& operator=(const brbasis_s& other);
+
+		Face	*faces;
+		vec3_t	mins, maxs;
+	} basis;
 	bool	hiddenBrush;
 
 	// sikk---> Undo/Redo
@@ -32,10 +38,11 @@ public:
 	bool	IsConvex() const;	// sikk - Vertex Editing Splits Face
 	bool	IsFiltered() const;
 
-	static Brush *Create (vec3_t mins, vec3_t maxs, texdef_t *texdef);
+	static Brush *Create (vec3_t inMins, vec3_t inMaxs, texdef_t *texdef);
 	void	Recreate(vec3_t inMins, vec3_t inMaxs, texdef_t *inTexDef);
 	Brush	*Clone() const;
 	Brush	*FullClone() const;	// sikk - Undo/Redo
+	void	CopyBasis(brbasis_s &brb);
 	void	Move(vec3_t move);
 
 	void	Build();

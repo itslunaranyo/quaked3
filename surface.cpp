@@ -228,7 +228,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 
 	for (pBrush = pList->next; pBrush != pList; pBrush = pBrush->next)
 	{
-		for (pFace = pBrush->brush_faces; pFace; pFace = pFace->next)
+		for (pFace = pBrush->basis.faces; pFace; pFace = pFace->next)
 		{
 			if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
 			{
@@ -318,7 +318,7 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 		Undo::Start("Set Brush Textures");	// sikk - Undo/Redo
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			if (!b->owner->eclass->IsFixedSize())
+			if (b->owner->IsBrush())
 			{
 				Undo::AddBrush(b);	// sikk - Undo/Redo
 				b->SetTexture(texdef, nSkipFlags);
@@ -379,7 +379,7 @@ void Surf_RotateForTransform(int nAxis, float fDeg, vec3_t vOrigin)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			RotateFaceTexture(f, nAxis, fDeg, vOrigin);
 			b->Build();
@@ -438,7 +438,7 @@ void Surf_ShiftTexture(int x, int y)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			f->texdef.shift[0] += x;
 			f->texdef.shift[1] += y;
@@ -478,7 +478,7 @@ void Surf_ScaleTexture(int x, int y)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			f->texdef.scale[0] += x / 100.0f;
 			f->texdef.scale[1] += y / 100.0f;
@@ -519,7 +519,7 @@ void Surf_RotateTexture(int deg)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			f->texdef.rotate += deg;
 			if (f->texdef.rotate >180)

@@ -27,14 +27,36 @@ int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 Brush::Brush
 =============
 */
-Brush::Brush() : 
-	prev(nullptr), next(nullptr), 
+Brush::Brush() :
+	prev(nullptr), next(nullptr),
 	oprev(nullptr), onext(nullptr),
-	owner(nullptr), brush_faces(nullptr),
+	owner(nullptr), hiddenBrush(false),
 	undoId(0), redoId(0), ownerId(0)
 {
+}
+
+Brush::brbasis_s::brbasis_s() : faces(nullptr)
+{
 	ClearBounds(mins, maxs);
-	hiddenBrush = false;
+}
+
+// these dumb things are necessary because vec3_t is an array:
+Brush::brbasis_s::brbasis_s(const brbasis_s & other)
+{
+	faces = other.faces;
+	VectorCopy(other.mins, mins);
+	VectorCopy(other.maxs, maxs);
+}
+
+Brush::brbasis_s &Brush::brbasis_s::operator=(const brbasis_s &other)
+{
+	if (this != &other)
+	{
+		faces = other.faces;
+		VectorCopy(other.mins, mins);
+		VectorCopy(other.maxs, maxs);
+	}
+	return *this;
 }
 
 /*
@@ -52,7 +74,7 @@ Brush::~Brush()
 	Face *f, *fnext;
 
 	// free faces
-	for (f = brush_faces; f; f = fnext)
+	for (f = basis.faces; f; f = fnext)
 	{
 		fnext = f->next;
 		delete f;
@@ -76,7 +98,7 @@ int Brush::NumFaces() const
 {
 	int sum = 0;
 	Face* f;
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 		if (f->face_winding)
 			sum++;
 	return sum;
@@ -92,7 +114,7 @@ int Brush::MemorySize() const
 	int		size = 0;
 	Face *f;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 		size += f->MemorySize();
 
 	size += sizeof(*this);
@@ -109,11 +131,11 @@ bool Brush::IsConvex() const
 {
 	Face	*face1, *face2;
 
-	for (face1 = brush_faces; face1; face1 = face1->next)
+	for (face1 = basis.faces; face1; face1 = face1->next)
 	{
 		if (!face1->face_winding)
 			continue;
-		for (face2 = brush_faces; face2; face2 = face2->next)
+		for (face2 = basis.faces; face2; face2 = face2->next)
 		{
 			if (face1 == face2)
 				continue;
@@ -142,19 +164,19 @@ bool Brush::IsFiltered() const
 		return true;
 	
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_CLIP)
-		if (!strncmp(brush_faces->texdef.name, "clip", 4))
+		if (!strncmp(basis.faces->texdef.name, "clip", 4))
 			return true;
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_HINT)
-		if (!strncmp(brush_faces->texdef.name, "hint", 4))	// catches hint and hintskip
+		if (!strncmp(basis.faces->texdef.name, "hint", 4))	// catches hint and hintskip
 			return true;
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WATER)
-		if (brush_faces->texdef.name[0] == '*')
+		if (basis.faces->texdef.name[0] == '*')
 			return true;
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_SKY)
-		if (!strncmp(brush_faces->texdef.name, "sky", 3))
+		if (!strncmp(basis.faces->texdef.name, "sky", 3))
 			return true;
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_FUNC_WALL)
@@ -165,7 +187,7 @@ bool Brush::IsFiltered() const
 		if (!strncmp(owner->eclass->name, "func_detail", 11))
 			return true;
 
-	if (owner == g_map.world)
+	if (owner->IsWorld())
 	{
 		if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_WORLD)
 			return true;
@@ -195,19 +217,19 @@ Create new rectilinear brush
 The brush is NOT linked to any list
 =============
 */
-Brush *Brush::Create(vec3_t mins, vec3_t maxs, texdef_t *texdef)
+Brush *Brush::Create(vec3_t inMins, vec3_t inMaxs, texdef_t *texdef)
 {
 	Brush	   *b;
 
 	for (int i = 0; i < 3; i++)
 	{
-		if (maxs[i] <= mins[i])
+		if (inMaxs[i] <= inMins[i])
 			Error("Brush_InitSolid: Backwards.");
 	}
 
 	b = new Brush();
 
-	b->Recreate(mins, maxs, texdef);
+	b->Recreate(inMins, inMaxs, texdef);
 	return b;
 }
 
@@ -218,15 +240,15 @@ void Brush::Recreate(vec3_t inMins, vec3_t inMaxs, texdef_t *inTexDef)
 	Face	   *f, *fnext;
 
 	// free old faces
-	for (f = brush_faces; f; f = fnext)
+	for (f = basis.faces; f; f = fnext)
 	{
 		fnext = f->next;
 		delete f;
-		brush_faces = nullptr;
+		basis.faces = nullptr;
 	}
 
-	VectorCopy(inMins, mins);
-	VectorCopy(inMaxs, maxs);
+	VectorCopy(inMins, basis.mins);
+	VectorCopy(inMaxs, basis.maxs);
 
 	pts[0][0][0] = inMins[0];
 	pts[0][0][1] = inMins[1];
@@ -291,11 +313,11 @@ Brush *Brush::Clone() const
 	n = new Brush();
 	n->owner = owner;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 	{
 		nf = f->Clone();
-		nf->next = n->brush_faces;
-		n->brush_faces = nf;
+		nf->next = n->basis.faces;
+		n->basis.faces = nf;
 	}
 
 	return n;
@@ -315,10 +337,10 @@ Brush *Brush::FullClone() const
 
 	n = new Brush();
 	n->owner = owner;
-	VectorCopy(mins, n->mins);
-	VectorCopy(maxs, n->maxs);
+	VectorCopy(basis.mins, n->basis.mins);
+	VectorCopy(basis.maxs, n->basis.maxs);
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 	{
 		if (f->original)
 			continue;
@@ -326,7 +348,7 @@ Brush *Brush::FullClone() const
 		nf = f->FullClone(n);
 
 		// copy all faces that have the original set to this face
-		for (f2 = brush_faces; f2; f2 = f2->next)
+		for (f2 = basis.faces; f2; f2 = f2->next)
 		{
 			if (f2->original == f)
 			{
@@ -338,12 +360,26 @@ Brush *Brush::FullClone() const
 		}
 	}
 
-	for (nf = n->brush_faces; nf; nf = nf->next)
+	for (nf = n->basis.faces; nf; nf = nf->next)
 	{
 		nf->ColorAndTexture();
 	}
 
 	return n;
+}
+
+void Brush::CopyBasis(brbasis_s & brb)
+{
+	Face *f, *nf;
+
+	brb = basis;
+
+	for (f = basis.faces; f; f = f->next)
+	{
+		nf = f->Clone();
+		nf->next = brb.faces;
+		brb.faces = nf;
+	}
 }
 
 /*
@@ -354,13 +390,14 @@ Brush::Move
 void Brush::Move(vec3_t move)
 {
 	int		i;
-	Face *f;
+	Face	*f;
 
-	for (f = brush_faces; f; f = f->next)
+	if (VectorCompare(move, g_v3VecOrigin)) return;
+
+	for (f = basis.faces; f; f = f->next)
 	{
-		if (!owner->eclass->IsFixedSize())
-			if (g_qeglobals.d_bTextureLock)
-				f->MoveTexture(move);
+		if (owner->IsBrush() && g_qeglobals.d_bTextureLock)
+			f->MoveTexture(move);
 
 		for (i = 0; i < 3; i++)
 			VectorAdd(f->planepts[i], move, f->planepts[i]);
@@ -369,7 +406,7 @@ void Brush::Move(vec3_t move)
 	Build();
 
 	// PGM - keep the origin vector up to date on fixed size entities.
-	if (owner->eclass->IsFixedSize() && onext != this)
+	if (owner->IsPoint() && onext != this)	// FIXME: hmmm
 	{
 		// lunaran: update everything
 		owner->SetOriginFromBrush();
@@ -393,11 +430,11 @@ void Brush::Build()
 	Face		*face;
 	winding_t	*w;
 
-	ClearBounds(mins, maxs);
+	ClearBounds(basis.mins, basis.maxs);
 	SnapPlanePoints();
 	MakeFacePlanes();
 
-	for (face = brush_faces; face; face = face->next)
+	for (face = basis.faces; face; face = face->next)
 	{
 		int	i, j;
 		face->owner = this;
@@ -416,10 +453,10 @@ void Brush::Build()
 			for (j = 0; j < 3; j++)
 			{
 				v = w->points[i][j];
-				if (v > maxs[j])
-					maxs[j] = v;
-				if (v < mins[j])
-					mins[j] = v;
+				if (v > basis.maxs[j])
+					basis.maxs[j] = v;
+				if (v < basis.mins[j])
+					basis.mins[j] = v;
 			}
 		}
 		// setup s and t vectors, and set color
@@ -452,7 +489,7 @@ winding_t *Brush::MakeFaceWinding(Face *face)
 
 	// chop the poly by all of the other faces
 	past = false;
-	for (clip = brush_faces; clip && w; clip = clip->next)
+	for (clip = basis.faces; clip && w; clip = clip->next)
 	{
 		if (clip == face)
 		{
@@ -503,7 +540,7 @@ void Brush::MakeFacePlanes()
 	Face *f;
 	vec3_t	t1, t2, t3;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 	{
 		// convert to a vector / dist plane
 		for (i = 0; i < 3; i++)
@@ -536,7 +573,7 @@ void Brush::SnapPlanePoints()
 	if (g_qeglobals.d_savedinfo.bNoClamp)
 		return;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 		for (i = 0; i < 3; i++)
 			for (j = 0; j < 3; j++)
 				f->planepts[i][j] = floor(f->planepts[i][j] + 0.5);
@@ -553,8 +590,8 @@ void Brush::RemoveEmptyFaces()
 {
 	Face	*f, *next;
 
-	f = brush_faces;
-	brush_faces = NULL;
+	f = basis.faces;
+	basis.faces = NULL;
 
 	for (; f; f = next)
 	{
@@ -564,8 +601,8 @@ void Brush::RemoveEmptyFaces()
 			delete f;
 		else
 		{
-			f->next = brush_faces;
-			brush_faces = f;
+			f->next = basis.faces;
+			basis.faces = f;
 		}
 	}
 }
@@ -646,7 +683,7 @@ void Brush::FitTexture(int nHeight, int nWidth)
 {
 	Face *face;
 
-	for (face = brush_faces; face; face = face->next)
+	for (face = basis.faces; face; face = face->next)
 		face->FitTexture(nHeight, nWidth);
 }
 
@@ -659,7 +696,7 @@ void Brush::SetTexture(texdef_t *texdef, int nSkipFlags)
 {
 	Face *f;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 		f->SetTexture(texdef, nSkipFlags);
 
 	Build();
@@ -686,7 +723,7 @@ Face *Brush::RayTest(vec3_t origin, vec3_t dir, float *dist)
 	for (i = 0; i < 3; i++)
 		p2[i] = p1[i] + dir[i] * 16384;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 	{
 		d1 = DotProduct(p1, f->plane.normal) - f->plane.dist;
 		d2 = DotProduct(p2, f->plane.normal) - f->plane.dist;
@@ -743,7 +780,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 	Face	   *f2;
 	winding_t  *w;
 
-	if (owner->eclass->IsFixedSize())
+	if (owner->IsPoint())
 		return;
 
 	c = 0;
@@ -757,7 +794,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 	{
 		if (b2 == this)
 			continue;
-		for (f2 = b2->brush_faces; f2; f2 = f2->next)
+		for (f2 = b2->basis.faces; f2; f2 = f2->next)
 		{
 			for (i = 0; i < 3; i++)
 				if (fabs(DotProduct(f2->planepts[i], f->plane.normal) - f->plane.dist) > ON_EPSILON)
@@ -775,7 +812,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 	if (!shear)
 		return;
 
-	for (f2 = brush_faces; f2; f2 = f2->next)
+	for (f2 = basis.faces; f2; f2 = f2->next)
 	{
 		if (f2 == f)
 			continue;
@@ -838,12 +875,12 @@ void Brush::SideSelect(vec3_t origin, vec3_t dir, bool shear)
 	Face	*f, *f2;
 	vec3_t	 p1, p2;
 
-	for (f = brush_faces; f; f = f->next)
+	for (f = basis.faces; f; f = f->next)
 	{
 		VectorCopy(origin, p1);
 		VectorMA(origin, 16384, dir, p2);
 
-		for (f2 = brush_faces; f2; f2 = f2->next)
+		for (f2 = basis.faces; f2; f2 = f2->next)
 		{
 			if (f2 == f)
 				continue;
@@ -902,7 +939,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 		return false;
 
 	// the end point may not be the same as another vertex
-	for (face = brush_faces; face; face = face->next)
+	for (face = basis.faces; face; face = face->next)
 	{
 		w = face->face_winding;
 		if (!w)
@@ -924,7 +961,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 		// chop off triangles from all brush faces that use the to be moved vertex
 		// store pointers to these chopped off triangles in movefaces[]
 		nummovefaces = 0;
-		for (face = brush_faces; face; face = face->next)
+		for (face = basis.faces; face; face = face->next)
 		{
 			w = face->face_winding;
 			if (!w)
@@ -968,8 +1005,8 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 							newface->d_texture = face->d_texture;
 
 							// add the face to the brush
-							newface->next = brush_faces;
-							brush_faces = newface;
+							newface->next = basis.faces;
+							basis.faces = newface;
 
 							// add this new triangle to the move faces
 							movefacepoints[nummovefaces] = 0;
@@ -1018,8 +1055,8 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 						//newface->d_texture = Texture_ForName(newface->inTexDef.name);
 
 						// add the face to the brush
-						newface->next = brush_faces;
-						brush_faces = newface;
+						newface->next = basis.faces;
+						basis.faces = newface;
 
 						movefacepoints[nummovefaces] = 1;
 						movefaces[nummovefaces++] = newface;
@@ -1036,7 +1073,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 		VectorCopy(end, mid);
 		smallestfrac = 1;
 
-		for (face = brush_faces; face; face = face->next)
+		for (face = basis.faces; face; face = face->next)
 		{
 			// check if there is a move face that has this face as the original
 			for (i = 0; i < nummovefaces; i++)
@@ -1143,7 +1180,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 
 		// now try to merge faces with their original faces
 		lastface = NULL;
-		for (face = brush_faces; face; face = nextface)
+		for (face = basis.faces; face; face = nextface)
 		{
 			nextface = face->next;
 			if (!face->original)
@@ -1172,7 +1209,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 			if (lastface)
 				lastface->next = face->next;
 			else
-				brush_faces = face->next;
+				basis.faces = face->next;
 			delete face;
 		}
 	}
@@ -1188,7 +1225,7 @@ void Brush::ResetFaceOriginals()
 {
 	Face *face;
 
-	for (face = brush_faces; face; face = face->next)
+	for (face = basis.faces; face; face = face->next)
 		face->original = NULL;
 }
 // <---sikk
@@ -1236,8 +1273,8 @@ void Brush::MakeSided(int sides)
 	}
 
 	b = g_brSelectedBrushes.next;
-	VectorCopy(b->mins, mins);
-	VectorCopy(b->maxs, maxs);
+	VectorCopy(b->basis.mins, mins);
+	VectorCopy(b->basis.maxs, maxs);
 	texdef = &g_qeglobals.d_workTexDef;
 
 	delete b;
@@ -1368,8 +1405,8 @@ void Brush::MakeSidedCone(int sides)
 	}
 
 	b = g_brSelectedBrushes.next;
-	VectorCopy(b->mins, mins);
-	VectorCopy(b->maxs, maxs);
+	VectorCopy(b->basis.mins, mins);
+	VectorCopy(b->basis.maxs, maxs);
 	texdef = &g_qeglobals.d_workTexDef;
 
 	delete b;
@@ -1463,8 +1500,8 @@ void Brush::MakeSidedSphere(int sides)
 	}
 
 	b = g_brSelectedBrushes.next;
-	VectorCopy(b->mins, mins);
-	VectorCopy(b->maxs, maxs);
+	VectorCopy(b->basis.mins, mins);
+	VectorCopy(b->basis.maxs, maxs);
 	texdef = &g_qeglobals.d_workTexDef;
 
 	delete b;
@@ -1672,10 +1709,10 @@ void Brush::Draw ()
 	if (hiddenBrush)
 		return;
 
-//	if (owner->eclass->IsFixedSize() && g_qeglobals.d_camera.draw_mode == cd_texture)
+//	if (owner->IsPoint() && g_qeglobals.d_camera.draw_mode == cd_texture)
 //		glDisable (GL_TEXTURE_2D);
 
-	if (owner->eclass->IsFixedSize())
+	if (owner->IsPoint())
 	{
 		if (!(g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) && (owner->eclass->nShowFlags & ECLASS_ANGLE))
 			DrawFacingAngle();
@@ -1692,7 +1729,7 @@ void Brush::Draw ()
 
 	// guarantee the texture will be set first
 	prev = NULL;
-	for (face = brush_faces, order = 0; face; face = face->next, order++)
+	for (face = basis.faces, order = 0; face; face = face->next, order++)
 	{
 		w = face->face_winding;
 		if (!w)
@@ -1721,7 +1758,7 @@ void Brush::Draw ()
 		glEnd();
 	}
 
-	if (owner->eclass->IsFixedSize() && g_qeglobals.d_camera.draw_mode == cd_texture)
+	if (owner->IsPoint() && g_qeglobals.d_camera.draw_mode == cd_texture)
 		glEnable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1745,34 +1782,34 @@ void Brush::DrawXY (int nViewType)
 	if (hiddenBrush)
 		return;
 
-	if (owner->eclass->IsFixedSize())
+	if (owner->IsPoint())
 	{
 		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->nShowFlags & ECLASS_LIGHT))
 		{
-    		fMid = mins[2] + (maxs[2] - mins[2]) / 2;
+    		fMid = basis.mins[2] + (basis.maxs[2] - basis.mins[2]) / 2;
 
-			vCorners[0][0] = mins[0];
-			vCorners[0][1] = mins[1];
+			vCorners[0][0] = basis.mins[0];
+			vCorners[0][1] = basis.mins[1];
 			vCorners[0][2] = fMid;
 
-			vCorners[1][0] = mins[0];
-			vCorners[1][1] = maxs[1];
+			vCorners[1][0] = basis.mins[0];
+			vCorners[1][1] = basis.maxs[1];
 			vCorners[1][2] = fMid;
 
-			vCorners[2][0] = maxs[0];
-			vCorners[2][1] = maxs[1];
+			vCorners[2][0] = basis.maxs[0];
+			vCorners[2][1] = basis.maxs[1];
 			vCorners[2][2] = fMid;
 
-			vCorners[3][0] = maxs[0];
-			vCorners[3][1] = mins[1];
+			vCorners[3][0] = basis.maxs[0];
+			vCorners[3][1] = basis.mins[1];
 			vCorners[3][2] = fMid;
 
-			vTop[0] = mins[0] + ((maxs[0] - mins[0]) / 2);
-			vTop[1] = mins[1] + ((maxs[1] - mins[1]) / 2);
-			vTop[2] = maxs[2];
+			vTop[0] = basis.mins[0] + ((basis.maxs[0] - basis.mins[0]) / 2);
+			vTop[1] = basis.mins[1] + ((basis.maxs[1] - basis.mins[1]) / 2);
+			vTop[2] = basis.maxs[2];
 
 			VectorCopy(vTop, vBottom);
-			vBottom[2] = mins[2];
+			vBottom[2] = basis.mins[2];
 	    
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -1799,7 +1836,7 @@ void Brush::DrawXY (int nViewType)
 		}
 	}
 
-	for (face = brush_faces, order = 0; face; face = face->next, order++)
+	for (face = basis.faces, order = 0; face; face = face->next, order++)
 	{
 		// only draw polygons facing in a direction we care about
 		switch (nViewType)
@@ -1846,14 +1883,14 @@ void Brush::DrawFacingAngle ()
 	vec3_t	endpoint, tip1, tip2;
 	vec3_t	start;
 
-	VectorAdd(owner->brushes.onext->mins, owner->brushes.onext->maxs, start);
+	VectorAdd(owner->brushes.onext->basis.mins, owner->brushes.onext->basis.maxs, start);
 	VectorScale(start, 0.5, start);
-	dist = (maxs[0] - start[0]) * 2.5;
+	dist = (basis.maxs[0] - start[0]) * 2.5;
 
 	FacingVectors(this, forward, right, up);
 	VectorMA(start, dist, forward, endpoint);
 
-	dist = (maxs[0] - start[0]) * 0.5;
+	dist = (basis.maxs[0] - start[0]) * 0.5;
 	VectorMA(endpoint, -dist, forward, tip1);
 	VectorMA(tip1, -dist, up, tip1);
 	VectorMA(tip1, 2 * dist, up, tip2);
@@ -1886,7 +1923,7 @@ void Brush::DrawEntityName ()
 	if (!owner)
 		return;	// during contruction
 
-	if (owner == g_map.world)
+	if (owner->IsWorld())
 		return;
 
 	if (this != owner->brushes.onext)
@@ -1899,7 +1936,7 @@ void Brush::DrawEntityName ()
 		s = sin(a / 180 * Q_PI);
 		c = cos(a / 180 * Q_PI);
 		for (i = 0; i < 3; i++)
-			mid[i] = (mins[i] + maxs[i]) * 0.5; 
+			mid[i] = (basis.mins[i] + basis.maxs[i]) * 0.5; 
 
 		glBegin(GL_LINE_STRIP);
 		glVertex3fv(mid);
@@ -1935,19 +1972,19 @@ void Brush::DrawEntityName ()
 			if (*owner->GetKeyValue("style"))
 			{
 				sprintf(sz, "%s (style: %s)", owner->GetKeyValue("classname"), owner->GetKeyValue("style"));
-				glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
+				glRasterPos3f(basis.mins[0] + 4, basis.mins[1] + 4, basis.mins[2] + 4);
 				glCallLists(strlen(sz), GL_UNSIGNED_BYTE, sz);
 			}
 			else
 			{
-				glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
+				glRasterPos3f(basis.mins[0] + 4, basis.mins[1] + 4, basis.mins[2] + 4);
 				glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
 			}
 		}
 // <---sikk
 		else
 		{
-			glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
+			glRasterPos3f(basis.mins[0] + 4, basis.mins[1] + 4, basis.mins[2] + 4);
 			glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
 		}
 	}
@@ -1990,30 +2027,30 @@ void Brush::DrawLight()
 	}
 	glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
   
-	fMid = mins[2] + (maxs[2] - mins[2]) / 2;
+	fMid = basis.mins[2] + (basis.maxs[2] - basis.mins[2]) / 2;
 
-	vCorners[0][0] = mins[0];
-	vCorners[0][1] = mins[1];
+	vCorners[0][0] = basis.mins[0];
+	vCorners[0][1] = basis.mins[1];
 	vCorners[0][2] = fMid;
 
-	vCorners[1][0] = mins[0];
-	vCorners[1][1] = maxs[1];
+	vCorners[1][0] = basis.mins[0];
+	vCorners[1][1] = basis.maxs[1];
 	vCorners[1][2] = fMid;
 
-	vCorners[2][0] = maxs[0];
-	vCorners[2][1] = maxs[1];
+	vCorners[2][0] = basis.maxs[0];
+	vCorners[2][1] = basis.maxs[1];
 	vCorners[2][2] = fMid;
 
-	vCorners[3][0] = maxs[0];
-	vCorners[3][1] = mins[1];
+	vCorners[3][0] = basis.maxs[0];
+	vCorners[3][1] = basis.mins[1];
 	vCorners[3][2] = fMid;
 
-	vTop[0] = mins[0] + ((maxs[0] - mins[0]) / 2);
-	vTop[1] = mins[1] + ((maxs[1] - mins[1]) / 2);
-	vTop[2] = maxs[2];
+	vTop[0] = basis.mins[0] + ((basis.maxs[0] - basis.mins[0]) / 2);
+	vTop[1] = basis.mins[1] + ((basis.maxs[1] - basis.mins[1]) / 2);
+	vTop[2] = basis.maxs[2];
 
 	VectorCopy(vTop, vBottom);
-	vBottom[2] = mins[2];
+	vBottom[2] = basis.mins[2];
 
 	VectorCopy(vTriColor, vSave);
 
@@ -2076,13 +2113,13 @@ Brush *Brush::Parse ()
 		
 		f = new Face();
 		// add the brush to the end of the chain, so loading and saving a map doesn't reverse the order
-		if (!b->brush_faces)
-			b->brush_faces = f;
+		if (!b->basis.faces)
+			b->basis.faces = f;
 		else
 		{
 			Face *scan;
 
-			for (scan = b->brush_faces; scan->next; scan = scan->next)
+			for (scan = b->basis.faces; scan->next; scan = scan->next)
 				;
 			scan->next = f;
 		}
@@ -2144,7 +2181,7 @@ void Brush::Write(std::ostream& out)
 	Face *fa;
 
 	out << "{\n";
-	for (fa = brush_faces; fa; fa = fa->next)
+	for (fa = basis.faces; fa; fa = fa->next)
 	{
 		for (i = 0; i < 3; i++)
 			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision
@@ -2182,7 +2219,7 @@ void Brush::Write (FILE *f)
 	Face *fa;
 
 	fprintf(f, "{\n");
-	for (fa = brush_faces; fa; fa = fa->next)
+	for (fa = basis.faces; fa; fa = fa->next)
 	{
 		for (i = 0; i < 3; i++)
 			if (g_qeglobals.d_savedinfo.bBrushPrecision)	// sikk - Brush Precision

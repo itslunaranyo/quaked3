@@ -192,7 +192,7 @@ void Winding::CheckFreeChain()
 	chunk = first;
 	while (chunk->next)
 	{
-		assert(chunk->next->prev = chunk);
+		assert(chunk->next->prev == chunk);
 		chunk = chunk->next;
 	}
 }

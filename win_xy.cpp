@@ -109,7 +109,7 @@ int GetSelectionInfo ()
 	// lunaran TODO: what the fuck
 	for(b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if(b->owner->eclass->IsFixedSize())
+		if(b->owner->IsPoint())
 			retval = SELECTION_POINTENT;
 		else if(!_stricmp(b->owner->eclass->name, "worldspawn"))
 			retval = SELECTION_BRUSHES;
@@ -135,6 +135,7 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT)), 0);
 
 	GetCursorPos(&point);
+	xyz->ToGridPoint(x, y, g_v3Origin);
 
 	switch (selected)
 	{
@@ -216,7 +217,6 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		DoCreateEntity(false, true, true, g_v3Origin);
 		break;
 	case ID_MENU_CREATEPOINTENTITY:
-		xyz->ToGridPoint(x, y, g_v3Origin);
 		g_v3Origin[xyz->dViewType] = g_qeglobals.d_v3WorkMin[xyz->dViewType];
 
 		DoCreateEntity(true, false, false, g_v3Origin);

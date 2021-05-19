@@ -214,8 +214,8 @@ Face::Face(Brush* b)
 	Init();
 
 	owner = b;
-	next = b->brush_faces;
-	b->brush_faces = this;
+	next = b->basis.faces;
+	b->basis.faces = this;
 }
 
 /*
@@ -275,7 +275,6 @@ Face::FullClone
 
 sikk - Undo/Redo
 makes an exact copy of the face
-does not set owner
 ================
 */
 Face *Face::FullClone(Brush *own)
@@ -507,7 +506,7 @@ void Face::SetColor()
 	q = d_texture;
 	shade = ShadeForPlane();
 
-	if (g_qeglobals.d_camera.draw_mode == cd_texture && !owner->owner->eclass->IsFixedSize())
+	if (g_qeglobals.d_camera.draw_mode == cd_texture && owner->owner->IsBrush())
 	{
 		d_color[0] = d_color[1] = d_color[2] = shade;
 	}

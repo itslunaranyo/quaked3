@@ -76,6 +76,14 @@ bool Select_IsEmpty()
 {
 	return !( Select_HasBrushes() || Select_FaceCount() );
 }
+bool Select_OnlyPointEntities()
+{
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		if (b->owner->IsBrush())
+			return false;
+
+	return true;
+}
 int Select_NumBrushes()
 {
 	int i = 0;
@@ -131,7 +139,7 @@ void Select_SelectBrushSorted(Brush* b)
 
 	// world brushes, point entities, and brush ents with only one brush go to the end 
 	// of the list, so we don't keep looping over them looking for buddies
-	if (b->owner == g_map.world || b->owner->eclass->IsFixedSize() || b->onext == b)
+	if (b->owner->IsWorld() || b->owner->IsPoint() || b->onext == b)
 	{
 		b->AddToList(g_brSelectedBrushes.prev);
 		return;
@@ -167,7 +175,7 @@ void Select_HandleBrush (Brush *brush, bool bComplete)
 	if (e)
 	{
 		// select complete entity on first click
-		if (e != g_map.world && bComplete == true)
+		if (!e->IsWorld() && bComplete == true)
 		{
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 			{
@@ -356,11 +364,11 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 	{
 		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 		{
-			if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_map.world)
+			if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
 				continue;
 			if (brush->IsFiltered())
 				continue;
-			if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->IsFixedSize())
+			if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->IsPoint())
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
 			if (dist > 0 && dist < t.dist)
@@ -375,11 +383,11 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if ((flags & SF_ENTITIES_FIRST) && brush->owner == g_map.world)
+		if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
 			continue;
 		if (brush->IsFiltered())
 			continue;
-		if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->IsFixedSize())
+		if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->IsPoint())
 			continue;
 		face = brush->RayTest(origin, dir, &dist);
 		if (dist > 0 && dist < t.dist)
@@ -505,7 +513,7 @@ void Select_BrushesToFaces()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			Select_SelectFace(f);
 		}
@@ -565,6 +573,7 @@ void Select_DeselectFiltered()
 /*
 ===============
 Select_DeselectAll
+lunaran TODO: proper selection mode switching (brush/face) so we don't need this bool
 ===============
 */
 void Select_DeselectAll (bool bDeselectFaces)
@@ -636,10 +645,10 @@ void Select_GetBounds(vec3_t mins, vec3_t maxs)
 	{
 		for (i = 0; i < 3; i++)
 		{
-			if (b->mins[i] < mins[i])
-				mins[i] = b->mins[i];
-			if (b->maxs[i] > maxs[i])
-				maxs[i] = b->maxs[i];
+			if (b->basis.mins[i] < mins[i])
+				mins[i] = b->basis.mins[i];
+			if (b->basis.maxs[i] > maxs[i])
+				maxs[i] = b->basis.maxs[i];
 		}
 	}
 }
@@ -685,7 +694,7 @@ void Select_GetMid(vec3_t mid)
 		mid[i] = roundf((mins[i] + maxs[i]) * 0.5f);
 	}
 	//for (i = 0; i < 3; i++)
-	//	mid[i] = g_qeglobals.d_nGridSize * floor(((mins[i] + maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
+	//	mid[i] = g_qeglobals.d_nGridSize * floor(((basis.mins[i] + basis.maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
 }
 
 
@@ -771,7 +780,7 @@ void Select_MatchingTextures()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			if (!strcmp(f->texdef.name, texdef->name))
 			{
@@ -872,8 +881,8 @@ void Select_CompleteTall()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	VectorCopy(g_brSelectedBrushes.next->mins, mins);
-	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
+	VectorCopy(g_brSelectedBrushes.next->basis.mins, mins);
+	VectorCopy(g_brSelectedBrushes.next->basis.maxs, maxs);
 	Select_Delete();
 
 	// lunaran - grid view reunification
@@ -892,8 +901,8 @@ void Select_CompleteTall()
 	{
 		next = b->next;
 
-		if ((b->maxs[nDim1] > maxs[nDim1] || b->mins[nDim1] < mins[nDim1]) ||
-			(b->maxs[nDim2] > maxs[nDim2] || b->mins[nDim2] < mins[nDim2]))
+		if ((b->basis.maxs[nDim1] > maxs[nDim1] || b->basis.mins[nDim1] < mins[nDim1]) ||
+			(b->basis.maxs[nDim2] > maxs[nDim2] || b->basis.mins[nDim2] < mins[nDim2]))
 			continue;
 
 		if (b->IsFiltered())
@@ -920,8 +929,8 @@ void Select_PartialTall()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	VectorCopy(g_brSelectedBrushes.next->mins, mins);
-	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
+	VectorCopy(g_brSelectedBrushes.next->basis.mins, mins);
+	VectorCopy(g_brSelectedBrushes.next->basis.maxs, maxs);
 	Select_Delete();
 
 	// lunaran - grid view reunification
@@ -940,8 +949,8 @@ void Select_PartialTall()
 	{
 		next = b->next;
 
-		if ((b->mins[nDim1] > maxs[nDim1] || b->maxs[nDim1] < mins[nDim1]) ||
-			(b->mins[nDim2] > maxs[nDim2] || b->maxs[nDim2] < mins[nDim2]))
+		if ((b->basis.mins[nDim1] > maxs[nDim1] || b->basis.maxs[nDim1] < mins[nDim1]) ||
+			(b->basis.mins[nDim2] > maxs[nDim2] || b->basis.maxs[nDim2] < mins[nDim2]))
 			continue;
 
 		if (b->IsFiltered())
@@ -967,14 +976,14 @@ void Select_Touching()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	VectorCopy(g_brSelectedBrushes.next->mins, mins);
-	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
+	VectorCopy(g_brSelectedBrushes.next->basis.mins, mins);
+	VectorCopy(g_brSelectedBrushes.next->basis.maxs, maxs);
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
-			if (b->mins[i] > maxs[i] + 1 || b->maxs[i] < mins[i] - 1)
+			if (b->basis.mins[i] > maxs[i] + 1 || b->basis.maxs[i] < mins[i] - 1)
 				break;
 		if (i == 3)
 		{
@@ -999,15 +1008,15 @@ void Select_Inside()
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	VectorCopy(g_brSelectedBrushes.next->mins, mins);
-	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
+	VectorCopy(g_brSelectedBrushes.next->basis.mins, mins);
+	VectorCopy(g_brSelectedBrushes.next->basis.maxs, maxs);
 	Select_Delete();
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
 		for (i = 0; i < 3; i++)
-			if (b->maxs[i] > maxs[i] || b->mins[i] < mins[i])
+			if (b->basis.maxs[i] > maxs[i] || b->basis.mins[i] < mins[i])
 				break;
 		if (i == 3)
 		{
@@ -1063,6 +1072,8 @@ void Select_NextBrushInGroup()
 //============================================================
 
 
+
+
 /*
 ===============
 Select_Delete
@@ -1070,8 +1081,10 @@ Select_Delete
 */
 void Select_Delete ()
 {
-	Brush	*brush;
-	Entity	*e;
+//	Brush	*brush;
+//	Entity	*e;
+
+	if (!Select_HasBrushes()) return;
 
 //	g_pfaceSelectedFace = NULL;
 // sikk---> Multiple Face Selection
@@ -1079,19 +1092,25 @@ void Select_Delete ()
 		Select_DeselectAllFaces();
 // <---sikk
 	g_qeglobals.d_selSelectMode = sel_brush;
-
 	g_qeglobals.d_nNumMovePoints = 0;
+
+	CmdDelete *cmd = new CmdDelete(&g_brSelectedBrushes);
+	g_cmdQueue.Complete(cmd);
+
+	/*
 	while (Select_HasBrushes())
 	{
 		brush = g_brSelectedBrushes.next;
-		e = brush->owner;
-		delete brush;
+	//	e = brush->owner;
+	//	delete brush;
+
 
 		// remove any (not-worldspawn) entities with no brushes
-		if (e->brushes.onext == &e->brushes && e != g_map.world)
-			delete e;
+	//	if (e->brushes.onext == &e->brushes && !e->IsWorld())
+	//		delete e;
+		// actually leave them around, an undo might restore their brushes
 	}
-
+	*/
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1108,8 +1127,8 @@ void UpdateWorkzone (Brush* b)
 	assert(b != &g_brSelectedBrushes);
 
 	// will update the workzone to the given brush
-	VectorCopy(b->mins, g_qeglobals.d_v3WorkMin);
-	VectorCopy(b->maxs, g_qeglobals.d_v3WorkMax);
+	VectorCopy(b->basis.mins, g_qeglobals.d_v3WorkMin);
+	VectorCopy(b->basis.maxs, g_qeglobals.d_v3WorkMax);
 
 	/*
 	int nDim1, nDim2;
@@ -1117,16 +1136,16 @@ void UpdateWorkzone (Brush* b)
 	nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
 	nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
 
-	g_qeglobals.d_v3WorkMin[nDim1] = b->mins[nDim1];
-	g_qeglobals.d_v3WorkMax[nDim1] = b->maxs[nDim1];
-	g_qeglobals.d_v3WorkMin[nDim2] = b->mins[nDim2];
-	g_qeglobals.d_v3WorkMax[nDim2] = b->maxs[nDim2];
+	g_qeglobals.d_v3WorkMin[nDim1] = b->basis.mins[nDim1];
+	g_qeglobals.d_v3WorkMax[nDim1] = b->basis.maxs[nDim1];
+	g_qeglobals.d_v3WorkMin[nDim2] = b->basis.mins[nDim2];
+	g_qeglobals.d_v3WorkMax[nDim2] = b->basis.maxs[nDim2];
 	*/
 }
 
 /*
 ================
-Select_Clone
+Select_Clone	
 
 Creates an exact duplicate of the selection in place, then moves
 the selected brushes off of their old positions
@@ -1134,11 +1153,7 @@ the selected brushes off of their old positions
 */
 void Select_Clone ()
 {
-	vec3_t	delta;
-	Entity	*e;
-	Brush	*b, *b2, *n, *next, *next2;
-	Brush	templist;	// lunaran - select and offset the new brushes, not the old ones
-	templist.next = templist.prev = &templist;
+	vec3_t	delta = { 0,0,0 };
 
 	if (g_qeglobals.d_selSelectMode != sel_brush) return;
 	if (!Select_HasBrushes()) return;
@@ -1148,11 +1163,11 @@ void Select_Clone ()
 	{
 	case XZ:
 		delta[0] = g_qeglobals.d_nGridSize;
-		delta[1] = 0;
+	//	delta[1] = 0;
 		delta[2] = g_qeglobals.d_nGridSize;
 		break;
 	case YZ:
-		delta[0] = 0;
+	//	delta[0] = 0;
 		delta[1] = g_qeglobals.d_nGridSize;
 		delta[2] = g_qeglobals.d_nGridSize;
 		break;
@@ -1160,8 +1175,19 @@ void Select_Clone ()
 	case XY:
 		delta[0] = g_qeglobals.d_nGridSize;
 		delta[1] = g_qeglobals.d_nGridSize;
-		delta[2] = 0;
+	//	delta[2] = 0;
 	}
+
+	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
+	g_cmdQueue.Complete(cmd);
+	Select_DeselectAll(true);
+	cmd->Select();
+
+	/*
+	Entity	*e;
+	Brush	*b, *b2, *n, *next, *next2;
+	Brush	templist;	// lunaran - select and offset the new brushes, not the old ones
+	templist.next = templist.prev = &templist;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
 	{
@@ -1170,7 +1196,7 @@ void Select_Clone ()
 		Undo::EndEntity(b->owner);
 		Undo::EndBrush(b);
 		// if the brush is a world brush, handle simply
-		if (b->owner == g_map.world)
+		if (b->owner->IsWorld())
 		{
 //		Undo::EndBrush(n);
 			n = b->Clone();
@@ -1189,7 +1215,7 @@ void Select_Clone ()
 //		DeleteKey(e, "targetname");
 
 		// if the brush is a fixed size entity, create a new entity
-		if (b->owner->eclass->IsFixedSize())
+		if (b->owner->IsPoint())
 		{
 			n = b->Clone();
 			n->AddToList(&templist);
@@ -1229,8 +1255,8 @@ void Select_Clone ()
 	// lunaran - select and offset the new brushes, not the old ones
 	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_map.brActive);
 	Brush::MergeListIntoList(&templist, &g_brSelectedBrushes);
-
 	g_bSelectionChanged = true;
+	*/
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1252,11 +1278,13 @@ Select_Move
 */
 void Select_Move (vec3_t delta)
 {
-	Brush	*b;
-
-	// actually move the selected brushes
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		b->Move(delta);
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		if (b->owner->IsPoint())
+			b->owner->Move(delta);
+		else
+			b->Move(delta);
+	}
 //	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1275,7 +1303,7 @@ void Select_ApplyMatrix ()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			for (i = 0; i < 3; i++)
 			{
@@ -1472,7 +1500,7 @@ void Select_Scale (float x, float y, float z)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			for (i = 0; i < 3; i++)
 			{
@@ -1519,12 +1547,13 @@ Turn the currently selected entity back into normal brushes
 */
 void Select_Ungroup ()
 {
-	Entity	*e;
-	Brush		*b;
+//	Entity	*e;
+//	Brush	*b;
 
+	/*
 	e = g_brSelectedBrushes.next->owner;
 
-	if (!e || e == g_map.world || e->eclass->IsFixedSize())
+	if (!e || e->IsWorld() || e->IsPoint())
 	{
 		Sys_Printf("WARNING: Not a grouped entity.\n");
 		return;
@@ -1542,7 +1571,22 @@ void Select_Ungroup ()
 	}
 
 	delete e;
-	Sys_UpdateWindows(W_ALL);
+	*/
+	try
+	{
+		CmdReparentBrush *cmd = new CmdReparentBrush();
+		cmd->Destination(g_map.world);
+		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+		{
+			cmd->AddBrush(br);
+		}
+		g_cmdQueue.Complete(cmd);
+	}
+	catch (...)
+	{
+		return;
+	}
+	Sys_UpdateWindows(W_SCENE);
 }
 
 // sikk---> Insert Brush into Entity
@@ -1553,10 +1597,46 @@ Select_InsertBrush
 */
 void Select_InsertBrush ()
 {
-	EntClass   *ec;
-	EPair	   *ep;
-	Entity   *e, *e2;
-	Brush	   *b;
+	Brush *br;
+	Entity *dest;
+
+	dest = nullptr;
+	for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+	{
+		if (br->owner->IsWorld() || br->owner->IsPoint())
+			continue;
+		dest = br->owner;
+		break;
+	}
+
+	if (!dest)
+	{
+		Sys_Printf("WARNING: No brush entity selected to add brushes to.\n");
+		return;
+	}
+
+	try
+	{
+		CmdReparentBrush *cmd = new CmdReparentBrush();
+		cmd->Destination(dest);
+		for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+		{
+			cmd->AddBrush(br);
+		}
+		g_cmdQueue.Complete(cmd);
+	}
+	catch (...)
+	{
+		return;
+	}
+	Sys_UpdateWindows(W_SCENE);
+
+	/*
+
+	EntClass	*ec;
+	EPair		*ep;
+	Entity		*e, *e2;
+	Brush		*b;
 	bool		bCheck = false, bInserting = false;
 
 	// check to make sure we have a brush
@@ -1566,7 +1646,7 @@ void Select_InsertBrush ()
 	// if any selected brushes is a point entity, return
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner->eclass->IsFixedSize())
+		if (b->owner->IsPoint())
 		{
 			Sys_Printf("WARNING: Selection contains a point entity. No insertion done\n");
 			return;
@@ -1576,7 +1656,7 @@ void Select_InsertBrush ()
 	// find first brush that's an entity, pull info and continue
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner != g_map.world)
+		if (!b->owner->IsWorld())
 		{
 			e2 = b->owner;
 			ec = b->owner->eclass;
@@ -1593,7 +1673,7 @@ void Select_InsertBrush ()
 	// check whether we are inserting a brush or just reordering (for console text only)
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner == g_map.world)
+		if (b->owner->IsWorld())
 		{
 			bInserting = true;
 			continue;
@@ -1635,6 +1715,7 @@ void Select_InsertBrush ()
 
 	g_bSelectionChanged = true;
 	Sys_UpdateWindows(W_ALL);
+	*/
 }
 // <---sikk
 
@@ -1706,7 +1787,7 @@ void Select_ConnectEntities ()
 	}
 	e2 = b->owner;
 
-	if (e1 == g_map.world || e2 == g_map.world)
+	if (e1->IsWorld() || e2->IsWorld())
 	{
 		Sys_Printf("WARNING: Cannot connect to the world.\n");
 		Sys_Beep();

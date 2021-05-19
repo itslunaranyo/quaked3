@@ -125,27 +125,27 @@ void Clip_ProduceSplitLists ()
 			{
 				if (g_nClipAxis == YZ)
 				{
-					face.planepts[0][0] = pBrush->mins[0];
-					face.planepts[1][0] = pBrush->mins[0];
+					face.planepts[0][0] = pBrush->basis.mins[0];
+					face.planepts[1][0] = pBrush->basis.mins[0];
 					face.planepts[2][1] = (g_cpClip1.ptClip[1] + g_cpClip2.ptClip[1]) * 0.5f;
 					face.planepts[2][2] = (g_cpClip1.ptClip[2] + g_cpClip2.ptClip[2]) * 0.5f;
-					face.planepts[2][0] = pBrush->maxs[0];
+					face.planepts[2][0] = pBrush->basis.maxs[0];
 				}
 				else if (g_nClipAxis == XZ)
 				{
-					face.planepts[0][1] = pBrush->mins[1];
-					face.planepts[1][1] = pBrush->mins[1];
+					face.planepts[0][1] = pBrush->basis.mins[1];
+					face.planepts[1][1] = pBrush->basis.mins[1];
 					face.planepts[2][0] = (g_cpClip1.ptClip[0] + g_cpClip2.ptClip[0]) * 0.5f;
 					face.planepts[2][2] = (g_cpClip1.ptClip[2] + g_cpClip2.ptClip[2]) * 0.5f;
-					face.planepts[2][1] = pBrush->maxs[1];
+					face.planepts[2][1] = pBrush->basis.maxs[1];
 				}
 				else
 				{
-					face.planepts[0][2] = pBrush->mins[2];
-					face.planepts[1][2] = pBrush->mins[2];
+					face.planepts[0][2] = pBrush->basis.mins[2];
+					face.planepts[1][2] = pBrush->basis.mins[2];
 					face.planepts[2][0] = (g_cpClip1.ptClip[0] + g_cpClip2.ptClip[0]) * 0.5f;
 					face.planepts[2][1] = (g_cpClip1.ptClip[1] + g_cpClip2.ptClip[1]) * 0.5f;
-					face.planepts[2][2] = pBrush->maxs[2];
+					face.planepts[2][2] = pBrush->basis.maxs[2];
 				}
 			}
 
@@ -705,7 +705,7 @@ void Clip_DrawPoints ()
 		for (pBrush = pList->next; pBrush != NULL && pBrush != pList; pBrush = pBrush->next)
 		{
 			glColor3f(1, 1, 0);
-			for (face = pBrush->brush_faces, order = 0; face; face = face->next, order++)
+			for (face = pBrush->basis.faces, order = 0; face; face = face->next, order++)
 			{
 				w = face->face_winding;
 				if (!w)

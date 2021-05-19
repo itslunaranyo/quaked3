@@ -19,10 +19,10 @@
 
 #include "qe3.h"
 
-CmdQEUndo *g_undolist;				//first undo in the list
-CmdQEUndo *g_lastundo;				//last undo in the list
-CmdQEUndo *g_redolist;				//first redo in the list
-CmdQEUndo *g_lastredo;				//last redo in list
+qeUndo *g_undolist;				//first undo in the list
+qeUndo *g_lastundo;				//last undo in the list
+qeUndo *g_redolist;				//first redo in the list
+qeUndo *g_lastredo;				//last redo in list
 int g_undoMaxSize = 64;				//maximum number of undos
 int g_undoSize = 0;					//number of undos in the list
 int g_undoMaxMemorySize = 2097152;	//maximum undo memory (default 2 MB) (2 * 1024 * 1024 bytes)
@@ -31,14 +31,14 @@ int g_undoId = 1;					//current undo ID (zero is invalid id)
 int g_redoId = 1;					//current redo ID (zero is invalid id)
 
 
-CmdQEUndo::CmdQEUndo() : time(0), id(0), done(false),
+qeUndo::qeUndo() : time(0), id(0), done(false),
 	operation(nullptr), prev(nullptr), next(nullptr)
 {
 	brushlist.CloseLinks();
 	entitylist.CloseLinks();
 }
 
-CmdQEUndo::~CmdQEUndo()
+qeUndo::~qeUndo()
 {
 }
 
@@ -49,15 +49,17 @@ Undo::GeneralStart
 */
 void Undo::GeneralStart (char *operation)
 {
-	CmdQEUndo		*undo;
+	return;
+	/*
+	qeUndo	*undo;
 	Brush		*pBrush;
-	Entity	*pEntity;
+	Entity		*pEntity;
 
 	if (g_lastundo)
 		if (!g_lastundo->done)
 			Sys_Printf("WARNING: Undo::Start: Last undo not finished.\n");
 
-	undo = new CmdQEUndo();
+	undo = new qeUndo();
 
 	if (!undo) 
 		return;
@@ -95,12 +97,13 @@ void Undo::GeneralStart (char *operation)
 		if (pEntity->undoId == undo->id)
 			pEntity->undoId = 0;
 
-	g_undoMemorySize += sizeof(CmdQEUndo);
+	g_undoMemorySize += sizeof(qeUndo);
 	g_undoSize++;
 
 	// undo buffer is bound to a max
 	if (g_undoSize > g_undoMaxSize)
 		Undo::FreeFirstUndo();
+		*/
 }
 
 /*
@@ -110,8 +113,9 @@ Undo::Start
 */
 void Undo::Start (char *operation)
 {
-	Undo::ClearRedo();
-	Undo::GeneralStart(operation);
+	return;
+//	Undo::ClearRedo();
+//	Undo::GeneralStart(operation);
 }
 
 /*
@@ -121,6 +125,8 @@ Undo::End
 */
 void Undo::End ()
 {
+	return;
+	/*
 	if (!g_lastundo)
 	{
 //		Sys_Printf("MSG: Undo::End: Nothing left to undo.\n");
@@ -145,6 +151,7 @@ void Undo::End ()
 	}
 	
 //	Sys_Printf("undo size = %d, undo memory = %d\n", g_undoSize, g_undoMemorySize);
+*/
 }
 
 /*
@@ -154,6 +161,8 @@ Undo::AddBrush
 */
 void Undo::AddBrush (Brush *pBrush)
 {
+	return;
+	/*
 	Brush *pClone;
 	
 	if (!g_lastundo)
@@ -180,6 +189,7 @@ void Undo::AddBrush (Brush *pBrush)
 
 	pClone->AddToList(&g_lastundo->brushlist);
 	g_undoMemorySize += pClone->MemorySize();
+	*/
 }
 
 /*
@@ -198,6 +208,8 @@ same for other items like weapons and ammo etc.
 */
 void Undo::AddBrushList (Brush *brushlist)
 {
+	return;
+	/*
 	Brush *pBrush;
 	Brush *pClone;
 
@@ -222,7 +234,7 @@ void Undo::AddBrushList (Brush *brushlist)
 		// if it's a fixed size entity, the brush that reprents it is not really relevant, it's used for selecting and moving around
 		// what we want to store for undo is the owner entity, epairs and origin/angle stuff
 		// ++timo FIXME: if the entity is not fixed size I don't know, so I don't do it yet
-		if (pBrush->owner->eclass->IsFixedSize())
+		if (pBrush->owner->IsPoint())
 			Undo::AddEntity(pBrush->owner);
 
 		// clone the brush
@@ -237,6 +249,7 @@ void Undo::AddBrushList (Brush *brushlist)
 		pClone->AddToList(&g_lastundo->brushlist);
 		g_undoMemorySize += pClone->MemorySize();
 	}
+	*/
 }
 
 /*
@@ -246,6 +259,8 @@ Undo::EndBrush
 */
 void Undo::EndBrush (Brush *pBrush)
 {
+	return;
+	/*
 	if (!g_lastundo)
 	{
 //		Sys_Printf("MSG: Undo::End: Nothing left to undo.\n");
@@ -259,6 +274,7 @@ void Undo::EndBrush (Brush *pBrush)
 	}
 
 	pBrush->undoId = g_lastundo->id;
+	*/
 }
 
 /*
@@ -268,6 +284,8 @@ Undo::EndBrushList
 */
 void Undo::EndBrushList (Brush *brushlist)
 {
+	return;
+	/*
 	Brush *pBrush;
 
 	if (!g_lastundo)
@@ -284,6 +302,7 @@ void Undo::EndBrushList (Brush *brushlist)
 
 	for (pBrush = brushlist->next; pBrush != nullptr && pBrush != brushlist; pBrush = pBrush->next)
 		pBrush->undoId = g_lastundo->id;
+		*/
 }
 
 /*
@@ -293,6 +312,8 @@ Undo::AddEntity
 */
 void Undo::AddEntity (Entity *entity)
 {
+	return;
+	/*
 	Entity *pClone;
 
 	if (!g_lastundo)
@@ -310,7 +331,7 @@ void Undo::AddEntity (Entity *entity)
 
 	// NOTE: Entity_Clone adds the entity to the entity list
 	//		 so we remove it from that list here
-	pClone->RemoveFromList();
+	//pClone->RemoveFromList();
 
 	// save the old undo ID for previous undos
 	pClone->undoId = entity->undoId;
@@ -320,6 +341,7 @@ void Undo::AddEntity (Entity *entity)
 	
 	pClone->AddToList(&g_lastundo->entitylist);
 	g_undoMemorySize += pClone->MemorySize();
+	*/
 }
 
 /*
@@ -329,6 +351,8 @@ Undo::EndEntity
 */
 void Undo::EndEntity (Entity *entity)
 {
+	return;
+	/*
 	if (!g_lastundo)
 	{
 #ifdef _DEBUG
@@ -343,7 +367,7 @@ void Undo::EndEntity (Entity *entity)
 #endif
 		return;
 	}
-	if (entity == g_map.world)
+	if (entity->IsWorld())
 	{
 //		Sys_Printf("WARNING: Undo::AddEntity: Undo on world entity.\n");
 		// NOTE: we never delete the world entity when undoing an operation
@@ -351,6 +375,7 @@ void Undo::EndEntity (Entity *entity)
 		return;
 	}
 	entity->undoId = g_lastundo->id;
+	*/
 }
 
 /*
@@ -358,7 +383,7 @@ void Undo::EndEntity (Entity *entity)
 Undo::BrushInUndo
 =============
 */
-bool Undo::BrushInUndo (CmdQEUndo *undo, Brush *brush)
+bool Undo::BrushInUndo (qeUndo *undo, Brush *brush)
 {
 	Brush *b;
 
@@ -374,7 +399,7 @@ bool Undo::BrushInUndo (CmdQEUndo *undo, Brush *brush)
 Undo::EntityInUndo
 =============
 */
-bool Undo::EntityInUndo (CmdQEUndo *undo, Entity *ent)
+bool Undo::EntityInUndo (qeUndo *undo, Entity *ent)
 {
 	Entity *e;
 
@@ -392,7 +417,7 @@ Undo::Undo
 */
 void Undo::Undo ()
 {
-	CmdQEUndo	*undo, *redo;
+	qeUndo	*undo, *redo;
 	Brush	*pBrush, *pNextBrush;
 	Entity	*pEntity, *pNextEntity, *pUndoEntity;
 
@@ -418,7 +443,7 @@ void Undo::Undo ()
 	g_lastundo = g_lastundo->prev;
 
 	// allocate a new redo
-	redo = new CmdQEUndo();
+	redo = new qeUndo();
 	if (!redo) 
 		return;
 	
@@ -554,7 +579,7 @@ void Undo::Undo ()
 	Sys_Printf("CMD: %s undone.\n", undo->operation);
 
 	// free the undo
-	g_undoMemorySize -= sizeof(CmdQEUndo);
+	g_undoMemorySize -= sizeof(qeUndo);
 	delete undo;
 	g_undoSize--;
 	g_undoId--;
@@ -572,9 +597,9 @@ Undo::Redo
 */
 void Undo::Redo()
 {
-	CmdQEUndo	*redo;
-	Brush	*pBrush, *pNextBrush;
-	Entity	*pEntity, *pNextEntity, *pRedoEntity;
+	qeUndo	*redo;
+	Brush		*pBrush, *pNextBrush;
+	Entity		*pEntity, *pNextEntity, *pRedoEntity;
 
 	if (!g_lastredo)
 	{
@@ -708,11 +733,13 @@ Undo::UndoAvailable
 */
 bool Undo::UndoAvailable ()
 {
+	return g_cmdQueue.UndoAvailable();
+/*
 	if (g_lastundo)
 		if (g_lastundo->done)
 			return true;
 
-	return false;
+	return false;*/
 }
 
 /*
@@ -722,10 +749,11 @@ Undo::RedoAvailable
 */
 bool Undo::RedoAvailable ()
 {
-	if (g_lastredo) 
+	return g_cmdQueue.RedoAvailable();
+	/*if (g_lastredo)
 		return true;
 
-	return false;
+	return false;*/
 }
 
 /*
@@ -737,9 +765,9 @@ Clears the undo buffer.
 */
 void Undo::Clear ()
 {
-	CmdQEUndo	*undo, *nextundo;
-	Brush	*pBrush, *pNextBrush;
-	Entity	*pEntity, *pNextEntity;
+	qeUndo	*undo, *nextundo;
+	Brush		*pBrush, *pNextBrush;
+	Entity		*pEntity, *pNextEntity;
 
 	Undo::ClearRedo();
 
@@ -761,7 +789,7 @@ void Undo::Clear ()
 			delete pEntity;
 		}
 
-		g_undoMemorySize -= sizeof(CmdQEUndo);
+		g_undoMemorySize -= sizeof(qeUndo);
 		delete undo;
 	}
 
@@ -779,9 +807,9 @@ Undo::ClearRedo
 */
 void Undo::ClearRedo ()
 {
-	CmdQEUndo	*redo, *nextredo;
-	Brush	*pBrush, *pNextBrush;
-	Entity	*pEntity, *pNextEntity;
+	qeUndo	*redo, *nextredo;
+	Brush		*pBrush, *pNextBrush;
+	Entity		*pEntity, *pNextEntity;
 
 	for (redo = g_redolist; redo; redo = nextredo)
 	{
@@ -814,9 +842,9 @@ Undo::FreeFirstUndo
 */
 void Undo::FreeFirstUndo ()
 {
-	CmdQEUndo		*undo;
+	qeUndo	*undo;
 	Brush		*pBrush, *pNextBrush;
-	Entity	*pEntity, *pNextEntity;
+	Entity		*pEntity, *pNextEntity;
 
 	// remove the oldest undo from the undo buffer
 	undo = g_undolist;
@@ -837,7 +865,7 @@ void Undo::FreeFirstUndo ()
 		delete pEntity;
 	}
 
-	g_undoMemorySize -= sizeof(CmdQEUndo);
+	g_undoMemorySize -= sizeof(qeUndo);
 	delete undo;
 	g_undoSize--;
 }
@@ -901,7 +929,7 @@ int Undo::MemorySize ()
 {
 /*
 	int			size;
-	CmdQEUndo	   *undo;
+	qeUndo	   *undo;
 	Brush    *pBrush;
 	Entity   *pEntity;
 
@@ -914,7 +942,7 @@ int Undo::MemorySize ()
 		for (pEntity = undo->entitylist.next; pEntity != nullptr && pEntity != &undo->entitylist; pEntity = pEntity->next)
 			size += Entity_MemorySize(pEntity);
 
-		size += sizeof(CmdQEUndo);
+		size += sizeof(qeUndo);
 	}
 	return size;
 */

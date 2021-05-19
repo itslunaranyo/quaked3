@@ -289,9 +289,9 @@ bool QE_KeyDown (int key)
 	case 'O':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CONSOLE, 0);
 		break;
-	case 'P':
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_FILE_IMPORTPREFAB, 0);
-		break;
+	//case 'P':
+	//	PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_FILE_IMPORTPREFAB, 0);
+	//	break;
 	case 'Q':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CAMERA, 0);
 		break;
@@ -559,7 +559,7 @@ bool QE_SingleBrush ()
 		Sys_Printf("WARNING: Must have a single brush selected.\n");
 		return false;
 	}
-	if (g_brSelectedBrushes.next->owner->eclass->IsFixedSize())
+	if (g_brSelectedBrushes.next->owner->IsPoint())
 	{
 		Sys_Printf("WARNING: Cannot manipulate fixed size entities.\n");
 		return false;
@@ -677,9 +677,9 @@ void QE_CountBrushesAndUpdateStatusBar ()
 		for (b = g_map.brActive.next; b != NULL && b != &g_map.brActive; b = next)
 		{
 			next = b->next;
-			if (b->brush_faces)
+			if (b->basis.faces)
 			{
-				if (b->owner->eclass->IsFixedSize())
+				if (b->owner->IsPoint())
 					g_map.numEntities++;
 				else
 					g_map.numBrushes++;

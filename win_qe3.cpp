@@ -365,7 +365,7 @@ void Error (char *error, ...)
 	vsprintf(text, error,argptr);
 	va_end(argptr);
 
-	Sys_Printf("EXCEPTION: %s\n", text);
+	Sys_Printf("ERROR: %s\n", text);
 	throw std::exception(text);
 
 //	err = GetLastError();

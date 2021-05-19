@@ -6,11 +6,11 @@
 
 // QERadiant Multilevel Undo/Redo
 
-class CmdQEUndo
+class qeUndo
 {
 public:
-	CmdQEUndo();
-	~CmdQEUndo();
+	qeUndo();
+	~qeUndo();
 
 	double		time;			//time operation was performed
 	int			id;				//every undo has an unique id
@@ -18,7 +18,7 @@ public:
 	char		*operation;		//name of the operation
 	Brush		brushlist;		//deleted brushes
 	Entity		entitylist;		//deleted entities
-	CmdQEUndo	*prev, *next;	//next and prev undo in list
+	qeUndo	*prev, *next;	//next and prev undo in list
 };
 
 //========================================================================
@@ -45,9 +45,9 @@ void EndBrushList(Brush *brushlist);
 	// end an entity after the operation is performed
 	void EndEntity(Entity *entity);
 	// returns true if brush is in undo buffer
-	bool BrushInUndo(CmdQEUndo *undo, Brush *brush);
+	bool BrushInUndo(qeUndo *undo, Brush *brush);
 	// returns true if entity is in undo buffer
-	bool EntityInUndo(CmdQEUndo *undo, Entity *ent);
+	bool EntityInUndo(qeUndo *undo, Entity *ent);
 	// undo last operation
 	void Undo();
 	// redo last undone operation

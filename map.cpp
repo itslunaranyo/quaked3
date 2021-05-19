@@ -119,9 +119,14 @@ void Map::Free()
 		delete world;
 	world = nullptr;
 
-	// dump the wads after we dump the geometry, because flush calls MapRebuild 
+	// dump the wads after brushes delete their geometry, because flush calls MapRebuild 
 	// which will generate a bunch of notextures that just get thrown away
 	Textures::Flush();
+
+	g_cmdQueue.Clear();
+
+	// winding clear must come last, as it resets the winding allocator, so that all
+	// brush geometry that might point into the winding pages is already destroyed
 	Winding::Clear();
 }
 
@@ -141,7 +146,7 @@ void Map::BuildBrushData(Brush &blist)
 	{
 		next = b->next;
 		b->Build();
-		if (!b->brush_faces)
+		if (!b->basis.faces)
 		{
 			delete b;
 			Sys_Printf("MSG: Removed degenerate brush.\n");
@@ -180,6 +185,8 @@ void Map::BuildBrushData()
 Map::ParseBufferReplace
 
 parse all entities and brushes from the text buffer, assuming the scene is not empty
+
+for import/paste/etc
 ================
 */
 bool Map::ParseBufferMerge(const char *data)
@@ -227,6 +234,8 @@ bool Map::ParseBufferMerge(const char *data)
 Map::ParseBufferReplace
 
 parse all entities and brushes from the text buffer, assuming the scene is empty
+
+only for File > Load
 ================
 */
 bool Map::ParseBufferReplace(const char *data)
@@ -678,12 +687,16 @@ void Map::WriteSelected(std::ostream &out)
 		out << "// entity " << count << "\n";
 		count++;
 		next = e->next;
+		/*
 		if (e->brushes.onext == &e->brushes)
 		{
 			assert(0);
 			delete e;	// no brushes left, so remove it
 		}
 		else
+			e->WriteSelected(out);
+		*/
+		if (e->brushes.onext != &e->brushes)
 			e->WriteSelected(out);
 	}
 }
@@ -710,12 +723,16 @@ void Map::WriteAll(std::ostream &out, bool use_region)
 		out << "// entity " << count << "\n";
 		count++;
 		next = e->next;
+		/*
 		if (e->brushes.onext == &e->brushes)
 		{
 			assert(0);
 			delete e;	// no brushes left, so remove it
 		}
 		else
+			e->Write(out, use_region);
+		*/
+		if (e->brushes.onext != &e->brushes)
 			e->Write(out, use_region);
 	}
 }
@@ -867,8 +884,8 @@ void Map::RegionTallBrush()
 
 	RegionOff();
 
-	VectorCopy(b->mins, regionMins);
-	VectorCopy(b->maxs, regionMaxs);
+	VectorCopy(b->basis.mins, regionMins);
+	VectorCopy(b->basis.maxs, regionMaxs);
 	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 
@@ -887,8 +904,8 @@ void Map::RegionBrush()
 
 	RegionOff();
 
-	VectorCopy(b->mins, regionMins);
-	VectorCopy(b->maxs, regionMaxs);
+	VectorCopy(b->basis.mins, regionMins);
+	VectorCopy(b->basis.maxs, regionMaxs);
 
 	Select_Delete();
 	RegionApply();
@@ -987,9 +1004,9 @@ bool Map::IsBrushFiltered(Brush *b)
 
 	for (int i = 0; i < 3; i++)
 	{
-		if (b->mins[i] > regionMaxs[i])
+		if (b->basis.mins[i] > regionMaxs[i])
 			return true;
-		if (b->maxs[i] < regionMins[i])
+		if (b->basis.maxs[i] < regionMins[i])
 			return true;
 	}
 	return false;

@@ -140,7 +140,7 @@ void FindBrush (int entitynum, int brushnum)
 	Select_SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
-		g_qeglobals.d_xyz[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
+		g_qeglobals.d_xyz[0].origin[i] = (b->basis.mins[i] + b->basis.maxs[i]) / 2;
 
 	Sys_Printf("MSG: Selected.\n");
 }
@@ -162,7 +162,7 @@ void GetSelectionIndex (int *entity, int *brush)
 		return;
 
 	// find entity
-	if (b->owner != g_map.world)
+	if (!b->owner->IsWorld())
 	{
 		(*entity)++;
 		for (e = g_map.entities.next; e != &g_map.entities; e = e->next, (*entity)++)
@@ -929,7 +929,7 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 	for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 	{
 		pec = *ecIt;
-		if (pec->IsFixedSize())
+		if (pec->IsPointClass())
 		{
 			if (bPointbased)
 			{
@@ -951,30 +951,6 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 
 /*
 ============
-MakeEntity
-============
-*/
-Entity* MakeEntity (HWND h)
-{
-	int			index;
-	EntClass   *pec;
-	Entity* out;
-
-	index = SendMessage(h, LB_GETCURSEL, 0, 0);
-	pec = (EntClass *)SendMessage(h, LB_GETITEMDATA, index, 0);
-
-	Undo::Start("Create Entity");
-	Undo::AddBrushList(&g_brSelectedBrushes);
-	out = Entity::Create(pec);
-	Undo::EndBrushList(&g_brSelectedBrushes);
-	Undo::End();
-
-	return out;
-	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
-}
-
-/*
-============
 ConfirmClassnameHack
 ============
 */
@@ -982,12 +958,36 @@ bool ConfirmClassnameHack(EntClass *desired)
 {
 	char	text[768];
 
-	if (desired->IsFixedSize())
+	if (desired->IsPointClass())
 		sprintf(text, "%s is a point entity. Are you sure you want to\ncreate one out of the selected brushes?", desired->name);
 	else
 		sprintf(text, "%s is a brush-based entity. Are you sure you want to create one with no brushes?", desired->name);
 
 	return (MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
+}
+
+/*
+============
+CreateEntityDlg_Make
+============
+*/
+bool CreateEntityDlg_Make (HWND h)
+{
+	int			index;
+	EntClass	*pec;
+//	Entity*		out;
+
+	index = SendMessage(h, LB_GETCURSEL, 0, 0);
+	pec = (EntClass *)SendMessage(h, LB_GETITEMDATA, index, 0);
+
+//	Undo::Start("Create Entity");
+//	Undo::AddBrushList(&g_brSelectedBrushes);
+	return Entity::Create(pec);
+//	Undo::EndBrushList(&g_brSelectedBrushes);
+//	Undo::End();
+
+//	return out;
+//	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
 /*
@@ -1016,7 +1016,7 @@ BOOL CALLBACK CreateEntityDlgProc (
 		switch (LOWORD(wParam)) 
 		{
 		case IDOK:
-			if (MakeEntity(h))
+			if (CreateEntityDlg_Make(h))
 				EndDialog(hwndDlg, 1);
 			else
 				SetFocus(hwndDlg);
@@ -1030,7 +1030,7 @@ BOOL CALLBACK CreateEntityDlgProc (
 			switch (HIWORD(wParam))
 			{
 			case LBN_DBLCLK:
-				if (MakeEntity(h))
+				if (CreateEntityDlg_Make(h))
 					EndDialog(hwndDlg, 1);
 				else
 					SetFocus(hwndDlg);
@@ -1053,8 +1053,8 @@ void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, vec3_t origi
 	g_bPointBased = bPointbased;
 	g_bBrushBased = bBrushbased;
 	g_bFromSelection = bSel;
-	if (!bSel)
-		VectorCopy(origin, g_brSelectedBrushes.mins);
+	//if (!bSel)
+		VectorCopy(origin, g_brSelectedBrushes.basis.mins);
 
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CREATEENTITY), g_qeglobals.d_hwndMain, CreateEntityDlgProc);
 }
@@ -1106,23 +1106,23 @@ BOOL CALLBACK MapInfoDlgProc (
 
 		for (pBrush = g_map.brActive.next; pBrush != &g_map.brActive; pBrush = pBrush->next)
 		{
-			if (pBrush->owner == g_map.world)
+			if (pBrush->owner->IsWorld())
 			{
 				// we don't want to count point entity faces 
-				for (pFace = pBrush->brush_faces; pFace; pFace = pFace->next)
+				for (pFace = pBrush->basis.faces; pFace; pFace = pFace->next)
 					nTotalFaces++;
 				nTotalBrushes++;
 			}
-			else if (pBrush->owner->eclass->IsFixedSize())
+			else if (pBrush->owner->IsPoint())
 				nTotalPointEnts++;
 			else
 				nTotalBrushEnts++;
 
-			if (!strncmp(pBrush->brush_faces->texdef.name, "sky", 3))
+			if (!strncmp(pBrush->basis.faces->texdef.name, "sky", 3))
 				nSkyBrushes++;
-			if (pBrush->brush_faces->texdef.name[0] == '*')
+			if (pBrush->basis.faces->texdef.name[0] == '*')
 				nWaterBrushes++;
-			if (!strncmp(pBrush->brush_faces->texdef.name, "clip", 4))
+			if (!strncmp(pBrush->basis.faces->texdef.name, "clip", 4))
 				nClipBrushes++;
 		}
 

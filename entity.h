@@ -15,6 +15,8 @@ public:
 	qeBuffer	key, value;
 };
 
+//==============================
+
 class Entity
 {
 public:
@@ -22,7 +24,7 @@ public:
 	~Entity();
 
 	Entity		*prev, *next;
-	Brush		brushes;	// head/tail of list
+	Brush		brushes;	// head/tail of list - TODO: make this brush the dummy brush for point entities instead of a stupid linked one?
 	vec3_t		origin;
 	EntClass	*eclass;
 	EPair		*epairs;
@@ -33,20 +35,27 @@ public:
 	int			entityId;	// entity ID
 // <---sikk
 
-	static Entity	*Create (EntClass *c);
+	bool	IsPoint() const { return (eclass->IsPointClass()); }
+	bool	IsBrush() const { return !(eclass->IsPointClass()); }
+	bool	IsWorld() const { return (eclass == EntClass::worldspawn); }
+	EntClass	*GetEntClass() const { return eclass; }
+	EPair		*GetFirstEPair() const { return epairs; }
+
+	static bool		Create (EntClass *c);
 	Entity			*Clone();
-	Entity			*Copy();
 	void			LinkBrush (Brush *b);
 	static void		UnlinkBrush (Brush *b);
 
 	void	ChangeClassname(EntClass* ec);
 	void	ChangeClassname(const char *classname);
-	void	MakeBrush();
+	Brush	*MakeBrush();
 
+	// TODO: properly constrain the ways origin is set and stored
 	void	SetOrigin(vec3_t org);
 	void	SetOriginFromMember();
 	void	SetOriginFromKeyvalue();
 	void	SetOriginFromBrush();
+	void	Move(vec3_t trans);
 
 	void	SetSpawnFlag(int flag, bool on);
 
@@ -55,6 +64,8 @@ public:
 	void	SetKeyValue(const char *key, const int ivalue);
 	void	SetKeyValueFVector(const char *key, const vec3_t vec);
 	void	SetKeyValueIVector(const char *key, const vec3_t vec);
+
+	EPair	*GetEPair(const char *key) const;
 
 	char	*GetKeyValue(const char *key) const;
 	float	GetKeyValueFloat(const char *key) const;
@@ -72,7 +83,7 @@ public:
 	void	FreeEpairs();
 	// <---sikk
 
-	static void CleanCopiedList();
+	// TODO: move to Map class
 	static Entity* Find (char *pszKey, char *pszValue);
 	static Entity* Find (char *pszKey, int iValue);
 

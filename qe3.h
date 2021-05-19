@@ -9,6 +9,7 @@
 #pragma warning(disable : 4244)     // MIPS
 #pragma warning(disable : 4136)     // X86
 #pragma warning(disable : 4051)     // ALPHA
+#pragma warning(1 : 4706)	// assignment in conditional: never not a typo
 
 #define WINVER 0x0501
 #define _WIN32_WINNT_WINXP 0x0501 // Windows XP  
@@ -35,8 +36,6 @@
 #include "qedefs.h"
 #include "qfiles.h"
 
-#include "Command.h"
-
 #include "palette.h"
 #include "textures.h"
 #include "face.h"
@@ -60,6 +59,8 @@
 #include "v_z.h"
 #include "mru.h"
 #include "undo.h"
+
+#include "commands.h"
 
 //========================================================================
 
@@ -309,8 +310,8 @@ void	EntWnd_UpdateListSel();
 void	EntWnd_UpdateUI();
 void	EntWnd_CreateEntity ();
 void	EntWnd_FillClassList ();
-void	EntWnd_AddKeyValue ();
-void	EntWnd_AddKeyValue(const char* key, const char* value);
+void	EntWnd_SetKeyValue ();
+void	EntWnd_SetKeyValue(const char* key, const char* value);
 void	EntWnd_RemoveKeyValue ();
 void	EntWnd_EditKeyValue ();
 void	EntWnd_CreateControls (HINSTANCE hInstance);

@@ -66,7 +66,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 
 	b = g_brSelectedBrushes.next;
 	if (b != &g_brSelectedBrushes)
-		org[0] = (b->mins[0] + b->maxs[0]) / 2;
+		org[0] = (b->basis.mins[0] + b->basis.maxs[0]) / 2;
 
 	dir[0] = 0; 
 	dir[1] = 1; 
@@ -407,10 +407,10 @@ void ZView::Draw ()
 
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
-		if (brush->mins[0] >= origin[0] || 
-			brush->maxs[0] <= origin[0]	|| 
-			brush->mins[1] >= origin[1]	|| 
-			brush->maxs[1] <= origin[1])
+		if (brush->basis.mins[0] >= origin[0] || 
+			brush->basis.maxs[0] <= origin[0]	|| 
+			brush->basis.mins[1] >= origin[1]	|| 
+			brush->basis.maxs[1] <= origin[1])
 			continue;
 
 		if (!brush->RayTest(org_top, dir_down, &top))
@@ -421,7 +421,7 @@ void ZView::Draw ()
 			continue;
 		bottom = org_bottom[2] + bottom;
 
-		q = Textures::ForName(brush->brush_faces->texdef.name);
+		q = Textures::ForName(brush->basis.faces->texdef.name);
 
 		glColor3f(q->color[0], q->color[1], q->color[2]);
 		glBegin(GL_QUADS);
@@ -445,10 +445,10 @@ void ZView::Draw ()
 	//
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if (!(brush->mins[0] >= origin[0] || 
-			  brush->maxs[0] <= origin[0] || 
-			  brush->mins[1] >= origin[1] || 
-			  brush->maxs[1] <= origin[1]))
+		if (!(brush->basis.mins[0] >= origin[0] || 
+			  brush->basis.maxs[0] <= origin[0] || 
+			  brush->basis.mins[1] >= origin[1] || 
+			  brush->basis.maxs[1] <= origin[1]))
 		{
 			if (brush->RayTest(org_top, dir_down, &top))
 			{
@@ -456,7 +456,7 @@ void ZView::Draw ()
 				if (brush->RayTest(org_bottom, dir_up, &bottom))
 				{
 					bottom = org_bottom[2] + bottom;
-					q = Textures::ForName(brush->brush_faces->texdef.name);
+					q = Textures::ForName(brush->basis.faces->texdef.name);
 
 					glColor3f(q->color[0], q->color[1], q->color[2]);
 					glBegin(GL_QUADS);
@@ -471,10 +471,10 @@ void ZView::Draw ()
 
 		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
 		glBegin(GL_LINE_LOOP);
-		glVertex2f(-xCam, brush->mins[2]);
-		glVertex2f(xCam, brush->mins[2]);
-		glVertex2f(xCam, brush->maxs[2]);
-		glVertex2f(-xCam, brush->maxs[2]);
+		glVertex2f(-xCam, brush->basis.mins[2]);
+		glVertex2f(xCam, brush->basis.mins[2]);
+		glVertex2f(xCam, brush->basis.maxs[2]);
+		glVertex2f(-xCam, brush->basis.maxs[2]);
 		glEnd();
 	}
 

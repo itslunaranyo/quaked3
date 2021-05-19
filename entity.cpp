@@ -11,8 +11,7 @@ int g_nEntityId = 0;	// sikk - Undo/Redo
 
 
 Entity::Entity() :
-	next(nullptr), prev(nullptr), 
-	eclass(nullptr), epairs(nullptr), 
+	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
 	undoId(0), redoId(0), ownerId(0)
 {
 	entityId = ++g_nEntityId;
@@ -20,6 +19,7 @@ Entity::Entity() :
 	brushes.owner = this;
 	origin[0] = origin[1] = origin[2] = 0;
 }
+
 
 
 /*
@@ -56,6 +56,7 @@ Entity::~Entity()
 ==============
 Entity::SetSpawnFlag
 set an individual spawnflag without affecting the others
+'flag' is the binary integer (post-exponentiation), not the ordinal slot
 ==============
 */
 void Entity::SetSpawnFlag(int flag, bool on)
@@ -160,6 +161,21 @@ void Entity::SetKeyValueIVector(const char *key, const vec3_t vec)
 
 /*
 ==============
+Entity::GetEPair
+==============
+*/
+EPair *Entity::GetEPair(const char * key) const
+{
+	for (EPair *ep = epairs; ep; ep = ep->next)
+		if (ep->key == key)
+			return ep;
+
+	return nullptr;
+}
+
+
+/*
+==============
 Entity::GetKeyValue
 ==============
 */
@@ -218,7 +234,7 @@ void Entity::DeleteKeyValue(const char *key)
 {
 	EPair	**ep, *next;
 
-	if (!strcmp(key, "origin"))
+	if (!strcmp(key, "origin") && IsPoint())
 	{
 		Sys_Printf("WARNING: Point entities must have an origin\n");
 		Sys_Beep();
@@ -451,7 +467,7 @@ Entity *Entity::Parse (bool onlypairs)
 	e = EntClass::ForName(ent->GetKeyValue("classname"), has_brushes, false);
 	ent->eclass = e;
 
-	if (e->IsFixedSize())
+	if (e->IsPointClass())
 	{	// create a custom brush
 		ent->MakeBrush();
 	}
@@ -471,7 +487,7 @@ calculate a new origin based on the current brush position and warn if not
 */
 void Entity::CheckOrigin()
 {
-	if (!eclass->IsFixedSize()) return;
+	if (IsBrush()) return;
 
 	vec3_t testorg, org;
 	GetKeyValueVector("origin", testorg);
@@ -524,7 +540,7 @@ void Entity::Write(std::ostream &out, bool use_region)
 	for (ep = epairs; ep; ep = ep->next)
 		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
 
-	if (!eclass->IsFixedSize())
+	if (IsBrush())
 	{
 		count = 0;
 		for (b = brushes.onext; b != &brushes; b = b->onext)
@@ -577,7 +593,7 @@ void Entity::Write (FILE *f, bool use_region)
 	for (ep = epairs; ep; ep = ep->next)
 		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
 
-	if (!eclass->IsFixedSize())
+	if (IsBrush())
 	{
 		count = 0;
 		for (b = brushes.onext; b != &brushes; b = b->onext)
@@ -623,7 +639,7 @@ void Entity::WriteSelected(std::ostream &out)
 
 	CheckOrigin();
 
-	if (!eclass->IsFixedSize())
+	if (IsBrush())
 	{
 		count = 0;
 		for (b; b != &brushes; b = b->onext)
@@ -658,7 +674,7 @@ void Entity::WriteSelected (FILE *f)
 	for (ep = epairs; ep; ep = ep->next)
 		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
 
-	if (!eclass->IsFixedSize())
+	if (IsBrush())
 	{
 		count = 0;
 		for (b = brushes.onext; b != &brushes; b = b->onext)
@@ -688,7 +704,7 @@ origin via these functions or they won't stay synced and you're a JERK
 */
 void Entity::SetOrigin(vec3_t org)
 {
-	if (!eclass->IsFixedSize()) return;
+	if (IsBrush()) return;
 
 	VectorCopy(org, origin);
 	SetKeyValueIVector("origin", org);
@@ -698,7 +714,7 @@ void Entity::SetOrigin(vec3_t org)
 // call one of these three after updating the odd one out, to not loop
 void Entity::SetOriginFromMember()
 {
-	if (!eclass->IsFixedSize()) return;
+	if (IsBrush()) return;
 
 	SetKeyValueIVector("origin", origin);
 	MakeBrush();
@@ -706,11 +722,9 @@ void Entity::SetOriginFromMember()
 
 void Entity::SetOriginFromKeyvalue()
 {
-	vec3_t	org;
-	if (!eclass->IsFixedSize()) return;
+	if (IsBrush()) return;
 
-	SetKeyValueIVector("origin", org);
-	VectorCopy(org, origin);
+	GetKeyValueVector("origin", origin);
 	MakeBrush();
 }
 
@@ -718,12 +732,18 @@ void Entity::SetOriginFromBrush()
 {
 	vec3_t	org;
 
-	if (!eclass->IsFixedSize()) return;
+	if (IsBrush()) return;
 	if (brushes.onext == &brushes) return;
 
-	VectorSubtract(brushes.onext->mins, eclass->mins, org);
+	VectorSubtract(brushes.onext->basis.mins, eclass->mins, org);
 	SetKeyValueIVector("origin", org);
 	VectorCopy(org, origin);
+}
+
+void Entity::Move(vec3_t trans)
+{
+	VectorAdd(trans, origin, origin);
+	SetOriginFromMember();
 }
 
 /*
@@ -734,7 +754,7 @@ update the dummy brush for point entities after the origin is overridden (easier
 than translating it) or when the classname is changed
 ============
 */
-void Entity::MakeBrush()
+Brush *Entity::MakeBrush()
 {
 	Brush		*b;
 	vec3_t		emins, emaxs;
@@ -754,6 +774,7 @@ void Entity::MakeBrush()
 	}
 
 	b->Build();
+	return b;
 }
 
 /*
@@ -765,44 +786,93 @@ If the entity class is fixed size, the brushes are only used to find a midpoint.
 Otherwise, the brushes have their ownership transfered to the new entity.
 ============
 */
-Entity *Entity::Create (EntClass *ecIn)
+bool Entity::Create (EntClass *ecIn)
 {
 	Entity		*e;
-	EntClass	*c;
-	Brush		*b;
-
+	//EntClass	*c;
+//	Brush		*b;
+	/*
 	if (!_stricmp(ecIn->name, "worldspawn"))
 	{
 		Sys_Printf("WARNING: Cannot create a new worldspawn entity.\n");
 		return nullptr;
-	}
+	}*/
 
-	if (g_brSelectedBrushes.next == g_brSelectedBrushes.prev &&
-		g_brSelectedBrushes.next != &g_brSelectedBrushes &&
-		g_brSelectedBrushes.next->owner->eclass->IsFixedSize())
+	if (g_brSelectedBrushes.next != &g_brSelectedBrushes &&		// brushes are selected
+		g_brSelectedBrushes.next == g_brSelectedBrushes.prev &&	// one brush is selected
+		g_brSelectedBrushes.next->owner->IsPoint())		// it is a fixedsize brush
 	{
 		e = g_brSelectedBrushes.next->owner;
-
 		e->ChangeClassname(ecIn);
-
-		return e;
+		Sys_UpdateWindows(W_SCENE);
+		g_bSelectionChanged = true;
+		return true;
 	}
 
 	// check to make sure the brushes are ok
+	/*
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		if (b->owner != g_map.world)
+		if (!b->owner->IsWorld())
 		{
-			Sys_Printf("WARNING: Entity NOT created, brushes not all from world.\n");
+			Sys_Printf("WARNING: Entity not created, brushes not all from world.\n");
 			Sys_Beep();
 			return nullptr;
 		}
+		*/
 
-	if (Select_HasBrushes() == ecIn->IsFixedSize())	// x0r!
+	if (Select_HasBrushes() == ecIn->IsPointClass())	// x0r!
 	{
 		// check with user that we want to apply the 'wrong' eclass
 		if (!ConfirmClassnameHack(ecIn))
-			return nullptr;
+			return false;
+	}
 
+	if (Select_HasBrushes())
+	{
+		try
+		{
+			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);
+			cmd->AddBrushes(&g_brSelectedBrushes);
+			g_cmdQueue.Complete(cmd);
+			Select_DeselectAll(true);
+			cmd->Select();
+		}
+		catch (...)
+		{
+			return false;
+		}
+		/*
+		// create it
+		e = new Entity();
+		e->eclass = ecIn;
+		e->SetKeyValue("classname", ecIn->name);
+
+		// add the entity to the entity list
+		e->next = g_map.entities.next;
+		g_map.entities.next = e;
+		e->next->prev = e;
+		e->prev = &g_map.entities;
+
+		// change the selected brushes over to the new entity
+		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		{
+			Entity::UnlinkBrush(b);
+			e->LinkBrush(b);
+			b->Build();	// so the key brush gets a name
+		}*/
+	}
+	else
+	{
+		// TODO: pass the location of the right-click via an appropriate method
+		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.basis.mins);
+
+		g_cmdQueue.Complete(cmd);
+		Select_DeselectAll(true);
+		cmd->Select();
+		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.basis.mins);	// reset
+	}
+
+	/*
 		// this will spit back a reversed-form eclass
 		c = EntClass::ForName(ecIn->name, Select_HasBrushes(), false);
 	}
@@ -820,12 +890,12 @@ Entity *Entity::Create (EntClass *ecIn)
 	e->next->prev = e;
 	e->prev = &g_map.entities;
 
-	if (c->IsFixedSize())
+	if (c->IsPointClass())
 	{
 		// TODO: pass the location of the right-click via an appropriate method
-		VectorCopy(g_brSelectedBrushes.mins, e->origin);
+		VectorCopy(g_brSelectedBrushes.basis.mins, e->origin);
 		e->SetKeyValueIVector("origin", e->origin);
-		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.mins);	// reset
+		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.basis.mins);	// reset
 
 		e->MakeBrush();
 
@@ -841,8 +911,9 @@ Entity *Entity::Create (EntClass *ecIn)
 			b->Build();	// so the key brush gets a name
 		}
 	}
-
-	return e;
+	*/
+	//return e;
+	return true;
 }
 
 /*
@@ -852,10 +923,11 @@ Entity::ChangeClassname
 */
 void Entity::ChangeClassname(EntClass* ec)
 {
+	assert(ec != EntClass::worldspawn);
 	eclass = ec;
 	SetKeyValue("classname", ec->name);
 
-	if (ec->IsFixedSize())
+	if (ec->IsPointClass())
 	{
 		// make a new brush for the entity
 		MakeBrush();
@@ -864,7 +936,9 @@ void Entity::ChangeClassname(EntClass* ec)
 
 void Entity::ChangeClassname(const char *classname)
 {
-	bool hasbrushes = (brushes.onext != brushes.oprev);
+	// lunaran TODO: jesus christ there has to be a better way
+	bool hasbrushes = (brushes.onext->basis.faces->d_texture->name[0] != '(');
+
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
 	ChangeClassname(ec);
 }
@@ -914,10 +988,10 @@ Entity *Entity::Clone()
 	n->eclass = eclass;
 
 	// add the entity to the entity list
-	n->next = g_map.entities.next;
+/*	n->next = g_map.entities.next;
 	g_map.entities.next = n;
 	n->next->prev = n;
-	n->prev = &g_map.entities;
+	n->prev = &g_map.entities;*/
 
 	for (ep = epairs; ep; ep = ep->next)
 	{
@@ -926,9 +1000,9 @@ Entity *Entity::Clone()
 		n->epairs = np;
 	}
 	VectorCopy(origin, n->origin);
+	//	n->CloseLinks();
 	return n;
 }
-
 
 
 /*

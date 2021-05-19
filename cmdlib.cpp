@@ -853,14 +853,15 @@ int SetStr (char *dest, ...)
 	va_list	list;
 
 	va_start(list, dest);
-
-	while (s = va_arg(list, char *))
+	s = va_arg(list, char *);
+	while (s)
 	{
 		while (*s)
 		{
 			*dest++ = *s++;
 			len++;
 		}
+		s = va_arg(list, char *);
 	}
 	*dest = 0;
 	va_end(list);
@@ -885,8 +886,8 @@ int SetDirStr (char *dest, ...)
 	va_list	list;
 
 	va_start(list, dest);
-
-	while (s = va_arg(list, char *))
+	s = va_arg(list, char *);
+	while (s)
 	{
 		while (*s)
 		{
@@ -907,6 +908,7 @@ int SetDirStr (char *dest, ...)
 				last = *dest++ = *s++;
 			}
 		}
+		s = va_arg(list, char *);
 	}
 	*dest = 0;
 	va_end(list);
@@ -925,8 +927,8 @@ int SetDirStr2 (char *dest, ...)
 	va_list	list;
 
 	va_start(list, dest);
-
-	while (s = va_arg(list, char *))
+	s = va_arg(list, char *);
+	while (s)
 	{
 		while (*s)
 		{
@@ -947,6 +949,7 @@ int SetDirStr2 (char *dest, ...)
 				last = *dest++ = *s++;
 			}
 		}
+		s = va_arg(list, char *);
 	}
 	*dest = 0;
 	va_end(list);

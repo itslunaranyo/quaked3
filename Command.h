@@ -7,28 +7,54 @@
 
 #include <deque>
 
+// ========================================================================
+
 class Command
 {
 public:
 	Command();
 	virtual ~Command();
 
-	enum { BAD, LIVE, DONE, UNDONE } state;
+	enum { NOOP, LIVE, DONE, UNDONE } state;
+	// NOOP - uninitialized
+	// LIVE - currently being built by the UI
+	// DONE - completed, scene has been changed
+	// UNDONE - completed, changes to scene have been reverted
 
-	void Complete();
+	void Do();
 	void Undo();
 	void Redo();
-
-	static void PerformUndo();
-	static void PerformRedo();
+	void Select();
 
 protected:
-	virtual bool Undo_Impl() { return false; }
-	virtual bool Redo_Impl() { return false; }
+	virtual void Do_Impl() { return; }
+	virtual void Undo_Impl() { return; }
+	virtual void Redo_Impl() { return; }
+	virtual void Select_Impl() { return; }
+};
+
+// ========================================================================
+
+class CommandQueue
+{
+public:
+	CommandQueue() {}
+	~CommandQueue() {}
+
+	void Complete(Command* cmd);
+	void Undo();
+	void Redo();
+	void Clear();
+
+	Command* LastUndo() { return undoQueue.back(); }
+	bool UndoAvailable() { return (undoQueue.size() != 0); }
+	bool RedoAvailable() { return (redoQueue.size() != 0); }
 
 private:
-	static void ClearOldestUndo();
-	static std::deque<Command*> undoQueue, redoQueue;
+	void ClearOldestUndo();
+	void ClearAllRedos();
+	void ClearAllUndos();
+	std::deque<Command*> undoQueue, redoQueue;
 };
 
 

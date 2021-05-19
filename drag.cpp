@@ -89,7 +89,7 @@ void MoveSelection (vec3_t move)
 		{
 			b->Build();
 			for (i = 0; i < 3; i++)
-				if (b->mins[i] > b->maxs[i]	|| b->maxs[i] - b->mins[i] > MAX_BRUSH_SIZE)
+				if (b->basis.mins[i] > b->basis.maxs[i]	|| b->basis.maxs[i] - b->basis.mins[i] > MAX_BRUSH_SIZE)
 					break;	// dragged backwards or fucked up
 			if (i != 3)
 				break;
@@ -203,7 +203,7 @@ void Drag_Setup(int x, int y, int buttons,
 			// be pressed before Shift or the brush is deselected.
 			// But it is a useful command to leave hidden as it is.  
 			Sys_Printf("CMD: Sticky dragging brush.\n");
-			for (f = t.brush->brush_faces; f; f = f->next)
+			for (f = t.brush->basis.faces; f; f = f->next)
 				t.brush->SelectFaceForDragging(f, false);
 		}
 		else
@@ -233,7 +233,7 @@ void Drag_Setup(int x, int y, int buttons,
 		else
 			g_brSelectedBrushes.next->SideSelect(origin, dir, false);
 	}
-	if (g_brSelectedBrushes.next->owner->eclass->IsFixedSize())
+	if (g_brSelectedBrushes.next->owner->IsPoint())
 		Sys_Printf("CMD: Dragging entire selection.\n");
 	else
 		Sys_Printf("CMD: Side stretch.\n");
@@ -326,7 +326,7 @@ void Drag_Begin (int x, int y, int buttons,
 			t = Test_Ray(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->brush_faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '(')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -350,7 +350,7 @@ void Drag_Begin (int x, int y, int buttons,
 			t = Test_Ray(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->brush_faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '(')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{
@@ -375,7 +375,7 @@ void Drag_Begin (int x, int y, int buttons,
 			t = Test_Ray(origin, dir, false);
 			if (t.brush)
 			{
-				if (t.brush->brush_faces->texdef.name[0] == '(')
+				if (t.brush->basis.faces->texdef.name[0] == '(')
 					Sys_Printf("WARNING: Cannot change an entity texture.\n");
 				else
 				{

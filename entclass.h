@@ -17,7 +17,7 @@ public:
 
 	char			*name;
 	typedef enum {
-		ECF_FIXED = 0x01,
+		ECF_POINT = 0x01,
 		ECF_BRUSH = 0x02,
 		ECF_HACKED = 0x04,	// is supposed to be the opposite form
 		ECF_UNKNOWN = 0x08
@@ -31,7 +31,7 @@ public:
 	char			flagnames[MAX_FLAGS][32];
 	unsigned int	nShowFlags;
 
-	bool			IsFixedSize() { return !!(form & ECF_FIXED); }
+	bool			IsPointClass() { return !!(form & ECF_POINT); }
 	static EntClass	*ForName(const char *name, bool has_brushes, bool strict);
 	void			AddToClassList();
 

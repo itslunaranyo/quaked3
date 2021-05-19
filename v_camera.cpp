@@ -38,9 +38,9 @@ void CameraView::PositionCenter ()
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		origin[0] = b->mins[0] - 64;
-		origin[1] = b->mins[1] - 64;
-		origin[2] = b->mins[2] + 64;
+		origin[0] = b->basis.mins[0] - 64;
+		origin[1] = b->basis.mins[1] - 64;
+		origin[2] = b->basis.mins[2] + 64;
 		angles[0] = -22.5;
 		angles[1] = 45;
 		angles[2] = 0;
@@ -228,10 +228,10 @@ void CameraView::PositionRotate ()
 		{
 			for (i = 0; i < 3; i++)
 			{
-				if (b->maxs[i] > maxs[i])
-					maxs[i] = b->maxs[i];
-				if (b->mins[i] < mins[i])
-					mins[i] = b->mins[i];
+				if (b->basis.maxs[i] > maxs[i])
+					maxs[i] = b->basis.maxs[i];
+				if (b->basis.mins[i] < mins[i])
+					mins[i] = b->basis.mins[i];
 			}
 		}
 		sorigin[0] = (mins[0] + maxs[0]) / 2;
@@ -513,14 +513,14 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 			b = t.brush;
 			for (i = 0; i < 3; i++)
 			{
-				if (b->mins[i] < mins[i])
-					mins[i] = b->mins[i];
-				if (b->maxs[i] > maxs[i])
-					maxs[i] = b->maxs[i];
+				if (b->basis.mins[i] < mins[i])
+					mins[i] = b->basis.mins[i];
+				if (b->basis.maxs[i] > maxs[i])
+					maxs[i] = b->basis.maxs[i];
 			}
 
 			VectorSubtract(maxs, mins, size);
-			if (t.brush->owner->eclass->IsFixedSize())
+			if (t.brush->owner->IsPoint())
 				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
 			else
 				sprintf(camstring, "%s (%d %d %d) %s", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2], t.face->texdef.name);
@@ -653,7 +653,7 @@ bool CameraView::CullBrush (Brush *b)
 		point[2] = origin[2] - fLevel;
 
 		for (i = 0; i < 3; i++)
-			if (b->mins[i] < point[i] && b->maxs[i] < point[i])
+			if (b->basis.mins[i] < point[i] && b->basis.maxs[i] < point[i])
 				return true;
 
 		point[0] = origin[0] + fLevel;
@@ -661,20 +661,20 @@ bool CameraView::CullBrush (Brush *b)
 		point[2] = origin[2] + fLevel;
 	
 		for (i = 0; i < 3; i++)
-			if (b->mins[i] > point[i] && b->maxs[i] > point[i])
+			if (b->basis.mins[i] > point[i] && b->basis.maxs[i] > point[i])
 				return true;
 	}
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->mins[nCullv1[i]] - origin[i];
+		point[i] = b->basis.mins[nCullv1[i]] - origin[i];
 
 	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->mins[nCullv2[i]] - origin[i];
+		point[i] = b->basis.mins[nCullv2[i]] - origin[i];
 
 	d = DotProduct(point, v3Cull2);
 	if (d < -1)
@@ -861,11 +861,11 @@ void CameraView::Draw ()
 			continue;
 // sikk---> Transparent Brushes
 		// TODO: Make toggle via Preferences Option. 
-		assert(brush->brush_faces->d_texture);
-		if (!strncmp(brush->brush_faces->d_texture->name, "*", 1) ||
-			!strcmp(brush->brush_faces->d_texture->name, "clip") ||
-			!strncmp(brush->brush_faces->d_texture->name, "hint", 4) ||
-			!strcmp(brush->brush_faces->d_texture->name, "trigger"))
+		assert(brush->basis.faces->d_texture);
+		if (!strncmp(brush->basis.faces->d_texture->name, "*", 1) ||
+			!strcmp(brush->basis.faces->d_texture->name, "clip") ||
+			!strncmp(brush->basis.faces->d_texture->name, "hint", 4) ||
+			!strcmp(brush->basis.faces->d_texture->name, "trigger"))
 			g_pbrTransBrushes[g_nNumTransBrushes++] = brush;
 		else
 		{
@@ -968,7 +968,7 @@ void CameraView::Draw ()
 	glDisable(GL_TEXTURE_2D);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->brush_faces; face; face = face->next)
+		for (face = brush->basis.faces; face; face = face->next)
 			face->Draw();
 
 //	if (g_pfaceSelectedFace)
@@ -988,7 +988,7 @@ void CameraView::Draw ()
 	glColor3f(1, 1, 1);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->brush_faces; face; face = face->next)
+		for (face = brush->basis.faces; face; face = face->next)
 			face->Draw();
 
 	// edge / vertex flags

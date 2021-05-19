@@ -56,6 +56,7 @@ void	Select_Ray (vec3_t origin, vec3_t dir, int flags);
 bool	Select_HasBrushes();
 int		Select_FaceCount();
 bool	Select_IsEmpty();
+bool	Select_OnlyPointEntities();
 int		Select_NumBrushFacesSelected(Brush* b);
 bool	Select_IsBrushSelected(Brush* bSel);	// sikk - Export Selection (Map/Prefab)
 

@@ -83,7 +83,7 @@ void SurfWnd_RefreshEditTexdef()
 		bool first = true;
 		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			for (Face *f = b->brush_faces; f; f = f->next)
+			for (Face *f = b->basis.faces; f; f = f->next)
 			{
 				if (first)
 				{

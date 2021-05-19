@@ -22,14 +22,14 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	b = in->Clone();
 	nf = f->Clone();
 
-	nf->texdef = b->brush_faces->texdef;
-	nf->next = b->brush_faces;
-	b->brush_faces = nf;
+	nf->texdef = b->basis.faces->texdef;
+	nf->next = b->basis.faces;
+	b->basis.faces = nf;
 
 	b->Build();
 	b->RemoveEmptyFaces();
 
-	if (!b->brush_faces)
+	if (!b->basis.faces)
 	{	// completely clipped away
 		delete b;
 		*back = NULL;
@@ -48,14 +48,14 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	VectorCopy(nf->planepts[1], nf->planepts[0]);
 	VectorCopy(temp, nf->planepts[1]);
 
-	nf->texdef = b->brush_faces->texdef;
-	nf->next = b->brush_faces;
-	b->brush_faces = nf;
+	nf->texdef = b->basis.faces->texdef;
+	nf->next = b->basis.faces;
+	b->basis.faces = nf;
 
 	b->Build();
 	b->RemoveEmptyFaces();
 
-	if (!b->brush_faces)
+	if (!b->basis.faces)
 	{	// completely clipped away
 		delete b;
 		*front = NULL;
@@ -92,10 +92,10 @@ void CSG_Hollow ()
 	{
 		next = b->next;
 
-		if (b->owner->eclass->IsFixedSize() || b->hiddenBrush)
+		if (b->owner->IsPoint() || b->hiddenBrush)
 			continue;
 
-		for (f = b->brush_faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->next)
 		{
 			split = *f;
 			VectorScale(f->plane.normal, g_qeglobals.d_nGridSize, move);
@@ -141,13 +141,13 @@ Brush* Brush_ConvexMerge(Brush *bList)
 		int		pointBufSize;
 
 		pointBufSize = 0;
-		for (b = bList; b; b = b->next) for (bf = b->brush_faces; bf; bf = bf->next)
+		for (b = bList; b; b = b->next) for (bf = b->basis.faces; bf; bf = bf->next)
 			pointBufSize += bf->face_winding->numpoints;
 		pointBuf = (vec_t*)qmalloc(sizeof(vec_t) * 3 * pointBufSize);
 
 		numPoints = 0;
 		nextPoint = pointBuf;
-		for (b = bList; b; b = b->next) for (bf = b->brush_faces; bf; bf = bf->next)
+		for (b = bList; b; b = b->next) for (bf = b->basis.faces; bf; bf = bf->next)
 		{
 			for (int i = 0; i < bf->face_winding->numpoints; i++)
 			{
@@ -244,13 +244,13 @@ Brush* Brush_ConvexMerge(Brush *bList)
 	free(pointBuf);
 	free(planeBuf);
 
-	for (f = result->brush_faces; f; f = f->next)
+	for (f = result->basis.faces; f; f = f->next)
 	{
 		// compare result planes to original brush planes, preserve texdefs from matching planes
 		bool match = false;
 		for (b = bList; b; b = b->next)
 		{
-			for (bf = b->brush_faces; bf; bf = bf->next)
+			for (bf = b->basis.faces; bf; bf = bf->next)
 			{
 				if (bf->plane.EqualTo(&f->plane, true))
 				{
@@ -302,7 +302,7 @@ bool CSG_CanMerge()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner->eclass->IsFixedSize())
+		if (b->owner->IsPoint())
 		{
 			Sys_Printf("WARNING: Cannot add fixed size entities.\n");
 			return false;
@@ -378,8 +378,8 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 	// check for bounding box overlapp
 	for (i = 0; i < 3; i++)
 	{
-		if (brush1->mins[i] > brush2->maxs[i] + ON_EPSILON || 
-			brush1->maxs[i] < brush2->mins[i] - ON_EPSILON)
+		if (brush1->basis.mins[i] > brush2->basis.maxs[i] + ON_EPSILON || 
+			brush1->basis.maxs[i] < brush2->basis.mins[i] - ON_EPSILON)
 		{
 			// never merge if the brushes overlap
 			return NULL;
@@ -388,10 +388,10 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 
 	shared = 0;
 	// check if the new brush would be convex... flipped planes make a brush non-convex
-	for (face1 = brush1->brush_faces; face1; face1 = face1->next)
+	for (face1 = brush1->basis.faces; face1; face1 = face1->next)
 	{
 		// don't check the faces of brush 1 and 2 touching each other
-		for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+		for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 		{
 			if (face1->plane.EqualTo(&face2->plane, true))
 			{
@@ -406,10 +406,10 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 		if (face2) 
 			continue;
 
-		for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+		for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 		{
 			// don't check the faces of brush 1 and 2 touching each other
-			for (f = brush1->brush_faces; f; f = f->next)
+			for (f = brush1->basis.faces; f; f = f->next)
 				if (face2->plane.EqualTo(&f->plane, true))
 					break;
 
@@ -433,10 +433,10 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 
 	newbrush = new Brush();
 
-	for (face1 = brush1->brush_faces; face1; face1 = face1->next)
+	for (face1 = brush1->basis.faces; face1; face1 = face1->next)
 	{
 		// don't add the faces of brush 1 and 2 touching each other
-		for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+		for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 			if (face1->plane.EqualTo(&face2->plane, true))
 				break;
 
@@ -444,7 +444,7 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 			continue;
 
 		// don't add faces with the same plane twice
-		for (f = newbrush->brush_faces; f; f = f->next)
+		for (f = newbrush->basis.faces; f; f = f->next)
 		{
 			if (face1->plane.EqualTo(&f->plane, false))
 				break;
@@ -463,10 +463,10 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 		newface->plane = face1->plane;
 	}
 
-	for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+	for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 	{
 		// don't add the faces of brush 1 and 2 touching each other
-		for (face1 = brush1->brush_faces; face1; face1 = face1->next)
+		for (face1 = brush1->basis.faces; face1; face1 = face1->next)
 			if (face2->plane.EqualTo(&face1->plane, true))
 				break;
 
@@ -474,7 +474,7 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 			continue;
 
 		// don't add faces with the same plane twice
-		for (f = newbrush->brush_faces; f; f = f->next)
+		for (f = newbrush->basis.faces; f; f = f->next)
 		{
 			if (face2->plane.EqualTo(&f->plane, false))
 				break;
@@ -599,14 +599,14 @@ Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
 	for (brush1 = brushlist; brush1; brush1 = brush1->next)
 	{
 		// check if the new brush would be convex... flipped planes make a brush concave
-		for (face1 = brush1->brush_faces; face1; face1 = face1->next)
+		for (face1 = brush1->basis.faces; face1; face1 = face1->next)
 		{
 			// don't check face1 if it touches another brush
 			for (brush2 = brushlist; brush2; brush2 = brush2->next)
 			{
 				if (brush2 == brush1) 
 					continue;
-				for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+				for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 					if (face1->plane.EqualTo(&face2->plane, true))
 						break;
 
@@ -620,13 +620,13 @@ Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
 			for (brush2 = brush1->next; brush2; brush2 = brush2->next)
 			{
 				// don't check the faces of brush 2 touching another brush
-				for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+				for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 				{
 					for (brush3 = brushlist; brush3; brush3 = brush3->next)
 					{
 						if (brush3 == brush2) 
 							continue;
-						for (face3 = brush3->brush_faces; face3; face3 = face3->next)
+						for (face3 = brush3->basis.faces; face3; face3 = face3->next)
 							if (face2->plane.EqualTo(&face3->plane, true))
 								break;
 
@@ -659,14 +659,14 @@ Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
 
 	for (brush1 = brushlist; brush1; brush1 = brush1->next)
 	{
-		for (face1 = brush1->brush_faces; face1; face1 = face1->next)
+		for (face1 = brush1->basis.faces; face1; face1 = face1->next)
 		{
 			// don't add face1 to the new brush if it touches another brush
 			for (brush2 = brushlist; brush2; brush2 = brush2->next)
 			{
 				if (brush2 == brush1) 
 					continue;
-				for (face2 = brush2->brush_faces; face2; face2 = face2->next)
+				for (face2 = brush2->basis.faces; face2; face2 = face2->next)
 					if (face1->plane.EqualTo(&face2->plane, true))
 						break;
 
@@ -678,7 +678,7 @@ Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
 				continue;
 
 			// don't add faces with the same plane twice
-			for (f = newbrush->brush_faces; f; f = f->next)
+			for (f = newbrush->basis.faces; f; f = f->next)
 			{
 				if (face1->plane.EqualTo(&f->plane, false))
 					break;
@@ -725,7 +725,7 @@ Brush *Brush_Subtract (Brush *a, Brush *b)
 	in = a;
 	out = NULL;
 
-	for (f = b->brush_faces; f && in; f = f->next)
+	for (f = b->basis.faces; f && in; f = f->next)
 	{
 		CSG_SplitBrushByFace(in, f, &front, &back);
 		if (in != a)
@@ -782,7 +782,7 @@ void CSG_Subtract ()
 	{
 		next = b->next;
 
-		if (b->owner->eclass->IsFixedSize())
+		if (b->owner->IsPoint())
 			continue;	// can't use texture from a fixed entity, so don't subtract
 
 		// chop all fragments further up
@@ -791,7 +791,7 @@ void CSG_Subtract ()
 			snext = s->next;
 
 			for (i = 0; i < 3; i++)
-				if (b->mins[i] >= s->maxs[i] - ON_EPSILON || b->maxs[i] <= s->mins[i] + ON_EPSILON)
+				if (b->basis.mins[i] >= s->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= s->basis.mins[i] + ON_EPSILON)
 					break;
 
 			if (i != 3)
@@ -824,11 +824,11 @@ void CSG_Subtract ()
 		{
 			snext = s->next;
 
-			if (s->owner->eclass->IsFixedSize() || s->hiddenBrush)
+			if (s->owner->IsPoint() || s->hiddenBrush)
 				continue;
 
 			for (i = 0; i < 3; i++)
-				if (b->mins[i] >= s->maxs[i] - ON_EPSILON || b->maxs[i] <= s->mins[i] + ON_EPSILON)
+				if (b->basis.mins[i] >= s->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= s->basis.mins[i] + ON_EPSILON)
 					break;
 
 			if (i != 3)

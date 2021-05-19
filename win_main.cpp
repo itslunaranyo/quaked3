@@ -1204,10 +1204,14 @@ LONG WINAPI CommandHandler (
 // Edit menu
 //===================================
 		case ID_EDIT_UNDO:	// sikk - Undo/Redo
-			Undo::Undo();
+			//Undo::Undo();
+			g_cmdQueue.Undo();
+			Sys_UpdateWindows(W_ALL);
 			break;
 		case ID_EDIT_REDO:	// sikk - Undo/Redo
-			Undo::Redo();
+			//Undo::Redo();
+			g_cmdQueue.Redo();
+			Sys_UpdateWindows(W_ALL);
 			break;
 
 		case ID_EDIT_CUT:
@@ -1682,11 +1686,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CLONE:
-			Undo::Start("Clone");
-			Undo::AddBrushList(&g_brSelectedBrushes);
+		//	Undo::Start("Clone");
+		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_Clone();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
+		//	Undo::EndBrushList(&g_brSelectedBrushes);
+		//	Undo::End();
 			break;
 		case ID_SELECTION_DESELECT:
 			if (g_qeglobals.d_bClipMode)
@@ -1698,18 +1702,18 @@ LONG WINAPI CommandHandler (
 			Select_Invert();
 			break;
 		case ID_SELECTION_DELETE:
-			{	// sikk - TODO: Undo doesn't function properly with mixed selection  
-				Brush *brush;
+			//{	// sikk - TODO: Undo doesn't function properly with mixed selection  
+			//	Brush *brush;
 
-				Undo::Start("Delete");
-				Undo::AddBrushList(&g_brSelectedBrushes);
+			//	Undo::Start("Delete");
+			//	Undo::AddBrushList(&g_brSelectedBrushes);
 				// add all deleted entities to the undo
-				for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-					Undo::AddEntity(brush->owner);
+			//	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+			//		Undo::AddEntity(brush->owner);
 				Select_Delete();
-				Undo::EndBrushList(&g_brSelectedBrushes);
-				Undo::End();
-			}
+			//	Undo::EndBrushList(&g_brSelectedBrushes);
+			//	Undo::End();
+			//}
 			break;
 
 		case ID_SELECTION_FLIPX:
@@ -2282,7 +2286,7 @@ LONG WINAPI CommandHandler (
 				
 			//	SetWindowText(g_hwndEnt[ENT_KEYFIELD], "_color");
 			//	SetWindowText(g_hwndEnt[ENT_VALUEFIELD], buffer);
-				EntWnd_AddKeyValue("_color", buffer);
+				EntWnd_SetKeyValue("_color", buffer);
 			}
 			Sys_UpdateWindows(W_ALL);
 			break;

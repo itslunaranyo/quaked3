@@ -53,8 +53,8 @@ void XYZView::PositionView()
 	b = g_brSelectedBrushes.next;
 	if (b && b->next != b)
 	{
-		origin[nDim1] = b->mins[nDim1];
-		origin[nDim2] = b->mins[nDim2];
+		origin[nDim1] = b->basis.mins[nDim1];
+		origin[nDim2] = b->basis.mins[nDim2];
 	}
 	else
 	{
@@ -368,7 +368,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 				SnapToPoint( x, y, v1);
 
 				b = g_brSelectedBrushes.next;
-				VectorSubtract(v1, b->mins, v2);
+				VectorSubtract(v1, b->basis.mins, v2);
 
 				/*
 				if (this->dViewType == XY)
@@ -1529,9 +1529,9 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 		fRadius = 300;
 
 	// find the center
-	fOrigX = (pBrush->mins[0] + ((pBrush->maxs[0] - pBrush->mins[0]) / 2));
-	fOrigY = (pBrush->mins[1] + ((pBrush->maxs[1] - pBrush->mins[1]) / 2));
-	fOrigZ = (pBrush->mins[2] + ((pBrush->maxs[2] - pBrush->mins[2]) / 2));
+	fOrigX = (pBrush->basis.mins[0] + ((pBrush->basis.maxs[0] - pBrush->basis.mins[0]) / 2));
+	fOrigY = (pBrush->basis.mins[1] + ((pBrush->basis.maxs[1] - pBrush->basis.mins[1]) / 2));
+	fOrigZ = (pBrush->basis.mins[2] + ((pBrush->basis.maxs[2] - pBrush->basis.mins[2]) / 2));
 
 	glDisable(GL_LINE_STIPPLE);
 	glLineWidth(1);
@@ -1666,10 +1666,10 @@ void XYZView::Draw ()
 	e = g_map.world;
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
-		if (brush->mins[nDim1] > maxs[0] || 
-			brush->mins[nDim2] > maxs[1] || 
-			brush->maxs[nDim1] < mins[0] || 
-			brush->maxs[nDim2] < mins[1])
+		if (brush->basis.mins[nDim1] > maxs[0] || 
+			brush->basis.mins[nDim2] > maxs[1] || 
+			brush->basis.maxs[nDim1] < mins[0] || 
+			brush->basis.maxs[nDim2] < mins[1])
 		{
 			culled++;
 			continue;		// off screen
@@ -1734,16 +1734,16 @@ void XYZView::Draw ()
 		// paint size
 	    if (!bFixedSize)
 	    {
-			if (brush->owner->eclass->IsFixedSize())
+			if (brush->owner->IsPoint())
 				bFixedSize = true;
 			if (g_qeglobals.d_savedinfo.bShow_SizeInfo)
 			{
 				for (i = 0; i < 3; i++)
 				{
-					if (brush->mins[i] < vMinBounds[i])
-						vMinBounds[i] = brush->mins[i];
-					if (brush->maxs[i] > vMaxBounds[i])
-						vMaxBounds[i] = brush->maxs[i];
+					if (brush->basis.mins[i] < vMinBounds[i])
+						vMinBounds[i] = brush->basis.mins[i];
+					if (brush->basis.maxs[i] > vMaxBounds[i])
+						vMaxBounds[i] = brush->basis.maxs[i];
 				}
 			}
 		}

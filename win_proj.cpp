@@ -497,8 +497,8 @@ void SaveSettings (HWND hwndDlg)
 	}
 
 	strcpy(buf, g_qeglobals.d_savedinfo.szLastProject);
-
-	if (!(file = fopen(buf, "w")))
+	file = fopen(buf, "w");
+	if (!file)
 	{
 		MessageBox(hwndDlg, "Could not open config file for writing.", "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
 		return;

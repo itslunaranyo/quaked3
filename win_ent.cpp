@@ -126,7 +126,7 @@ BOOL CALLBACK FieldWndProc (
 			}
 			else
 			{
-				EntWnd_AddKeyValue();
+				EntWnd_SetKeyValue();
 //				SetFocus(g_qeglobals.d_hwndCamera);
 				SetFocus(g_hwndEnt[ENT_PROPS]);	// sikk - Made sense to keep focus 
 			}
@@ -559,19 +559,40 @@ static void EntWnd_FlagChecked(int flag)
 
 	int f = 1 << (flag-1);
 
-	Entity *eo;
-	eo = NULL;
-	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		if (b->owner == eo)
-			continue;
-		else
-			eo = b->owner;
+	Entity *last;
 
-		b->owner->SetSpawnFlag(f, on);
+	last = nullptr;
+	try
+	{
+		CmdSetSpawnflag *cmd = new CmdSetSpawnflag(flag, on);
+		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		{
+			// skip entity brushes in sequence
+			if (b->owner == last)
+				continue;
+			last = b->owner;
+			cmd->AddEntity(last);
+		}
+		g_cmdQueue.Complete(cmd);
+	}
+	catch (...)
+	{
+		return;
 	}
 
+	/*
+	Entity *last;
+	last = nullptr;
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		if (b->owner == last)
+			continue;
+		last = b->owner;
+		b->owner->SetSpawnFlag(f, on);
+	}
+	*/
 	EntWnd_UpdateUI();
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -651,10 +672,6 @@ void EntWnd_UpdateUI ()
 }
 
 
-
-
-
-
 /*
 ==============
 EntWnd_CreateEntity
@@ -665,22 +682,13 @@ Creates a new entity based on the currently selected brush and entity type.
 void EntWnd_CreateEntity ()
 {
 	EntClass	*ec;
-	Entity		*e;
+//	Entity		*e;
 	int			i;
 	HWND		hwnd;
-	char		sz[1024];
-
-	// check to make sure we have a brush
-	if (!Select_HasBrushes())
-	{
-	//	MessageBox(g_qeglobals.d_hwndMain, "You must have a brush selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
-	//	return;
-		g_qeglobals.d_camera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum		
-	}
+	//char		sz[1024];
 
 	// find out what type of entity we are trying to create
 	hwnd = g_hwndEnt[ENT_CLASSLIST];
-
 	i = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETCURSEL, 0, 0);
 
 	if (i < 0)
@@ -689,10 +697,23 @@ void EntWnd_CreateEntity ()
 		return;
 	}
 
-	SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
-	ec = EntClass::ForName(sz, false, true);
-	e = Entity::Create(ec);
+	//SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
+	ec = (EntClass *)SendMessage(hwnd, LB_GETITEMDATA, i, 0);
 
+	if (!Select_HasBrushes())
+	{
+		g_qeglobals.d_camera.GetAimPoint(g_brSelectedBrushes.basis.mins);	// FIXME: dum
+	}
+	else if (Select_OnlyPointEntities())
+	{
+		EntWnd_SetKeyValue("classname", ec->name);
+	}
+	else
+	{
+		Entity::Create(ec);
+	}
+	/*
+	e = Entity::Create(ec);
 	if (!e)
 	{
 	    MessageBox(g_qeglobals.d_hwndMain, "Failed to create entity.", "QuakeEd 3: Entity Creation Error", MB_OK | MB_ICONEXCLAMATION);
@@ -703,18 +724,37 @@ void EntWnd_CreateEntity ()
 	Select_HandleBrush(e->brushes.onext, true);
 
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+	*/
 }
 
 /*
 ===============
-EntWnd_AddKeyValue
+EntWnd_SetKeyValue
 ===============
 */
-void EntWnd_AddKeyValue(const char* key, const char* value)
+void EntWnd_SetKeyValue(const char* key, const char* value)
 {
 	Entity *last;
 
 	last = nullptr;
+	try
+	{
+		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, value);
+		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		{
+			// skip entity brushes in sequence
+			if (b->owner == last)
+				continue;
+			last = b->owner;
+			cmd->AddEntity(last);
+		}
+		g_cmdQueue.Complete(cmd);
+	}
+	catch (...)
+	{
+		return;
+	}
+	/*
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
 		// skip entity brushes in sequence
@@ -722,34 +762,43 @@ void EntWnd_AddKeyValue(const char* key, const char* value)
 			continue;
 		last = b->owner;
 
-		b->owner->SetKeyValue(key, value);
 		if (!strcmp(key, "origin"))
 		{
+			b->owner->SetKeyValue(key, value);
 			b->owner->SetOriginFromKeyvalue();
 			b->Build();
 		}
 		else if (!strcmp(key, "classname"))
+		{
 			b->owner->ChangeClassname(value);
-
-		g_bSelectionChanged = true;
-		Sys_UpdateWindows(W_CAMERA|W_XY|W_Z);
+		}
+		else
+		{
+			b->owner->SetKeyValue(key, value);
+		}
 	}
-	g_eEditEntity.SetKeyValue(key, value);
+	*/
 
 	// refresh the prop listbox
-	EntWnd_RefreshKeyValues();
+	//g_eEditEntity.SetKeyValue(key, value);
+	//EntWnd_RefreshKeyValues();
+
+	//g_bSelectionChanged = true;
+	EntWnd_UpdateUI();
+	Sys_UpdateWindows(W_SCENE);
 }
 
-void EntWnd_AddKeyValue()
+void EntWnd_SetKeyValue()
 {
 	char	key[1024];
 	char	value[1024];
 
 	// Get current selection text
+	// FIXME: strip accidental whitespace padding
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);
 
-	EntWnd_AddKeyValue(key, value);
+	EntWnd_SetKeyValue(key, value);
 }
 
 /*
@@ -764,12 +813,15 @@ void EntWnd_RemoveKeyValue ()
 	// Get current selection text
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(sz) - 1, (LPARAM)sz);	
 
+	EntWnd_SetKeyValue(sz, "");
+	/*
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		b->owner->DeleteKeyValue(sz);
 	g_eEditEntity.DeleteKeyValue(sz);
 
 	// refresh the prop listbox
 	EntWnd_RefreshKeyValues();	
+	*/
 }
 
 /*
@@ -981,7 +1033,7 @@ BOOL CALLBACK EntityWndProc (
 			InspWnd_ToTop();
 			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == TRUE)
 			{
-				extern void EntWnd_AddKeyValue(void);
+				extern void EntWnd_SetKeyValue(void);
 				
 				char buffer[64];
 				
@@ -991,14 +1043,14 @@ BOOL CALLBACK EntityWndProc (
 					
 				SetWindowText(g_hwndEnt[ENT_KEYFIELD], "_color");
 				SetWindowText(g_hwndEnt[ENT_VALUEFIELD], buffer);
-				EntWnd_AddKeyValue();
+				EntWnd_SetKeyValue();
 			}
 			Sys_UpdateWindows(W_ALL);
 			break;
 
 		case IDC_E_ADDPROP:
 			InspWnd_ToTop();
-			EntWnd_AddKeyValue();
+			EntWnd_SetKeyValue();
 			break;
 		case IDC_E_DELPROP:
 			InspWnd_ToTop();
