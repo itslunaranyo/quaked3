@@ -48,10 +48,10 @@ void CmdSetSpawnflag::Do_Impl() { SetNew(); }
 void CmdSetSpawnflag::Undo_Impl() { SetOld(); }
 void CmdSetSpawnflag::Redo_Impl() { SetNew(); }
 
-void CmdSetSpawnflag::Select_Impl()
+void CmdSetSpawnflag::Sel_Impl()
 {
 	for (auto sfcIt = sfchanges.begin(); sfcIt != sfchanges.end(); ++sfcIt)
 		for (Brush *br = sfcIt->ent->brushes.onext; br != &sfcIt->ent->brushes; br = br->onext)
-			Select_SelectBrush(br);
+			Selection::SelectBrush(br);
 }
 

@@ -186,6 +186,37 @@ void XYZView::SnapToPoint (int x, int y, vec3 &point)
 
 /*
 ==================
+XYZView::GetBasis
+==================
+*/
+bool XYZView::GetBasis(vec3 &right, vec3 &up, vec3 &forward)
+{
+	right = vec3(0);
+	up = vec3(0);
+	forward = vec3(0);
+	forward[this->dViewType] = -1;
+
+	if (this->dViewType == XY) // 2
+	{
+		right[0] = 1;
+		up[1] = 1;
+	}
+	else if (this->dViewType == YZ) // 0
+	{
+		right[1] = 1;
+		up[2] = 1;
+	}
+	else // 1
+	{
+		right[0] = 1;
+		up[2] = 1;
+	}
+
+	return true;
+}
+
+/*
+==================
 XYZView::DragDelta
 ==================
 */
@@ -232,7 +263,7 @@ void XYZView::DragNewBrush (int x, int y)
 		return;
 
 	// delete the current selection
-	if (Select_HasBrushes())
+	if (Selection::HasBrushes())
 		delete g_brSelectedBrushes.next;
 
 	SnapToPoint( pressx, pressy, mins);
@@ -338,7 +369,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		up[2] = 1 / this->scale;
 	}
 
-	press_selection = (Select_HasBrushes());
+	press_selection = (Selection::HasBrushes());
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
 
@@ -373,7 +404,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			MoveSelection(v2);
 
 			// update g_v3RotateOrigin to selection
-			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+			Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 		}
 // <---sikk
 		else
@@ -381,7 +412,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 			Drag_Begin(x, y, buttons, right, up, orgLocal, dir);
 
 			// update g_v3RotateOrigin to selection
-			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+			Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 		}
 		return;
 	}
@@ -522,7 +553,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		DragNewBrush(x, y);
 
 		// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
-		Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 		return;
 	}
 
@@ -533,7 +564,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		Drag_MouseMoved(x, y, buttons);
 		
 		// update g_v3RotateOrigin to new brush
-		Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
+		Selection::GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
@@ -645,17 +676,17 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 			case XY:
 				x -= cursorX;
 				nRotate += x;
-				Select_RotateAxis(2, x, true);
+				Transform_RotateAxis(2, x, true);
 				break;
 			case XZ:
 				x = cursorX - x;
 				nRotate += -x;
-				Select_RotateAxis(1, x, true);
+				Transform_RotateAxis(1, x, true);
 				break;
 			case YZ:
 				x -= cursorX;
 				nRotate += x;
-				Select_RotateAxis(0, x, true);
+				Transform_RotateAxis(0, x, true);
 				break;
 			}
 
@@ -715,20 +746,20 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		if (i < 0)
 		{
 			if (g_qeglobals.d_savedinfo.bScaleLockX)
-				Select_Scale(0.9f, 1.0f, 1.0f);
+				Transform_Scale(0.9f, 1.0f, 1.0f);
 			if (g_qeglobals.d_savedinfo.bScaleLockY)
-				Select_Scale(1.0f, 0.9f, 1.0f);
+				Transform_Scale(1.0f, 0.9f, 1.0f);
 			if (g_qeglobals.d_savedinfo.bScaleLockZ)
-				Select_Scale(1.0f, 1.0f, 0.9f);
+				Transform_Scale(1.0f, 1.0f, 0.9f);
 		}
 		if (i > 0)
 		{
 			if (g_qeglobals.d_savedinfo.bScaleLockX)
-				Select_Scale(1.1f, 1.0f, 1.0f);
+				Transform_Scale(1.1f, 1.0f, 1.0f);
 			if (g_qeglobals.d_savedinfo.bScaleLockY)
-				Select_Scale(1.0f, 1.1f, 1.0f);
+				Transform_Scale(1.0f, 1.1f, 1.0f);
 			if (g_qeglobals.d_savedinfo.bScaleLockZ)
-				Select_Scale(1.0f, 1.0f, 1.1f);
+				Transform_Scale(1.0f, 1.0f, 1.1f);
 		}
 			
 		Sys_SetCursorPos(cursorX, cursorY);

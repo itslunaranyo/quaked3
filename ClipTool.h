@@ -1,16 +1,11 @@
 //==============================
-//	clip.h
+//	ClipTool.h
 //==============================
 
 #ifndef __CLIP_H__
 #define __CLIP_H__
 
 // 3-Point Clipping Tool
-
-class WndView;
-class XYZView;
-class CameraView;
-class CmdBrushClip;
 
 #include "Tool.h"
 
@@ -20,9 +15,9 @@ public:
 	ClipTool();
 	~ClipTool();
 
-	int Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	int Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	int Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void Draw();
 	void SelectionChanged();
 
@@ -42,7 +37,7 @@ private:
 	int axis;
 	bool backside;
 
-	int InputCommand(WPARAM w);
+	bool InputCommand(WPARAM w);
 
 	void Reset();
 	void PointsUpdated();

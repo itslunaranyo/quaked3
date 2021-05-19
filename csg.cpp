@@ -330,7 +330,7 @@ bool CSG_CanMerge()
 	Brush *b;
 	Entity *owner;
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return false;
@@ -503,7 +503,7 @@ void CSG::Subtract ()
 
 	Sys_Printf("CMD: CSG Subtracting...\n");
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return;
@@ -624,7 +624,7 @@ void CSG::Hollow()
 {
 	Sys_Printf("CMD: CSG Hollowing...\n");
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return;

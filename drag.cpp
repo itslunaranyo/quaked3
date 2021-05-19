@@ -124,7 +124,7 @@ void MoveSelection (const vec3 move)
 			g_qeglobals.d_v3SelectTranslate = g_qeglobals.d_v3SelectTranslate + move;
 		}
 		else
- 			Select_Move(move);
+ 			Transform_Move(move);
 	}
 }
 
@@ -142,7 +142,7 @@ void Drag_Setup(int x, int y, int buttons,
 	Face *f;
 	trace_t	t;
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		Undo::Start("Create Brush");	// sikk - Undo/Redo
 //		Sys_Printf("MSG: No selection to drag.\n");	// sikk - Pointless Message
@@ -184,7 +184,7 @@ void Drag_Setup(int x, int y, int buttons,
 	}
 
 	// check for direct hit first
-	t = Test_Ray(origin, dir, true);
+	t = Selection::TestRay(origin, dir, true);
 	if (t.selected)
 	{
 		g_bDragOK = true;
@@ -247,6 +247,7 @@ void Drag_Setup(int x, int y, int buttons,
 Drag_TrySelect
 ===========
 */
+/*
 bool Drag_TrySelect(int buttons, const vec3 origin, const vec3 dir)
 {
 	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
@@ -254,11 +255,9 @@ bool Drag_TrySelect(int buttons, const vec3 origin, const vec3 dir)
 	// Shift+LBUTTON = select entire brush
 	if (buttons == (MK_LBUTTON | MK_SHIFT))
 	{
-		nFlag = GetAsyncKeyState(VK_MENU) ? SF_CYCLE : 0;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
-		if (!dir[0] && !dir[1])
-			Select_Ray(origin, dir, nFlag | SF_ENTITIES_FIRST);	// hack for XY	// sikk - Single Selection Cycle (Shift+Alt+LMB)
-		else
-			Select_Ray(origin, dir, nFlag);	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+		// sikk - Single Selection Cycle (Shift+Alt+LMB)
+		nFlag = GetAsyncKeyState(VK_MENU) ? SF_CYCLE : 0;
+		Selection::Ray(origin, dir, nFlag | SF_ENTITIES_FIRST);
 		return true;
 	}
 
@@ -266,13 +265,13 @@ bool Drag_TrySelect(int buttons, const vec3 origin, const vec3 dir)
 	if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
 	{
 		// if Alt = pressed, don't deselect selected faces
-		Select_DeselectAll((GetAsyncKeyState(VK_MENU) == 0));	// sikk - Multiple Face Selection
-		Select_Ray(origin, dir, SF_SINGLEFACE);
+		Selection::DeselectAll();
+		Selection::Ray(origin, dir, SF_FACES);
 		return true;
 	}
 	return false;
 }
-
+*/
 /*
 ===========
 Drag_Begin
@@ -295,8 +294,8 @@ void Drag_Begin(int x, int y, int buttons,
 	// LBUTTON = manipulate selection
 	if (buttons & MK_LBUTTON)
 	{
-		if (Drag_TrySelect(buttons, origin, dir))
-			return;
+		//if (Drag_TrySelect(buttons, origin, dir))
+		//	return;
 
 		Drag_Setup(x, y, buttons, xaxis, yaxis, origin, dir);
 		return;
@@ -307,7 +306,7 @@ void Drag_Begin(int x, int y, int buttons,
 	{
 		if (buttons == MK_MBUTTON)
 		{
-			t = Test_Ray(origin, dir, false);
+			t = Selection::TestRay(origin, dir, false);
 			if (t.face)
 			{
 				UpdateWorkzone(t.brush);
@@ -323,7 +322,7 @@ void Drag_Begin(int x, int y, int buttons,
 		// Ctrl+MBUTTON = set entire brush to texture
 		if (buttons == (MK_MBUTTON | MK_CONTROL))
 		{
-			t = Test_Ray(origin, dir, false);
+			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
 				if (t.brush->basis.faces->texdef.name[0] == '(')
@@ -347,7 +346,7 @@ void Drag_Begin(int x, int y, int buttons,
 		// Shift+MBUTTON = set single face to texture (face attributes remain)
 		if (buttons == (MK_MBUTTON | MK_SHIFT))
 		{
-			t = Test_Ray(origin, dir, false);
+			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
 				if (t.brush->basis.faces->texdef.name[0] == '(')
@@ -372,7 +371,7 @@ void Drag_Begin(int x, int y, int buttons,
 		// Ctrl+Shift+MBUTTON = set single face to texture
 		if (buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT))
 		{
-			t = Test_Ray(origin, dir, false);
+			t = Selection::TestRay(origin, dir, false);
 			if (t.brush)
 			{
 				if (t.brush->basis.faces->texdef.name[0] == '(')
@@ -451,7 +450,7 @@ void Drag_MouseUp ()
 //	Sys_Printf("MSG: Drag completed.\n");	// sikk - I Consider it Console Spamming
 	if (g_qeglobals.d_v3SelectTranslate[0] || g_qeglobals.d_v3SelectTranslate[1] || g_qeglobals.d_v3SelectTranslate[2])
 	{
-		Select_Move(g_qeglobals.d_v3SelectTranslate);
+		Transform_Move(g_qeglobals.d_v3SelectTranslate);
 		g_qeglobals.d_v3SelectTranslate = vec3(0);
 		Sys_UpdateWindows(W_CAMERA);
 	}

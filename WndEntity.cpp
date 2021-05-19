@@ -498,7 +498,7 @@ void WndEntity::UpdateUI()
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
 	RefreshEditEntity();
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)"");
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, -1, 0);
@@ -797,7 +797,7 @@ WndEntity::SetKeyValue
 */
 void WndEntity::SetKeyValue(const char* key, const char* value)
 {
-	Select_SetKeyValue(key,value);
+	Modify_SetKeyValue(key,value);
 }
 
 void WndEntity::SetKeyValue()
@@ -810,7 +810,7 @@ void WndEntity::SetKeyValue()
 	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);
 	SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);
 
-	Select_SetKeyValue(key, value);
+	Modify_SetKeyValue(key, value);
 }
 
 /*
@@ -895,11 +895,11 @@ void WndEntity::CreateEntity()
 	//SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
 	ec = (EntClass *)SendMessage(hwnd, LB_GETITEMDATA, i, 0);
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 	{
 		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.basis.mins);	// FIXME: dum
 	}
-	else if (Select_OnlyPointEntities())
+	else if (Selection::OnlyPointEntities())
 	{
 		SetKeyValue("classname", ec->name);
 	}

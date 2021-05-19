@@ -31,7 +31,7 @@ void CmdScale::Redo_Impl()
 	
 }
 
-void CmdScale::Select_Impl()
+void CmdScale::Sel_Impl()
 {
 	
 }

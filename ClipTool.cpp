@@ -1,5 +1,5 @@
 //==============================
-//	clip.cpp
+//	ClipTool.cpp
 //==============================
 
 #include "qe3.h"
@@ -9,7 +9,7 @@
 ClipTool::ClipTool() : 
 	ptMoving(nullptr),
 	g_pcmdBC(nullptr),
-	Tool(true)	// clip tool is modal
+	Tool("clipper", true)	// clip tool is modal
 {
 	g_qeglobals.d_clipTool = this;
 	Reset();
@@ -27,7 +27,7 @@ ClipTool::~ClipTool()
 ClipTool::Input3D
 ==================
 */
-int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
 {
 	int keys = wParam;
 	int x, y;
@@ -38,11 +38,11 @@ int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		return InputCommand(wParam);
 
 //	case WM_KEYDOWN:
-//		return 0;
+//		return false;
 
 	case WM_LBUTTONDOWN:
-		if (ShiftDown() || CtrlDown())
-			return 0;
+		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
+			return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -53,9 +53,10 @@ int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		else
 			CamDropPoint(x, y);
 		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return 1;
+		return true;
 
 	case WM_LBUTTONUP:
+		if (!hot) return false;
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
@@ -66,16 +67,16 @@ int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		Sys_UpdateWindows(W_XY | W_CAMERA);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
-		return 1;
+		return true;
 
 	case WM_MOUSEMOVE:
 		if ((!keys || keys & MK_LBUTTON))
 		{
 			vWnd.GetMsgXY(lParam, x, y);
 			CamMovePoint(x, y);
-			return (keys & MK_LBUTTON);
+			return !!keys;
 		}
-		return 0;
+		return false;
 	}
 	return hot;
 }
@@ -85,7 +86,7 @@ int ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 ClipTool::Input2D
 ==================
 */
-int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
 {
 	int keys = wParam;
 	int x, y;
@@ -96,8 +97,8 @@ int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndVi
 		return InputCommand(wParam);
 
 	case WM_LBUTTONDOWN:
-		if (ShiftDown() || CtrlDown())
-			return 0;
+		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
+			return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -108,9 +109,10 @@ int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndVi
 		else
 			DropPoint(&v, x, y);
 		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return 1;
+		return true;
 
 	case WM_LBUTTONUP:
+		if (!hot) return false;
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
@@ -121,16 +123,16 @@ int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndVi
 		Sys_UpdateWindows(W_XY | W_CAMERA);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
-		return 1;
+		return true;
 
 	case WM_MOUSEMOVE:
 		if ((!keys || keys & MK_LBUTTON))
 		{
 			vWnd.GetMsgXY(lParam, x, y);
 			MovePoint(&v, x, y);
-			return 1;
+			return !!keys;
 		}
-		return 0;
+		return false;
 	}
 	return hot;
 }
@@ -140,13 +142,10 @@ int ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndVi
 ClipTool::Input
 ==================
 */
-int ClipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool ClipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int keys = wParam;
-//	int x, y;
-
 	if (uMsg != WM_COMMAND)
-		return 0;
+		return false;
 
 	return InputCommand(wParam);
 }
@@ -156,19 +155,19 @@ int ClipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 ClipTool::InputCommand
 ==================
 */
-int ClipTool::InputCommand(WPARAM w)
+bool ClipTool::InputCommand(WPARAM w)
 {
 	switch (LOWORD(w))
 	{
 	case ID_SELECTION_CLIPSELECTED:
 		Clip();
-		return 1;
+		return true;
 	case ID_SELECTION_SPLITSELECTED:
 		Split();
-		return 1;
+		return true;
 	case ID_SELECTION_FLIPCLIP:
 		Flip();
-		return 1;
+		return true;
 	}
 	return hot;
 }
@@ -408,7 +407,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 	vec3		dir, pn, pt;
 	trace_t		t;
 	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
-	t = Test_Ray(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
+	t = Selection::TestRay(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED);
 	if (t.brush && t.face)
 	{
 		pn = t.face->plane.normal;

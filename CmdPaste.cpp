@@ -113,7 +113,7 @@ void CmdPaste::Redo_Impl()
 	cmdAR.Redo();
 }
 
-void CmdPaste::Select_Impl()
+void CmdPaste::Sel_Impl()
 {
 	cmdAR.Select();
 }

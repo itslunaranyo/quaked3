@@ -13,8 +13,10 @@ class TextureView;
 class Tool
 {
 public:
-	Tool(bool isModal);
+	Tool(const char* n, bool isModal);
 	virtual ~Tool();
+
+	const char* name;
 
 	bool hot;	// true during drags or other actions that must capture all input
 	const bool modal;	// modal tools are mutually exclusive, and delete each other from the stack
@@ -22,11 +24,11 @@ public:
 	virtual void SelectionChanged() {}
 	virtual void Draw() {}
 
-	virtual int Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	virtual int Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	virtual int Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
-	virtual int InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
-	virtual int Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	virtual bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
+	virtual bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	virtual bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
+	virtual bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
+	virtual bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static int HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	static int HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
@@ -35,6 +37,7 @@ public:
 	static int HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static Tool* HotTool();
+	static bool FilterInput(UINT uMsg);
 
 	bool ShiftDown() { return (GetKeyState(VK_SHIFT) < 0); }
 	bool CtrlDown() { return (GetKeyState(VK_CONTROL) < 0); }

@@ -97,7 +97,7 @@ void CmdImportMap::Redo_Impl()
 	cmdAR.Redo();
 }
 
-void CmdImportMap::Select_Impl()
+void CmdImportMap::Sel_Impl()
 {
 	cmdAR.Select();
 }

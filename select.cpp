@@ -5,7 +5,7 @@
 #include "qe3.h"
 
 Brush	g_brSelectedBrushes;	// highlighted
-Face	*g_pfaceSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
+Face	*g_vfSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
 int		g_nSelFaceCount;
 bool	g_bSelectionChanged;
 
@@ -22,27 +22,30 @@ vec3	g_v3RotateOrigin;	// sikk - Free Rotate
 //
 //============================================================
 
+
+void Selection::Changed() { g_bSelectionChanged = true;  }
+
 /*
 ================
-Select_HandleChange
+Selection::HandleChange
 
 lunaran: handle all consequences of the selection changing in one place, so that
 ui updates are consistent, centralized, and not repeated unnecessarily
 ================
 */
-void Select_HandleChange()
+void Selection::HandleChange()
 {
 	if (!g_bSelectionChanged) return;
 
-	Select_DeselectFiltered();
+	DeselectFiltered();
 
 	vec3		vMin, vMax, vSize;
 	char		selectionstring[256];
 	char		*name;
 
-	if (Select_HasBrushes())
+	if (HasBrushes())
 	{
-		Select_GetBounds(vMin, vMax);
+		GetBounds(vMin, vMax);
 		vSize = vMax - vMin;
 		name = g_brSelectedBrushes.next->owner->GetKeyValue("classname");
 		sprintf(selectionstring, "Selected: %s (%d %d %d)", name, (int)vSize[0], (int)vSize[1], (int)vSize[2]);
@@ -68,19 +71,19 @@ void Select_HandleChange()
 interface functions
 ================
 */
-bool Select_HasBrushes()
+bool Selection::HasBrushes()
 {
 	return (g_brSelectedBrushes.next && (g_brSelectedBrushes.next != &g_brSelectedBrushes));
 }
-int Select_FaceCount()
+int Selection::FaceCount()
 {
 	return g_nSelFaceCount;
 }
-bool Select_IsEmpty()
+bool Selection::IsEmpty()
 {
-	return !( Select_HasBrushes() || Select_FaceCount() );
+	return !( HasBrushes() || FaceCount() );
 }
-bool Select_OnlyPointEntities()
+bool Selection::OnlyPointEntities()
 {
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		if (b->owner->IsBrush())
@@ -88,23 +91,23 @@ bool Select_OnlyPointEntities()
 
 	return true;
 }
-int Select_NumBrushes()
+int Selection::NumBrushes()
 {
 	int i = 0;
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next) i++;
 	return i;
 }
-int Select_NumFaces()
+int Selection::NumFaces()
 {
 	return g_nSelFaceCount;
 }
 
 /*
 =================
-Select_IsBrushSelected
+Selection::IsBrushSelected
 =================
 */
-bool Select_IsBrushSelected(Brush* bSel)
+bool Selection::IsBrushSelected(Brush* bSel)
 {
 	Brush* b;
 
@@ -117,26 +120,26 @@ bool Select_IsBrushSelected(Brush* bSel)
 
 /*
 ================
-Select_SelectBrush
+Selection::SelectBrush
 ================
 */
-void Select_SelectBrush(Brush* b)
+void Selection::SelectBrush(Brush* b)
 {
 	if (b->next && b->prev)
 		b->RemoveFromList();
 
 	b->AddToList(&g_brSelectedBrushes);
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 
 /*
 ================
-Select_SelectBrushSorted
+Selection::SelectBrushSorted
 add a brush to the selected list, but adjacent to other brushes in the same entity
 ================
 */
-void Select_SelectBrushSorted(Brush* b)
+void Selection::SelectBrushSorted(Brush* b)
 {
 	if (b->next && b->prev)
 		b->RemoveFromList();
@@ -159,20 +162,20 @@ void Select_SelectBrushSorted(Brush* b)
 
 	b->AddToList(bCur);
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 
 /*
 ================
-Select_HandleBrush
+Selection::HandleBrush
 ================
 */
-void Select_HandleBrush (Brush *brush, bool bComplete)
+void Selection::HandleBrush (Brush *brush, bool bComplete)
 {
 	Brush	   *b;
 	Entity   *e;
 
-	Select_DeselectAllFaces();	// sikk - Multiple Face Selection
+	DeselectAllFaces();	// sikk - Multiple Face Selection
 
 	// we have hit an unselected brush
 	e = brush->owner;
@@ -186,54 +189,54 @@ void Select_HandleBrush (Brush *brush, bool bComplete)
 				if (b->owner != e) continue;
 
 				// current entity is partially selected, select just this brush
-				//Select_SelectBrush(brush);
+				//SelectBrush(brush);
 				brush->RemoveFromList();
 				brush->AddToList(b);	// add next to its partners to minimize entity fragmentation in the list
-				g_bSelectionChanged = true;
+				Selection::Changed();
 				return;
 			}
 			// current entity is not selected at all, select the whole thing
 			for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
 			{
-				Select_SelectBrush(b);
+				SelectBrush(b);
 			}
 		}
 		else
 		{
 			// select just this brush
-			Select_SelectBrush(brush);
+			SelectBrush(brush);
 		}
 	}
 }
 
 /*
 ================
-Select_DeselectAllFaces
+Selection::DeselectAllFaces
 ================
 */
-bool Select_DeselectAllFaces()
+bool Selection::DeselectAllFaces()
 {
 	if (!g_nSelFaceCount) return false;
 
-	g_pfaceSelectedFaces[0] = NULL;
+	g_vfSelectedFaces[0] = NULL;
 	g_nSelFaceCount = 0;
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 	return true;
 }
 
 /*
 ================
-Select_IsFaceSelected
+Selection::IsFaceSelected
 ================
 */
-bool Select_IsFaceSelected (Face *face)
+bool Selection::IsFaceSelected (Face *face)
 {
 	int i;
 	
 	for (i = 0; i < g_nSelFaceCount; i++)
-		if (face == g_pfaceSelectedFaces[i])
+		if (face == g_vfSelectedFaces[i])
 			return true;
 
 	return false;
@@ -242,25 +245,41 @@ bool Select_IsFaceSelected (Face *face)
 
 /*
 ================
-Select_DeselectFace
+Selection::SelectFace
+================
+*/
+void Selection::SelectFace(Face* f)
+{
+	assert(!IsFaceSelected(f));
+	if (!f->face_winding)
+		return;
+	g_vfSelectedFaces[g_nSelFaceCount++] = f;
+	g_vfSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
+
+	Selection::Changed();
+}
+
+/*
+================
+Selection::DeselectFace
 
 returns true or false if face could be deselected or not
 ================
 */
-bool Select_DeselectFace(Face* f)
+bool Selection::DeselectFace(Face* f)
 {
 	for (int i = 0; i < g_nSelFaceCount; i++)
 	{
-		if (f == g_pfaceSelectedFaces[i])
+		if (f == g_vfSelectedFaces[i])
 		{
-			g_pfaceSelectedFaces[i] = NULL;
+			g_vfSelectedFaces[i] = NULL;
 			for (i; i < g_nSelFaceCount; i++)
-				if (g_pfaceSelectedFaces[i + 1] != NULL)
-					g_pfaceSelectedFaces[i] = g_pfaceSelectedFaces[i + 1];
+				if (g_vfSelectedFaces[i + 1] != NULL)
+					g_vfSelectedFaces[i] = g_vfSelectedFaces[i + 1];
 				else
-					g_pfaceSelectedFaces[i] = NULL;
+					g_vfSelectedFaces[i] = NULL;
 
-			g_bSelectionChanged = true;
+			Selection::Changed();
 			g_nSelFaceCount--;
 			return true;
 		}
@@ -269,110 +288,156 @@ bool Select_DeselectFace(Face* f)
 }
 
 /*
-================
-Select_SelectFace
-================
+===============
+Selection::NumBrushFacesSelected
+===============
 */
-void Select_SelectFace(Face* f)
+int Selection::NumBrushFacesSelected(Brush* b)
 {
-	assert(!Select_IsFaceSelected(f));
-	if (!f->face_winding)
-		return;
-	g_pfaceSelectedFaces[g_nSelFaceCount++] = f;
-	g_pfaceSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
+	int sum;
+	sum = 0;
 
-	g_bSelectionChanged = true;
+	for (int i = 0; i < g_nSelFaceCount; i++)
+	{
+		if (g_vfSelectedFaces[i]->owner == b)
+			sum++;
+	}
+	return sum;
 }
 
 /*
 ===============
-Test_Ray
+Selection::FacesToBrushes
 ===============
 */
-trace_t Test_Ray(const vec3 origin, const vec3 dir, int flags)
+void Selection::FacesToBrushes(bool partial)
 {
-	Brush	   *brush;
-	Face	   *face;
-	float		dist;
-	trace_t		t;
+	Brush *b;
+
+	if (!FaceCount())
+		return;
+
+	b = NULL;
+	for (int i = 0; i < FaceCount(); i++)
+	{
+		if (b == g_vfSelectedFaces[i]->owner)
+			continue;
+
+		b = g_vfSelectedFaces[i]->owner;
+		if (partial || NumBrushFacesSelected(b) == b->NumFaces())
+		{
+			SelectBrushSorted(b);
+		}
+	}
+	DeselectAllFaces();
+	Selection::Changed();
+	g_qeglobals.d_selSelectMode = sel_brush;
+}
+
+/*
+===============
+Selection::BrushesToFaces
+===============
+*/
+void Selection::BrushesToFaces()
+{
+	Brush *b;
+	Face *f;
+
+	if (!HasBrushes())
+		return;
+
+	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (f = b->basis.faces; f; f = f->fnext)
+		{
+			SelectFace(f);
+		}
+	}
+	g_qeglobals.d_selSelectMode = sel_face;
+	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
+	Selection::Changed();
+}
+
+
+
+
+
+// ============================================================
+
+
+
+
+/*
+===============
+Test_BrushFilter
+===============
+*/
+bool Test_BrushFilter(Brush *brush, int flags)
+{
+	if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
+		return false;
+	if (flags & (SF_NOFIXEDSIZE | SF_FACES) && brush->owner->IsPoint())
+		return false;
+	if (brush->IsFiltered())
+		return false;
+	return true;
+}
+
+/*
+===============
+Selection::TestRay
+===============
+*/
+trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
+{
+	Brush	*brush;
+	Face	*face;
+	float	dist;
+	trace_t	t;
+
+	// single selection cycle:
+	// find the first unselected brush behind the first selected brush
+	if (flags & SF_CYCLE && HasBrushes())
+	{
+		memset(&t, 0, sizeof(t));
+		t.dist = DIST_START;
+
+		vec3 org;
+		float bestdist = DIST_START;
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+		{
+			if (!Test_BrushFilter(brush, flags))
+				continue;
+			face = brush->RayTest(origin, dir, &dist);
+			if (dist > 0 && dist < bestdist)
+				bestdist = dist;
+		}
+		org = origin + glm::normalize(dir) * bestdist;
+		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+		{
+			if (!Test_BrushFilter(brush, flags))
+				continue;
+			face = brush->RayTest(org, dir, &dist);
+			if (dist > 0 && dist < t.dist)
+			{
+				t.dist = dist;
+				t.brush = brush;
+				t.face = face;
+				t.selected = false;
+			}
+		}
+		if (t.brush) return t;
+	}
 
 	memset(&t, 0, sizeof(t));
 	t.dist = DIST_START;
-
-	// sikk---> Single Selection Cycle (Shift+Alt+LMB)
-	// This code was taken from Q3Radiant. It is a total hack 
-	// from me to get it working and really should be rewritten.
-	if (flags & SF_CYCLE)
-	{
-		int			nSize, j = 0;
-		Brush	   *pToSelect;
-		Brush	   *brArray[MAX_MAP_BRUSHES];
-
-		pToSelect = (Select_HasBrushes()) ? g_brSelectedBrushes.next : NULL;
-		Select_DeselectAll(true);
-
-		// go through active brushes and accumulate all "hit" brushes
-		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
-		{
-			if (brush->IsFiltered())
-				continue;
-
-			face = brush->RayTest(origin, dir, &dist);
-
-			if (face)
-			{
-				brArray[j] = brush;
-				j++;
-			}
-		}
-
-		nSize = j;
-		if (nSize)
-		{
-			Brush	   *b;
-			bool		bFound = false;
-			int			i;
-
-			for (i = 0; i < nSize; i++)
-			{
-				b = brArray[i];
-				// did we hit the last one selected yet ?
-				if (b == pToSelect)
-				{
-					// yes we want to select the next one in the list 
-					int n = (i > 0) ? i - 1 : nSize - 1;
-					pToSelect = brArray[n];
-					bFound = true;
-					break;
-				}
-			}
-			if (!bFound)
-			{
-				j = 0;
-				pToSelect = brArray[0];
-			}
-		}
-		if (pToSelect)
-		{
-			face = pToSelect->RayTest(origin, dir, &dist);
-			t.dist = dist;
-			t.brush = pToSelect;
-			t.face = face;
-			t.selected = false;
-			return t;
-		}
-	}
-	// <---sikk
 
 	if (!(flags & SF_SELECTED_ONLY))
 	{
 		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 		{
-			if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
-				continue;
-			if (brush->IsFiltered())
-				continue;
-			if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->IsPoint())
+			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
 			if (dist > 0 && dist < t.dist)
@@ -385,27 +450,26 @@ trace_t Test_Ray(const vec3 origin, const vec3 dir, int flags)
 		}
 	}
 
-	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	if (!(flags & SF_FACES))
 	{
-		if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
-			continue;
-		if (brush->IsFiltered())
-			continue;
-		if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->IsPoint())
-			continue;
-		face = brush->RayTest(origin, dir, &dist);
-		if (dist > 0 && dist < t.dist)
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 		{
-			t.dist = dist;
-			t.brush = brush;
-			t.face = face;
-			t.selected = true;
+			if (!Test_BrushFilter(brush, flags))
+				continue;
+			face = brush->RayTest(origin, dir, &dist);
+			if (dist > 0 && dist < t.dist)
+			{
+				t.dist = dist;
+				t.brush = brush;
+				t.face = face;
+				t.selected = true;
+			}
 		}
 	}
 
 	// if entities first, but didn't find any, check regular
 	if ((flags & SF_ENTITIES_FIRST) && t.brush == NULL)
-		return Test_Ray(origin, dir, flags - SF_ENTITIES_FIRST);
+		return TestRay(origin, dir, flags - SF_ENTITIES_FIRST);
 
 	return t;
 }
@@ -413,125 +477,156 @@ trace_t Test_Ray(const vec3 origin, const vec3 dir, int flags)
 
 /*
 ================
-Select_Ray
+Selection::Ray
 
 If the origin is inside a brush, that brush will be ignored.
 ================
 */
-void Select_Ray (const vec3 origin, const vec3 dir, int flags)
+int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 {
 	trace_t	t;
+	int out;
 
-	t = Test_Ray(origin, dir, flags);
+	t = TestRay(origin, dir, flags);
 	if (!t.brush)
-		return;
+		return 0;
 
-	if (flags == SF_SINGLEFACE)
+	out = flags;
+	if (flags & SF_FACES)
 	{
-		if (!Select_DeselectFace(t.face))	// deselect face if already selected
+		g_qeglobals.d_selSelectMode = sel_face;
+		if (IsFaceSelected(t.face))
 		{
-			Select_SelectFace(t.face);
-			t.face->owner = t.brush;	// important safety tip: this is important because apparently face.owner isn't set to anything by default?
+			if (flags & SF_UNSELECTED) return 0;
+			out |= SF_SELECTED;
+			DeselectFace(t.face);
+		}
+		else
+		{
+			if (flags & SF_SELECTED) return 0;
+			out |= SF_UNSELECTED;
+			SelectFace(t.face);
+			//t.face->owner = t.brush;	// important safety tip: this is important because apparently face.owner isn't set to anything by default?
 			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef, false);
 		}
-
-		g_qeglobals.d_selSelectMode = sel_brush;
-		//Sys_UpdateWindows(W_ALL);	// lunaran - handled by SelectChanged()
-		return;
-	}
-
-	// move the brush to the other list
-	g_qeglobals.d_selSelectMode = sel_brush;
-
-	if (t.selected)
-	{		
-		t.brush->RemoveFromList();
-		t.brush->AddToList(&g_map.brActive);
-		g_bSelectionChanged = true;
 	}
 	else
 	{
-		Select_HandleBrush(t.brush, true);
-	}
-}
-
-/*
-===============
-Select_NumBrushFacesSelected
-===============
-*/
-int Select_NumBrushFacesSelected(Brush* b)
-{
-	int sum;
-	sum = 0;
-
-	for (int i = 0; i < g_nSelFaceCount; i++)
-	{
-		if (g_pfaceSelectedFaces[i]->owner == b)
-			sum++;
-	}
-	return sum;
-}
-
-/*
-===============
-Select_FacesToBrushes
-===============
-*/
-void Select_FacesToBrushes(bool partial)
-{
-	Brush *b;
-
-	if (!Select_FaceCount())
-		return;
-
-	b = NULL;
-	for (int i = 0; i < Select_FaceCount(); i++)
-	{
-		if (b == g_pfaceSelectedFaces[i]->owner)
-			continue;
-
-		b = g_pfaceSelectedFaces[i]->owner;
-		if (partial || Select_NumBrushFacesSelected(b) == b->NumFaces())
+		g_qeglobals.d_selSelectMode = sel_brush;
+		if (flags & SF_CYCLE)
 		{
-			Select_SelectBrushSorted(b);
+			DeselectAll();
+			HandleBrush(t.brush, false);
+			return 0;
+		}
+		// move the brush to the other list
+		if (t.selected)
+		{
+			if (flags & SF_UNSELECTED) return 0;
+			out |= SF_SELECTED;
+			t.brush->RemoveFromList();
+			t.brush->AddToList(&g_map.brActive);
+			Selection::Changed();
+		}
+		else
+		{
+			if (flags & SF_SELECTED) return 0;
+			out |= SF_UNSELECTED;
+			HandleBrush(t.brush, true);
 		}
 	}
-	Select_DeselectAllFaces();
-	g_bSelectionChanged = true;
+	return out;
+}
+
+/*
+================
+Selection::TestPoint
+================
+*/
+trace_t Selection::TestPoint(const vec3 origin, int flags)
+{
+	trace_t t;
+	Brush* brush;
+
+	memset(&t, 0, sizeof(t));
+
+	if (!(flags & SF_SELECTED_ONLY))
+	{
+		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+		{
+			if (!Test_BrushFilter(brush, flags))
+				continue;
+			if (brush->PointTest(origin))
+			{
+				t.brush = brush;
+				t.selected = false;
+			}
+		}
+	}
+	if (t.brush) return t;
+
+	if (!(flags & SF_FACES))
+	{
+		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+		{
+			if (!Test_BrushFilter(brush, flags))
+				continue;
+			if (brush->PointTest(origin))
+			{
+				t.brush = brush;
+				t.selected = true;
+			}
+		}
+	}
+	return t;
+}
+
+/*
+================
+Selection::Point
+================
+*/
+void Selection::Point(const vec3 origin, int flags)
+{
+	if (flags & SF_FACES)
+		return;
+
+	trace_t t;
+	t = TestPoint(origin, flags);
+	if (!t.brush)
+		return;
+
 	g_qeglobals.d_selSelectMode = sel_brush;
-}
-
-/*
-===============
-Select_BrushesToFaces
-===============
-*/
-void Select_BrushesToFaces()
-{
-	Brush *b;
-	Face *f;
-
-	if (!Select_HasBrushes())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	// move the brush to the other list
+	if (t.selected)
 	{
-		for (f = b->basis.faces; f; f = f->fnext)
-		{
-			Select_SelectFace(f);
-		}
+		t.brush->RemoveFromList();
+		t.brush->AddToList(&g_map.brActive);
+		Selection::Changed();
 	}
-	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
-	g_bSelectionChanged = true;
+	else
+	{
+		HandleBrush(t.brush, true);
+	}
 }
+
+
+
+
+
+
+// ================================================================
+
+
+
+
 
 /*
 ===============
-Select_All
+Selection::SelectAll
 ===============
 */
-void Select_All()
+void Selection::SelectAll()
 {
 	/*
 	// sikk---> Select All
@@ -540,24 +635,24 @@ void Select_All()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
-		Select_SelectBrush(b);
+		SelectBrush(b);
 	}
 	// <---sikk
 	*/
 
-	Select_DeselectAllFaces();
+	DeselectAllFaces();
 
 	g_map.brActive.MergeListIntoList(&g_brSelectedBrushes);
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 
 /*
 ===============
-Select_DeselectFiltered
+Selection::DeselectFiltered
 ===============
 */
-void Select_DeselectFiltered()
+void Selection::DeselectFiltered()
 {
 	Brush *b, *next;
 
@@ -569,76 +664,40 @@ void Select_DeselectFiltered()
 		{
 			b->RemoveFromList();
 			b->AddToList(&g_map.brActive);
-			g_bSelectionChanged = true;
+			Selection::Changed();
 		}
 	}
 }
 
 /*
 ===============
-Select_DeselectAll
-lunaran TODO: proper selection mode switching (brush/face) so we don't need this bool
+Selection::DeselectAll
 ===============
 */
-void Select_DeselectAll (bool bDeselectFaces)
+void Selection::DeselectAll()
 {
 	//g_qeglobals.d_nWorkCount++;
 	g_qeglobals.d_nNumMovePoints = 0;
 
-	if (bDeselectFaces)
-		Select_DeselectAllFaces();
+	DeselectAllFaces();
 
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	if (!Select_HasBrushes())
+	if (!HasBrushes())
 		return;
 
 	UpdateWorkzone(g_brSelectedBrushes.next);
 
 	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 
 /*
 ===============
-OnBrushList
-
-returns true if pFind is in pList
+Selection::GetBounds
 ===============
 */
-bool OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize)
-{
-	while (nSize-- > 0)
-		if (pList[nSize] == pFind)
-			return true;
-
-	return false;
-}
-
-/*
-===============
-OnEntityList
-
-returns true if pFind is in pList
-===============
-*/
-bool OnEntityList(Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize)
-{
-	while (nSize-- > 0)
-	{
-		if (pList[nSize] == pFind)
-			return true;
-	}
-	return false;
-}
-
-
-/*
-===============
-Select_GetBounds
-===============
-*/
-void Select_GetBounds(vec3 &mins, vec3 &maxs)
+void Selection::GetBounds(vec3 &mins, vec3 &maxs)
 {
 	int			i;
 	Brush	   *b;
@@ -659,15 +718,15 @@ void Select_GetBounds(vec3 &mins, vec3 &maxs)
 
 /*
 ===============
-Select_GetTrueMid
+Selection::GetTrueMid
 ===============
 */
-void Select_GetTrueMid(vec3 &mid)
+void Selection::GetTrueMid(vec3 &mid)
 {
 	vec3	mins, maxs;
 	int		i;
 
-	Select_GetBounds(mins, maxs);
+	GetBounds(mins, maxs);
 
 	for (i = 0; i < 3; i++)
 		mid[i] = (mins[i] + ((maxs[i] - mins[i]) / 2));
@@ -675,21 +734,21 @@ void Select_GetTrueMid(vec3 &mid)
 
 /*
 ===============
-Select_GetMid
+Selection::GetMid
 ===============
 */
-void Select_GetMid(vec3 &mid)
+void Selection::GetMid(vec3 &mid)
 {
 	vec3	mins, maxs;
 	int		i;
 
 	if (g_qeglobals.d_savedinfo.bNoClamp)
 	{
-		Select_GetTrueMid(mid);
+		GetTrueMid(mid);
 		return;
 	}
 
-	Select_GetBounds(mins, maxs);
+	GetBounds(mins, maxs);
 	// lunaran: don't snap the midpoint to the grid, snap the bounds first so selections don't wander when rotated
 	for (i = 0; i < 3; i++)
 	{
@@ -706,16 +765,16 @@ void Select_GetMid(vec3 &mid)
 // sikk---> Select Matching Key/Value
 /*
 ===============
-Select_MatchingKeyValue
+Selection::MatchingKeyValue
 ===============
 */
-void Select_MatchingKeyValue(char *szKey, char *szValue)
+void Selection::MatchingKeyValue(char *szKey, char *szValue)
 {
 	Brush    *b, *bnext;
 	EPair	   *ep;
 	bool		bFound;
 
-	Select_DeselectAll(true);
+	DeselectAll();
 
 	if (strlen(szKey) && strlen(szValue))	// if both "key" & "value" are declared
 	{
@@ -725,7 +784,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 			if (!strcmp(b->owner->GetKeyValue(szKey), szValue))
 			{
-				Select_SelectBrushSorted(b);
+				SelectBrushSorted(b);
 			}
 		}
 	}
@@ -737,7 +796,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 			if (strlen(b->owner->GetKeyValue(szKey)))
 			{
-				Select_SelectBrushSorted(b);
+				SelectBrushSorted(b);
 			}
 		}
 	}
@@ -752,34 +811,34 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 			{
 				if (ep->value == szValue)
 				{
-					Select_SelectBrushSorted(b);
+					SelectBrushSorted(b);
 					bFound = true;	// this is so an entity with two different keys 
 				}					// with identical values are not selected twice
 			}
 		}
 	}
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 // <---sikk
 
 // sikk---> Select Matching Textures
 /*
 ===============
-Select_MatchingTextures
+Selection::MatchingTextures
 ===============
 */
-void Select_MatchingTextures()
+void Selection::MatchingTextures()
 {
 	Brush	   *b, *next;
 	Face	   *f;
 	texdef_t   *texdef;
 
 	if (g_nSelFaceCount)
-		texdef = &g_pfaceSelectedFaces[0]->texdef;
+		texdef = &g_vfSelectedFaces[0]->texdef;
 	else
 		texdef = &g_qeglobals.d_workTexDef;
 
-	Select_DeselectAll(true);
+	DeselectAll();
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
@@ -788,7 +847,7 @@ void Select_MatchingTextures()
 		{
 			if (!strcmp(f->texdef.name, texdef->name))
 			{
-				Select_SelectFace(f);
+				SelectFace(f);
 			}
 		}
 	}
@@ -798,10 +857,10 @@ void Select_MatchingTextures()
 
 /*
 ================
-Select_Invert
+Selection::Invert
 ================
 */
-void Select_Invert()
+void Selection::Invert()
 {
 	Brush *next, *prev;
 
@@ -836,7 +895,7 @@ void Select_Invert()
 		g_brSelectedBrushes.prev = &g_brSelectedBrushes;
 	}
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 	//Sys_Printf("MSG: Done.\n");
 }
 
@@ -845,10 +904,10 @@ void Select_Invert()
 // sikk---> Select All Type
 /*
 ===============
-Select_AllType
+Selection::AllType
 ===============
 */
-void Select_AllType()
+void Selection::AllType()
 {
 	Brush	*b, *next, *selected;
 
@@ -863,7 +922,7 @@ void Select_AllType()
 
 		if (!strcmp(b->owner->eclass->name, selected->owner->eclass->name))
 		{
-			Select_SelectBrushSorted(b);
+			SelectBrushSorted(b);
 		}
 	}
 }
@@ -871,10 +930,10 @@ void Select_AllType()
 
 /*
 ===============
-Select_CompleteTall
+Selection::CompleteTall
 ===============
 */
-void Select_CompleteTall()
+void Selection::CompleteTall()
 {
 	Brush	   *b, *next;
 	//	int			i;
@@ -888,7 +947,7 @@ void Select_CompleteTall()
 
 	mins = g_brSelectedBrushes.next->basis.mins;
 	maxs = g_brSelectedBrushes.next->basis.maxs;
-	Select_Delete();
+	Modify_Delete();
 
 	// lunaran - grid view reunification
 	{
@@ -914,16 +973,16 @@ void Select_CompleteTall()
 		if (b->IsFiltered())
 			continue;
 
-		Select_SelectBrushSorted(b);
+		SelectBrushSorted(b);
 	}
 }
 
 /*
 ===============
-Select_PartialTall
+Selection::PartialTall
 ===============
 */
-void Select_PartialTall()
+void Selection::PartialTall()
 {
 	Brush	   *b, *next;
 	//	int			i;
@@ -937,7 +996,7 @@ void Select_PartialTall()
 
 	mins = g_brSelectedBrushes.next->basis.mins;
 	maxs = g_brSelectedBrushes.next->basis.maxs;
-	Select_Delete();
+	Modify_Delete();
 
 	// lunaran - grid view reunification
 	{
@@ -963,16 +1022,16 @@ void Select_PartialTall()
 		if (b->IsFiltered())
 			continue;
 
-		Select_SelectBrushSorted(b);
+		SelectBrushSorted(b);
 	}
 }
 
 /*
 ===============
-Select_Touching
+Selection::Touching
 ===============
 */
-void Select_Touching()
+void Selection::Touching()
 {
 	Brush	   *b, *next;
 	int			i;
@@ -994,17 +1053,17 @@ void Select_Touching()
 				break;
 		if (i == 3)
 		{
-			Select_SelectBrushSorted(b);
+			SelectBrushSorted(b);
 		}
 	}
 }
 
 /*
 ===============
-Select_Inside
+Selection::Inside
 ===============
 */
-void Select_Inside()
+void Selection::Inside()
 {
 	Brush	   *b, *next;
 	int			i;
@@ -1017,7 +1076,7 @@ void Select_Inside()
 
 	mins = g_brSelectedBrushes.next->basis.mins;
 	maxs = g_brSelectedBrushes.next->basis.maxs;
-	Select_Delete();
+	Modify_Delete();
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
@@ -1027,17 +1086,17 @@ void Select_Inside()
 				break;
 		if (i == 3)
 		{
-			Select_SelectBrushSorted(b);
+			SelectBrushSorted(b);
 		}
 	}
 }
 
 /*
 ===============
-Select_NextBrushInGroup
+Selection::NextBrushInGroup
 ===============
 */
-void Select_NextBrushInGroup()
+void Selection::NextBrushInGroup()
 {
 	Brush		*b;
 	Brush		*b2;
@@ -1052,7 +1111,7 @@ void Select_NextBrushInGroup()
 		if (_strcmpi(b->owner->eclass->name, "worldspawn") != 0)
 		{
 			e = b->owner;
-			Select_DeselectAll(true);
+			DeselectAll();
 			for (b2 = e->brushes.onext; b2 != &e->brushes; b2 = b2->onext)
 			{
 				if (b == b2)
@@ -1064,7 +1123,7 @@ void Select_NextBrushInGroup()
 			if (b2 == &e->brushes)
 				b2 = b2->onext;
 
-			Select_HandleBrush(b2, false);
+			HandleBrush(b2, false);
 		}
 	}
 }
@@ -1083,20 +1142,20 @@ void Select_NextBrushInGroup()
 
 /*
 ===============
-Select_Delete
+Modify_Delete
 ===============
 */
-void Select_Delete ()
+void Modify_Delete ()
 {
 //	Brush	*brush;
 //	Entity	*e;
 
-	if (!Select_HasBrushes()) return;
+	if (!Selection::HasBrushes()) return;
 
 //	g_pfaceSelectedFace = NULL;
 // sikk---> Multiple Face Selection
-	if (Select_FaceCount())
-		Select_DeselectAllFaces();
+	if (Selection::FaceCount())
+		Selection::DeselectAllFaces();
 // <---sikk
 	g_qeglobals.d_selSelectMode = sel_brush;
 	g_qeglobals.d_nNumMovePoints = 0;
@@ -1105,7 +1164,7 @@ void Select_Delete ()
 	g_cmdQueue.Complete(cmd);
 
 	/*
-	while (Select_HasBrushes())
+	while (Selection::HasBrushes())
 	{
 		brush = g_brSelectedBrushes.next;
 	//	e = brush->owner;
@@ -1122,48 +1181,19 @@ void Select_Delete ()
 }
 
 /*
-===============
-UpdateWorkzone
-
-update the workzone to a given brush
-===============
-*/
-void UpdateWorkzone (Brush* b)
-{
-	if (!b) return;
-	assert(b != &g_brSelectedBrushes);
-
-	// will update the workzone to the given brush
-	g_qeglobals.d_v3WorkMin = b->basis.mins;
-	g_qeglobals.d_v3WorkMax = b->basis.maxs;
-
-	/*
-	int nDim1, nDim2;
-
-	nDim1 = (g_qeglobals.d_vXYZ[0].dViewType == YZ) ? 1 : 0;
-	nDim2 = (g_qeglobals.d_vXYZ[0].dViewType == XY) ? 1 : 2;
-
-	g_qeglobals.d_v3WorkMin[nDim1] = b->basis.mins[nDim1];
-	g_qeglobals.d_v3WorkMax[nDim1] = b->basis.maxs[nDim1];
-	g_qeglobals.d_v3WorkMin[nDim2] = b->basis.mins[nDim2];
-	g_qeglobals.d_v3WorkMax[nDim2] = b->basis.maxs[nDim2];
-	*/
-}
-
-/*
 ================
-Select_Clone	
+Modify_Clone	
 
 Creates an exact duplicate of the selection in place, then moves
 the selected brushes off of their old positions
 ================
 */
-void Select_Clone ()
+void Modify_Clone ()
 {
 	vec3	delta(0);
 
 	if (g_qeglobals.d_selSelectMode != sel_brush) return;
-	if (!Select_HasBrushes()) return;
+	if (!Selection::HasBrushes()) return;
 
 	// move cloned brushes based on active XY view
 	switch (QE_BestViewAxis())//XYZWnd_GetTopWindowViewType())
@@ -1186,84 +1216,9 @@ void Select_Clone ()
 	}
 
 	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
-	Select_DeselectAll(true);
+	Selection::DeselectAll();
 	g_cmdQueue.Complete(cmd);
-	//cmd->Select();
 
-	/*
-	Entity	*e;
-	Brush	*b, *b2, *n, *next, *next2;
-	Brush	templist;	// lunaran - select and offset the new brushes, not the old ones
-	templist.next = templist.prev = &templist;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
-	{
-		next = b->next;
-
-		Undo::EndEntity(b->owner);
-		Undo::EndBrush(b);
-		// if the brush is a world brush, handle simply
-		if (b->owner->IsWorld())
-		{
-//		Undo::EndBrush(n);
-			n = b->Clone();
-			n->AddToList(&templist);
-			g_map.world->LinkBrush(n);
-			n->Build();
-			n->Move(delta);
-			continue;
-		}
-
-		e = b->owner->Clone();
-		// clear the target / targetname
-// sikk - Commented out. I'm not sure why id prefered to not keep these keys
-// across clones.
-//		DeleteKey(e, "target");
-//		DeleteKey(e, "targetname");
-
-		// if the brush is a fixed size entity, create a new entity
-		if (b->owner->IsPoint())
-		{
-			n = b->Clone();
-			n->AddToList(&templist);
-			e->LinkBrush(n);
-			n->Build();
-			n->Move(delta);
-			continue;
-		}
-        
-		// brush is a complex entity, grab all the other ones now
-		next = &g_brSelectedBrushes;
-
-		for (b2 = b; b2 != &g_brSelectedBrushes; b2 = next2)
-		{
-			Undo::EndBrush(b2);
-			next2 = b2->next;
-			if (b2->owner != b->owner)
-			{
-				if (next == &g_brSelectedBrushes)
-					next = b2;
-				continue;
-			}
-
-			// move b2 to the start of g_brSelectedBrushes,
-			// so it won't be hit again
-			b2->RemoveFromList();
-			b2->AddToList(&g_brSelectedBrushes);
-			
-			n = b2->Clone();
-			n->AddToList(&templist);
-			e->LinkBrush(n);
-			n->Build();
-			n->Move(delta);
-		}
-	}
-
-	// lunaran - select and offset the new brushes, not the old ones
-	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
-	templist.MergeListIntoList(&g_brSelectedBrushes);
-	g_bSelectionChanged = true;
-	*/
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1280,10 +1235,10 @@ void Select_Clone ()
 
 /*
 ================
-Select_Move
+Transform_Move
 ================
 */
-void Select_Move (const vec3 delta)
+void Transform_Move (const vec3 delta)
 {
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -1298,10 +1253,10 @@ void Select_Move (const vec3 delta)
 
 /*
 ===============
-Select_ApplyMatrix
+Transform_ApplyMatrix
 ===============
 */
-void Select_ApplyMatrix ()
+void Transform_ApplyMatrix ()
 {
 	Brush	*b;
 	Face	*f;
@@ -1332,14 +1287,14 @@ void Select_ApplyMatrix ()
 
 /*
 ===============
-Select_FlipAxis
+Transform_FlipAxis
 ===============
 */
-void Select_FlipAxis (int axis)
+void Transform_FlipAxis (int axis)
 {
 	int		i;
 
-	Select_GetMid(g_v3SelectOrigin);
+	Selection::GetMid(g_v3SelectOrigin);
 	for (i = 0; i < 3; i++)
 	{
 		g_v3SelectMatrix[i] = vec3(0);
@@ -1348,17 +1303,17 @@ void Select_FlipAxis (int axis)
 	g_v3SelectMatrix[axis][axis] = -1;
 
 	g_bSelectFlipOrder = true;
-	Select_ApplyMatrix();
+	Transform_ApplyMatrix();
 	Sys_UpdateWindows(W_SCENE);
 }
 
 
 /*
 ===============
-Select_RotateAxis
+Transform_RotateAxis
 ===============
 */
-void Select_RotateAxis (int axis, float deg, bool bMouse)
+void Transform_RotateAxis (int axis, float deg, bool bMouse)
 {
 /*
 	vec3_t	temp;
@@ -1368,7 +1323,7 @@ void Select_RotateAxis (int axis, float deg, bool bMouse)
 	if (deg == 0)
 		return;
 
-	Select_GetMid(g_v3SelectOrigin);
+	Selection::GetMid(g_v3SelectOrigin);
 	g_bSelectFlipOrder = false;
 
 	if (deg == 90)
@@ -1449,7 +1404,7 @@ void Select_RotateAxis (int axis, float deg, bool bMouse)
 		g_v3SelectOrigin = g_v3RotateOrigin;
 	}
 	else
-		Select_GetMid(g_v3SelectOrigin);
+		Selection::GetMid(g_v3SelectOrigin);
 	g_bSelectFlipOrder = false;
 	
 	deg = -deg;
@@ -1487,23 +1442,23 @@ void Select_RotateAxis (int axis, float deg, bool bMouse)
 	if (g_qeglobals.d_bTextureLock)
 		Surf_RotateForTransform(axis, deg, g_v3SelectOrigin);
 
-	Select_ApplyMatrix();
+	Transform_ApplyMatrix();
 	Sys_UpdateWindows(W_SCENE);
 }
 
 // sikk---> Brush Scaling
 /*
 ===========
-Select_Scale
+Transform_Scale
 ===========
 */
-void Select_Scale (float x, float y, float z)
+void Transform_Scale (float x, float y, float z)
 {
 	int			i;
 	Brush	   *b;
 	Face	   *f;
 
-	Select_GetMid(g_v3SelectOrigin);
+	Selection::GetMid(g_v3SelectOrigin);
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -1547,12 +1502,12 @@ GROUP SELECTIONS
 
 /*
 =================
-Select_Ungroup
+Modify_Ungroup
 
 Turn the currently selected entity back into normal brushes
 =================
 */
-void Select_Ungroup ()
+void Modify_Ungroup ()
 {
 //	Entity	*e;
 //	Brush	*b;
@@ -1574,7 +1529,7 @@ void Select_Ungroup ()
 		g_map.world->LinkBrush(b);
 		b->Build();
 		b->owner = g_map.world;
-		Select_HandleBrush(b, true);	// sikk - reselect the ungrouped brush  
+		Selection::HandleBrush(b, true);	// sikk - reselect the ungrouped brush  
 	}
 
 	delete e;
@@ -1599,10 +1554,10 @@ void Select_Ungroup ()
 // sikk---> Insert Brush into Entity
 /*
 ===============
-Select_InsertBrush
+Modify_InsertBrush
 ===============
 */
-void Select_InsertBrush ()
+void Modify_InsertBrush ()
 {
 	Brush *br;
 	Entity *dest;
@@ -1647,7 +1602,7 @@ void Select_InsertBrush ()
 	bool		bCheck = false, bInserting = false;
 
 	// check to make sure we have a brush
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 		return;
 
 	// if any selected brushes is a point entity, return
@@ -1720,7 +1675,7 @@ void Select_InsertBrush ()
 	else
 		Sys_Printf("CMD: Brush entity \"%s\" reordered\n", e->eclass->name);
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 	Sys_UpdateWindows(W_ALL);
 	*/
 }
@@ -1730,10 +1685,10 @@ void Select_InsertBrush ()
 
 /*
 ===============
-Select_Hide
+Modify_Hide
 ===============
 */
-void Select_Hide ()
+void Modify_Hide ()
 {
 	Brush *b;
 
@@ -1743,15 +1698,15 @@ void Select_Hide ()
 		b->hiddenBrush = true;
 	}
 
-	g_bSelectionChanged = true;
+	Selection::Changed();
 }
 
 /*
 ===============
-Select_ShowAllHidden
+Modify_ShowHidden
 ===============
 */
-void Select_ShowAllHidden ()
+void Modify_ShowHidden ()
 {
 	Brush *b;
 
@@ -1766,13 +1721,13 @@ void Select_ShowAllHidden ()
 
 /*
 ===============
-Select_ConnectEntities
+Modify_ConnectEntities
 
 Sets target/targetname on the first two entities selected in order
 lunaran TODO: confirmation box if target & targetname already clash before overwriting
 ===============
 */
-void Select_ConnectEntities ()
+void Modify_ConnectEntities ()
 {
 	Entity	*e1, *e2, *e;
 	char		*target, *tn;
@@ -1834,17 +1789,17 @@ void Select_ConnectEntities ()
 	Sys_Printf("Entities connected as '%s'.\n", newtarg);
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 
-	Select_DeselectAll(true);
-	Select_HandleBrush(b, true);
+	Selection::DeselectAll();
+	Selection::HandleBrush(b, true);
 }
 
 
 /*
 ===============
-Select_SetKeyValue
+Modify_SetKeyValue
 ===============
 */
-void Select_SetKeyValue(const char *key, const char *value)
+void Modify_SetKeyValue(const char *key, const char *value)
 {
 	Entity *last;
 
@@ -1872,13 +1827,55 @@ void Select_SetKeyValue(const char *key, const char *value)
 
 /*
 ===============
-Select_SetColor
+Modify_SetColor
 ===============
 */
-void Select_SetColor(const vec3 color)
+void Modify_SetColor(const vec3 color)
 {
 	char szColor[128];
 
 	VecToString(color, szColor);
-	Select_SetKeyValue("_color", szColor);
+	Modify_SetKeyValue("_color", szColor);
 }
+
+
+
+// ================================================================
+
+
+
+/*
+===============
+OnBrushList
+
+returns true if pFind is in pList
+===============
+*/
+bool OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize)
+{
+	while (nSize-- > 0)
+		if (pList[nSize] == pFind)
+			return true;
+
+	return false;
+}
+
+
+
+/*
+===============
+UpdateWorkzone
+
+update the workzone to a given brush
+===============
+*/
+void UpdateWorkzone(Brush* b)
+{
+	if (!b) return;
+	assert(b != &g_brSelectedBrushes);
+
+	// will update the workzone to the given brush
+	g_qeglobals.d_v3WorkMin = b->basis.mins;
+	g_qeglobals.d_v3WorkMax = b->basis.maxs;
+}
+

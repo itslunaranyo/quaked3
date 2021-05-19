@@ -25,6 +25,7 @@ public:
 
 	void	DrawPathLines();
 	void	DrawTools();
+	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward) { return false; }
 
 	int	cursorX, cursorY;
 private:

@@ -175,9 +175,9 @@ void CmdBrushMod::Do_Impl() {}	// nothing to do here, changes were already made 
 void CmdBrushMod::Undo_Impl() { Swap(); }
 void CmdBrushMod::Redo_Impl() { Swap(); }
 
-void CmdBrushMod::Select_Impl()
+void CmdBrushMod::Sel_Impl()
 {
 	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
-		Select_SelectBrush(brbIt->br);
+		Selection::SelectBrush(brbIt->br);
 }
 

@@ -42,6 +42,48 @@ char *CopyString (char *s)
 
 /*
 ==================
+QE_InitProject
+==================
+*/
+void QE_InitProject()
+{
+	char	szProject[_MAX_PATH];	// sikk - Load Last Project
+
+	// sikk - If 'Load Last Project' is checked, load that file,
+	// else load default file
+	if (g_qeglobals.d_savedinfo.bLoadLastProject)
+	{
+		if (strlen(g_qeglobals.d_savedinfo.szLastProject) > 0)
+			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
+		else
+		{
+			strcpy(g_qeglobals.d_savedinfo.szLastProject, "scripts/quake.qe3");
+			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
+		}
+	}
+	else
+	{
+		strcpy(szProject, "scripts/quake.qe3");
+		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
+	}
+
+	// the project file can be specified on the command line, (must be first parameter)
+	// or implicitly found in the scripts directory
+	if (g_pszArgV[1])
+	{
+		if (!QE_LoadProject(g_pszArgV[1]))
+			Error("Could not load %s project file.", g_pszArgV[1]);
+	}
+	else if (!QE_LoadProject(szProject))
+	{
+		DoProject(true);	// sikk - Manually create project file if none is found
+		if (!QE_LoadProject("scripts/quake.qe3"))
+			Error("Could not load scripts/quake.qe3 project file.");
+	}
+}
+
+/*
+==================
 QE_Init
 ==================
 */
@@ -49,14 +91,16 @@ void QE_Init ()
 {
 	int i;	// sikk - Save Rebar Band Info
 
-	/*
-	** initialize variables
-	*/
+	QE_InitProject();
+
+	// initialize variables
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
 	g_qeglobals.d_vXYZ[0].dViewType = XY;
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 	g_qeglobals.d_clipTool = nullptr;
+
+	new SelectTool();
 
 	// set maximium undo levels
 	Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
@@ -87,15 +131,8 @@ void QE_Init ()
 */
 // <---sikk
 
-	/*
-	** other stuff
-	*/
+	// other stuff
 	Textures::Init();
-	//Cam_Init();
-	//for (int i = 0; i < 4;i++)
-	//	XYZ_Init(&g_qeglobals.d_vXYZ[i]);
-	//Z_Init();
-	//g_pcmdBC = nullptr;
 	g_map.RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface
@@ -529,7 +566,7 @@ QE_BestViewAxis
 */
 int QE_BestViewAxis()
 {
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		if (g_qeglobals.d_wndGrid[i]->IsOnTop())
 			return g_qeglobals.d_wndGrid[i]->xyzv->dViewType;
@@ -544,7 +581,7 @@ QE_SingleBrush
 */
 bool QE_SingleBrush ()
 {
-	if ((!Select_HasBrushes()) ||
+	if ((!Selection::HasBrushes()) ||
 		(g_brSelectedBrushes.next->next != &g_brSelectedBrushes))
 	{
 		Sys_Printf("WARNING: Must have a single brush selected.\n");
@@ -724,11 +761,11 @@ void QE_UpdateCommandUI ()
 //===================================
 	// lunaran - leave cut/copy/paste always enabled, so they work in the console and other text fields
 	// Cut
-//	EnableMenuItem(hMenu, ID_EDIT_CUT, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	EnableMenuItem(hMenu, ID_EDIT_CUT, (Selection::HasBrushes() ? MF_ENABLED : MF_GRAYED));
+//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Selection::HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Copy
-//	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
-//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+//	EnableMenuItem(hMenu, ID_EDIT_COPY, (Selection::HasBrushes() ? MF_ENABLED : MF_GRAYED));
+//	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Selection::HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Paste
 //	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
 //	SendMessage(g_qeglobals.d_hwndToolbar[1], TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));

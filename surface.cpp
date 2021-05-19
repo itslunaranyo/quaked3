@@ -201,7 +201,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 
 	pList = (bSelected) ? &g_brSelectedBrushes : &g_map.brActive;
 	if (!bSelected)
-		Select_DeselectAll(true);
+		Selection::DeselectAll();
 
 	for (pBrush = pList->next; pBrush != pList; pBrush = pBrush->next)
 	{
@@ -255,25 +255,25 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 {
 	Brush	*b;
 
-	if (Select_IsEmpty())
+	if (Selection::IsEmpty())
 	{
 		Surf_ApplyTexdef(&g_qeglobals.d_workTexDef, texdef, nSkipFlags);
 		return;
 	}
 
 	// sikk---> Multiple Face Selection
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
 		int i, nBrushCount = 0;
 		Brush	*pbrArray[MAX_MAP_BRUSHES];
 
-		for (i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Selection::FaceCount(); i++)
 		{
 			// this check makes sure that brushes are only added to undo once 
 			// and not once per selected face on brush
-			if (!OnBrushList(g_pfaceSelectedFaces[i]->owner, pbrArray, nBrushCount))
+			if (!OnBrushList(g_vfSelectedFaces[i]->owner, pbrArray, nBrushCount))
 			{
-				pbrArray[nBrushCount] = g_pfaceSelectedFaces[i]->owner;
+				pbrArray[nBrushCount] = g_vfSelectedFaces[i]->owner;
 				nBrushCount++;
 			}
 		}
@@ -283,14 +283,14 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 		for (i = 0; i < nBrushCount; i++)
 			Undo::AddBrush(pbrArray[i]);	// sikk - Undo/Redo
 
-		for (i = 0; i < Select_FaceCount(); i++)
-			g_pfaceSelectedFaces[i]->SetTexture(texdef, nSkipFlags);
+		for (i = 0; i < Selection::FaceCount(); i++)
+			g_vfSelectedFaces[i]->SetTexture(texdef, nSkipFlags);
 
 		for (i = 0; i < nBrushCount; i++)
 			Undo::EndBrush(pbrArray[i]);	// sikk - Undo/Redo
 	}
 	// <---sikk
-	else if (Select_HasBrushes())
+	else if (Selection::HasBrushes())
 	{
 		Undo::Start("Set Brush Textures");	// sikk - Undo/Redo
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -375,7 +375,7 @@ void Surf_FitTexture(float nHeight, float nWidth)
 {
 	Brush	*b;
 
-	if (Select_IsEmpty())
+	if (Selection::IsEmpty())
 		return;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -385,13 +385,13 @@ void Surf_FitTexture(float nHeight, float nWidth)
 	}
 
 	// sikk---> Multiple Face Selection
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
 		int i;
-		for (i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Selection::FaceCount(); i++)
 		{
-			g_pfaceSelectedFaces[i]->FitTexture(nHeight, nWidth);
-			g_pfaceSelectedFaces[i]->owner->Build();
+			g_vfSelectedFaces[i]->FitTexture(nHeight, nWidth);
+			g_vfSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk
@@ -410,7 +410,7 @@ void Surf_ShiftTexture(int x, int y)
 	Brush	*b;
 	Face	*f;
 
-	if (Select_IsEmpty())
+	if (Selection::IsEmpty())
 		return;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -424,15 +424,15 @@ void Surf_ShiftTexture(int x, int y)
 		b->Build();
 	}
 	// sikk---> Multiple Face Selection
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
 		int i;
-		for (i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Selection::FaceCount(); i++)
 		{
-			g_pfaceSelectedFaces[i]->texdef.shift[0] += x;
-			g_pfaceSelectedFaces[i]->texdef.shift[1] += y;
-		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			g_pfaceSelectedFaces[i]->owner->Build();
+			g_vfSelectedFaces[i]->texdef.shift[0] += x;
+			g_vfSelectedFaces[i]->texdef.shift[1] += y;
+		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
+			g_vfSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <--sikk
@@ -450,7 +450,7 @@ void Surf_ScaleTexture(int x, int y)
 	Brush	*b;
 	Face	*f;
 
-	if (Select_IsEmpty())
+	if (Selection::IsEmpty())
 		return;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -465,15 +465,15 @@ void Surf_ScaleTexture(int x, int y)
 	}
 
 	// sikk---> Multiple Face Selection
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
 		int i;
-		for (i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Selection::FaceCount(); i++)
 		{
-			g_pfaceSelectedFaces[i]->texdef.scale[0] += x / 100.0f;
-			g_pfaceSelectedFaces[i]->texdef.scale[1] += y / 100.0f;
-		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			g_pfaceSelectedFaces[i]->owner->Build();
+			g_vfSelectedFaces[i]->texdef.scale[0] += x / 100.0f;
+			g_vfSelectedFaces[i]->texdef.scale[1] += y / 100.0f;
+		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
+			g_vfSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk
@@ -491,7 +491,7 @@ void Surf_RotateTexture(int deg)
 	Brush	*b;
 	Face	*f;
 
-	if (Select_IsEmpty())
+	if (Selection::IsEmpty())
 		return;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -509,18 +509,18 @@ void Surf_RotateTexture(int deg)
 	}
 
 	// sikk---> Multiple Face Selection
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
 		int i;
-		for (i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Selection::FaceCount(); i++)
 		{
-			g_pfaceSelectedFaces[i]->texdef.rotate += deg;
-			if (g_pfaceSelectedFaces[i]->texdef.rotate > 180)
-				g_pfaceSelectedFaces[i]->texdef.rotate -= 360;
-			if (g_pfaceSelectedFaces[i]->texdef.rotate <= -180)
-				g_pfaceSelectedFaces[i]->texdef.rotate += 360;
-		//	Surf_SetTexdef(&g_pfaceSelectedFaces[i]->texdef);
-			g_pfaceSelectedFaces[i]->owner->Build();
+			g_vfSelectedFaces[i]->texdef.rotate += deg;
+			if (g_vfSelectedFaces[i]->texdef.rotate > 180)
+				g_vfSelectedFaces[i]->texdef.rotate -= 360;
+			if (g_vfSelectedFaces[i]->texdef.rotate <= -180)
+				g_vfSelectedFaces[i]->texdef.rotate += 360;
+		//	Surf_SetTexdef(&g_vfSelectedFaces[i]->texdef);
+			g_vfSelectedFaces[i]->owner->Build();
 		}
 	}
 	// <---sikk

@@ -60,7 +60,7 @@ void CmdCreatePointEntity::Redo_Impl()
 	ent->brushes.onext->AddToList(&g_map.brActive);
 }
 
-void CmdCreatePointEntity::Select_Impl()
+void CmdCreatePointEntity::Sel_Impl()
 {
 	if (state != DONE) return;
 

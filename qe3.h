@@ -41,7 +41,6 @@
 #include "textures.h"
 #include "face.h"
 #include "brush.h"
-#include "clip.h"
 #include "csg.h"
 #include "drag.h"
 #include "entclass.h"
@@ -63,8 +62,6 @@
 
 #include "commands.h"
 
-#include "Tool.h"
-
 #include "WndView.h"
 #include "WndCamera.h"
 #include "WndTexture.h"
@@ -72,6 +69,11 @@
 #include "WndZChecker.h"
 #include "WndEntity.h"
 #include "WndConsole.h"
+
+#include "Tool.h"
+#include "SelectTool.h"
+#include "TextureTool.h"
+#include "ClipTool.h"
 
 //========================================================================
 

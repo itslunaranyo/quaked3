@@ -32,7 +32,7 @@ protected:
 	virtual void Do_Impl() { return; }
 	virtual void Undo_Impl() { return; }
 	virtual void Redo_Impl() { return; }
-	virtual void Select_Impl() { return; }
+	virtual void Sel_Impl() { return; }
 };
 
 // ========================================================================

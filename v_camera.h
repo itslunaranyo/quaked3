@@ -33,6 +33,7 @@ public:
 
 	void GetAimPoint(vec3 &pt);
 	void PointToRay(int x, int y, vec3 &rayOut);
+	bool GetBasis(vec3 &right, vec3 &up, vec3 &forward);
 
 	void ChangeFloor(bool up);
 	void FreeLook();

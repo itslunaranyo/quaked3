@@ -491,3 +491,9 @@ void ZView::Draw ()
 		Sys_Printf("MSG: Z: %d ms\n", (int)(1000 * (end - start)));
 	} 
 }
+
+void ZView::ToPoint(int x, int y, vec3 &point)
+{
+	point = origin;
+	point.z = origin.z + (y - height / 2) / scale;
+}

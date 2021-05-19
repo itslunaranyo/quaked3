@@ -87,7 +87,7 @@ void CmdTranslate::Redo_Impl()
 	cmdBM.Redo();
 }
 
-void CmdTranslate::Select_Impl()
+void CmdTranslate::Sel_Impl()
 {
 	
 }

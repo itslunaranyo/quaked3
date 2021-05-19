@@ -202,6 +202,13 @@ void ParseCommandLine (char *lpCmdLine)
 			}
 		}
 	}
+
+	// lunaran: 0-init other parms
+	while (g_nArgC < MAX_NUM_ARGVS)
+	{
+		g_pszArgV[g_nArgC] = 0;
+		g_nArgC++;
+	}
 }
 
 /*

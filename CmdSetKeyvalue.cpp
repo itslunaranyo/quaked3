@@ -123,10 +123,10 @@ void CmdSetKeyvalue::SetOld()
 void CmdSetKeyvalue::Do_Impl() { SetNew(); }
 void CmdSetKeyvalue::Undo_Impl() { SetOld(); }
 void CmdSetKeyvalue::Redo_Impl() { SetNew(); }
-void CmdSetKeyvalue::Select_Impl()
+void CmdSetKeyvalue::Sel_Impl()
 {
 	for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
 		for (Brush *br = kvcIt->ent->brushes.onext; br != &kvcIt->ent->brushes; br = br->onext)
-			Select_SelectBrush(br);
+			Selection::SelectBrush(br);
 }
 

@@ -641,7 +641,7 @@ void Entity::WriteSelected(std::ostream &out)
 		b = brushes.onext;
 	else
 		for (b = brushes.onext; b != &brushes; b = b->onext)
-			if (Select_IsBrushSelected(b))
+			if (Selection::IsBrushSelected(b))
 				break;
 
 	if (b == &brushes)
@@ -658,7 +658,7 @@ void Entity::WriteSelected(std::ostream &out)
 		count = 0;
 		for (b; b != &brushes; b = b->onext)
 		{
-			if (Select_IsBrushSelected(b))
+			if (Selection::IsBrushSelected(b))
 			{
 				out << "// brush " << count << "\n";
 				count++;
@@ -676,7 +676,7 @@ void Entity::WriteSelected (FILE *f)
 	int		count;
 
 	for (b = brushes.onext; b != &brushes; b = b->onext)
-		if (Select_IsBrushSelected(b))
+		if (Selection::IsBrushSelected(b))
 			break;	// got one
 
 	if (b == &brushes)
@@ -693,7 +693,7 @@ void Entity::WriteSelected (FILE *f)
 		count = 0;
 		for (b = brushes.onext; b != &brushes; b = b->onext)
 		{
-			if (Select_IsBrushSelected(b))
+			if (Selection::IsBrushSelected(b))
 			{
 				fprintf(f, "// brush %d\n", count);
 				count++;
@@ -829,7 +829,7 @@ bool Entity::Create (EntClass *ecIn)
 		e = g_brSelectedBrushes.next->owner;
 		e->ChangeClassname(ecIn);
 		Sys_UpdateWindows(W_SCENE);
-		g_bSelectionChanged = true;
+		Selection::Changed();
 		return true;
 	}
 
@@ -844,20 +844,20 @@ bool Entity::Create (EntClass *ecIn)
 		}
 		*/
 
-	if (Select_HasBrushes() == ecIn->IsPointClass())	// x0r!
+	if (Selection::HasBrushes() == ecIn->IsPointClass())	// x0r!
 	{
 		// check with user that we want to apply the 'wrong' eclass
 		if (!ConfirmClassnameHack(ecIn))
 			return false;
 	}
 
-	if (Select_HasBrushes())
+	if (Selection::HasBrushes())
 	{
 		try
 		{
 			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);
 			cmd->AddBrushes(&g_brSelectedBrushes);
-			//Select_DeselectAll(true);
+			//Selection::DeselectAll();
 			g_cmdQueue.Complete(cmd);
 			//cmd->Select();
 		}
@@ -889,7 +889,7 @@ bool Entity::Create (EntClass *ecIn)
 	{
 		// TODO: pass the location of the right-click via an appropriate method
 		CmdCreatePointEntity *cmd = new CmdCreatePointEntity(ecIn->name, g_brSelectedBrushes.basis.mins);
-		//Select_DeselectAll(true);
+		//Selection::DeselectAll();
 		g_cmdQueue.Complete(cmd);
 		//cmd->Select();
 		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
@@ -897,7 +897,7 @@ bool Entity::Create (EntClass *ecIn)
 
 	/*
 		// this will spit back a reversed-form eclass
-		c = EntClass::ForName(ecIn->name, Select_HasBrushes(), false);
+		c = EntClass::ForName(ecIn->name, Selection::HasBrushes(), false);
 	}
 	else
 		c = ecIn;
@@ -922,7 +922,7 @@ bool Entity::Create (EntClass *ecIn)
 
 		e->MakeBrush();
 
-		Select_HandleBrush(e->brushes.onext,false);
+		Selection::HandleBrush(e->brushes.onext,false);
 	}
 	else
 	{

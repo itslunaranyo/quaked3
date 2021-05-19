@@ -90,7 +90,7 @@ void CmdReparentBrush::Redo_Impl()
 		(*entIt)->RemoveFromList();
 }
 
-void CmdReparentBrush::Select_Impl()
+void CmdReparentBrush::Sel_Impl()
 {
 	for (auto rpIt = reparents.begin(); rpIt != reparents.end(); ++rpIt)
 	{

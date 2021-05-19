@@ -174,9 +174,9 @@ void CmdCzgCylinder::Redo_Impl()
 	cmdBM.Redo();
 }
 
-void CmdCzgCylinder::Select_Impl()
+void CmdCzgCylinder::Sel_Impl()
 {
-	Select_SelectBrush(target);
+	Selection::SelectBrush(target);
 }
 
 

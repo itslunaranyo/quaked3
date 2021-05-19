@@ -121,9 +121,9 @@ void CmdCone::Redo_Impl()
 	cmdBM.Redo();
 }
 
-void CmdCone::Select_Impl()
+void CmdCone::Sel_Impl()
 {
-	Select_SelectBrush(target);
+	Selection::SelectBrush(target);
 }
 
 

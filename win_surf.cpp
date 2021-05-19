@@ -66,19 +66,19 @@ void SurfWnd_RefreshEditTexdef()
 
 	SurfWnd_ClearEditTexdef();
 
-	if (Select_FaceCount())
+	if (Selection::FaceCount())
 	{
-		for (int i = 0; i < Select_FaceCount(); i++)
+		for (int i = 0; i < Selection::FaceCount(); i++)
 		{
 			if (i == 0)
-				g_texdefEdit = g_pfaceSelectedFaces[i]->texdef;
+				g_texdefEdit = g_vfSelectedFaces[i]->texdef;
 			else
-				SurfWnd_AddToEditTexdef(g_pfaceSelectedFaces[i]);
+				SurfWnd_AddToEditTexdef(g_vfSelectedFaces[i]);
 		}
 		return;
 	}
 
-	if (Select_HasBrushes())
+	if (Selection::HasBrushes())
 	{
 		bool first = true;
 		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)

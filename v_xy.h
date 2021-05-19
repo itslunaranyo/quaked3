@@ -26,6 +26,7 @@ public:
 	void	ToPoint(int x, int y, vec3 &point);
 	void	ToGridPoint(int x, int y, vec3 &point);
 	void	SnapToPoint(int x, int y, vec3 &point);
+	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward);
 
 	void	Draw();
 

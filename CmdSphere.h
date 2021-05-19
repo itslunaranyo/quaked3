@@ -21,7 +21,7 @@ private:
 	void Do_Impl();
 	void Undo_Impl();
 	void Redo_Impl();
-	void Select_Impl();
+	void Sel_Impl();
 
 };
 

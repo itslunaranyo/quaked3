@@ -31,7 +31,7 @@ void CmdRotate::Redo_Impl()
 	
 }
 
-void CmdRotate::Select_Impl()
+void CmdRotate::Sel_Impl()
 {
 	
 }

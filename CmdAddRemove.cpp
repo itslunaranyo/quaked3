@@ -211,19 +211,19 @@ void CmdAddRemove::Redo_Impl()
 	Restore(brAdded);
 }
 
-void CmdAddRemove::Select_Impl()
+void CmdAddRemove::Sel_Impl()
 {
 	if (state == DONE)
 	{
 		for (auto brIt = brAdded.begin(); brIt != brAdded.end(); ++brIt)
-			Select_SelectBrush(*brIt);
+			Selection::SelectBrush(*brIt);
 		for (auto entIt = entAdded.begin(); entIt != entAdded.end(); ++entIt)
-			Select_SelectBrush((*entIt)->brushes.onext);
+			Selection::SelectBrush((*entIt)->brushes.onext);
 		return;
 	}
 	for (auto brIt = brRemoved.begin(); brIt != brRemoved.end(); ++brIt)
-		Select_SelectBrush(*brIt);
+		Selection::SelectBrush(*brIt);
 	for (auto entIt = entRemoved.begin(); entIt != entRemoved.end(); ++entIt)
-		Select_SelectBrush((*entIt)->brushes.onext);
+		Selection::SelectBrush((*entIt)->brushes.onext);
 }
 

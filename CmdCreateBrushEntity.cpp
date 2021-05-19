@@ -50,6 +50,6 @@ void CmdCreateBrushEntity::Redo_Impl()
 	ent->AddToList(&g_map.entities);
 	cmdRPB.Redo();
 }
-void CmdCreateBrushEntity::Select_Impl() { cmdRPB.Select(); }
+void CmdCreateBrushEntity::Sel_Impl() { cmdRPB.Select(); }
 
 

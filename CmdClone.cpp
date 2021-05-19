@@ -72,7 +72,7 @@ void CmdClone::Do_Impl() { cmdAR.Do(); }
 void CmdClone::Undo_Impl() { cmdAR.Undo(); }
 void CmdClone::Redo_Impl() { cmdAR.Redo(); }
 
-void CmdClone::Select_Impl()
+void CmdClone::Sel_Impl()
 {
 	if (state == DONE)
 		cmdAR.Select();

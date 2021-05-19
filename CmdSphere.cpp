@@ -107,9 +107,9 @@ void CmdSphere::Redo_Impl()
 	cmdBM.Redo();
 }
 
-void CmdSphere::Select_Impl()
+void CmdSphere::Sel_Impl()
 {
-	Select_SelectBrush(target);
+	Selection::SelectBrush(target);
 }
 
 

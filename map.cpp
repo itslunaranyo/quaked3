@@ -219,7 +219,7 @@ bool Map::ParseBufferMerge(const char *data)
 		return false;
 	}
 
-	Select_DeselectAll(true);
+	Selection::DeselectAll();
 	elist.MergeListIntoList(&entities);
 	blist.MergeListIntoList(&g_brSelectedBrushes);	// merge to selection
 	return true;
@@ -410,7 +410,7 @@ void Map::ImportFromFile(const char *filename)
 	IO_LoadFile(filename, buf);
 	if (ParseBufferMerge((char*)*buf))
 	{
-		g_bSelectionChanged = true;
+		Selection::Changed();
 		modified = true;
 		BuildBrushData(g_brSelectedBrushes);
 	}
@@ -518,7 +518,7 @@ write selected brushes and entities to the windows clipboard and delete them
 void Map::Cut()
 {
 	Copy();
-	Select_Delete();
+	Modify_Delete();
 }
 
 /*
@@ -533,7 +533,7 @@ void Map::Copy()
 	HGLOBAL hglbCopy;
 	int copylen;
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 		return;
 	if (!OpenClipboard(g_qeglobals.d_hwndMain))
 		return;
@@ -598,7 +598,7 @@ void Map::Paste()
 
 			if (ParseBufferMerge(cbdata))
 			{
-				g_bSelectionChanged = true;
+				Selection::Changed();
 				modified = true;
 				BuildBrushData(g_brSelectedBrushes);
 			}
@@ -757,7 +757,7 @@ void Map::SaveBetween(qeBuffer &buf)
 {
 	int copylen;
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 		return;
 	if (MessageBox(g_qeglobals.d_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
 		return;
@@ -787,7 +787,7 @@ void Map::LoadBetween(qeBuffer &buf)
 	if (ParseBufferMerge((char*)*buf))
 	{
 		//BuildBrushData(g_brSelectedBrushes);
-		g_bSelectionChanged = true;
+		Selection::Changed();
 		modified = true;
 	}
 }
@@ -900,7 +900,7 @@ void Map::RegionTallBrush()
 	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 
-	Select_Delete();
+	Modify_Delete();
 	RegionApply();
 }
 
@@ -918,7 +918,7 @@ void Map::RegionBrush()
 	regionMins = b->basis.mins;
 	regionMaxs = b->basis.maxs;
 
-	Select_Delete();
+	Modify_Delete();
 	RegionApply();
 }
 
@@ -926,11 +926,11 @@ void Map::RegionSelectedBrushes()
 {
 	RegionOff();
 
-	if (!Select_HasBrushes())
+	if (!Selection::HasBrushes())
 		return;
 
 	regionActive = true;
-	Select_GetBounds(regionMins, regionMaxs);
+	Selection::GetBounds(regionMins, regionMaxs);
 
 	// move the entire active_brushes list to filtered_brushes
 	brActive.MergeListIntoList(&brRegioned);

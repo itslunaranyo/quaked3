@@ -44,5 +44,5 @@ void CmdMerge::Do_Impl()
 
 void CmdMerge::Undo_Impl() { cmdAR.Undo(); }
 void CmdMerge::Redo_Impl() { cmdAR.Redo(); }
-void CmdMerge::Select_Impl() { cmdAR.Select(); }
+void CmdMerge::Sel_Impl() { cmdAR.Select(); }
 

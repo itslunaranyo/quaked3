@@ -219,7 +219,7 @@ void CameraView::PositionRotate ()
 	x -= g_qeglobals.d_vCamera.cursorX;
 	y -= g_qeglobals.d_vCamera.cursorY;
 
-	if (Select_HasBrushes())
+	if (Selection::HasBrushes())
 	{
 		ClearBounds(mins, maxs);
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
@@ -234,13 +234,13 @@ void CameraView::PositionRotate ()
 		}
 		sorigin = (mins + maxs) / 2.0f;
 	}
-	else if (Select_FaceCount())
+	else if (Selection::FaceCount())
 	{
 		ClearBounds(mins, maxs);
 
 		//		f = g_pfaceSelectedFace;
 		// rotate around last selected face
-		f = g_pfaceSelectedFaces[Select_FaceCount() - 1];	// sikk - Multiple Face Selection
+		f = g_vfSelectedFaces[Selection::FaceCount() - 1];	// sikk - Multiple Face Selection
 		for (j = 0; j < f->face_winding->numpoints; j++)
 		{
 			for (i = 0; i < 3; i++)
@@ -384,6 +384,14 @@ void CameraView::PointToRay(int x, int y, vec3 &rayOut)
 	VectorNormalize(rayOut);
 }
 
+bool CameraView::GetBasis(vec3 &_right, vec3 &_up, vec3 &_forward)
+{
+	_right = vright;
+	_up = vup;
+	_forward = vpn;
+	return true;
+}
+
 /*
 ==============
 CameraView::MouseDown
@@ -415,12 +423,6 @@ void CameraView::MouseDown (int x, int y, int buttons)
 		(buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT)))
 	{
 		Drag_Begin(x, y, buttons, vright, vup, origin, dir);
-		return;
-	}
-
-	if ((buttons == MK_RBUTTON))
-	{
-		MouseControl(0.1f);
 		return;
 	}
 }
@@ -462,7 +464,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		for (i = 0; i < 3; i++)
 			dir[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
 		VectorNormalize(dir);
-		t = Test_Ray(origin, dir, false);
+		t = Selection::TestRay(origin, dir, false);
 
 		if (t.brush)
 		{
@@ -561,7 +563,7 @@ void CameraView::GetAimPoint(vec3 &pt)
 	float		dist;
 	trace_t		t;
 
-	t = Test_Ray(origin, vpn, SF_NOFIXEDSIZE);
+	t = Selection::TestRay(origin, vpn, SF_NOFIXEDSIZE);
 	dist = min(240.0f, t.dist);
 	pt = origin + dist * vpn;
 	SnapToPoint(pt);
@@ -916,10 +918,10 @@ void CameraView::Draw ()
 //	if (g_pfaceSelectedFace)
 //		Face_Draw(g_pfaceSelectedFace);
 // sikk---> Multiple Face Selection
-//	if (Select_FaceCount())
+//	if (Selection::FaceCount())
 //	{
-		for (i = 0; i < Select_FaceCount(); i++)
-			g_pfaceSelectedFaces[i]->Draw();
+		for (i = 0; i < Selection::FaceCount(); i++)
+			g_vfSelectedFaces[i]->Draw();
 //	}
 // <---sikk
 

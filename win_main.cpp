@@ -1634,11 +1634,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_VIEW_HIDESHOW_HIDESELECTED:
-			Select_Hide();
-			Select_DeselectAll(true);
+			Modify_Hide();
+			Selection::DeselectAll();
 			break;
 		case ID_VIEW_HIDESHOW_SHOWHIDDEN:
-			Select_ShowAllHidden();
+			Modify_ShowHidden();
 			break;
 
 //===================================
@@ -1676,39 +1676,36 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CLONE:
-			Select_Clone();
+			Modify_Clone();
 			break;
 		case ID_SELECTION_DESELECT:
-			if (g_qeglobals.d_clipTool)	// TODO: cancel any modal tool
+			if (g_qeglobals.d_clipTool)	// lunaran TODO: cancel any modal tool
 				delete g_qeglobals.d_clipTool;
 			else
-				Select_DeselectAll(true);
-			break;
-		case ID_SELECTION_INVERT:
-			Select_Invert();
+				Selection::DeselectAll();
 			break;
 		case ID_SELECTION_DELETE:
-			Select_Delete();
+			Modify_Delete();
 			break;
 
 		case ID_SELECTION_FLIPX:
 			Undo::Start("Flip X");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_FlipAxis(0);
+			Transform_FlipAxis(0);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
 		case ID_SELECTION_FLIPY:
 			Undo::Start("Flip Y");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_FlipAxis(1);
+			Transform_FlipAxis(1);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
 		case ID_SELECTION_FLIPZ:
 			Undo::Start("Flip Z");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_FlipAxis(2);
+			Transform_FlipAxis(2);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
@@ -1716,21 +1713,21 @@ LONG WINAPI CommandHandler (
 		case ID_SELECTION_ROTATEX:
 			Undo::Start("Rotate X");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_RotateAxis(0, RotateAngleForModifiers(), false);
+			Transform_RotateAxis(0, RotateAngleForModifiers(), false);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEY:
 			Undo::Start("Rotate Y");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_RotateAxis(1, RotateAngleForModifiers(), false);
+			Transform_RotateAxis(1, RotateAngleForModifiers(), false);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEZ:
 			Undo::Start("Rotate Z");
 			Undo::AddBrushList(&g_brSelectedBrushes);
-			Select_RotateAxis(2, RotateAngleForModifiers(), false);
+			Transform_RotateAxis(2, RotateAngleForModifiers(), false);
 			Undo::EndBrushList(&g_brSelectedBrushes);
 			Undo::End();
 			break;
@@ -1796,54 +1793,18 @@ LONG WINAPI CommandHandler (
 			break;
 			*/
 		// lunaran - back and forth face<->brush conversion
-		case ID_SELECTION_FACESTOBRUSHESPARTIAL:
-			Select_FacesToBrushes(true);
-			break;
-		case ID_SELECTION_FACESTOBRUSHESCOMPLETE:
-			Select_FacesToBrushes(false);
-			break;
-		case ID_SELECTION_BRUSHESTOFACES:
-			Select_BrushesToFaces();
-			break;
-
-		case ID_SELECTION_SELECTCOMPLETETALL:
-			Select_CompleteTall();
-			break;
-		case ID_SELECTION_SELECTTOUCHING:
-			Select_Touching();
-			break;
-		case ID_SELECTION_SELECTPARTIALTALL:
-			Select_PartialTall();
-			break;
-		case ID_SELECTION_SELECTINSIDE:
-			Select_Inside();
-			break;
-		case ID_SELECTION_SELECTALL:	// sikk - Select All
-			// lunaran FIXME: ensure this works in the entity edit fields
-			Select_All();
-			break;
-		case ID_SELECTION_SELECTALLTYPE:	// sikk - Select All Type
-			Select_AllType();
-			break;
-
-		case ID_SELECTION_SELECTMATCHINGTEXTURES:	// sikk - Select Matching Textures
-			Select_MatchingTextures();
-			break;
-		case ID_SELECTION_SELECTMATCHINGKEYVALUE:	// sikk - Select Matching Key/Value
-			DoFindKeyValue();
-			break;
 
 		case ID_SELECTION_CONNECT:
-			Select_ConnectEntities();
+			Modify_ConnectEntities();
 			break;
 		case ID_SELECTION_UNGROUPENTITY:
-			Select_Ungroup();
+			Modify_Ungroup();
 			break;
 		case ID_SELECTION_GROUPNEXTBRUSH:
-			Select_NextBrushInGroup();
+			Selection::NextBrushInGroup();
 			break;
 		case ID_SELECTION_INSERTBRUSH:	// sikk - Insert Brush into Entity
-			Select_InsertBrush();
+			Modify_InsertBrush();
 			break;
 
 		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog (Map format)
@@ -2228,7 +2189,7 @@ LONG WINAPI CommandHandler (
 		case ID_MISC_SELECTENTITYCOLOR:
 			if (DoColor(COLOR_ENTITY) == TRUE)
 			{
-				Select_SetColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY]);
+				Modify_SetColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY]);
 				Sys_UpdateWindows(W_CAMERA|W_ENTITY);
 			}
 			break;
@@ -2737,7 +2698,6 @@ int WINAPI WinMain (
 {
     MSG		msg;
 	HACCEL	accelerators;
-	char	szProject[_MAX_PATH];	// sikk - Load Last Project
     time_t	lTime;
 
 	g_qeglobals.d_hInstance = hInstance;
@@ -2789,36 +2749,11 @@ int WINAPI WinMain (
 	time(&lTime);	
 	Sys_Printf("QuakeEd 3 beta (build 105)\nSesson Started: %s\n", ctime(&lTime));
 
-	// sikk - If 'Load Last Project' is checked, load that file,
-	// else load default file
-	if (g_qeglobals.d_savedinfo.bLoadLastProject)
-	{
-		if (strlen(g_qeglobals.d_savedinfo.szLastProject) > 0)
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
-		else
-		{
-			strcpy(g_qeglobals.d_savedinfo.szLastProject, "scripts/quake.qe3");
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
-		}
-	}
-	else
-	{
-		strcpy(szProject, "scripts/quake.qe3");
-		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
-	}
-	// the project file can be specified on the command line,
-	// or implicitly found in the scripts directory
 	if (lpCmdLine && strlen(lpCmdLine))
 	{
 		ParseCommandLine(lpCmdLine);
-		if (!QE_LoadProject(g_pszArgV[1]))
-			Error("Could not load %s project file.", g_pszArgV[1]);
-	}
-	else if (!QE_LoadProject(szProject))
-	{
-		DoProject(true);	// sikk - Manually create project file if none is found
-		if (!QE_LoadProject("scripts/quake.qe3"))
-			Error("Could not load scripts/quake.qe3 project file.");
+		if (g_pszArgV[1])
+			Sys_Printf("Command line: %s\n", lpCmdLine);
 	}
 
 	QE_Init();
@@ -2862,7 +2797,7 @@ int WINAPI WinMain (
 			}
 
 			// lunaran - all consequences of selection alteration put in one place for consistent behavior
-			Select_HandleChange();
+			Selection::HandleChange();
 
 			Sys_CheckBspProcess();
 

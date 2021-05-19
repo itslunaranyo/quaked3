@@ -909,6 +909,19 @@ void Brush::SideSelect(const vec3 origin, const vec3 dir, bool shear)
 	}
 }
 
+bool Brush::PointTest(const vec3 origin)
+{
+	float d;
+	for (Face *f = basis.faces; f; f = f->fnext)
+	{
+		d = DotProduct(origin, f->plane.normal) - f->plane.dist;
+
+		if (d >= 0)
+			return false;	// point is on front side of face
+	}
+	return true;
+}
+
 
 /*
 =================

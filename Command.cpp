@@ -102,8 +102,8 @@ this method.
 void Command::Select()
 {
 	assert(state == DONE || state == UNDONE);
-	Select_Impl();
-	g_bSelectionChanged = true;
+	Sel_Impl();
+	Selection::Changed();
 }
 
 

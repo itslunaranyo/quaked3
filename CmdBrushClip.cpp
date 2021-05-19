@@ -119,7 +119,7 @@ void CmdBrushClip::Redo_Impl()
 	cmdAR.Redo();
 }
 
-void CmdBrushClip::Select_Impl()
+void CmdBrushClip::Sel_Impl()
 {
 	cmdAR.Select();
 }

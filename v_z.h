@@ -16,6 +16,9 @@ public:
 	void	MouseUp(int x, int y, int buttons);
 	void	MouseMoved(int x, int y, int buttons);
 	void	Draw ();
+
+	void	ToPoint(int x, int y, vec3 &point);
+
 private:
 	void	Init();
 	void	DrawGrid ();

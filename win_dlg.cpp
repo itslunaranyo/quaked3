@@ -137,7 +137,7 @@ void FindBrush (int entitynum, int brushnum)
 		}
 	}
 
-	Select_SelectBrush(b);
+	Selection::SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
 		g_qeglobals.d_vXYZ[0].origin[i] = (b->basis.mins[i] + b->basis.maxs[i]) / 2;
@@ -280,17 +280,17 @@ BOOL CALLBACK RotateDlgProc (
 				GetDlgItemText(hwndDlg, IDC_EDIT_ROTX, sz, 255);
 				f = atof(sz);
 				if (f)
-					Select_RotateAxis(0, f, false);
+					Transform_RotateAxis(0, f, false);
 
 				GetDlgItemText(hwndDlg, IDC_EDIT_ROTY, sz, 255);
 				f = atof(sz);
 				if (f)
-					Select_RotateAxis(1, f, false);
+					Transform_RotateAxis(1, f, false);
 
 				GetDlgItemText(hwndDlg, IDC_EDIT_ROTZ, sz, 255);
 				f = atof(sz);
 				if (f)
-					Select_RotateAxis(2, f, false);
+					Transform_RotateAxis(2, f, false);
 			}
 
 // sikk--->	For more precise rotation
@@ -308,17 +308,17 @@ BOOL CALLBACK RotateDlgProc (
 			GetDlgItemText(hwndDlg, IDC_EDIT_ROTX, sz, 255);
 			f = atof(sz);
 			if (f)
-				Select_RotateAxis(0, f, false);
+				Transform_RotateAxis(0, f, false);
 
 			GetDlgItemText(hwndDlg, IDC_EDIT_ROTY, sz, 255);
 			f = atof(sz);
 			if (f)
-				Select_RotateAxis(1, f, false);
+				Transform_RotateAxis(1, f, false);
 
 			GetDlgItemText(hwndDlg, IDC_EDIT_ROTZ, sz, 255);
 			f = atof(sz);
 			if (f)
-				Select_RotateAxis(2, f, false);
+				Transform_RotateAxis(2, f, false);
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			
@@ -1317,8 +1317,8 @@ void OnSelect (HWND hTree)
 		Entity *pEntity = (Entity *)tvI.lParam;
 		if (pEntity)
 		{
-			Select_DeselectAll(true);
-			Select_HandleBrush(pEntity->brushes.onext, true);
+			Selection::DeselectAll();
+			Selection::HandleBrush(pEntity->brushes.onext, true);
 		}
 	}
 
@@ -1354,7 +1354,7 @@ void OnDelete (HWND hTree, HWND hList)
 	if (hItem)
 	{
 		OnSelect(hTree);
-		Select_Delete();
+		Modify_Delete();
 		TreeView_DeleteItem(hTree, hItem);
 		ListView_DeleteAllItems(hList);
 	}
@@ -1827,7 +1827,7 @@ BOOL CALLBACK ScaleDlgProc (
 				GetDlgItemText(hwndDlg, IDC_EDIT_SCALEZ, sz, 255);
 				z = atof(sz);
 
-				Select_Scale(x, y, z);
+				Transform_Scale(x, y, z);
 			}
 
 			// For more precise scaling
@@ -1848,7 +1848,7 @@ BOOL CALLBACK ScaleDlgProc (
 			GetDlgItemText(hwndDlg, IDC_EDIT_SCALEZ, sz, 255);
 			z = atof(sz);
 
-			Select_Scale(x, y, z);
+			Transform_Scale(x, y, z);
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			Sys_ForceUpdateWindows(W_SCENE);			
@@ -2200,7 +2200,7 @@ BOOL CALLBACK FindKeyValueDlgProc (
 		case IDOK:
 			GetDlgItemText(hwndDlg, IDC_EDIT_FINDKEY, szKey, 255);
 			GetDlgItemText(hwndDlg, IDC_EDIT_FINDVALUE, szValue, 255);
-			Select_MatchingKeyValue(szKey, szValue);
+			Selection::MatchingKeyValue(szKey, szValue);
 
 			EndDialog(hwndDlg, 1);
 			return TRUE;

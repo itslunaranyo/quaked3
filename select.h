@@ -8,27 +8,31 @@
 
 #define	SF_SELECTED_ONLY	0x01
 #define	SF_ENTITIES_FIRST	0x02
-#define	SF_SINGLEFACE		0x04
-#define SF_CYCLE			0x08	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+#define	SF_FACES			0x04
+#define SF_CYCLE			0x08	// sikk - Single Selection Cycle(Shift+Alt+LMB)
 #define SF_NOFIXEDSIZE		0x10	// lunaran - avoid selecting the 'faces' on entity brushes
+#define SF_MULTIFACE		0x20
+#define SF_SELECTED			0x40
+#define SF_UNSELECTED		0x80
 
 //========================================================================
 
 typedef enum
 {
 	sel_brush,
+	sel_face,
 	sel_vertex,
 	sel_edge
 //	sel_sticky_brush,
-//	sel_face,
 } select_t;
 
-typedef struct
+typedef struct trace_s
 {
 	Brush	*brush;
 	Face	*face;
 	float	dist;
 	bool	selected;
+	trace_s() : brush(nullptr), face(nullptr), dist(0), selected(false) {};
 } trace_t;
 
 //========================================================================
@@ -37,76 +41,89 @@ extern bool			g_bSelectionChanged;
 extern Brush		g_brSelectedBrushes;
 
 // sikk - Multiple Face Selection
-extern Face		*g_pfaceSelectedFaces[MAX_MAP_FACES];
-
+// lunaran TODO: make this a std vector
+extern Face		*g_vfSelectedFaces[MAX_MAP_FACES];
 // <-- sikk
 
-//extern Face		*g_pfaceSelectedFace;
-//extern Brush	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
 extern vec3		g_v3RotateOrigin;	// sikk - Free Rotate
 
 //========================================================================
 
-void	Select_HandleChange();
-void	Select_SelectBrush(Brush *b);
+namespace Selection
+{
+	void	Changed();
+	void	HandleChange();
 
-trace_t	Test_Ray (const vec3 origin, const vec3 dir, int flags);
-void	Select_Ray (const vec3 origin, const vec3 dir, int flags);
+	bool	HasBrushes();
+	int		FaceCount();
+	bool	IsEmpty();
+	bool	OnlyPointEntities();
+	int		NumBrushes();
+	int		NumFaces();
 
-bool	Select_HasBrushes();
-int		Select_FaceCount();
-bool	Select_IsEmpty();
-bool	Select_OnlyPointEntities();
-int		Select_NumBrushFacesSelected(Brush* b);
-bool	Select_IsBrushSelected(Brush* bSel);	// sikk - Export Selection (Map/Prefab)
+	bool	IsBrushSelected(Brush* bSel);
+	void	SelectBrush(Brush *b);
+	void	SelectBrushSorted(Brush *b);
+	void	HandleBrush(Brush *b, bool bComplete);
 
-void	Select_GetBounds (vec3 &mins, vec3 &maxs);
-void	Select_GetTrueMid (vec3 &mid);
-void	Select_GetMid (vec3 &mid);
-void	Select_ApplyMatrix ();
-void	Select_HandleBrush (Brush *b, bool bComplete);
-void	Select_Delete ();
-void	Select_DeselectFiltered();
-void	Select_DeselectAll (bool bDeselectFaces);
-void	Select_FacesToBrushes(bool partial);
-void	Select_BrushesToFaces();
-// sikk---> Multiple Face Selection
-bool	Select_IsFaceSelected (Face *face);
-bool	Select_DeselectAllFaces ();
-// <---sikk
-void	Select_Clone ();
-void	Select_Move (const vec3 delta);
-void	Select_FlipAxis (int axis);
-void	Select_RotateAxis (int axis, float deg, bool bMouse);  // sikk - Free Rotate: bool bMouse argument added
-void	Select_Scale (float x, float y, float z);	// sikk - Brush Scaling
-void	Select_All ();	// sikk - Select All
-void	Select_AllType ();	// sikk - Select All Type
-void	Select_CompleteTall ();
-void	Select_PartialTall ();
-void	Select_Touching ();
-void	Select_Inside ();
-void	Select_Ungroup ();	// sikk - made sense to put it here
-void	Select_NextBrushInGroup ();
-void	Select_InsertBrush ();	// sikk - Insert Brush into Entity
-void	Select_Invert ();
-void	Select_Hide ();
-void	Select_ShowAllHidden ();
-void	Select_MatchingTextures ();	// sikk - Select All Matching Textures
-void	Select_ConnectEntities ();
-void	Select_MatchingKeyValue (char *szKey, char *szValue);	// sikk - Select Matching Key/Value
-void	Select_SetKeyValue(const char *key, const char *value);
-void	Select_SetColor(const vec3 color);
+	bool	DeselectAllFaces();
+	bool	IsFaceSelected(Face *face);
+	void	SelectFace(Face* f);
+	bool	DeselectFace(Face* f);
+	int		NumBrushFacesSelected(Brush* b);
+	void	FacesToBrushes(bool partial);
+	void	BrushesToFaces();
 
-// returns true if pFind is in pList
-bool	OnEntityList (Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize);
-// <---sikk
+	trace_t	TestRay(const vec3 origin, const vec3 dir, int flags);
+	int		Ray(const vec3 origin, const vec3 dir, int flags);
+	trace_t	TestPoint(const vec3 origin, int flags);
+	void	Point(const vec3 origin, int flags);
+
+	void	SelectAll();	// sikk - Select All
+	void	DeselectFiltered();
+	void	DeselectAll();
+	void	GetBounds(vec3 &mins, vec3 &maxs);
+	void	GetTrueMid(vec3 &mid);
+	void	GetMid(vec3 &mid);
+
+	void	MatchingKeyValue(char *szKey, char *szValue);	// sikk - Select Matching Key/Value
+	void	MatchingTextures();	// sikk - Select All Matching Textures
+
+	void	Invert();
+	void	AllType();	// sikk - Select All Type
+
+	void	CompleteTall();
+	void	PartialTall();
+	void	Touching();
+	void	Inside();
+
+	void	NextBrushInGroup();
+}
+// ================================
+
+void	Modify_Delete();
+void	Modify_Clone();
+
+void	Transform_Move(const vec3 delta);
+void	Transform_ApplyMatrix();
+void	Transform_FlipAxis(int axis);
+void	Transform_RotateAxis(int axis, float deg, bool bMouse);  // sikk - Free Rotate: bool bMouse argument added
+void	Transform_Scale(float x, float y, float z);	// sikk - Brush Scaling
+
+void	Modify_Ungroup();	// sikk - made sense to put it here
+void	Modify_InsertBrush();	// sikk - Insert Brush into Entity
+void	Modify_Hide();
+void	Modify_ShowHidden();
+
+void	Modify_ConnectEntities();
+void	Modify_SetKeyValue(const char *key, const char *value);
+void	Modify_SetColor(const vec3 color);
 
 // sikk - Multiple Face Selection: returns true if pFind is in pList
-bool	OnBrushList (Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize);
+bool	OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize);
 
-
-// updating workzone to a given brush (depends on current view)
-void UpdateWorkzone (Brush *b);
+// updating workzone to a given brush(depends on current view)
+void	UpdateWorkzone(Brush *b);
 
 
 #endif

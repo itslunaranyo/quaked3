@@ -68,7 +68,7 @@ void CmdHollow::Redo_Impl()
 	cmdAR.Redo();
 }
 
-void CmdHollow::Select_Impl()
+void CmdHollow::Sel_Impl()
 {
 	cmdAR.Select();
 }
