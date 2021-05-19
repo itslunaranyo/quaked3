@@ -49,9 +49,10 @@ void Select_HandleChange();
 void Select_SelectBrush(brush_t *b);
 
 trace_t Test_Ray (vec3_t origin, vec3_t dir, int flags);
+void Select_Ray (vec3_t origin, vec3_t dir, int flags);
 
 bool Select_HasBrushes();
-bool Select_HasFaces();
+int Select_FaceCount();
 bool Select_IsEmpty();
 
 void Select_GetBounds (vec3_t mins, vec3_t maxs);
@@ -59,7 +60,6 @@ void Select_GetTrueMid (vec3_t mid);
 void Select_GetMid (vec3_t mid);
 void Select_ApplyMatrix ();
 void Select_HandleBrush (brush_t *b, bool bComplete);
-void Select_Ray (vec3_t origin, vec3_t dir, int flags);
 void Select_Delete ();
 void Select_DeselectFiltered();
 void Select_DeselectAll (bool bDeselectFaces);
@@ -69,7 +69,6 @@ bool Select_DeselectAllFaces ();
 // <---sikk
 void Select_Clone ();
 void Select_Move (vec3_t delta);
-void Select_SetTexture (texdef_t *texdef);
 void Select_FlipAxis (int axis);
 void Select_RotateAxis (int axis, float deg, bool bMouse);  // sikk - Free Rotate: bool bMouse argument added
 void Select_Scale (float x, float y, float z);	// sikk - Brush Scaling
@@ -86,10 +85,6 @@ void Select_Invert ();
 void Select_Hide ();
 void Select_ShowAllHidden ();
 void Select_MatchingTextures ();	// sikk - Select All Matching Textures
-void Select_FitTexture (int nHeight, int nWidth);
-void Select_ShiftTexture (int x, int y);
-void Select_ScaleTexture (int x, int y);
-void Select_RotateTexture (int deg);
 void Select_ConnectEntities ();
 void Select_MatchingKeyValue (char *szKey, char *szValue);	// sikk - Select Matching Key/Value
 // sikk---> Cut/Copy/Paste
@@ -103,17 +98,9 @@ bool OnEntityList (entity_t *pFind, entity_t *pList[MAX_MAP_ENTITIES], int nSize
 // sikk - Multiple Face Selection: returns true if pFind is in pList
 bool OnBrushList (brush_t *pFind, brush_t *pList[MAX_MAP_BRUSHES], int nSize);
 
-void Clamp (float *f, int nClamp);
-void ProjectOnPlane (vec3_t normal, float dist, vec3_t ez, vec3_t p);
-void Back (vec3_t dir, vec3_t p);
-void ComputeScale (vec3_t rex, vec3_t rey, vec3_t p, face_t *f);
-void ComputeAbsolute (face_t *f, vec3_t p1, vec3_t p2, vec3_t p3);
-void AbsoluteToLocal (plane_t normal2, face_t *f, vec3_t p1, vec3_t p2, vec3_t p3);
-void RotateFaceTexture (face_t* f, int nAxis, float fDeg);
-void RotateTextures (int nAxis, float fDeg, vec3_t vOrigin);
 
 // updating workzone to a given brush (depends on current view)
 void UpdateWorkzone (brush_t *b);
 
-void FindReplaceTextures (char *pFind, char *pReplace, bool bSelected, bool bForce);
+
 

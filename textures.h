@@ -38,9 +38,12 @@ typedef struct
 typedef struct
 {
 	int			originy;
-	int			width, height, length;
+	int			width, height;
 	float		scale;	// sikk - Mouse Zoom Texture Window
-	texdef_t	texdef;
+	//texdef_t	texdef;
+
+	// lunaran: cached layout
+	int			length;
 	texWndPlacement_t* layout;
 	int			count;
 } texturewin_t;
@@ -61,10 +64,10 @@ void Texture_InitFromWad (char *file);
 void Texture_InitPalette (byte *pal);
 void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection);	// sikk - Multiple Face Selection: added bSetSelection
 void Texture_SetMode (int iMenu);	// GL_NEAREST, etc..
-void Texture_MouseDown (int x, int y, int buttons);
-void Texture_MouseUp (int x, int y, int buttons);
-void Texture_MouseMoved (int x, int y, int buttons);
-void Texture_Draw (int width, int height);
+void TexWnd_MouseDown (int x, int y, int buttons);
+void TexWnd_MouseUp (int x, int y, int buttons);
+void TexWnd_MouseMoved (int x, int y, int buttons);
+void TexWnd_Draw (int width, int height);
 qtexture_t *Texture_LoadTexture (miptex_t *qtex);
 qtexture_t *Texture_CreateSolid (char *name);
 qtexture_t *Texture_ForName (char *name);
@@ -72,8 +75,8 @@ qtexture_t *Texture_ForName (char *name);
 void FillTextureMenu ();
 void TexWnd_Layout();
 void TexWnd_SetScale(float scale);
-qtexture_t* Texture_TexAtWndPos (int wx, int wy);
+qtexture_t* TexWnd_TexAtPos (int wx, int wy);
 
 void SetTexParameters ();
-void SelectTexture (int mx, int my);
+void TexWnd_SelectTexture (int mx, int my);
 void SortTextures ();

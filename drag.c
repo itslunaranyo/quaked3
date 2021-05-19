@@ -356,6 +356,7 @@ void Drag_Begin (int x, int y, int buttons,
 			UpdateWorkzone(t.brush);
 
 			Texture_ChooseTexture(&t.face->texdef, true);
+			SurfWnd_UpdateUI();
 		}
 		else
 			Sys_Printf("MSG: Did not select a texture.\n");
@@ -374,7 +375,7 @@ void Drag_Begin (int x, int y, int buttons,
 			{
 				Undo_Start("Set Brush Texture");
 				Undo_AddBrush(t.brush);
-				Brush_SetTexture(t.brush, &g_qeglobals.d_texturewin.texdef);
+				Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef);
 				Undo_EndBrush(t.brush);
 				Undo_End();
 				Sys_UpdateWindows(W_ALL);
@@ -398,7 +399,7 @@ void Drag_Begin (int x, int y, int buttons,
 			{
 				Undo_Start("Set Face Texture");
 				Undo_AddBrush(t.brush);
-				strcpy(t.face->texdef.name, g_qeglobals.d_texturewin.texdef.name);
+				strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
 				Brush_Build(t.brush);
 				Undo_EndBrush(t.brush);
 				Undo_End();
@@ -423,7 +424,7 @@ void Drag_Begin (int x, int y, int buttons,
 			{
 				Undo_Start("Set Face Texture");
 				Undo_AddBrush(t.brush);
-				t.face->texdef = g_qeglobals.d_texturewin.texdef;
+				t.face->texdef = g_qeglobals.d_workTexDef;
 				Brush_Build(t.brush);
 				Undo_EndBrush(t.brush);
 				Undo_End();

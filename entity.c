@@ -24,6 +24,8 @@ char	   *g_szDebugName;
 
 int g_nEntityId = 1;	// sikk - Undo/Redo
 
+// lunaran TODO: create duplicate eclass with opposite fixedsize when a hacked point entity with brushes
+// or brush entity without any is created
 
 /*
 ==============

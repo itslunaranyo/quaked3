@@ -2029,7 +2029,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_TEXTURES_INSPECTOR:
-			DoSurface();
+			SurfWnd_Create();
 			break;
 
 		case ID_TEXTURES_POPUP:	// sikk - Toolbar Button

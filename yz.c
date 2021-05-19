@@ -196,7 +196,7 @@ void YZ_Drag_NewBrush (int x, int y)
 		}
 	}
 
-	n = Brush_Create(mins, maxs, &g_qeglobals.d_texturewin.texdef);
+	n = Brush_Create(mins, maxs, &g_qeglobals.d_workTexDef);
 	if (!n)
 		return;
 

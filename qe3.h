@@ -43,6 +43,7 @@
 #include "map.h"
 #include "points.h"
 #include "select.h"
+#include "surface.h"
 #include "vertsel.h"
 #include "winding.h"
 
@@ -130,6 +131,7 @@ typedef struct
 
 	vec3_t		d_v3WorkMin, 			// defines the boundaries of the current work area is used to guess
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
+	texdef_t	d_workTexDef;			// lunaran: moved out of texturewin_t
 
 	HGLRC		d_hglrcBase;
 	HDC			d_hdcBase;
@@ -158,7 +160,8 @@ typedef struct
 				d_hwndToolbar10,
 				d_hwndToolbar11,
 				d_hwndRebar,			// sikk - Rebar 
-				d_hwndSplash;			// sikk - Splash screen
+				d_hwndSplash,			// sikk - Splash screen
+				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
 
 	entity_t   *d_entityProject;
 	int			d_nNumEntities;
@@ -191,9 +194,6 @@ typedef struct
 
 	//int         d_nWorkCount;		// no longer necessary for punishing jromero unproductivity
 
-	// connect entities uses the last two brushes selected
-	int			d_nSelectCount;
-	brush_t	   *d_pbrSelectOrder[2];
 	vec3_t      d_v3SelectTranslate;    // for dragging w/o making new display lists
 	select_t    d_selSelectMode;
 
@@ -238,9 +238,7 @@ int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
 
 //========================================================================
 
-/*
-** QE function declarations
-*/
+// QE function declarations
 void	QE_CheckAutoSave ();
 void	QE_CheckOpenGLForErrors (void);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
@@ -253,18 +251,14 @@ bool	QE_SingleBrush ();
 void	QE_UpdateCommandUI ();
 char   *QE_ExpandRelativePath (char *p);
 
-/*
-** QE Win32 function declarations
-*/
+// QE Win32 function declarations
 int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
 void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
 
 void   *qmalloc (int size);
 char   *CopyString (char *s);
 
-//
 // system functions
-//
 void    Sys_UpdateBrushStatusBar ();
 void	Sys_UpdateGridStatusBar ();
 void    Sys_UpdateWindows (int bits);
@@ -280,9 +274,7 @@ void    Sys_EndWait ();
 void    Sys_Status (const char *psz, int part);
 void	Sys_LogFile ();
 
-//
 // win_qe3.c
-//
 void	FillBSPMenu ();
 char   *TranslateString (char *buf);
 void	ProjectDialog ();
@@ -293,32 +285,26 @@ bool	ConfirmModified ();
 void	ImportDialog (bool bCheck);	// sikk - Import Dialog for map/prefab
 void	ExportDialog (bool bCheck);	// sikk - Export Dialog for map/prefab
 
-//
 // textures.c
-//
-HWND TexWnd_Create (HINSTANCE hInstance);
-LONG WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void TexWnd_Resize(RECT rc);
+HWND	TexWnd_Create (HINSTANCE hInstance);
+LONG	WINAPI WTex_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void	TexWnd_Resize(RECT rc);
 
-//
 // win_insp.c
-//
-void InspWnd_Create (HINSTANCE hInstance);
-void InspWnd_SetMode (int nType);
-void InspWnd_ToTop();
-void InspWnd_Resize();
-BOOL CALLBACK InspWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void InspWnd_Move(HWND hwnd, int x, int y, int w, int h);
-void InspWnd_MoveRect(HWND hwnd, RECT r);
+void	InspWnd_Create (HINSTANCE hInstance);
+void	InspWnd_SetMode (int nType);
+void	InspWnd_ToTop();
+void	InspWnd_Resize();
+BOOL	CALLBACK InspWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void	InspWnd_Move(HWND hwnd, int x, int y, int w, int h);
+void	InspWnd_MoveRect(HWND hwnd, RECT r);
 
-void ConsoleWnd_Create(HINSTANCE hInstance);
-void ConsoleWnd_Resize(RECT rc);
+void	ConsoleWnd_Create(HINSTANCE hInstance);
+void	ConsoleWnd_Resize(RECT rc);
 
-//
 // win_ent.c
-//
-void EntWnd_Create (HINSTANCE hInstance);
-void EntWnd_Resize(RECT rc);
+void	EntWnd_Create (HINSTANCE hInstance);
+void	EntWnd_Resize(RECT rc);
 
 BOOL CALLBACK FieldWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK EntityListWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -327,62 +313,51 @@ BOOL CALLBACK EntityWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 LRESULT (CALLBACK* OldFieldWindowProc) (HWND, UINT, WPARAM, LPARAM);
 LRESULT (CALLBACK* OldEntityListWindowProc) (HWND, UINT, WPARAM, LPARAM);
 
-void EntWnd_RefreshEditEntity();
-void EntWnd_UpdateListSel();
-void EntWnd_UpdateUI();
-void EntWnd_CreateEntity ();
-void EntWnd_FillClassList ();
-void EntWnd_AddKeyValue ();
-void EntWnd_RemoveKeyValue ();
-void EntWnd_EditKeyValue ();
-void EntWnd_CreateControls (HINSTANCE hInstance);
-void EntWnd_FlagsFromEnt ();
-void EntWnd_RefreshKeyValues ();
+void	EntWnd_RefreshEditEntity();
+void	EntWnd_UpdateListSel();
+void	EntWnd_UpdateUI();
+void	EntWnd_CreateEntity ();
+void	EntWnd_FillClassList ();
+void	EntWnd_AddKeyValue ();
+void	EntWnd_RemoveKeyValue ();
+void	EntWnd_EditKeyValue ();
+void	EntWnd_CreateControls (HINSTANCE hInstance);
+void	EntWnd_FlagsFromEnt ();
+void	EntWnd_RefreshKeyValues ();
 
-//
 // win_cam.c
-//
-void WCam_Create (HINSTANCE hInstance);
-LONG WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void	WCam_Create (HINSTANCE hInstance);
+LONG	WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-//
 // win_xy.c
-//
-void WXY_Create (HINSTANCE hInstance);
-LONG WINAPI WXY_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void	WXY_Create (HINSTANCE hInstance);
+LONG	WINAPI WXY_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void WXY_Print ();
-int  GetSelectionInfo ();	// sikk - Contex Menu
-void DoXYPopupMenu (int x, int y);	// sikk - Contex Menu
+void	WXY_Print ();
+int		GetSelectionInfo ();	// sikk - Contex Menu
+void	DoXYPopupMenu (int x, int y);	// sikk - Contex Menu
 
 // sikk---> Multiple Orthographic Views
-//
 // win_xz.c
-//
-void WXZ_Create (HINSTANCE hInstance);
+void	WXZ_Create (HINSTANCE hInstance);
 LONG WINAPI WXZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void WXZ_Print ();
-void DoXZPopupMenu (int x, int y);	// sikk - Contex Menu
-//
-// win_yz.c
-//
-void WYZ_Create (HINSTANCE hInstance);
+void	WXZ_Print ();
+void	DoXZPopupMenu (int x, int y);	// sikk - Contex Menu
+
+									// win_yz.c
+void	WYZ_Create (HINSTANCE hInstance);
 LONG WINAPI WYZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
-void WYZ_Print ();
-void DoYZPopupMenu (int x, int y);	// sikk - Contex Menu
+void	WYZ_Print ();
+void	DoYZPopupMenu (int x, int y);	// sikk - Contex Menu
 // <---sikk
 
-//
 // win_z.c
-//
 void WZ_Create (HINSTANCE hInstance);
 LONG WINAPI WZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-//
 // win_main.c
-//
 void WMain_Create (HINSTANCE hInstance);
 LONG WINAPI CommandHandler (HWND hWnd, WPARAM wParam, LPARAM lParam); // sikk - Declaration for Popup menu
 BOOL DoColor (int iIndex);
@@ -400,15 +375,12 @@ extern BOOL LoadWindowState (HWND hWnd, const char *pszName);
 extern BOOL SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize);
 extern BOOL LoadRegistryInfo (const char *pszName, void *pvBuf, long *plSize);
 
-//
 // win_dlg.c
-//
 void DoFindBrush ();
 void DoRotate ();
 void DoSides (int nType);	// sikk - Brush Primitives (previously took no arguments)
 void DoKeylist ();
 void DoAbout ();
-void DoSurface ();
 void DoFindTexture ();
 void DoNewProject();	// sikk - New Project Dialog
 void DoProject (bool bFirst);	// sikk - Project Settings Dialog
@@ -421,9 +393,12 @@ void DoCamSpeed ();	// sikk - Camera Speed Dialog
 void DoDefaultTexScale ();	// sikk - Default Texture Scale Dialog
 void DoFindKeyValue ();	// sikk - Find Key/Value Dialog
 
-//
+// win_surf.c
+void	SurfWnd_UpdateUI();
+void	SurfWnd_Close();
+void	SurfWnd_Create();
+
 // win_proj.c
-//
 BOOL CALLBACK ProjectSettingsDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SelectDirDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

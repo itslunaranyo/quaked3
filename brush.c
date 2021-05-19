@@ -329,11 +329,84 @@ void Face_Draw (face_t *f)
 	glEnd();
 }
 
+
+void Face_BoundsOnAxis(face_t *face, vec3_t a, float* min, float* max)
+{
+	int i;
+	float p;
+	vec3_t an;
+
+	if (!face->face_winding)
+		return 0;
+
+	*max = -99999;
+	*min = 99999;
+
+	VectorCopy(a, an);
+	VectorNormalize(an);
+
+	for (i = 0; i < face->face_winding->numpoints; i++)
+	{
+		p = DotProduct(an, face->face_winding->points[i]);
+		if (p > *max) *max = p;
+		if (p < *min) *min = p;
+	}
+}
+
+/*
+=================
+Face_FitTexture
+
+lunaran: rewrote all this so it works with decimal fit increments
+=================
+*/
+void Face_FitTexture(face_t *face, float fHeight, float fWidth)
+{
+	vec_t		scale;
+	vec3_t		u, v, n;
+	float		min, max, len;
+	winding_t	*w;
+
+	w = face->face_winding;
+	if (!w)
+		return;
+
+	// convert current rotation to U and V vectors
+	TextureAxisFromPlane(&face->plane, u, v);
+	CrossProduct(u, v, n);
+	if (face->texdef.rotate != 0.0f)
+	{
+		VectorScale(n, -face->texdef.rotate, n);
+		VectorRotate(u, n, u);
+		VectorRotate(v, n, v);
+	}
+
+	// find size of winding along those vectors and resize
+	if (fWidth != 0.0f)
+	{
+		Face_BoundsOnAxis(face, u, &min, &max);
+		len = max - min;
+		scale = (len / face->d_texture->width) / fWidth;
+		face->texdef.shift[0] = -((int)roundf(min / scale + 0.001f) % face->d_texture->width);
+		face->texdef.scale[0] = scale;
+	}
+
+	if (fHeight != 0.0f)
+	{
+		Face_BoundsOnAxis(face, v, &min, &max);
+		len = max - min;
+		scale = (len / face->d_texture->height) / fHeight;
+		face->texdef.shift[1] = -((int)roundf(min / scale + 0.001f) % face->d_texture->width);
+		face->texdef.scale[1] = scale;
+	}
+}
+
 /*
 =================
 Face_FitTexture
 =================
 */
+/*
 void Face_FitTexture (face_t *face, int nHeight, int nWidth)
 {
 	int			i;
@@ -434,6 +507,7 @@ void Face_FitTexture (face_t *face, int nHeight, int nWidth)
 
 	texdef->shift[1] = (int)(temp - texdef->shift[1]) % (face->d_texture->height * nHeight);
 }
+*/
 
 /*
 =================
@@ -549,14 +623,15 @@ void Face_SetColor (brush_t *b, face_t *f)
 	}
 }
 
+
 /*
 =================
 Face_SetTexture
 =================
 */
-void Face_SetTexture (face_t *f, texdef_t *texdef)
+void Face_SetTexture (face_t *f, texdef_t *texdef, int nSkipFlags)
 {
-	f->texdef = *texdef;
+	Surf_ApplyTexdef(&f->texdef, texdef, nSkipFlags);
 	Brush_Build(f->owner);
 }
 
@@ -700,6 +775,7 @@ void Brush_BuildWindings (brush_t *b)
 	for ( ; face; face = face->next)
 	{
 		int	i, j;
+		face->owner = b;
 
 		w = face->face_winding = Brush_MakeFaceWinding(b, face);
 		face->d_texture = Texture_ForName(face->texdef.name);
@@ -1419,7 +1495,7 @@ void Brush_MakeSided (int sides)
 	b = g_brSelectedBrushes.next;
 	VectorCopy(b->mins, mins);
 	VectorCopy(b->maxs, maxs);
-	texdef = &g_qeglobals.d_texturewin.texdef;
+	texdef = &g_qeglobals.d_workTexDef;
 
 	Brush_Free(b);
 
@@ -1559,7 +1635,7 @@ void Brush_MakeSidedCone (int sides)
 	b = g_brSelectedBrushes.next;
 	VectorCopy(b->mins, mins);
 	VectorCopy(b->maxs, maxs);
-	texdef = &g_qeglobals.d_texturewin.texdef;
+	texdef = &g_qeglobals.d_workTexDef;
 
 	Brush_Free(b);
 
@@ -1658,7 +1734,7 @@ void Brush_MakeSidedSphere (int sides)
 	b = g_brSelectedBrushes.next;
 	VectorCopy(b->mins, mins);
 	VectorCopy(b->maxs, maxs);
-	texdef = &g_qeglobals.d_texturewin.texdef;
+	texdef = &g_qeglobals.d_workTexDef;
 
 	Brush_Free(b);
 
@@ -2052,12 +2128,12 @@ void Brush_SelectFaceForDragging (brush_t *b, face_t *f, bool shear)
 Brush_SetTexture
 =================
 */
-void Brush_SetTexture (brush_t *b, texdef_t *texdef)
+void Brush_SetTexture (brush_t *b, texdef_t *texdef, int nSkipFlags)
 {
 	face_t *f;
 
 	for (f = b->brush_faces; f; f = f->next)
-		f->texdef = *texdef;
+		Face_SetTexture(f, texdef, nSkipFlags);
 
 	Brush_Build(b);
 }

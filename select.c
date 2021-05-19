@@ -51,6 +51,7 @@ void Select_HandleChange()
 		Sys_Status("", 3);
 	}
 	EntWnd_UpdateUI();
+	SurfWnd_UpdateUI();
 
 	Sys_UpdateWindows(W_ALL);
 	g_bSelectionChanged = false;
@@ -65,13 +66,13 @@ bool Select_HasBrushes()
 {
 	return (g_brSelectedBrushes.next != &g_brSelectedBrushes);
 }
-bool Select_HasFaces()
+int Select_FaceCount()
 {
-	return (g_nSelFaceCount > 0);
+	return g_nSelFaceCount;
 }
 bool Select_IsEmpty()
 {
-	return !( Select_HasBrushes() || Select_HasFaces() );
+	return !( Select_HasBrushes() || Select_FaceCount() );
 }
 int Select_NumBrushes()
 {
@@ -143,10 +144,6 @@ void Select_HandleBrush (brush_t *brush, bool bComplete)
 	entity_t   *e;
 
 	Select_DeselectAllFaces();	// sikk - Multiple Face Selection
-
-	if (g_qeglobals.d_nSelectCount < 2)
-		g_qeglobals.d_pbrSelectOrder[g_qeglobals.d_nSelectCount] = brush;
-	g_qeglobals.d_nSelectCount++;
 
 	// we have hit an unselected brush
 	e = brush->owner;
@@ -487,7 +484,6 @@ void Select_DeselectAll (bool bDeselectFaces)
 	UpdateWorkzone(g_brSelectedBrushes.next);
 
 	//g_qeglobals.d_nWorkCount++;
-	g_qeglobals.d_nSelectCount = 0;
 	g_qeglobals.d_nNumMovePoints = 0;
 
 	if (bDeselectFaces)
@@ -676,7 +672,7 @@ void Select_MatchingTextures()
 	if (g_nSelFaceCount)
 		texdef = &g_pfaceSelectedFaces[0]->texdef;
 	else
-		texdef = &g_qeglobals.d_texturewin.texdef;
+		texdef = &g_qeglobals.d_workTexDef;
 
 	Select_DeselectAll(true);
 
@@ -998,12 +994,11 @@ void Select_Delete ()
 
 //	g_pfaceSelectedFace = NULL;
 // sikk---> Multiple Face Selection
-	if (Select_HasFaces())
+	if (Select_FaceCount())
 		Select_DeselectAllFaces();
 // <---sikk
 	g_qeglobals.d_selSelectMode = sel_brush;
 
-	g_qeglobals.d_nSelectCount = 0;
 	g_qeglobals.d_nNumMovePoints = 0;
 	while (Select_HasBrushes())
 	{
@@ -1247,19 +1242,6 @@ void Select_FlipAxis (int axis)
 	Sys_UpdateWindows(W_ALL);
 }
 
-/*
-====================
-Clamp
-====================
-*/
-void Clamp (float *f, int nClamp)
-{
-	float fFrac = *f - (int)*f;
-	*f = (int)*f % nClamp;
-	*f += fFrac;
-}
-
-
 
 /*
 ===============
@@ -1393,7 +1375,7 @@ void Select_RotateAxis (int axis, float deg, bool bMouse)
 	}
 
 	if (g_qeglobals.d_bTextureLock)
-		RotateTextures(axis, deg, g_v3SelectOrigin);
+		Surf_RotateForTransform(axis, deg, g_v3SelectOrigin);
 
 	Select_ApplyMatrix();
 	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
@@ -1625,37 +1607,35 @@ void Select_ShowAllHidden ()
 ===============
 Select_ConnectEntities
 
-Sets target/targetname on the two entities selected
-from the first selected to the secon
+Sets target/targetname on the first two entities selected in order
+lunaran TODO: confirmation box if target & targetname already clash before overwriting
 ===============
 */
 void Select_ConnectEntities ()
 {
-	entity_t   *e1, *e2, *e;
-	char	   *target, *tn;
-	int			maxtarg, targetnum;
+	entity_t	*e1, *e2, *e;
+	char		*target, *tn;
+	brush_t		*b;
 	char		newtarg[32];
 
-	if (g_qeglobals.d_nSelectCount != 2)
+	b = g_brSelectedBrushes.prev;
+	e1 = b->owner;
+	e2 = e1;
+	while (e2 == b->owner)
 	{
-		Sys_Printf("WARNING: Must have two entities selected.\n");
-		Sys_Beep();
-		return;
+		if (b->prev == &g_brSelectedBrushes)
+		{
+			Sys_Printf("WARNING: Must have two entities selected.\n");
+			Sys_Beep();
+			return;
+		}
+		b = b->prev;
 	}
-
-	e1 = g_qeglobals.d_pbrSelectOrder[0]->owner;
-	e2 = g_qeglobals.d_pbrSelectOrder[1]->owner;
+	e2 = b->owner;
 
 	if (e1 == g_peWorldEntity || e2 == g_peWorldEntity)
 	{
 		Sys_Printf("WARNING: Cannot connect to the world.\n");
-		Sys_Beep();
-		return;
-	}
-
-	if (e1 == e2)
-	{
-		Sys_Printf("WARNING: Brushes are from same entity.\n");
 		Sys_Beep();
 		return;
 	}
@@ -1670,6 +1650,7 @@ void Select_ConnectEntities ()
 			strcpy(newtarg, target);
 		else
 		{
+			int maxtarg, targetnum;
 			// make a unique target value
 			maxtarg = 0;
 			for (e = g_entEntities.next; e != &g_entEntities; e = e->next)
@@ -1688,10 +1669,12 @@ void Select_ConnectEntities ()
 
 	SetKeyValue(e1, "target", newtarg);
 	SetKeyValue(e2, "targetname", newtarg);
+
+	Sys_Printf("Entities connected as '%s'.\n", newtarg);
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 
 	Select_DeselectAll(true);
-	Select_HandleBrush(g_qeglobals.d_pbrSelectOrder[1], true);
+	Select_HandleBrush(b, true);
 }
 
 
@@ -1842,501 +1825,3 @@ void Select_Paste ()
 // <---sikk
 
 
-//============================================================
-//
-//	SPECIFICALLY TEXTURE APPLICATION
-//
-//============================================================
-
-/*
-===============
-FindReplaceTextures
-===============
-*/
-void FindReplaceTextures(char *pFind, char *pReplace, bool bSelected, bool bForce)
-{
-	brush_t	*pBrush, *pList;
-	face_t	*pFace;
-
-	pList = (bSelected) ? &g_brSelectedBrushes : &g_brActiveBrushes;
-	if (!bSelected)
-		Select_DeselectAll(true);
-
-	for (pBrush = pList->next; pBrush != pList; pBrush = pBrush->next)
-	{
-		for (pFace = pBrush->brush_faces; pFace; pFace = pFace->next)
-		{
-			if (bForce || strcmpi(pFace->texdef.name, pFind) == 0)
-			{
-				pFace->d_texture = Texture_ForName(pFace->texdef.name);
-				strcpy(pFace->texdef.name, pReplace);
-			}
-		}
-		Brush_Build(pBrush);
-	}
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-
-/*
-================
-Select_SetTexture
-================
-*/
-void Select_SetTexture(texdef_t *texdef)
-{
-	brush_t	*b;
-
-	// sikk---> Multiple Face Selection
-	if (Select_HasFaces())
-	{
-		int i, nBrushCount = 0;
-		brush_t	*pbrArray[MAX_MAP_BRUSHES];
-
-		for (i = 0; i < g_nSelFaceCount; i++)
-		{
-			// this check makes sure that brushes are only added to undo once 
-			// and not once per selected face on brush
-			if (!OnBrushList(g_pfaceSelectedFaces[i]->owner, pbrArray, nBrushCount))
-			{
-				pbrArray[nBrushCount] = g_pfaceSelectedFaces[i]->owner;
-				nBrushCount++;
-			}
-		}
-
-		// sikk - TODO: Set Face Texture Undo bug
-		Undo_Start("Set Face Textures");	// sikk - Undo/Redo
-		for (i = 0; i < nBrushCount; i++)
-			Undo_AddBrush(pbrArray[i]);	// sikk - Undo/Redo
-
-		for (i = 0; i < g_nSelFaceCount; i++)
-			Face_SetTexture(g_pfaceSelectedFaces[i], texdef);
-
-		for (i = 0; i < nBrushCount; i++)
-			Undo_EndBrush(pbrArray[i]);	// sikk - Undo/Redo
-		Undo_End();	// sikk - Undo/Redo
-	}
-	// <---sikk
-	else if (Select_HasBrushes())
-	{
-		Undo_Start("Set Brush Textures");	// sikk - Undo/Redo
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			if (!b->owner->eclass->fixedsize)
-			{
-				Undo_AddBrush(b);	// sikk - Undo/Redo
-				Brush_SetTexture(b, texdef);
-				Undo_EndBrush(b);	// sikk - Undo/Redo
-			}
-		}
-		Undo_End();	// sikk - Undo/Redo
-	}
-	Sys_UpdateWindows(W_ALL);
-}
-
-
-
-/*
-===============
-ProjectOnPlane
-===============
-*/
-void ProjectOnPlane(vec3_t normal, float dist, vec3_t ez, vec3_t p)
-{
-	if (fabs(ez[0]) == 1)
-		p[0] = (dist - normal[1] * p[1] - normal[2] * p[2]) / normal[0];
-	else if (fabs(ez[1]) == 1)
-		p[1] = (dist - normal[0] * p[0] - normal[2] * p[2]) / normal[1];
-	else
-		p[2] = (dist - normal[0] * p[0] - normal[1] * p[1]) / normal[2];
-}
-
-/*
-===============
-Back
-===============
-*/
-void Back(vec3_t dir, vec3_t p)
-{
-	if (fabs(dir[0]) == 1)
-		p[0] = 0;
-	else if (fabs(dir[1]) == 1)
-		p[1] = 0;
-	else p[2] = 0;
-}
-
-/*
-===============
-ComputeScale
-
-using scale[0] and scale[1]
-===============
-*/
-void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, face_t *f)
-{
-	float px = DotProduct(rex, p);
-	float py = DotProduct(rey, p);
-	vec3_t aux;
-	px *= f->texdef.scale[0];
-	py *= f->texdef.scale[1];
-	VectorCopy(rex, aux);
-	VectorScale(aux, px, aux);
-	VectorCopy(aux, p);
-	VectorCopy(rey, aux);
-	VectorScale(aux, py, aux);
-	VectorAdd(p, aux, p);
-}
-
-/*
-===============
-ComputeAbsolute
-===============
-*/
-void ComputeAbsolute(face_t *f, vec3_t p1, vec3_t p2, vec3_t p3)
-{
-	vec3_t	ex, ey, ez;	        // local axis base
-	vec3_t	aux;
-	vec3_t	rex, rey;
-
-	// compute first local axis base
-	TextureAxisFromPlane(&f->plane, ex, ey);
-	CrossProduct(ex, ey, ez);
-
-	VectorCopy(ex, aux);
-	VectorScale(aux, -f->texdef.shift[0], aux);
-	VectorCopy(aux, p1);
-	VectorCopy(ey, aux);
-	VectorScale(aux, -f->texdef.shift[1], aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(p1, p2);
-	VectorAdd(p2, ex, p2);
-	VectorCopy(p1, p3);
-	VectorAdd(p3, ey, p3);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
-	VectorRotate(p1, aux, p1);
-	VectorRotate(p2, aux, p2);
-	VectorRotate(p3, aux, p3);
-	// computing rotated local axis base
-	VectorCopy(ex, rex);
-	VectorRotate(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate(rey, aux, rey);
-
-	ComputeScale(rex, rey, p1, f);
-	ComputeScale(rex, rey, p2, f);
-	ComputeScale(rex, rey, p3, f);
-
-	// project on normal plane along ez 
-	// assumes plane normal is normalized
-	ProjectOnPlane(f->plane.normal, f->plane.dist, ez, p1);
-	ProjectOnPlane(f->plane.normal, f->plane.dist, ez, p2);
-	ProjectOnPlane(f->plane.normal, f->plane.dist, ez, p3);
-}
-
-/*
-===============
-AbsoluteToLocal
-===============
-*/
-void AbsoluteToLocal(plane_t normal2, face_t *f, vec3_t p1, vec3_t p2, vec3_t p3)
-{
-	vec3_t	ex, ey, ez;
-	vec3_t	aux;
-	vec3_t	rex, rey;
-	vec_t	x;
-	vec_t	y;
-
-	// computing new local axis base
-	TextureAxisFromPlane(&normal2, ex, ey);
-	CrossProduct(ex, ey, ez);
-
-	// projecting back on (ex, ey)
-	Back(ez, p1);
-	Back(ez, p2);
-	Back(ez, p3);
-
-	// rotation
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
-
-	x = DotProduct(aux, ex);
-	y = DotProduct(aux, ey);
-	f->texdef.rotate = 180 * atan2(y, x) / Q_PI;
-
-	// computing rotated local axis base
-	VectorCopy(ez, aux);
-	VectorScale(aux, f->texdef.rotate, aux);
-	VectorCopy(ex, rex);
-	VectorRotate(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate(rey, aux, rey);
-
-	// scale
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[0] = DotProduct(aux, rex);
-	VectorCopy(p3, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[1] = DotProduct(aux, rey);
-
-	// shift
-	// only using p1
-	x = DotProduct(rex, p1);
-	y = DotProduct(rey, p1);
-	x /= f->texdef.scale[0];
-	y /= f->texdef.scale[1];
-
-	VectorCopy(rex, p1);
-	VectorScale(p1, x, p1);
-	VectorCopy(rey, aux);
-	VectorScale(aux, y, aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
-	VectorRotate(p1, aux, p1);
-	f->texdef.shift[0] = -DotProduct(p1, ex);
-	f->texdef.shift[1] = -DotProduct(p1, ey);
-
-	// stored rot is good considering local axis base
-	// change it if necessary
-	f->texdef.rotate = -f->texdef.rotate;
-
-	Clamp(&f->texdef.shift[0], f->d_texture->width);
-	Clamp(&f->texdef.shift[1], f->d_texture->height);
-	Clamp(&f->texdef.rotate, 360);
-
-	// lunaran fix: prefer small rotation and fewer negative scales
-	if (abs(f->texdef.rotate) >= 90 && (f->texdef.scale[0] < 0 || f->texdef.scale[1] < 0) )
-	{
-		if (f->texdef.rotate < 0)
-			f->texdef.rotate += 180;
-		else
-			f->texdef.rotate -= 180;
-
-		f->texdef.scale[0] *= -1.0f;
-		f->texdef.scale[1] *= -1.0f;
-	}
-	// lunaran fix: snap texture shifts back to whole numbers so they don't creep with successive translations
-	f->texdef.shift[0] = roundf(f->texdef.shift[0]);
-	f->texdef.shift[1] = roundf(f->texdef.shift[1]);
-	f->texdef.rotate = roundf(f->texdef.rotate);
-}
-
-/*
-===============
-RotateFaceTexture
-===============
-*/
-void RotateFaceTexture(face_t* f, int nAxis, float fDeg)
-{
-	vec3_t	p1, p2, p3, rota;
-	vec3_t	vNormal;
-	plane_t	normal2;
-
-	p1[0] = p1[1] = p1[2] = 0;
-	VectorCopy(p1, p2);
-	VectorCopy(p1, p3);
-	VectorCopy(p1, rota);
-	ComputeAbsolute(f, p1, p2, p3);
-
-	rota[nAxis] = fDeg;
-	VectorRotate2(p1, rota, g_v3SelectOrigin, p1);
-	VectorRotate2(p2, rota, g_v3SelectOrigin, p2);
-	VectorRotate2(p3, rota, g_v3SelectOrigin, p3);
-
-	vNormal[0] = f->plane.normal[0];
-	vNormal[1] = f->plane.normal[1];
-	vNormal[2] = f->plane.normal[2];
-	VectorRotate(vNormal, rota, vNormal);
-	normal2.normal[0] = vNormal[0];
-	normal2.normal[1] = vNormal[1];
-	normal2.normal[2] = vNormal[2];
-	AbsoluteToLocal(normal2, f, p1, p2, p3);
-}
-
-/*
-===============
-RotateTextures
-===============
-*/
-void RotateTextures(int nAxis, float fDeg, vec3_t vOrigin)
-{
-	brush_t *b;
-	face_t	*f;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->brush_faces; f; f = f->next)
-		{
-			RotateFaceTexture(f, nAxis, fDeg);
-			Brush_Build(b);
-		}
-		Brush_Build(b);
-	}
-}
-
-
-/*
-===============
-Select_FitTexture
-===============
-*/
-void Select_FitTexture(int nHeight, int nWidth)
-{
-	brush_t	*b;
-
-	if (Select_IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		Brush_FitTexture(b, nHeight, nWidth);
-		Brush_Build(b);
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Select_HasFaces())
-	{
-		int i;
-		for (i = 0; i < g_nSelFaceCount; i++)
-		{
-			Face_FitTexture(g_pfaceSelectedFaces[i], nHeight, nWidth);
-			Brush_Build(g_pfaceSelectedFaces[i]->owner);
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-// sikk---> Texture Manipulation Functions (Mouse & Keyboard)
-/*
-===========
-Select_ShiftTexture
-===========
-*/
-void Select_ShiftTexture(int x, int y)
-{
-	brush_t	*b;
-	face_t	*f;
-
-	if (Select_IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->brush_faces; f; f = f->next)
-		{
-			f->texdef.shift[0] += x * g_qeglobals.d_nGridSize;
-			f->texdef.shift[1] += y * g_qeglobals.d_nGridSize;
-		}
-
-		Brush_Build(b);
-	}
-	// sikk---> Multiple Face Selection
-	if (Select_HasFaces())
-	{
-		int i;
-		for (i = 0; i < g_nSelFaceCount; i++)
-		{
-			g_pfaceSelectedFaces[i]->texdef.shift[0] += x * g_qeglobals.d_nGridSize;
-			g_pfaceSelectedFaces[i]->texdef.shift[1] += y * g_qeglobals.d_nGridSize;
-			Select_SetTexture(&g_pfaceSelectedFaces[i]->texdef);
-			//			Brush_Build(g_pfaceSelectedFaces[i]->owner);
-		}
-	}
-	// <--sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-/*
-===========
-Select_ScaleTexture
-===========
-*/
-void Select_ScaleTexture(int x, int y)
-{
-	brush_t	*b;
-	face_t	*f;
-
-	if (Select_IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->brush_faces; f; f = f->next)
-		{
-			f->texdef.scale[0] += x * 0.05f;
-			f->texdef.scale[1] += y * 0.05f;
-		}
-
-		Brush_Build(b);
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Select_HasFaces())
-	{
-		int i;
-		for (i = 0; i < g_nSelFaceCount; i++)
-		{
-			g_pfaceSelectedFaces[i]->texdef.scale[0] += x * 0.05f;
-			g_pfaceSelectedFaces[i]->texdef.scale[1] += y * 0.05f;
-			Select_SetTexture(&g_pfaceSelectedFaces[i]->texdef);
-			//			Brush_Build(g_pfaceSelectedFaces[i]->owner);
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-
-/*
-===========
-Select_RotateTexture
-===========
-*/
-void Select_RotateTexture(int deg)
-{
-	brush_t	*b;
-	face_t	*f;
-
-	if (Select_IsEmpty())
-		return;
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-	{
-		for (f = b->brush_faces; f; f = f->next)
-		{
-			f->texdef.rotate += deg;
-			if (f->texdef.rotate >= 360)
-				f->texdef.rotate -= 360;
-			if (f->texdef.rotate < 0)
-				f->texdef.rotate += 360;
-
-		}
-
-		Brush_Build(b);
-	}
-
-	// sikk---> Multiple Face Selection
-	if (Select_HasFaces())
-	{
-		int i;
-		for (i = 0; i < g_nSelFaceCount; i++)
-		{
-			g_pfaceSelectedFaces[i]->texdef.rotate += deg;
-			if (g_pfaceSelectedFaces[i]->texdef.rotate >= 360)
-				g_pfaceSelectedFaces[i]->texdef.rotate -= 360;
-			if (g_pfaceSelectedFaces[i]->texdef.rotate < 0)
-				g_pfaceSelectedFaces[i]->texdef.rotate += 360;
-			Select_SetTexture(&g_pfaceSelectedFaces[i]->texdef);
-			//			Brush_Build(g_pfaceSelectedFaces[i]->owner);
-		}
-	}
-	// <---sikk
-
-	Sys_UpdateWindows(W_CAMERA);
-}
-// <---sikk

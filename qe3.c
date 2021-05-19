@@ -140,12 +140,12 @@ bool QE_KeyDown (int key)
 		if (GetKeyState(VK_SHIFT) < 0)
 		{
 			if (GetKeyState(VK_CONTROL) < 0)	
-				Select_RotateTexture(1);
+				Surf_RotateTexture(1);
 			else
-				Select_ShiftTexture(0, 1);
+				Surf_ShiftTexture(0, g_qeglobals.d_nGridSize);
 		}
 		else if (GetKeyState(VK_CONTROL) < 0)
-			Select_ScaleTexture(0, 1);
+			Surf_ScaleTexture(0, 5);
 		else
 			VectorMA(g_qeglobals.d_camera.origin, SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
 
@@ -155,12 +155,12 @@ bool QE_KeyDown (int key)
 		if (GetKeyState(VK_SHIFT) < 0)
 		{
 			if (GetKeyState(VK_CONTROL) < 0)
-				Select_RotateTexture(-1);
+				Surf_RotateTexture(-1);
 			else
-				Select_ShiftTexture(0, -1);
+				Surf_ShiftTexture(0, -g_qeglobals.d_nGridSize);
 		}
 		else if (GetKeyState(VK_CONTROL) < 0)
-			Select_ScaleTexture(0, -1);
+			Surf_ScaleTexture(0, -5);
 		else
 			VectorMA(g_qeglobals.d_camera.origin, -SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
 
@@ -170,12 +170,12 @@ bool QE_KeyDown (int key)
 		if (GetKeyState(VK_SHIFT) < 0)
 		{
 			if (GetKeyState(VK_CONTROL) < 0)
-				Select_RotateTexture(15);
+				Surf_RotateTexture(15);
 			else
-				Select_ShiftTexture(1, 0);
+				Surf_ShiftTexture(g_qeglobals.d_nGridSize, 0);
 		}
 		else if (GetKeyState(VK_CONTROL) < 0)
-			Select_ScaleTexture(-1, 0);
+			Surf_ScaleTexture(-5, 0);
 		else
 			g_qeglobals.d_camera.angles[1] += SPEED_TURN;
 
@@ -185,12 +185,12 @@ bool QE_KeyDown (int key)
 		if (GetKeyState(VK_SHIFT) < 0)
 		{
 			if (GetKeyState(VK_CONTROL) < 0)
-				Select_RotateTexture(-15);
+				Surf_RotateTexture(-15);
 			else
-				Select_ShiftTexture(-1, 0);
+				Surf_ShiftTexture(-g_qeglobals.d_nGridSize, 0);
 		}
 		else if (GetKeyState(VK_CONTROL) < 0)
-			Select_ScaleTexture(1, 0);
+			Surf_ScaleTexture(5, 0);
 		else
 			g_qeglobals.d_camera.angles[1] -= SPEED_TURN;
 
@@ -496,8 +496,8 @@ void QE_CheckAutoSave ()
 
 		Map_SaveFile(ValueForKey(g_qeglobals.d_entityProject, "autosave"), false);
 
-		Sys_Printf("MSG: Autosave successfull.\n");
-		Sys_Status("Autosave successfull.", 0);
+		Sys_Printf("MSG: Autosave successful.\n");
+		Sys_Status("Autosave successful.", 0);
 
 		g_bModified = 2;
 		s_start = now;

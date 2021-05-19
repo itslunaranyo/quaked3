@@ -656,6 +656,7 @@ void Texture_InitFromWad (char *file)
 	qtexture_t	*q;
 	int			 numlumps;
 	int			 i;
+	char		*wname;
 
 	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), file);
 
@@ -681,6 +682,9 @@ void Texture_InitFromWad (char *file)
 	wadinfo = (wadinfo_t *)wadfile;
 	numlumps = LittleLong(wadinfo->numlumps);
 	lumpinfo = (lumpinfo_t *)(wadfile + LittleLong(wadinfo->infotableofs));
+
+	wname = qmalloc(32 * sizeof(char));	// we do leak this tiny bit of memory if the same wad is loaded twice but I can live with that
+	strncpy(wname, file, 31);
 
 	for (i = 0; i < numlumps; i++, lumpinfo++)
 	{
@@ -720,7 +724,7 @@ void Texture_InitFromWad (char *file)
 
 		strncpy(q->name, lumpinfo->name, sizeof(q->name) - 1);
 		q->inuse = false;
-		q->wad = file;
+		q->wad = wname;
 		q->next = g_qeglobals.d_qtextures;
 		g_qeglobals.d_qtextures = q;
 
@@ -749,12 +753,12 @@ void Texture_ShowWad (int menunum)
 
 	SortTextures();
 	InspWnd_SetMode(W_TEXTURE);
-	TexWnd_Layout();
+	//TexWnd_Layout();
 	Sys_UpdateWindows(W_TEXTURE);
 
 	// select the first texture in the list
-	if (!g_qeglobals.d_texturewin.texdef.name[0])
-		SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
+	if (!g_qeglobals.d_workTexDef.name[0])
+		TexWnd_SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
 }
 
 /*
@@ -788,8 +792,8 @@ void Texture_ShowInuse ()
 	SetWindowText(g_qeglobals.d_hwndInspector, name);
 
 	// select the first texture in the list
-	if (!g_qeglobals.d_texturewin.texdef.name[0])
-		SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
+	if (!g_qeglobals.d_workTexDef.name[0])
+		TexWnd_SelectTexture(16, g_qeglobals.d_texturewin.height - 16);
 }
 
 /*
@@ -840,15 +844,22 @@ void TexWnd_Layout()
 		if (q->name[0] == '(') continue;
 
 		// go to the next row unless the texture is the first on the row
-		// lunaran: row breaks for new wads when sorted
-		if ((curX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8 ||
-			(q->wad != wad && g_qeglobals.d_savedinfo.bSortTexByWad) )
-			&& curRowHeight)
+		if (curRowHeight)
 		{
-			curX = 8;
-			curY -= curRowHeight + FONT_HEIGHT + 4;
-			curRowHeight = 0;
+			if (curX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8)
+			{
+				curX = 8;
+				curY -= curRowHeight + FONT_HEIGHT + 4;
+				curRowHeight = 0;
+			}
+			else if (wad && g_qeglobals.d_savedinfo.bSortTexByWad && q->wad && strcmp(q->wad, wad) != 0)
+			{
+				curX = 8;
+				curY -= curRowHeight + FONT_HEIGHT + 16;
+				curRowHeight = 0;
+			}
 		}
+		// lunaran: row breaks for new wads when sorted
 		wad = q->wad;
 
 		g_qeglobals.d_texturewin.layout[curIdx].tex = q;
@@ -883,7 +894,7 @@ static int	textures_cursorx, textures_cursory;
 void Texture_UpdateStatus(texdef_t* texdef)
 {
 	char		sz[256];
-	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, 0, 0);// q->width, q->height);	// lunaran TODO: texdef doens't contain a pointer to the texture?
+	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, 0, 0);// q->width, q->height);	// lunaran TODO: texdef doesn't contain a pointer to the texture?
 	Sys_Status(sz, 3);
 }
 
@@ -903,7 +914,7 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 		Sys_Printf("WARNING: Cannot select an entity texture.\n");
 		return;
 	}
-	g_qeglobals.d_texturewin.texdef = *texdef;
+	g_qeglobals.d_workTexDef = *texdef;
 
 	Sys_UpdateWindows(W_TEXTURE);
 //	sprintf(sz, "Selected texture: %s\n", texdef->name);
@@ -911,7 +922,7 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 // sikk---> Multiple Face Selection
 	// Check if we want to set current selection's texture
 	if (bSetSelection)
-		Select_SetTexture(texdef);
+		Surf_SetTexdef(texdef, 0);
 
 	// scroll origin so the texture is completely on screen
 	for (int i = 0; i < g_qeglobals.d_texturewin.count; i++)
@@ -942,13 +953,13 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 
 /*
 ==============
-Texture_TexAtWndPos
+TexWnd_TexAtPos
 
 Sets texture window's caption to the name and size of the texture
 under the current mouse position.
 ==============
 */
-qtexture_t* Texture_TexAtWndPos (int wx, int wy)
+qtexture_t* TexWnd_TexAtPos (int wx, int wy)
 {
 	texWndPlacement_t* twp;
 
@@ -971,7 +982,7 @@ void TexWnd_MouseOver(int mx, int my)
 	char		texstring[256];
 	qtexture_t*	tex;
 
-	tex = Texture_TexAtWndPos(mx, my);
+	tex = TexWnd_TexAtPos(mx, my);
 	if (tex)
 	{
 		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
@@ -984,19 +995,19 @@ void TexWnd_MouseOver(int mx, int my)
 
 /*
 ==============
-SelectTexture
+TexWnd_SelectTexture
 
 By mouse click
 ==============
 */
-void SelectTexture (int mx, int my)
+void TexWnd_SelectTexture (int mx, int my)
 {
 	texWndPlacement_t* twp;
 	texdef_t	texdef;
 
 	qtexture_t*	tw;
 
-	tw = Texture_TexAtWndPos(mx, my);
+	tw = TexWnd_TexAtPos(mx, my);
 	if (tw);
 	{
 		memset(&texdef, 0, sizeof(texdef));
@@ -1073,36 +1084,40 @@ void TexWnd_SetScale(float scale)
 
 /*
 ==============
-Texture_MouseDown
+TexWnd_MouseDown
 ==============
 */
-void Texture_MouseDown (int x, int y, int buttons)
+void TexWnd_MouseDown (int x, int y, int buttons)
 {
+	int cx, cy;
+
 	Sys_GetCursorPos(&textures_cursorx, &textures_cursory);
+	cx = x;
+	cy = g_qeglobals.d_texturewin.height - 1 - y;
 
 	// lbutton = select texture
 	if (buttons == MK_LBUTTON)
 	{
-		SelectTexture(x, g_qeglobals.d_texturewin.height - 1 - y);
+		TexWnd_SelectTexture(cx, cy);
 		return;
 	}
 }
 
 /*
 ==============
-Texture_MouseUp
+TexWnd_MouseUp
 ==============
 */
-void Texture_MouseUp (int x, int y, int buttons)
+void TexWnd_MouseUp (int x, int y, int buttons)
 {
 }
 
 /*
 ==============
-Texture_MouseMoved
+TexWnd_MouseMoved
 ==============
 */
-void Texture_MouseMoved (int x, int y, int buttons)
+void TexWnd_MouseMoved (int x, int y, int buttons)
 {
 	float	scale = 1;	// sikk - Mouse Zoom Texture Window (changed from "int")
 
@@ -1168,10 +1183,10 @@ void Texture_MouseMoved (int x, int y, int buttons)
 
 /*
 ============
-Texture_Draw
+TexWnd_Draw
 ============
 */
-void Texture_Draw (int width, int height)
+void TexWnd_Draw (int width, int height)
 {
 	texWndPlacement_t* twp;
 	char	   *name;
@@ -1230,7 +1245,7 @@ void Texture_Draw (int width, int height)
 			glEnd();
 
 			// draw the selection border
-			if (!strcmpi(g_qeglobals.d_texturewin.texdef.name, twp->tex->name))
+			if (!strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
 			{
 				glLineWidth(3);
 				glColor3f(1, 0, 0);
@@ -1317,7 +1332,7 @@ LONG WINAPI WTex_WndProc (
 
             if (!wglMakeCurrent(s_hdcTexture, s_hglrcTexture))
 				Error("wglMakeCurrent: Failed.");
-			Texture_Draw(rect.right-rect.left, rect.bottom-rect.top);
+			TexWnd_Draw(rect.right-rect.left, rect.bottom-rect.top);
 			SwapBuffers(s_hdcTexture);
 
 		    EndPaint(hWnd, &ps);
@@ -1335,7 +1350,7 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		Texture_MouseDown(xPos, yPos, wParam);
+		TexWnd_MouseDown(xPos, yPos, wParam);
 		return 0;
 
 	case WM_MBUTTONUP:
@@ -1344,7 +1359,7 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		Texture_MouseUp(xPos, yPos, wParam);
+		TexWnd_MouseUp(xPos, yPos, wParam);
 		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return 0;
@@ -1353,7 +1368,7 @@ LONG WINAPI WTex_WndProc (
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		
-		Texture_MouseMoved(xPos, yPos, wParam);
+		TexWnd_MouseMoved(xPos, yPos, wParam);
 		return 0;
     }
 
@@ -1417,7 +1432,9 @@ void TexWnd_Resize(RECT rc)
 	InspWnd_MoveRect(g_qeglobals.d_hwndTexture, rc);
 	g_qeglobals.d_texturewin.width = rc.right;
 	g_qeglobals.d_texturewin.height = rc.bottom;
-	TexWnd_Layout();
+
+	if(g_qeglobals.d_nInspectorMode == W_TEXTURE)
+		TexWnd_Layout();
 }
 
 

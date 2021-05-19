@@ -119,11 +119,12 @@ face_t	   *Face_Alloc ();
 face_t	   *Face_Clone (face_t *f);
 face_t	   *Face_FullClone (face_t *f);	// sikk - Undo/Redo
 void		Face_Draw (face_t *face);
-void		Face_FitTexture (face_t *face, int nHeight, int nWidth);
+void		Face_FitTexture(face_t *face, float fHeight, float fWidth);
+//void		Face_FitTexture (face_t *face, int nHeight, int nWidth);
 void		Face_Free (face_t *f);
 int			Face_MemorySize (face_t *f);	// sikk - Undo/Redo
 void		Face_MoveTexture (face_t *f, vec3_t delta);
-void		Face_SetTexture (face_t *f, texdef_t *texdef);
+void		Face_SetTexture (face_t *f, texdef_t *texdef, int nSkipFlags);
 
 int			AddPlanept (float *f);
 float		SetShadeForPlane (plane_t *p);

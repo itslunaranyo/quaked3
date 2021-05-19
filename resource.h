@@ -179,6 +179,7 @@
 #define IDC_SPIN_TEXSCALE               1280
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
+#define IDC_RESET                       1284
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -395,7 +396,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         40426
-#define _APS_NEXT_CONTROL_VALUE         1284
+#define _APS_NEXT_CONTROL_VALUE         1285
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

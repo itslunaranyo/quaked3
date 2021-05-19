@@ -255,7 +255,7 @@ void Cam_PositionRotate ()
 		origin[1] = (mins[1] + maxs[1]) / 2;
 		origin[2] = (mins[2] + maxs[2]) / 2;
 	}
-	else if (Select_HasFaces())
+	else if (Select_FaceCount())
 	{
 		mins[0] = mins[1] = mins[2] = 99999;
 		maxs[0] = maxs[1] = maxs[2] = -99999;
@@ -537,13 +537,13 @@ void Cam_MouseMoved (int x, int y, int buttons)
 			if (GetKeyState(VK_SHIFT) < 0)
 			{
 				if (GetKeyState(VK_CONTROL) < 0)
-					Select_RotateTexture(cursorx - x);
+					Surf_RotateTexture(cursorx - x);
 			}
 			else if (GetKeyState(VK_CONTROL) < 0)
-				Select_ScaleTexture(x - cursorx, cursory - y);
+				Surf_ScaleTexture(x - cursorx, cursory - y);
 
 			else
-				Select_ShiftTexture(cursorx - x, cursory - y);
+				Surf_ShiftTexture(cursorx - x, cursory - y);
 			*/
 			cursorx = x;
 			cursory = y;
@@ -957,7 +957,7 @@ void Cam_Draw ()
 //	if (g_pfaceSelectedFace)
 //		Face_Draw(g_pfaceSelectedFace);
 // sikk---> Multiple Face Selection
-//	if (Select_HasFaces())
+//	if (Select_FaceCount())
 //	{
 		for (int i = 0; i < Select_NumFaces(); i++)
 			Face_Draw(g_pfaceSelectedFaces[i]);

@@ -998,13 +998,17 @@ int WINAPI WinMain (
 		Sys_EndWait();	// remove wait cursor if active
 
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-		{	// sikk - We don't want QE3 to handle accelerator shortcuts when 
-			// editing text in the Entity & Console Windows
-			if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
-				(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
+		{
+			// lunaran - this magically makes tab work in the surface dialog
+			if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
 			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+				// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
+				if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
+					(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
+				{
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
 			}
 
 			if (msg.message == WM_QUIT)
