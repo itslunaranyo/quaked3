@@ -70,8 +70,8 @@ HWND		g_hwndEnt[ENT_LAST];
 // lunaran - entity window now interacts through a dummy entity that acts as the union of 
 // all selected entities (for displaying mixed selections)
 //bool		g_bMultipleEntities;
-//entity_t   *g_peEditEntity;
-entity_t	g_eEditEntity;
+//Entity   *g_peEditEntity;
+Entity	g_eEditEntity;
 char		g_nEditEntFlags[12];	// spawnflags in the entity inspector can be off/on/ambiguous
 char		g_szEditFlagNames[8][32];
 
@@ -363,15 +363,14 @@ EntWnd_FillClassList
 */
 void EntWnd_FillClassList()
 {
-	eclass_t   *pec;
 	int			iIndex;
 
 	SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_RESETCONTENT, 0, 0);
 
-	for (pec = g_pecEclass; pec; pec = pec->next)
+	for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 	{
-		iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)pec->name);
-		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)pec);
+		iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)(*ecIt)->name);
+		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)(*ecIt));
 	}
 }
 
@@ -388,15 +387,15 @@ EntWnd_UpdateListSel
 void EntWnd_UpdateListSel()
 {
 	int			iIndex;
-	eclass_t   *pec;
+	EntClass   *pec;
 	iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETCURSEL, 0, 0);
-	pec = (eclass_t *)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETITEMDATA, iIndex, 0);
+	pec = (EntClass *)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_GETITEMDATA, iIndex, 0);
 
 	if (iIndex != LB_ERR)
 		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, iIndex, 0);
 
 	if (pec)
-		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
+		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString((char*)*pec->comments));
 }
 
 /*
@@ -432,7 +431,7 @@ EntWnd_RefreshEditEntity
 */
 void EntWnd_RefreshEditEntity()
 {
-	entity_t *eo;
+	Entity *eo;
 	epair_t *ep;
 	bool first;
 
@@ -559,7 +558,7 @@ static void EntWnd_FlagChecked(int flag)
 
 	int f = 1 << (flag-1);
 
-	entity_t *eo;
+	Entity *eo;
 	eo = NULL;
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -618,13 +617,13 @@ void EntWnd_UpdateUI ()
 	}
 	else
 	{
-		eclass_t *pec = g_brSelectedBrushes.next->owner->eclass;
+		EntClass *pec = g_brSelectedBrushes.next->owner->eclass;
 		int nIndex = (int)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
 		if (nIndex != LB_ERR)
 			SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
 
 		// Set up the description
-		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
+		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString((char*)*pec->comments));
 
 		for (i = 0; i < 8; i++)
 		{
@@ -664,8 +663,8 @@ Creates a new entity based on the currently selected brush and entity type.
 */
 void EntWnd_CreateEntity ()
 {
-	eclass_t   *pecNew;
-	entity_t   *petNew;
+	EntClass	*ec;
+	Entity		*e;
 	int			i;
 	HWND		hwnd;
 	char		sz[1024];
@@ -673,8 +672,9 @@ void EntWnd_CreateEntity ()
 	// check to make sure we have a brush
 	if (!Select_HasBrushes())
 	{
-	    MessageBox(g_qeglobals.d_hwndMain, "You must have a brush selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
-		return;
+	//	MessageBox(g_qeglobals.d_hwndMain, "You must have a brush selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
+	//	return;
+		g_qeglobals.d_camera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum		
 	}
 
 	// find out what type of entity we are trying to create
@@ -689,32 +689,18 @@ void EntWnd_CreateEntity ()
 	}
 
 	SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
+	ec = EntClass::ForName(sz, false, true);
+	e = Entity_Create(ec);
 
-	if (!_stricmp(sz, "worldspawn"))
-	{
-	    MessageBox(g_qeglobals.d_hwndMain, "Cannot create a new worldspawn entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
-		return;
-	}
-
-	Undo_Start("Create Entity");	// sikk - Undo/Redo
-	Undo_AddBrushList(&g_brSelectedBrushes);
-
-	pecNew = Eclass_ForName(sz, false);
-
-	// create it
-	petNew = Entity_Create(pecNew);
-
-	if (petNew == NULL)
+	if (!e)
 	{
 	    MessageBox(g_qeglobals.d_hwndMain, "Failed to create entity.", "QuakeEd 3: Entity Creation Error", MB_OK | MB_ICONEXCLAMATION);
 		return;
 	}
 
 	Select_DeselectAll(true);
-	Select_HandleBrush(petNew->brushes.onext, true);
+	Select_HandleBrush(e->brushes.onext, true);
 
-	Undo_EndBrushList(&g_brSelectedBrushes);
-	Undo_End();	// sikk - Undo/Redo
 }
 
 /*
@@ -726,13 +712,30 @@ void EntWnd_AddKeyValue ()
 {
 	char	key[4096];
 	char	value[4096];
+	Entity *last;
 
 	// Get current selection text
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);	
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);	
-
+	last = nullptr;
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		// skip entity brushes in sequence
+		if (b->owner == last)
+			continue;
+		last = b->owner;
+
 		SetKeyValue(b->owner, key, value);
+		if (!strcmp(key, "origin"))
+		{
+			Entity_SetOriginFromKeyvalue(b->owner);
+			b->Build();
+			g_bSelectionChanged = true;
+			Sys_UpdateWindows(W_CAMERA|W_XY|W_Z);
+		}
+		else if (!strcmp(key, "classname"))
+			Entity_ChangeClassname(b->owner, value);
+	}
 	SetKeyValue(&g_eEditEntity, key, value);
 
 	// refresh the prop listbox

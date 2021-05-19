@@ -23,6 +23,8 @@ extern clippoint_t *g_pcpMovingClip;
 
 //========================================================================
 
+void SnapToPoint(vec3_t point);
+
 void Clip_ProduceSplitLists ();
 void Clip_SetMode ();
 void Clip_UnsetMode ();

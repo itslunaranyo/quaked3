@@ -1594,7 +1594,7 @@ void XYZView::Draw ()
 {
     Brush	   *brush;
 	float		w, h;
-	entity_t   *e;
+	Entity   *e;
 	double		start, end;
 	vec3_t		mins, maxs;
 	int			drawn, culled;
@@ -1734,7 +1734,7 @@ void XYZView::Draw ()
 		// paint size
 	    if (!bFixedSize)
 	    {
-			if (brush->owner->eclass->fixedsize)
+			if (brush->owner->eclass->IsFixedSize())
 				bFixedSize = true;
 			if (g_qeglobals.d_savedinfo.bShow_SizeInfo)
 			{

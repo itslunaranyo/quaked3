@@ -268,6 +268,10 @@ BOOL DoMru (HWND hWnd, WORD wId)
 	OFSTRUCT	of;
 	BOOL		fExist;
 
+	// lunaran: save confirmation from MRU
+	if (!ConfirmModified())
+		return FALSE;
+
 	GetMenuItem(g_qeglobals.d_lpMruMenu, wId, TRUE, szFileName, sizeof(szFileName));
 
 	// Test if the file exists.

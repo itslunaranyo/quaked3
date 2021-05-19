@@ -42,6 +42,7 @@
 #include "clip.h"
 #include "csg.h"
 #include "drag.h"
+#include "entclass.h"
 #include "entity.h"
 #include "map.h"
 #include "points.h"
@@ -163,7 +164,7 @@ typedef struct
 				d_hwndSplash,			// sikk - Splash screen
 				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
 
-	entity_t   *d_entityProject;
+	Entity   *d_entityProject;
 	int			d_nNumEntities;
 
 	int			d_nNumPoints;
@@ -360,6 +361,8 @@ void DoAbout ();
 void DoFindTexture ();
 void DoNewProject();	// sikk - New Project Dialog
 void DoProject (bool bFirst);	// sikk - Project Settings Dialog
+void FillEntityListbox(HWND hwnd, bool bPointbased, bool bBrushbased);	// sikk - Create Entity Dialog
+bool ConfirmClassnameHack(EntClass *desired);
 void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, vec3_t origin);	// sikk - Create Entity Dialog
 void DoMapInfo ();	// sikk - Map Info Dialog
 void DoEntityInfo ();	// sikk - Entity Info Dialog

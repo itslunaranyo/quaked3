@@ -4,22 +4,6 @@
 //	entity.h
 //==============================
 
-#define	MAX_FLAGS	8
-
-typedef struct eclass_s
-{
-	struct eclass_s	   *next;
-	char			   *name;
-	bool				fixedsize;
-	bool				unknown;		// wasn't found in source
-	vec3_t				mins, maxs;
-	vec3_t				color;
-	texdef_t			texdef;
-	char			   *comments;
-	char				flagnames[MAX_FLAGS][32];
-	unsigned int		nShowFlags;
-} eclass_t;
-
 typedef struct epair_s
 {
 	struct epair_s	*next;
@@ -27,74 +11,75 @@ typedef struct epair_s
 	char			*value;
 } epair_t;
 
-typedef struct entity_s
+class Entity
 {
-	struct entity_s	   *prev, *next;
-	Brush				brushes;	// head/tail of list
-	vec3_t				origin;
-	eclass_t		   *eclass;
-	epair_t			   *epairs;
+public:
+	Entity();
+	~Entity();
+
+	Entity		*prev, *next;
+	Brush		brushes;	// head/tail of list
+	vec3_t		origin;
+	EntClass	*eclass;
+	epair_t		*epairs;
+
 // sikk---> Undo/Redo
-	int					undoId;		// undo ID		
-	int					redoId;		// redo ID
-	int					ownerId;	// entityId of the owner entity for undo
-	int					entityId;	// entity ID
+	int			undoId, redoId;
+	int			ownerId;	// entityId of the owner entity for undo
+	int			entityId;	// entity ID
 // <---sikk
-} entity_t;
+};
 
 //========================================================================
-
-extern eclass_t	*g_pecEclass;
 
 extern HWND	g_hwndEnt[ENT_LAST];
 extern int	g_nEntDlgIds[ENT_LAST];
 
 //========================================================================
 
-eclass_t   *Eclass_InitFromText (char *text);
-void		Eclass_InitForSourceDirectory (char *path);
-void		Eclass_InsertAlphabetized (eclass_t *e);
-eclass_t   *Eclass_ForName (char *name, bool has_brushes);
-void		Eclass_ScanFile (char *filename);
+void		SetSpawnFlag(Entity *ent, int flag, bool on);
+char		*ValueForKey (Entity *ent, char *key);
+void		SetKeyValue (Entity *ent, char *key, char *value);
+void		SetKeyValueIVector(Entity *ent, char *key, vec3_t vec);
+void		SetKeyValueFVector(Entity *ent, char *key, vec3_t vec);
+void 		DeleteKey (Entity *ent, char *key);
+float		FloatForKey (Entity *ent, char *key);
+int			IntForKey (Entity *ent, char *key);
+void 		GetVectorForKey (Entity *ent, char *key, vec3_t vec);
 
-void		SetSpawnFlag(entity_t *ent, int flag, bool on);
-char	   *ValueForKey (entity_t *ent, char *key);
-void		SetKeyValue (entity_t *ent, char *key, char *value);
-void		SetKeyValueIVector(entity_t *ent, char *key, vec3_t vec);
-void		SetKeyValueFVector(entity_t *ent, char *key, vec3_t vec);
-void 		DeleteKey (entity_t *ent, char *key);
-float		FloatForKey (entity_t *ent, char *key);
-int			IntForKey (entity_t *ent, char *key);
-void 		GetVectorForKey (entity_t *ent, char *key, vec3_t vec);
-
-void		Entity_Free (entity_t *e);
-entity_t   *Entity_Parse (bool onlypairs);
-void		Entity_Write (entity_t *e, FILE *f, bool use_region);
-void		Entity_WriteSelected (entity_t *e, FILE *f);	// sikk - Export Selection (Map/Prefab)
-entity_t   *Entity_Create (eclass_t *c);
-entity_t   *Entity_Clone (entity_t *e);
-void		Entity_LinkBrush (entity_t *e, Brush *b);
+void		Entity_Free (Entity *e);
+Entity		*Entity_Parse (bool onlypairs);
+void		Entity_Write (Entity *e, FILE *f, bool use_region);
+void		Entity_WriteSelected (Entity *e, FILE *f);	// sikk - Export Selection (Map/Prefab)
+Entity		*Entity_Create (EntClass *c);
+Entity		*Entity_Clone (Entity *e);
+void		Entity_LinkBrush (Entity *e, Brush *b);
 void		Entity_UnlinkBrush (Brush *b);
+
+void		Entity_ChangeClassname(Entity *ent, char *value);
+void		Entity_MakeBrush(Entity *e);
+void		Entity_SetOrigin(Entity *ent, vec3_t org);
+void		Entity_SetOriginFromMember(Entity *ent);
+void		Entity_SetOriginFromKeyvalue(Entity *ent);
+void		Entity_SetOriginFromBrush(Entity *ent);
+
 // sikk---> Undo/Redo
-int			Entity_MemorySize (entity_t *e);
-void		Entity_AddToList (entity_t *e, entity_t *list);
-void		Entity_RemoveFromList (entity_t *e);
-void		Entity_FreeEpairs (entity_t *e);
+int			Entity_MemorySize (Entity *e);
+void		Entity_AddToList (Entity *e, Entity *list);
+void		Entity_RemoveFromList (Entity *e);
+void		Entity_FreeEpairs (Entity *e);
 // <---sikk
 // sikk---> Cut/Copy/Paste
-entity_t   *Entity_Copy (entity_t *e);	
+Entity		*Entity_Copy (Entity *e);	
 void		Entity_CleanList ();
 // <---sikk
-entity_t   *FindEntity (char *pszKey, char *pszValue);
-entity_t   *FindEntityInt (char *pszKey, int iValue);
+Entity		*FindEntity (char *pszKey, char *pszValue);
+Entity		*FindEntityInt (char *pszKey, int iValue);
 
 epair_t	   *ParseEpair ();
 
 int			GetUniqueTargetId (int iHint);
 
-void		FillEntityListbox (HWND hwnd, int pointbased, int brushbased);	// sikk - Create Entity Dialog
-
-bool		IsBrushSelected (Brush* bSel);	// sikk - Export Selection (Map/Prefab)
 
 
 #endif

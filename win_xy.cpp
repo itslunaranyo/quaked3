@@ -98,7 +98,7 @@ int GetSelectionInfo ()
 	// lunaran TODO: what the fuck
 	for(b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if(b->owner->eclass->fixedsize)
+		if(b->owner->eclass->IsFixedSize())
 			retval = SELECTION_POINTENT;
 		else if(!_stricmp(b->owner->eclass->name, "worldspawn"))
 			retval = SELECTION_BRUSHES;
@@ -131,6 +131,7 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		EnableMenuItem(hMenu, ID_SELECTION_CSGHOLLOW, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CSGSUBTRACT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CSGMERGE, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_CSGCONVEXMERGE, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTCOMPLETETALL, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTTOUCHING, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTPARTIALTALL, MF_GRAYED);
@@ -138,14 +139,16 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		EnableMenuItem(hMenu, ID_REGION_SETBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETTALLBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETSELECTION, MF_GRAYED);
-		EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_MENU_CREATEPOINTENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_UNGROUPENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_INSERTBRUSH, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_DESELECT, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_GROUPNEXTBRUSH, MF_GRAYED);
 		break;
 	case SELECTION_BRUSHENT:
-		EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_MENU_CREATEPOINTENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED);
@@ -154,7 +157,9 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		EnableMenuItem(hMenu, ID_SELECTION_CONNECT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_UNGROUPENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_INSERTBRUSH, MF_GRAYED);
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_DESELECT, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_GROUPNEXTBRUSH, MF_GRAYED);
+		//	EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED);
 		break;
 	default:
 		EnableMenuItem(hMenu, ID_EDIT_CUT, MF_GRAYED);
@@ -166,6 +171,9 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		EnableMenuItem(hMenu, ID_SELECTION_CSGHOLLOW, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CSGSUBTRACT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CSGMERGE, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_CSGCONVEXMERGE, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_DESELECT, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_SELECTION_GROUPNEXTBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTCOMPLETETALL, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTTOUCHING, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_SELECTPARTIALTALL, MF_GRAYED);
@@ -174,8 +182,8 @@ void XYZWnd_DoPopupMenu(XYZView* xyz, int x, int y)
 		EnableMenuItem(hMenu, ID_REGION_SETBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETTALLBRUSH, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_REGION_SETSELECTION, MF_GRAYED);
-		EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
-		EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEANYENTITY, MF_GRAYED);
+	//	EnableMenuItem(hMenu, ID_MENU_CREATEBRUSHENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_CONNECT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_UNGROUPENTITY, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_INSERTBRUSH, MF_GRAYED);

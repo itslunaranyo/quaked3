@@ -31,6 +31,7 @@ public:
 	void MouseMoved (int x, int y, int buttons);
 	void MouseControl (float dtime);
 
+	void GetAimPoint(vec3_t pt);
 	void PointToRay(int x, int y, vec3_t rayOut);
 
 	void ChangeFloor(bool up);

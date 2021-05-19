@@ -36,7 +36,7 @@ void View::DrawPathLines()
 {
 	int			i, j, k;
 	vec3_t		mid, mid1;
-	entity_t   *se, *te;
+	Entity   *se, *te;
 	Brush	   *sb, *tb;
 	char	   *psz;
 	vec3_t		dir, s1, s2;
@@ -44,7 +44,7 @@ void View::DrawPathLines()
 	int			arrows;
 	int			num_entities;
 	char	   *ent_target[MAX_MAP_ENTITIES];
-	entity_t   *ent_entity[MAX_MAP_ENTITIES];
+	Entity   *ent_entity[MAX_MAP_ENTITIES];
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
 		return;

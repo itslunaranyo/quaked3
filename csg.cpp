@@ -92,7 +92,7 @@ void CSG_Hollow ()
 	{
 		next = b->next;
 
-		if (b->owner->eclass->fixedsize || b->hiddenBrush)
+		if (b->owner->eclass->IsFixedSize() || b->hiddenBrush)
 			continue;
 
 		for (f = b->brush_faces; f; f = f->next)
@@ -284,7 +284,7 @@ CSG_CanMerge
 bool CSG_CanMerge()
 {
 	Brush *b;
-	entity_t *owner;
+	Entity *owner;
 
 	if (!Select_HasBrushes())
 	{
@@ -302,7 +302,7 @@ bool CSG_CanMerge()
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner->eclass->fixedsize)
+		if (b->owner->eclass->IsFixedSize())
 		{
 			Sys_Printf("WARNING: Cannot add fixed size entities.\n");
 			return false;
@@ -782,7 +782,7 @@ void CSG_Subtract ()
 	{
 		next = b->next;
 
-		if (b->owner->eclass->fixedsize)
+		if (b->owner->eclass->IsFixedSize())
 			continue;	// can't use texture from a fixed entity, so don't subtract
 
 		// chop all fragments further up
@@ -824,7 +824,7 @@ void CSG_Subtract ()
 		{
 			snext = s->next;
 
-			if (s->owner->eclass->fixedsize || s->hiddenBrush)
+			if (s->owner->eclass->IsFixedSize() || s->hiddenBrush)
 				continue;
 
 			for (i = 0; i < 3; i++)
@@ -893,7 +893,7 @@ CSG_Merge
 void CSG_Merge ()
 {
 	Brush		*b, *next, *newlist, *newbrush;
-	//entity_t	*owner;
+	//Entity	*owner;
 
 	Sys_Printf("CMD: CSG Merging...\n");
 

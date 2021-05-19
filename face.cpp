@@ -507,7 +507,7 @@ void Face::SetColor()
 	q = d_texture;
 	shade = ShadeForPlane();
 
-	if (g_qeglobals.d_camera.draw_mode == cd_texture && !owner->owner->eclass->fixedsize)
+	if (g_qeglobals.d_camera.draw_mode == cd_texture && !owner->owner->eclass->IsFixedSize())
 	{
 		d_color[0] = d_color[1] = d_color[2] = shade;
 	}

@@ -95,7 +95,6 @@ BEGIN
         END
         POPUP "Toggle",                         65535,MFT_STRING,MFS_ENABLED
         BEGIN
-            MENUITEM MFT_SEPARATOR
             MENUITEM "Show A&xis",                  ID_VIEW_SHOWAXIS,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Angles",                ID_VIEW_SHOWANGLES,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Blocks",                ID_VIEW_SHOWBLOCKS,MFT_STRING,MFS_ENABLED
@@ -412,32 +411,45 @@ BEGIN
             MENUITEM "CSG Hollow",                  ID_SELECTION_CSGHOLLOW
             MENUITEM "CSG Subtract",                ID_SELECTION_CSGSUBTRACT
             MENUITEM "CSG Merge",                   ID_SELECTION_CSGMERGE
+            MENUITEM "CSG &Convex Merge",           ID_SELECTION_CSGCONVEXMERGE
         END
         MENUITEM SEPARATOR
-        POPUP "Select"
+        POPUP "&Selection"
         BEGIN
-            MENUITEM "Select Complete Tall",        ID_SELECTION_SELECTCOMPLETETALL
-            MENUITEM "Select Touching",             ID_SELECTION_SELECTTOUCHING
-            MENUITEM "Select Partial Tall",         ID_SELECTION_SELECTPARTIALTALL
-            MENUITEM "Select Inside",               ID_SELECTION_SELECTINSIDE
+            MENUITEM "&Complete Tall",              ID_SELECTION_SELECTCOMPLETETALL
+            MENUITEM "&Touching",                   ID_SELECTION_SELECTTOUCHING
+            MENUITEM "&Partial Tall",               ID_SELECTION_SELECTPARTIALTALL
+            MENUITEM "&Inside",                     ID_SELECTION_SELECTINSIDE
             MENUITEM SEPARATOR
-            MENUITEM "Select All",                  ID_SELECTION_SELECTALL
-            MENUITEM "Select All Type",             ID_SELECTION_SELECTALLTYPE
+            MENUITEM "Select &All",                 ID_SELECTION_SELECTALL
+            MENUITEM "Dese&lect",                   ID_SELECTION_DESELECT
+            MENUITEM "&Invert",                     ID_SELECTION_INVERT
+            MENUITEM "&Next Brush In Group",        ID_SELECTION_GROUPNEXTBRUSH
+            MENUITEM SEPARATOR
+            MENUITEM "Select All of T&ype",         ID_SELECTION_SELECTALLTYPE
+            MENUITEM "Select Matching Textures",    ID_SELECTION_SELECTMATCHINGTEXTURES
+            MENUITEM "Select by Key/Value",         ID_SELECTION_SELECTMATCHINGKEYVALUE
+            MENUITEM SEPARATOR
+            POPUP "Convert"
+            BEGIN
+                MENUITEM "Brushes to Faces",            ID_SELECTION_BRUSHESTOFACES
+                MENUITEM "Faces to Brushes (Complete)", ID_SELECTION_FACESTOBRUSHESCOMPLETE
+                MENUITEM "Faces to Brushes (Partial)",  ID_SELECTION_FACESTOBRUSHESPARTIAL
+            END
         END
         MENUITEM SEPARATOR
-        POPUP "Region"
+        POPUP "&Region"
         BEGIN
-            MENUITEM "Off",                         ID_REGION_OFF
+            MENUITEM "&Off",                        ID_REGION_OFF
             MENUITEM SEPARATOR
-            MENUITEM "Set XY",                      ID_REGION_SETXY
+            MENUITEM "Set &Selection",              ID_REGION_SETSELECTION
+            MENUITEM "Set &XY",                     ID_REGION_SETXY
             MENUITEM "Set XZ",                      ID_REGION_SETXZ
             MENUITEM "Set YZ",                      ID_REGION_SETYZ
-            MENUITEM "Set Brush",                   ID_REGION_SETBRUSH
-            MENUITEM "Set Brush Tall",              ID_REGION_SETTALLBRUSH
-            MENUITEM "Set Selected Brushes",        ID_REGION_SETSELECTION
+            MENUITEM "Set &Brush",                  ID_REGION_SETBRUSH
+            MENUITEM "Set Brush &Tall",             ID_REGION_SETTALLBRUSH
         END
         MENUITEM SEPARATOR
-        MENUITEM "Create Entity",               ID_MENU_CREATEANYENTITY
         MENUITEM "Create Brush Entity",         ID_MENU_CREATEBRUSHENTITY
         MENUITEM "Create Point Entity",         ID_MENU_CREATEPOINTENTITY
         MENUITEM SEPARATOR
@@ -1408,6 +1420,7 @@ END
 STRINGTABLE
 BEGIN
     ID_SELECTION_CLONE      "Clone Selection (Space)"
+    ID_SELECTION_DESELECT   "Deselect"
     ID_SELECTION_DELETE     "Delete Selection (Backspace)"
     ID_SELECTION_DRAGVERTICES "Set Drag Vertex Mode (V)"
     ID_SELECTION_DRAGEDGES  "Set Drag Edges Mode (E)"

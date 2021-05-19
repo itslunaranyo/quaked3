@@ -93,7 +93,7 @@ typedef struct
 
 //========================================================================
 
-#include <list>
+#include <vector>
 #include <map>
 
 namespace Textures
@@ -114,7 +114,7 @@ namespace Textures
 	void RemoveFromNameMap(TextureGroup* tg);
 	void AddToNameMap(TextureGroup* tg);
 
-	extern std::list<TextureGroup*> groups;
+	extern std::vector<TextureGroup*> groups;
 	extern std::map<label_t, Texture*> texMap;
 	extern Texture *nulltexture;
 

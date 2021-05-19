@@ -87,6 +87,21 @@ int Select_NumFaces()
 	return g_nSelFaceCount;
 }
 
+/*
+=================
+Select_IsBrushSelected
+=================
+*/
+bool Select_IsBrushSelected(Brush* bSel)
+{
+	Brush* b;
+
+	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
+		if (b == bSel)
+			return true;
+
+	return false;
+}
 
 /*
 ================
@@ -116,7 +131,7 @@ void Select_SelectBrushSorted(Brush* b)
 
 	// world brushes, point entities, and brush ents with only one brush go to the end 
 	// of the list, so we don't keep looping over them looking for buddies
-	if (b->owner == g_peWorldEntity || b->owner->eclass->fixedsize || b->onext == b)
+	if (b->owner == g_peWorldEntity || b->owner->eclass->IsFixedSize() || b->onext == b)
 	{
 		b->AddToList(g_brSelectedBrushes.prev);
 		return;
@@ -143,7 +158,7 @@ Select_HandleBrush
 void Select_HandleBrush (Brush *brush, bool bComplete)
 {
 	Brush	   *b;
-	entity_t   *e;
+	Entity   *e;
 
 	Select_DeselectAllFaces();	// sikk - Multiple Face Selection
 
@@ -345,8 +360,7 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 				continue;
 			if (brush->IsFiltered())
 				continue;
-			if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->fixedsize)
-				// lunaran FIXME: this makes it impossible to select faces on point-entity-with-brushes hacks
+			if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->IsFixedSize())
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
 			if (dist > 0 && dist < t.dist)
@@ -365,8 +379,7 @@ trace_t Test_Ray(vec3_t origin, vec3_t dir, int flags)
 			continue;
 		if (brush->IsFiltered())
 			continue;
-		if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->fixedsize)
-			// lunaran FIXME: this makes it impossible to select faces on point-entity-with-brushes hacks
+		if (flags & (SF_NOFIXEDSIZE | SF_SINGLEFACE) && brush->owner->eclass->IsFixedSize())
 			continue;
 		face = brush->RayTest(origin, dir, &dist);
 		if (dist > 0 && dist < t.dist)
@@ -596,7 +609,7 @@ OnEntityList
 returns true if pFind is in pList
 ===============
 */
-bool OnEntityList(entity_t *pFind, entity_t *pList[MAX_MAP_ENTITIES], int nSize)
+bool OnEntityList(Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize)
 {
 	while (nSize-- > 0)
 	{
@@ -1012,7 +1025,7 @@ void Select_NextBrushInGroup()
 {
 	Brush		*b;
 	Brush		*b2;
-	entity_t	*e;
+	Entity	*e;
 
 	// check to see if the selected brush is part of a func group
 	// if it is, deselect everything and reselect the next brush 
@@ -1119,7 +1132,7 @@ void Select_Clone ()
 {
 	Brush	   *b, *b2, *n, *next, *next2;
 	vec3_t		delta;
-	entity_t   *e;
+	Entity   *e;
 
 	//g_qeglobals.d_nWorkCount++;
 	g_qeglobals.d_selSelectMode = sel_brush;
@@ -1190,7 +1203,7 @@ void Select_Clone ()
 //		DeleteKey(e, "targetname");
 
 		// if the brush is a fixed size entity, create a new entity
-		if (b->owner->eclass->fixedsize)
+		if (b->owner->eclass->IsFixedSize())
 		{
 			n = b->Clone();
 			n->AddToList(&g_brActiveBrushes);
@@ -1516,12 +1529,12 @@ Turn the currently selected entity back into normal brushes
 */
 void Select_Ungroup ()
 {
-	entity_t	*e;
+	Entity	*e;
 	Brush		*b;
 
 	e = g_brSelectedBrushes.next->owner;
 
-	if (!e || e == g_peWorldEntity || e->eclass->fixedsize)
+	if (!e || e == g_peWorldEntity || e->eclass->IsFixedSize())
 	{
 		Sys_Printf("WARNING: Not a grouped entity.\n");
 		return;
@@ -1550,9 +1563,9 @@ Select_InsertBrush
 */
 void Select_InsertBrush ()
 {
-	eclass_t   *ec;
+	EntClass   *ec;
 	epair_t	   *ep;
-	entity_t   *e, *e2;
+	Entity   *e, *e2;
 	Brush	   *b;
 	bool		bCheck = false, bInserting = false;
 
@@ -1563,7 +1576,7 @@ void Select_InsertBrush ()
 	// if any selected brushes is a point entity, return
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		if (b->owner->eclass->fixedsize)
+		if (b->owner->eclass->IsFixedSize())
 		{
 			Sys_Printf("WARNING: Selection contains a point entity. No insertion done\n");
 			return;
@@ -1598,9 +1611,7 @@ void Select_InsertBrush ()
 	}
 
 	// create it
-	e = (entity_t*)qmalloc(sizeof(*e));
-//	e->entityId = g_nEntityId++;	// sikk - Undo/Redo
-	e->brushes.onext = e->brushes.oprev = &e->brushes;
+	e = new Entity();	// note: this shouldn't increment entityid for some reason
 	e->eclass = ec;
 	e->epairs = ep;
 
@@ -1685,7 +1696,7 @@ lunaran TODO: confirmation box if target & targetname already clash before overw
 */
 void Select_ConnectEntities ()
 {
-	entity_t	*e1, *e2, *e;
+	Entity	*e1, *e2, *e;
 	char		*target, *tn;
 	Brush		*b;
 	char		newtarg[32];
@@ -1761,7 +1772,7 @@ void Select_Cut ()
 {
 	int nCount = 0;
 	Brush		*b, *b2, *eb, *eb2;
-	entity_t	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
+	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
 
 	Brush::FreeList(&g_brCopiedBrushes);
@@ -1811,7 +1822,7 @@ void Select_Copy ()
 {
 	int nCount = 0;
 	Brush		*b, *b2, *eb, *eb2;
-	entity_t	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
+	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
 
 	Brush::FreeList(&g_brCopiedBrushes);
 	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
@@ -1855,7 +1866,7 @@ Select_Paste
 void Select_Paste ()
 {
 	Brush		*b, *b2, *eb, *eb2;
-	entity_t	*e, *e2;
+	Entity	*e, *e2;
 
 //	if (g_brCopiedBrushes.next != &g_brCopiedBrushes || g_entCopiedEntities.next != &g_entCopiedEntities)
 	if (g_brCopiedBrushes.next != NULL)

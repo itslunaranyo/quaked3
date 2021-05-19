@@ -11,7 +11,7 @@ vec3_t  g_v3Vecs[2];
 float	g_fShift[2];
 
 bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when
-					// a bad texdef is found during saving map so it doesn't
+					// a bad inTexDef is found during saving map so it doesn't
 					// continuously popup with each bad face. It's reset to 
 					// "false" after saving is complete.
 
@@ -202,43 +202,61 @@ The brush is NOT linked to any list
 */
 Brush *Brush::Create(vec3_t mins, vec3_t maxs, texdef_t *texdef)
 {
-	int			i, j;
-	vec3_t		pts[4][2];
 	Brush	   *b;
-	Face	   *f;
 
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
+	{
 		if (maxs[i] <= mins[i])
 			Error("Brush_InitSolid: Backwards.");
+	}
 
 	b = new Brush();
-	VectorCopy(mins, b->mins);
-	VectorCopy(maxs, b->maxs);
 
-	pts[0][0][0] = mins[0];
-	pts[0][0][1] = mins[1];
+	b->Recreate(mins, maxs, texdef);
+	return b;
+}
 
-	pts[1][0][0] = mins[0];
-	pts[1][0][1] = maxs[1];
+void Brush::Recreate(vec3_t inMins, vec3_t inMaxs, texdef_t *inTexDef)
+{
+	vec3_t		pts[4][2];
+	int			i, j;
+	Face	   *f, *fnext;
 
-	pts[2][0][0] = maxs[0];
-	pts[2][0][1] = maxs[1];
+	// free old faces
+	for (f = brush_faces; f; f = fnext)
+	{
+		fnext = f->next;
+		delete f;
+		brush_faces = nullptr;
+	}
 
-	pts[3][0][0] = maxs[0];
-	pts[3][0][1] = mins[1];
+	VectorCopy(inMins, mins);
+	VectorCopy(inMaxs, maxs);
+
+	pts[0][0][0] = inMins[0];
+	pts[0][0][1] = inMins[1];
+
+	pts[1][0][0] = inMins[0];
+	pts[1][0][1] = inMaxs[1];
+
+	pts[2][0][0] = inMaxs[0];
+	pts[2][0][1] = inMaxs[1];
+
+	pts[3][0][0] = inMaxs[0];
+	pts[3][0][1] = inMins[1];
 
 	for (i = 0; i < 4; i++)
 	{
-		pts[i][0][2] = mins[2];
+		pts[i][0][2] = inMins[2];
 		pts[i][1][0] = pts[i][0][0];
 		pts[i][1][1] = pts[i][0][1];
-		pts[i][1][2] = maxs[2];
+		pts[i][1][2] = inMaxs[2];
 	}
 
 	for (i = 0; i < 4; i++)
 	{
-		f = new Face(b);
-		f->texdef = *texdef;
+		f = new Face(this);
+		f->texdef = *inTexDef;
 		j = (i + 1) % 4;
 
 		VectorCopy(pts[j][1], f->planepts[0]);
@@ -246,21 +264,19 @@ Brush *Brush::Create(vec3_t mins, vec3_t maxs, texdef_t *texdef)
 		VectorCopy(pts[i][0], f->planepts[2]);
 	}
 
-	f = new Face(b);
-	f->texdef = *texdef;
+	f = new Face(this);
+	f->texdef = *inTexDef;
 
 	VectorCopy(pts[0][1], f->planepts[0]);
 	VectorCopy(pts[1][1], f->planepts[1]);
 	VectorCopy(pts[2][1], f->planepts[2]);
 
-	f = new Face(b);
-	f->texdef = *texdef;
+	f = new Face(this);
+	f->texdef = *inTexDef;
 
 	VectorCopy(pts[2][0], f->planepts[0]);
 	VectorCopy(pts[1][0], f->planepts[1]);
 	VectorCopy(pts[0][0], f->planepts[2]);
-
-	return b;
 }
 
 
@@ -347,7 +363,7 @@ void Brush::Move(vec3_t move)
 
 	for (f = brush_faces; f; f = f->next)
 	{
-		if (!owner->eclass->fixedsize)
+		if (!owner->eclass->IsFixedSize())
 			if (g_qeglobals.d_bTextureLock)
 				f->MoveTexture(move);
 
@@ -358,14 +374,11 @@ void Brush::Move(vec3_t move)
 	Build();
 
 	// PGM - keep the origin vector up to date on fixed size entities.
-	if (owner->eclass->fixedsize && onext != this)
+	if (owner->eclass->IsFixedSize() && onext != this)
 	{
-		VectorAdd(owner->origin, move, owner->origin);
-
-		// lunaran: update the keyvalue too
-		vec3_t origin;
-		VectorSubtract(mins, owner->eclass->mins, origin);
-		SetKeyValueIVector(owner, "origin", origin);
+		// lunaran: update everything
+		Entity_SetOriginFromBrush(owner);
+	//	VectorAdd(owner->origin, move, owner->origin);
 
 		// lunaran TODO: update only once at the end of a drag or the window flickers too much
 		//EntWnd_UpdateUI();
@@ -574,12 +587,12 @@ detect potential problems when saving the texture name and apply default tex
 */
 void Brush::CheckTexdef (Face *f, char *pszName)
 {
-/*	if (!strlen(f->texdef.name))
+/*	if (!strlen(f->inTexDef.name))
 	{
 #ifdef _DEBUG
-		Sys_Printf("WARNING: Unexpected texdef.name is empty in Brush.cpp Brush_CheckTexdef()\n");
+		Sys_Printf("WARNING: Unexpected inTexDef.name is empty in Brush.cpp Brush_CheckTexdef()\n");
 #endif
-//		fa->texdef.SetName("unnamed");
+//		fa->inTexDef.SetName("unnamed");
 		strcpy(pszName, "unnamed");
 		return;
 	}
@@ -626,7 +639,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 		return;
 	}
 
-//	strcpy(pszName, f->texdef.name);
+//	strcpy(pszName, f->inTexDef.name);
 }
 
 /*
@@ -735,7 +748,7 @@ void Brush::SelectFaceForDragging(Face *f, bool shear)
 	Face	   *f2;
 	winding_t  *w;
 
-	if (owner->eclass->fixedsize)
+	if (owner->eclass->IsFixedSize())
 		return;
 
 	c = 0;
@@ -1007,7 +1020,7 @@ bool Brush::MoveVertex(vec3_t vertex, vec3_t delta, vec3_t end)
 
 						// get the texture
 						newface->d_texture = face->d_texture;
-						//newface->d_texture = Texture_ForName(newface->texdef.name);
+						//newface->d_texture = Texture_ForName(newface->inTexDef.name);
 
 						// add the face to the brush
 						newface->next = brush_faces;
@@ -1653,10 +1666,10 @@ void Brush::Draw ()
 	if (hiddenBrush)
 		return;
 
-//	if (owner->eclass->fixedsize && g_qeglobals.d_camera.draw_mode == cd_texture)
+//	if (owner->eclass->IsFixedSize() && g_qeglobals.d_camera.draw_mode == cd_texture)
 //		glDisable (GL_TEXTURE_2D);
 
-	if (owner->eclass->fixedsize)
+	if (owner->eclass->IsFixedSize())
 	{
 		if (!(g_qeglobals.d_savedinfo.nExclude & EXCLUDE_ANGLES) && (owner->eclass->nShowFlags & ECLASS_ANGLE))
 			DrawFacingAngle();
@@ -1702,7 +1715,7 @@ void Brush::Draw ()
 		glEnd();
 	}
 
-	if (owner->eclass->fixedsize && g_qeglobals.d_camera.draw_mode == cd_texture)
+	if (owner->eclass->IsFixedSize() && g_qeglobals.d_camera.draw_mode == cd_texture)
 		glEnable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -1726,7 +1739,7 @@ void Brush::DrawXY (int nViewType)
 	if (hiddenBrush)
 		return;
 
-	if (owner->eclass->fixedsize)
+	if (owner->eclass->IsFixedSize())
 	{
 		if (g_qeglobals.d_savedinfo.bRadiantLights && (owner->eclass->nShowFlags & ECLASS_LIGHT))
 		{

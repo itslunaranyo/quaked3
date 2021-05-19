@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 #include "io.h"
-
+#include <algorithm>	// for sort
 
 #define	MAX_TEXTUREDIRS	128
 
@@ -31,7 +31,7 @@ char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
 
 //=====================================================
 
-std::list<TextureGroup*>	Textures::groups;
+std::vector<TextureGroup*>	Textures::groups;
 std::map<label_t, Texture*>	Textures::texMap;
 TextureGroup				Textures::group_solid;
 TextureGroup				Textures::group_unknown;
@@ -109,7 +109,6 @@ void Textures::ClearUsed()
 		(*tgIt)->ClearUsed();
 
 	// TODO: should "refresh used" instead, so used status contains no false negatives
-	// otherwise FlushUnused could flush used textures
 	g_qeglobals.d_texturewin.stale = true;
 }
 
@@ -301,7 +300,7 @@ void Textures::LoadWad(const char* wadfile)
 
 		Textures::AddToNameMap(wad);
 		groups.push_back(wad);
-		groups.sort(TextureGroup::sortcmp);
+		std::sort(groups.begin(),groups.end(),TextureGroup::sortcmp);
 	}
 
 	g_qeglobals.d_texturewin.stale = true;

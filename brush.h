@@ -5,6 +5,7 @@
 //	brush.h
 //==============================
 
+class Entity;
 class Brush
 {
 public:
@@ -13,8 +14,8 @@ public:
 
 	Brush	*prev, *next;	// links in active/selected
 	Brush	*oprev, *onext;	// links in entity
-	struct entity_s	*owner;
-	Face *brush_faces;
+	Entity	*owner;
+	Face	*brush_faces;
 	vec3_t	mins, maxs;
 	bool	hiddenBrush;
 
@@ -32,15 +33,15 @@ public:
 	bool	IsFiltered() const;
 
 	static Brush *Create (vec3_t mins, vec3_t maxs, texdef_t *texdef);
+	void	Recreate(vec3_t inMins, vec3_t inMaxs, texdef_t *inTexDef);
 	Brush	*Clone() const;
 	Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	Move(vec3_t move);
 
 	void	Build();
-	void	BuildWindings();
-	winding_t *MakeFaceWinding(Face *face);
 	void	MakeFacePlanes();
 	void	SnapPlanePoints();
+	winding_t *MakeFaceWinding(Face *face);
 	void	RemoveEmptyFaces();
 
 	void	CheckTexdef(Face *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug

@@ -41,7 +41,7 @@ void Undo_GeneralStart (char *operation)
 {
 	undo_t		*undo;
 	Brush		*pBrush;
-	entity_t	*pEntity;
+	Entity	*pEntity;
 
 	if (g_lastundo)
 		if (!g_lastundo->done)
@@ -217,7 +217,7 @@ void Undo_AddBrushList (Brush *brushlist)
 		// if it's a fixed size entity, the brush that reprents it is not really relevant, it's used for selecting and moving around
 		// what we want to store for undo is the owner entity, epairs and origin/angle stuff
 		// ++timo FIXME: if the entity is not fixed size I don't know, so I don't do it yet
-		if (pBrush->owner->eclass->fixedsize)
+		if (pBrush->owner->eclass->IsFixedSize())
 			Undo_AddEntity(pBrush->owner);
 
 		// clone the brush
@@ -286,9 +286,9 @@ void Undo_EndBrushList (Brush *brushlist)
 Undo_AddEntity
 =============
 */
-void Undo_AddEntity (entity_t *entity)
+void Undo_AddEntity (Entity *entity)
 {
-	entity_t *pClone;
+	Entity *pClone;
 
 	if (!g_lastundo)
 	{
@@ -322,7 +322,7 @@ void Undo_AddEntity (entity_t *entity)
 Undo_EndEntity
 =============
 */
-void Undo_EndEntity (entity_t *entity)
+void Undo_EndEntity (Entity *entity)
 {
 	if (!g_lastundo)
 	{
@@ -369,9 +369,9 @@ bool Undo_BrushInUndo (undo_t *undo, Brush *brush)
 Undo_EntityInUndo
 =============
 */
-bool Undo_EntityInUndo (undo_t *undo, entity_t *ent)
+bool Undo_EntityInUndo (undo_t *undo, Entity *ent)
 {
-	entity_t *e;
+	Entity *e;
 
 	for (e = undo->entitylist.next; e != &undo->entitylist; e = e->next)
 		if (e == ent) 
@@ -389,7 +389,7 @@ void Undo_Undo ()
 {
 	undo_t		*undo, *redo;
 	Brush		*pBrush, *pNextBrush;
-	entity_t	*pEntity, *pNextEntity, *pUndoEntity;
+	Entity	*pEntity, *pNextEntity, *pUndoEntity;
 
 	if (!g_lastundo)
 	{
@@ -575,7 +575,7 @@ void Undo_Redo()
 {
 	undo_t		*redo;
 	Brush		*pBrush, *pNextBrush;
-	entity_t	*pEntity, *pNextEntity, *pRedoEntity;
+	Entity	*pEntity, *pNextEntity, *pRedoEntity;
 
 	if (!g_lastredo)
 	{
@@ -740,7 +740,7 @@ void Undo_Clear ()
 {
 	undo_t		*undo, *nextundo;
 	Brush		*pBrush, *pNextBrush;
-	entity_t	*pEntity, *pNextEntity;
+	Entity	*pEntity, *pNextEntity;
 
 	Undo_ClearRedo();
 
@@ -782,7 +782,7 @@ void Undo_ClearRedo ()
 {
 	undo_t		*redo, *nextredo;
 	Brush		*pBrush, *pNextBrush;
-	entity_t	*pEntity, *pNextEntity;
+	Entity	*pEntity, *pNextEntity;
 
 	for (redo = g_redolist; redo; redo = nextredo)
 	{
@@ -817,7 +817,7 @@ void Undo_FreeFirstUndo ()
 {
 	undo_t		*undo;
 	Brush		*pBrush, *pNextBrush;
-	entity_t	*pEntity, *pNextEntity;
+	Entity	*pEntity, *pNextEntity;
 
 	// remove the oldest undo from the undo buffer
 	undo = g_undolist;
@@ -904,7 +904,7 @@ int Undo_MemorySize ()
 	int			size;
 	undo_t	   *undo;
 	Brush    *pBrush;
-	entity_t   *pEntity;
+	Entity   *pEntity;
 
 	size = 0;
 	for (undo = g_undolist; undo; undo = undo->next)

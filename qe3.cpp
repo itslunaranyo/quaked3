@@ -535,7 +535,7 @@ bool QE_LoadProject (char *projectfile)
 	Sys_Printf("MSG: defaultwads: %s\n",	ValueForKey(g_qeglobals.d_entityProject, "defaultwads"));
 	Sys_Printf("MSG: toolspath: %s\n",		ValueForKey(g_qeglobals.d_entityProject, "rshcmd"));
 
-	Eclass_InitForSourceDirectory(ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
+	EntClass::InitForSourceDirectory(ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
 
 	EntWnd_FillClassList();	// list in entity window
 	FillTextureMenu();
@@ -559,7 +559,7 @@ bool QE_SingleBrush ()
 		Sys_Printf("WARNING: Must have a single brush selected.\n");
 		return false;
 	}
-	if (g_brSelectedBrushes.next->owner->eclass->fixedsize)
+	if (g_brSelectedBrushes.next->owner->eclass->IsFixedSize())
 	{
 		Sys_Printf("WARNING: Cannot manipulate fixed size entities.\n");
 		return false;
@@ -664,7 +664,7 @@ void QE_CountBrushesAndUpdateStatusBar ()
 	static int	s_lastbrushcount, s_lastentitycount, s_lasttexturecount;
 	static bool	s_didonce;
 	
-//	entity_t	*e;
+//	Entity	*e;
 	Brush		*b, *next;
 	Texture	*q;
 
@@ -679,10 +679,10 @@ void QE_CountBrushesAndUpdateStatusBar ()
 			next = b->next;
 			if (b->brush_faces)
 			{
-				if (!b->owner->eclass->fixedsize)
-					g_nNumBrushes++;
-				else
+				if (b->owner->eclass->IsFixedSize())
 					g_nNumEntities++;
+				else
+					g_nNumBrushes++;
 			}
 		}
 	}

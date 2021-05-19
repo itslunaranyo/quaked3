@@ -12,11 +12,11 @@ extern char			g_szCurrentMap[MAX_PATH];
 extern Brush		g_brActiveBrushes;		// brushes currently being displayed
 extern Brush		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
-extern entity_t		g_entEntities;
-extern entity_t	   *g_peWorldEntity;		// the world entity is NOT included in the entities chain
+extern Entity		g_entEntities;
+extern Entity	   *g_peWorldEntity;		// the world entity is NOT included in the entities chain
 
 extern Brush		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
-extern entity_t		g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
+extern Entity		g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 
 extern BOOL			g_bModified;			// for quit confirmations
 
@@ -49,7 +49,7 @@ void Map_AddRegionBrushes ();
 void Map_RemoveRegionBrushes ();
 bool Map_IsBrushFiltered (Brush *b);
 
-entity_t *Map_FindClass (char *cname);
+Entity *Map_FindClass (char *cname);
 
 
 

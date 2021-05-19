@@ -13,17 +13,17 @@ char		g_szCurrentMap[MAX_PATH];
 Brush		g_brActiveBrushes;		// brushes currently being displayed
 Brush		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
-entity_t	g_entEntities;			// head/tail of doubly linked list
-entity_t   *g_peWorldEntity;
+Entity	g_entEntities;			// head/tail of doubly linked list
+Entity   *g_peWorldEntity;
 
 Brush		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
-entity_t	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
+Entity	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 
 
 // Cross map selection saving
 // this could fuck up if you have only part of a complex entity selected...
 Brush		g_brBetweenBrushes;
-entity_t	g_entBetweenEntities;
+Entity	g_entBetweenEntities;
 
 int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
 
@@ -36,7 +36,7 @@ Map_SaveBetween
 void Map_SaveBetween ()
 {
 	Brush		*b;
-	entity_t	*e, *e2;
+	Entity	*e, *e2;
 
 	g_brBetweenBrushes.next = g_brSelectedBrushes.next;
 	g_brBetweenBrushes.prev = g_brSelectedBrushes.prev;
@@ -76,7 +76,7 @@ Map_RestoreBetween
 */
 void Map_RestoreBetween ()
 {
-	entity_t	*head, *tail;
+	Entity	*head, *tail;
 	Brush		*b;
 
 	if (!g_brBetweenBrushes.next)
@@ -153,9 +153,9 @@ void Map_BuildBrushData ()
 Map_FindClass
 ==================
 */
-entity_t *Map_FindClass (char *cname)
+Entity *Map_FindClass (char *cname)
 {
-	entity_t *ent;
+	Entity *ent;
 
 	for (ent = g_entEntities.next; ent != &g_entEntities; ent = ent->next)
 		if (!strcmp(cname, ValueForKey(ent, "classname")))
@@ -217,7 +217,7 @@ void Map_LoadFile (char *filename)
     char	   *buf;
 	char		temp[1024];
 	char	   *tempwad, wadkey[1024];
-	entity_t   *ent;
+	Entity   *ent;
 	bool		bSnapCheck = false;
 
 	Sys_BeginWait();
@@ -339,7 +339,7 @@ Map_SaveFile
 */
 void Map_SaveFile (char *filename, bool use_region)
 {
-	entity_t   *e, *next;
+	Entity   *e, *next;
 	FILE	   *f;
 	char        temp[1024];
 	int			count;
@@ -440,9 +440,9 @@ void Map_New ()
 	Sys_Printf("CMD: Map_New\n");
 	Map_Free();
 
-	g_peWorldEntity = (entity_t*)qmalloc(sizeof(*g_peWorldEntity));
-	g_peWorldEntity->brushes.onext = g_peWorldEntity->brushes.oprev = &g_peWorldEntity->brushes;
+	g_peWorldEntity = new Entity();
 	SetKeyValue(g_peWorldEntity, "classname", "worldspawn");
+
 // sikk---> Wad Loading
 	//	SetKeyValue(g_peWorldEntity, "wad", g_szWadString);
 	strcpy(buf, ValueForKey(g_qeglobals.d_entityProject, "defaultwads"));
@@ -462,7 +462,8 @@ void Map_New ()
 		SetKeyValue(g_peWorldEntity, "wad", tempwads);
 	}
 // <---sikk
-	g_peWorldEntity->eclass = Eclass_ForName("worldspawn", true);
+
+	g_peWorldEntity->eclass = EntClass::ForName("worldspawn", true, true);
 	
 	g_qeglobals.d_camera.angles[YAW] = 0;
 	VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
@@ -803,7 +804,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 	char	   *tempwad, wadkey[1024];
 	Brush	   *b = NULL, *bNext;
 	Brush    *brArray[MAX_MAP_BRUSHES];
-	entity_t   *ent;
+	Entity   *ent;
 	bool		bSnapCheck = false;	// sikk
 
 	Sys_BeginWait();
@@ -931,7 +932,7 @@ Map_ExportFile
 */
 void Map_ExportFile (char *filename, bool bCheck)
 {
-	entity_t   *e, *next;
+	Entity   *e, *next;
 	FILE	   *f;
 	char		temp[1024];
 	int			nCount;

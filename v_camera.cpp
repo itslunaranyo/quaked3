@@ -520,7 +520,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 			}
 
 			VectorSubtract(maxs, mins, size);
-			if (t.brush->owner->eclass->fixedsize)
+			if (t.brush->owner->eclass->IsFixedSize())
 				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
 			else
 				sprintf(camstring, "%s (%d %d %d) %s", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2], t.face->texdef.name);
@@ -587,6 +587,24 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		}
 	}
 }
+
+/*
+============
+CameraView::GetAimPoint
+pick a spot somewhere in front of the camera for dropping entities
+============
+*/
+void CameraView::GetAimPoint(vec3_t pt)
+{
+	float		dist;
+	trace_t		t;
+
+	t = Test_Ray(origin, vpn, SF_NOFIXEDSIZE);
+	dist = min(240, t.dist);
+	VectorMA(origin, dist, vpn, pt);
+	SnapToPoint(pt);
+}
+
 
 /*
 ============

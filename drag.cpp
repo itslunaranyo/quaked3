@@ -17,7 +17,7 @@ static int		pressx, pressy;
 static vec3_t	pressdelta;
 static int		buttonx, buttony;
 
-entity_t	   *g_peLink;
+Entity	   *g_peLink;
 
 /*
 ==============
@@ -136,7 +136,7 @@ UpdateTarget
 void UpdateTarget (vec3_t origin, vec3_t dir)
 {
 	trace_t		t;
-	entity_t   *pe;
+	Entity   *pe;
 	int			i;
 	char		sz[128];
 
@@ -278,7 +278,7 @@ void Drag_Setup(int x, int y, int buttons,
 		else
 			g_brSelectedBrushes.next->SideSelect(origin, dir, false);
 	}
-	if (g_brSelectedBrushes.next->owner->eclass->fixedsize)
+	if (g_brSelectedBrushes.next->owner->eclass->IsFixedSize())
 		Sys_Printf("CMD: Dragging entire selection.\n");
 	else
 		Sys_Printf("CMD: Side stretch.\n");

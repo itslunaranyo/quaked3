@@ -102,7 +102,7 @@ void FindBrush (int entitynum, int brushnum)
 {
 	int			i;
 	Brush	   *b;
-	entity_t   *e;
+	Entity   *e;
 
 	if (entitynum == 0)
 		e = g_peWorldEntity;
@@ -153,7 +153,7 @@ GetSelectionIndex
 void GetSelectionIndex (int *entity, int *brush)
 {
 	Brush		*b, *b2;
-	entity_t	*e;
+	Entity	*e;
 
 	*entity = *brush = 0;
 
@@ -921,14 +921,15 @@ FillEntityListbox
 */
 void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 {
-	eclass_t   *pec;
+	EntClass   *pec;
 	int			index;
 
 	SendMessage(hwnd, LB_RESETCONTENT, 0, 0);
 
-	for (pec = g_pecEclass; pec; pec = pec->next)
+	for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 	{
-		if (pec->fixedsize)
+		pec = *ecIt;
+		if (pec->IsFixedSize())
 		{
 			if (bPointbased)
 			{
@@ -953,28 +954,66 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 MakeEntity
 ============
 */
-int MakeEntity (HWND h)
+Entity* MakeEntityConfirm(EntClass *pec)
 {
-	int			index;
-	eclass_t   *pec;
-	char	   *text = "You have chosen to create a point-based entity\nwith more than one brush selected. This operation\nwill create one entity centered on the midpoint of\nall selected brushes and the selected brushes will\nbe deleted. Are you sure you want to do this?";
-	
-	index = SendMessage(h, LB_GETCURSEL, 0, 0);
-	pec = (eclass_t *)SendMessage(h, LB_GETITEMDATA, index, 0);
+	char		text[768];
+	int			result;
+	Entity* out;
+	bool		repbrushes;
 
-	if (pec->fixedsize && g_brSelectedBrushes.next != &g_brSelectedBrushes && g_brSelectedBrushes.next->next != &g_brSelectedBrushes)
-		if (MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) != IDOK)
-			return false;
+	if (pec->IsFixedSize() && Select_HasBrushes())
+	{
+		sprintf(text,
+			"You have chosen to create a %s\nwith brushes selected. Select 'Yes' to delete\nthe selected brushes and replace them with a\n%s at their midpoint, or 'No' to\ncreate a 'hacked' brush entity with the\nclassname %s.",
+			pec->name, pec->name, pec->name);
+
+		result = MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_YESNOCANCEL | MB_ICONQUESTION);
+		if (result == IDCANCEL)
+			return nullptr;
+		repbrushes = (result == IDYES);
+	}
+	else
+		repbrushes = true;
 
 	Undo_Start("Create Entity");
 	Undo_AddBrushList(&g_brSelectedBrushes);
-	VectorAdd(g_brSelectedBrushes.mins, pec->mins, g_brSelectedBrushes.mins);
-	Entity_Create(pec);
+	out = Entity_Create(pec);
 	Undo_EndBrushList(&g_brSelectedBrushes);
 	Undo_End();
 
-	return true;
+	return out;
 }
+Entity* MakeEntity (HWND h)
+{
+	int			index;
+	EntClass   *pec;
+	Entity* out;
+
+	index = SendMessage(h, LB_GETCURSEL, 0, 0);
+	pec = (EntClass *)SendMessage(h, LB_GETITEMDATA, index, 0);
+
+	Undo_Start("Create Entity");
+	Undo_AddBrushList(&g_brSelectedBrushes);
+	out = Entity_Create(pec);
+	Undo_EndBrushList(&g_brSelectedBrushes);
+	Undo_End();
+
+	return out;
+}
+
+bool ConfirmClassnameHack(EntClass *desired)
+{
+	char	text[768];
+
+	if (desired->IsFixedSize())
+		sprintf(text, "%s is a point entity. Are you sure you want to\ncreate one out of the selected brushes?", desired->name);
+	else
+		sprintf(text, "%s is a brush-based entity. Are you sure you want to create one with no brushes?", desired->name);
+
+	return (MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
+}
+
+
 
 /*
 ============
@@ -1079,8 +1118,8 @@ BOOL CALLBACK MapInfoDlgProc (
 				nClipBrushes = 0;
 	Brush    *pBrush;
 	Face	   *pFace;
-	entity_t   *pEntity;
-	eclass_t   *pEClass;
+	Entity   *pEntity;
+	EntClass   *pEClass;
 	char		sz[256];
 	int			nTabs[] = {128};
 
@@ -1099,10 +1138,10 @@ BOOL CALLBACK MapInfoDlgProc (
 					nTotalFaces++;
 				nTotalBrushes++;
 			}
-			else if (!pBrush->owner->eclass->fixedsize)
-				nTotalBrushEnts++;
-			else
+			else if (pBrush->owner->eclass->IsFixedSize())
 				nTotalPointEnts++;
+			else
+				nTotalBrushEnts++;
 
 			if (!strncmp(pBrush->brush_faces->texdef.name, "sky", 3))
 				nSkyBrushes++;
@@ -1112,8 +1151,9 @@ BOOL CALLBACK MapInfoDlgProc (
 				nClipBrushes++;
 		}
 
-		for (pEClass = g_pecEclass; pEClass; pEClass = pEClass->next)
+		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++) 
 		{
+			pEClass = *ecIt;
 			for (pEntity = g_entEntities.next; pEntity != &g_entEntities; pEntity = pEntity->next)
 				if (pEntity->eclass->name == pEClass->name)
 					nCount++;
@@ -1195,7 +1235,7 @@ and adds the item to the tree view.
 ============
 */
 HTREEITEM AddOneItem (HWND hWnd, HTREEITEM hParent, HTREEITEM hInsAfter,
-					  LPSTR szText, entity_t *pEntity)
+					  LPSTR szText, Entity *pEntity)
 {
 	HTREEITEM		hItem;
 	TVITEM			tvI;
@@ -1222,7 +1262,7 @@ HTREEITEM AddOneItem (HWND hWnd, HTREEITEM hParent, HTREEITEM hInsAfter,
 AddTreeViewItems
 ============
 */
-void AddTreeViewItems (HWND hWnd, entity_t *pEntArray[], int nCount)
+void AddTreeViewItems (HWND hWnd, Entity *pEntArray[], int nCount)
 {
 	HTREEITEM hTRoot;
 	int	i;
@@ -1246,7 +1286,7 @@ void OnSelectionChange (HWND hTree, HWND hList)
 	HTREEITEM		hItem = TreeView_GetSelection(hTree);
 	TVITEM			tvI;
 	LVITEM			lvItem;
-	entity_t       *pEntity;
+	Entity       *pEntity;
 	epair_t        *pEpair;
 
 	// If root item is selected, clear List Control and return
@@ -1266,7 +1306,7 @@ void OnSelectionChange (HWND hTree, HWND hList)
 	{
 		TreeView_GetItem(hTree, &tvI);
 			
-		pEntity = (entity_t *)tvI.lParam;
+		pEntity = (Entity *)tvI.lParam;
 					
 		for (pEpair = pEntity->epairs; pEpair; pEpair = pEpair->next)
 		{
@@ -1303,7 +1343,7 @@ void OnSelect (HWND hTree)
 
 	if (hItem)
 	{
-		entity_t *pEntity = (entity_t *)tvI.lParam;
+		Entity *pEntity = (Entity *)tvI.lParam;
 		if (pEntity)
 		{
 			Select_DeselectAll(true);
@@ -1373,9 +1413,9 @@ BOOL CALLBACK EntityInfoDlgProc (
    )
 {
 	static HWND	hTree, hList;
-	entity_t   *pEntity;
-	entity_t   *pEntArray[1024];
-	eclass_t   *pEClass;
+	Entity   *pEntity;
+	Entity   *pEntArray[1024];
+	EntClass   *pEClass;
 	int			nCount = 0;
 	HTREEITEM	hTRoot;
 
@@ -1409,8 +1449,9 @@ BOOL CALLBACK EntityInfoDlgProc (
 
 		// Nested for loop to group entites. Take each avalible entity class
 		// and check them with all active entites, pulling matches into an array.
-		for (pEClass = g_pecEclass; pEClass; pEClass = pEClass->next)
+		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 		{
+			pEClass = *ecIt;
 			for (pEntity = g_entEntities.next; pEntity != &g_entEntities; pEntity = pEntity->next)
 			{
 				if (pEntity->eclass->name == pEClass->name)

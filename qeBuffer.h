@@ -1,5 +1,5 @@
 //==============================
-//	qeBuffer.cpp
+//	qeBuffer.h
 //==============================
 
 #ifndef __H_QE_BUFFER__
@@ -13,7 +13,13 @@ typedef unsigned char byte;
 class qeBuffer
 {
 public:
+	// todo: all the other constructors
 	qeBuffer(size_t size = 0) : len(size), buf(nullptr) { create(); }
+	qeBuffer(const qeBuffer& other) : len(other.len), buf(nullptr)
+	{
+		create();
+		std::memcpy(buf, other.buf, len);
+	}
 	~qeBuffer() { destroy(); }
 
 	size_t size() { return len; }

@@ -318,7 +318,7 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 		Undo_Start("Set Brush Textures");	// sikk - Undo/Redo
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			if (!b->owner->eclass->fixedsize)
+			if (!b->owner->eclass->IsFixedSize())
 			{
 				Undo_AddBrush(b);	// sikk - Undo/Redo
 				b->SetTexture(texdef, nSkipFlags);

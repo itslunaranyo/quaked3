@@ -13,7 +13,7 @@ typedef struct undo_s
 	int			done;				//true when undo is build
 	char	   *operation;			//name of the operation
 	Brush		brushlist;			//deleted brushes
-	entity_t	entitylist;			//deleted entities
+	Entity	entitylist;			//deleted entities
 	struct undo_s	*prev, *next;	//next and prev undo in list
 } undo_t;
 
@@ -34,13 +34,13 @@ void Undo_EndBrush (Brush *pBrush);
 // end a list with brushes after the operation is performed
 void Undo_EndBrushList (Brush *brushlist);
 // add entity to undo
-void Undo_AddEntity (entity_t *entity);
+void Undo_AddEntity (Entity *entity);
 // end an entity after the operation is performed
-void Undo_EndEntity (entity_t *entity);
+void Undo_EndEntity (Entity *entity);
 // returns true if brush is in undo buffer
 bool Undo_BrushInUndo (undo_t *undo, Brush *brush);
 // returns true if entity is in undo buffer
-bool Undo_EntityInUndo (undo_t *undo, entity_t *ent);
+bool Undo_EntityInUndo (undo_t *undo, Entity *ent);
 // undo last operation
 void Undo_Undo ();
 // redo last undone operation
