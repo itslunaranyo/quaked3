@@ -66,11 +66,6 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 	if (stale)
 		Layout();
 
-	float	lscale = 1;	// sikk - Mouse Zoom Texture Window (changed from "int")
-
-	if (buttons & MK_SHIFT)
-		lscale = 4;
-
 	// sikk--->	Mouse Zoom Texture Window
 	// rbutton+control = zoom texture view
 	if (buttons == (MK_CONTROL | MK_RBUTTON))
@@ -101,15 +96,11 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 		Sys_GetCursorPos(&x, &y);
 		if (y != cursorY)
 		{
-			origin[1] += (y - cursorY) * lscale;
-			if (origin[1] < length)
-				origin[1] = length;
-			if (origin[1] > 0)
-				origin[1] = 0;
+			Scroll(y - cursorY, (buttons & MK_SHIFT) > 0);
 			Sys_SetCursorPos(cursorX, cursorY);
+
 			Sys_UpdateWindows(W_TEXTURE);
 		}
-		//return;
 	}
 	else
 		MouseOver(x, height - 1 - y);
@@ -137,6 +128,16 @@ void TextureView::MouseOver(int x, int y)
 }
 
 
+void TextureView::Scroll(int dist, bool fast)
+{
+	float lscale = fast ? 4 : 1;
+
+	origin[1] += dist * lscale;
+	if (origin[1] < length)
+		origin[1] = length;
+	if (origin[1] > 0)
+		origin[1] = 0;
+}
 
 
 
@@ -255,6 +256,11 @@ void TextureView::Resize(int w, int h)
 TextureView::SetScale
 ==============
 */
+void TextureView::Scale(float inscale)
+{
+	SetScale(scale * inscale);
+}
+
 void TextureView::SetScale(float inscale)
 {
 	char		texscalestring[128];

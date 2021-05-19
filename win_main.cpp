@@ -1203,41 +1203,24 @@ LONG WINAPI CommandHandler (
 //===================================
 // Edit menu
 //===================================
-		case ID_EDIT_UNDO:	// sikk - Undo/Redo
-			//Undo::Undo();
+		case ID_EDIT_UNDO:
 			g_cmdQueue.Undo();
 			Sys_UpdateWindows(W_ALL);
 			break;
-		case ID_EDIT_REDO:	// sikk - Undo/Redo
-			//Undo::Redo();
+		case ID_EDIT_REDO:
 			g_cmdQueue.Redo();
 			Sys_UpdateWindows(W_ALL);
 			break;
 
+		// lunaran FIXME: cut/copy/paste need to work in the console and in entity edit fields
 		case ID_EDIT_CUT:
-			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode != W_TEXTURE)
-				break;
-			//Undo::Start("Cut");
-			//Undo::AddBrushList(&g_brSelectedBrushes);
 			g_map.Cut();
-			//Undo::EndBrushList(&g_brSelectedBrushes);
-			//Undo::End();
 			break;
 		case ID_EDIT_COPY:
-			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_TEXTURE)
-				break;
 			g_map.Copy();
 			break;
 		case ID_EDIT_PASTE:
-			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_ENTITY)
-				break;
-			Undo::Start("Paste");
 			g_map.Paste();
-			//Select_Paste();
-			Undo::End();
 			break;
 
 		case ID_EDIT_FINDBRUSH:
@@ -1825,9 +1808,7 @@ LONG WINAPI CommandHandler (
 			Select_Inside();
 			break;
 		case ID_SELECTION_SELECTALL:	// sikk - Select All
-			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
-				break;
+			// lunaran FIXME: ensure this works in the entity edit fields
 			Select_All();
 			break;
 		case ID_SELECTION_SELECTALLTYPE:	// sikk - Select All Type
@@ -1964,14 +1945,12 @@ LONG WINAPI CommandHandler (
 			Textures::Flush();
 			QE_SetInspectorMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
-			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed All...");
 			break;
 		case ID_TEXTURES_FLUSH_UNUSED:
 			Sys_BeginWait();
 			Textures::FlushUnused();
 			QE_SetInspectorMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
-			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed Unused...");
 			break;
 		// sikk - TODO: This doesn't function like Radiant and is, for
 		// the most part, pointless. Will later make it toggle along 
@@ -2236,20 +2215,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_MISC_SELECTENTITYCOLOR:
-			if (/*(g_qeglobals.d_nInspectorMode == W_ENTITY) &&*/ DoColor(COLOR_ENTITY) == TRUE)
+			if (DoColor(COLOR_ENTITY) == TRUE)
 			{
-				char buffer[64];
-				
-				sprintf(buffer, "%f %f %f", g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][0],
-											g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][1],
-											g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][2]);
-				
-			// lunaran TODO: you commented this out because you are lazy
-			//	SetWindowText(g_hwndEnt[ENT_KEYFIELD], "_color");
-			//	SetWindowText(g_hwndEnt[ENT_VALUEFIELD], buffer);
-			//	EntWnd_SetKeyValue("_color", buffer);
+				Select_SetColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY]);
+				Sys_UpdateWindows(W_CAMERA|W_ENTITY);
 			}
-			Sys_UpdateWindows(W_ALL);
 			break;
 
 		case ID_MISC_TESTMAP:
@@ -2369,6 +2339,22 @@ LONG WINAPI CommandHandler (
 
 /*
 ============
+WMain_HandleMWheel
+============
+*/
+void WMain_HandleMWheel(MSG &msg)
+{
+	if (msg.message != WM_MOUSEWHEEL) return;
+
+	POINT	point;
+
+	point.x = (short)LOWORD(msg.lParam);
+	point.y = (short)HIWORD(msg.lParam);
+	msg.hwnd = ChildWindowFromPoint(g_qeglobals.d_hwndMain, point);
+}
+
+/*
+============
 WMain_WndProc
 ============
 */
@@ -2380,7 +2366,6 @@ LONG WINAPI WMain_WndProc (
 	)
 {
 	RECT	rect;
-	HDC		maindc;
 	LPTOOLTIPTEXT	lpToolTipText;
 	char	szToolTip[128];
     time_t	lTime;
@@ -2403,11 +2388,9 @@ LONG WINAPI WMain_WndProc (
 		return 0;
 
 	case WM_CREATE:
-		maindc = GetDC(hWnd);
-//		QEW_SetupPixelFormat(maindc, false);
 		g_qeglobals.d_lpMruMenu = CreateMruMenuDefault();
 		LoadMruInReg(g_qeglobals.d_lpMruMenu, QE3_WIN_REGISTRY_MRU);
-	
+
 		// Refresh the File menu.
 		PlaceMenuMRUItem(g_qeglobals.d_lpMruMenu, GetSubMenu(GetMenu(hWnd), 0), ID_FILE_EXIT);
 		return 0;
@@ -2420,42 +2403,41 @@ LONG WINAPI WMain_WndProc (
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
 
-   	case WM_CLOSE:
+	case WM_CLOSE:
 		// call destroy window to cleanup and go away
 		if (!ConfirmModified())
 			return TRUE;
 		for (auto wvIt = WndView::wndviews.begin(); wvIt != WndView::wndviews.end(); ++wvIt)
 			(*wvIt)->SavePosition();
 
-		SaveWindowState(g_qeglobals.d_hwndInspector,	"EntityWindow");
-		SaveWindowState(g_qeglobals.d_hwndMain,			"MainWindow");
+		SaveWindowState(g_qeglobals.d_hwndMain, "MainWindow");
 
-// sikk---> Save Rebar Band Info
+		// sikk---> Save Rebar Band Info
 		for (i = 0; i < 11; i++)
 		{
 			nBandIndex = SendMessage(g_qeglobals.d_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
 			Sys_Printf("Band %d\n", nBandIndex);
-			g_qeglobals.d_savedinfo.rbiSettings[i].cbSize	= sizeof(REBARBANDINFO);
-			g_qeglobals.d_savedinfo.rbiSettings[i].fMask	= RBBIM_CHILDSIZE | RBBIM_STYLE;
+			g_qeglobals.d_savedinfo.rbiSettings[i].cbSize = sizeof(REBARBANDINFO);
+			g_qeglobals.d_savedinfo.rbiSettings[i].fMask = RBBIM_CHILDSIZE | RBBIM_STYLE;
 			SendMessage(g_qeglobals.d_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);
 		}
-/*	Code below saves the current Band order but there is a problem with
-	updating this at program start. (check QE_Init() in qe3.c) 
-		j = 0;
-		while (j < 11)
-		{
-			for (i = 0; i < 11; i++)
-			{
-				nBandIndex = SendMessage(g_qeglobals.d_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-				if (nBandIndex == j)
-					g_qeglobals.d_savedinfo.nRebarSavedIndex[j] = ID_TOOLBAR + i;
-			}
-			j++;
-		}
-*/
-// <---sikk
+		/*	Code below saves the current Band order but there is a problem with
+			updating this at program start. (check QE_Init() in qe3.c)
+				j = 0;
+				while (j < 11)
+				{
+					for (i = 0; i < 11; i++)
+					{
+						nBandIndex = SendMessage(g_qeglobals.d_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
+						if (nBandIndex == j)
+							g_qeglobals.d_savedinfo.nRebarSavedIndex[j] = ID_TOOLBAR + i;
+					}
+					j++;
+				}
+		*/
+		// <---sikk
 
-		// FIXME: is this right?
+				// FIXME: is this right?
 		strcpy(g_qeglobals.d_savedinfo.szLastMap, g_map.name); // sikk - save current map name for Load Last Map option
 		SaveRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, sizeof(g_qeglobals.d_savedinfo));
 
@@ -2468,24 +2450,24 @@ LONG WINAPI WMain_WndProc (
 	case WM_COMMAND:
 		return CommandHandler(hWnd, wParam, lParam);
 
-	case WM_INITMENUPOPUP :
+	case WM_INITMENUPOPUP:
 		QE_UpdateCommandUI();	// sikk - Update Menu & Toolbar Items
-		return 0;	
-	
+		return 0;
+
 	case WM_NOTIFY:
-		switch (((LPNMHDR)lParam)->code) 
+		switch (((LPNMHDR)lParam)->code)
 		{
-// sikk---> Tooltip 
+			// sikk---> Tooltip 
 		case TTN_NEEDTEXT:
 			// Display tool tip text.
 			lpToolTipText = (LPTOOLTIPTEXT)lParam;
-			LoadString(g_qeglobals.d_hInstance, 
-					   lpToolTipText->hdr.idFrom,	// string ID == cmd ID
-					   szToolTip,
-					   sizeof(szToolTip));
+			LoadString(g_qeglobals.d_hInstance,
+				lpToolTipText->hdr.idFrom,	// string ID == cmd ID
+				szToolTip,
+				sizeof(szToolTip));
 			lpToolTipText->lpszText = szToolTip;
 			break;
-// <---sikk
+			// <---sikk
 
 		case RBN_BEGINDRAG:	// sikk - Rebar (to handle movement)
 			break;
@@ -2500,112 +2482,8 @@ LONG WINAPI WMain_WndProc (
 			break;
 		}
 		return 0;
-
-	// sikk---> Mousewheel Handling (All Windows)
 	default:
-		if (uMsg == WM_MOUSEWHEEL)
-		{
-			int		fwKeys = LOWORD(wParam);
-			short	zDelta = (short)HIWORD(wParam);
-			HWND	hwndTarget;
-			POINT	point;
-
-			point.x = (short)LOWORD(lParam);
-			point.y = (short)HIWORD(lParam);
-			hwndTarget = ChildWindowFromPoint(g_qeglobals.d_hwndMain, point);
-
-			if (hwndTarget == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_TEXTURE)
-			{
-				if (zDelta < 0)
-					g_qeglobals.d_vTexture.origin[1] -= 64;
-				else
-					g_qeglobals.d_vTexture.origin[1] += 64;
-
-				if (g_qeglobals.d_vTexture.origin[1] > 0)
-					g_qeglobals.d_vTexture.origin[1] = 0;
-
-				Sys_UpdateWindows(W_TEXTURE);
-			}
-			if (hwndTarget == g_qeglobals.d_hwndCamera)
-			{
-				if (zDelta < 0)
-					g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + -64.0f * g_qeglobals.d_vCamera.forward;
-				else
-					g_qeglobals.d_vCamera.origin = g_qeglobals.d_vCamera.origin + 64.0f * g_qeglobals.d_vCamera.forward;
-
-				Sys_UpdateWindows(W_ALL);
-			}
-			if (hwndTarget == g_qeglobals.d_hwndXYZ[0])
-			{
-				if (zDelta < 0)
-				{
-					g_qeglobals.d_vXYZ[0].scale *= 4.0f / 5;
-					if (g_qeglobals.d_vXYZ[0].scale < 0.05)
-						g_qeglobals.d_vXYZ[0].scale = 0.05f;
-					Sys_UpdateWindows(W_XY);
-				}
-				else
-				{
-					g_qeglobals.d_vXYZ[0].scale *= 5.0 / 4;
-					if (g_qeglobals.d_vXYZ[0].scale > 32)
-						g_qeglobals.d_vXYZ[0].scale = 32;
-					Sys_UpdateWindows(W_XY);
-				}
-			}
-			if (hwndTarget == g_qeglobals.d_hwndXYZ[2])
-			{
-				if (zDelta < 0)
-				{
-					g_qeglobals.d_vXYZ[2].scale *= 4.0f / 5;
-					if (g_qeglobals.d_vXYZ[2].scale < 0.05)
-						g_qeglobals.d_vXYZ[2].scale = 0.05f;
-					Sys_UpdateWindows(W_XY);
-				}
-				else
-				{
-					g_qeglobals.d_vXYZ[2].scale *= 5.0 / 4;
-					if (g_qeglobals.d_vXYZ[2].scale > 32)
-						g_qeglobals.d_vXYZ[2].scale = 32;
-					Sys_UpdateWindows(W_XY);
-				}
-			}
-			if (hwndTarget == g_qeglobals.d_hwndXYZ[1])
-			{
-				if (zDelta < 0)
-				{
-					g_qeglobals.d_vXYZ[1].scale *= 4.0f / 5;
-					if (g_qeglobals.d_vXYZ[1].scale < 0.05)
-						g_qeglobals.d_vXYZ[1].scale = 0.05f;
-					Sys_UpdateWindows(W_XY);
-				}
-				else
-				{
-					g_qeglobals.d_vXYZ[1].scale *= 5.0 / 4;
-					if (g_qeglobals.d_vXYZ[1].scale > 32)
-						g_qeglobals.d_vXYZ[1].scale = 32;
-					Sys_UpdateWindows(W_XY);
-				}
-			}
-			if (hwndTarget == g_qeglobals.d_hwndZ)
-			{
-				if (zDelta < 0)
-				{
-					g_qeglobals.d_vZ.scale *= 4.0f / 5;
-					if (g_qeglobals.d_vZ.scale < 0.05)
-						g_qeglobals.d_vZ.scale = 0.05f;
-					Sys_UpdateWindows(W_Z);
-				}
-				else
-				{
-					g_qeglobals.d_vZ.scale *= 5.0 / 4;
-					if (g_qeglobals.d_vZ.scale > 32)
-						g_qeglobals.d_vZ.scale = 32;
-					Sys_UpdateWindows(W_Z);
-				}
-			}
-		}
-	// <---sikk
-
+		break;
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -2869,6 +2747,9 @@ int WINAPI WinMain (
 
 	Sys_LogFile();
 
+	g_qeglobals.d_wndConsole = new WndConsole();
+	g_qeglobals.d_wndConsole->Initialize();
+
 	g_qeglobals.d_wndCamera = new WndCamera();
 	g_qeglobals.d_wndCamera->Initialize();
 	for (int i = 0; i < 3; i++)
@@ -2883,8 +2764,6 @@ int WINAPI WinMain (
 	g_qeglobals.d_wndTexture->Initialize();
 	g_qeglobals.d_wndEntity = new WndEntity();
 	g_qeglobals.d_wndEntity->Initialize();
-	g_qeglobals.d_wndConsole = new WndConsole();
-	g_qeglobals.d_wndConsole->Initialize();
 
 	QE_ForceInspectorMode(W_CONSOLE);
 
@@ -2945,12 +2824,13 @@ int WINAPI WinMain (
 #endif
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
+				WMain_HandleMWheel(msg);
+
 				// lunaran - this magically makes tab work in the surface dialog
 				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
 				{
 					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
-					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
-						(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
+					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg))
 					{
 						TranslateMessage(&msg);
 						DispatchMessage(&msg);

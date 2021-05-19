@@ -16,7 +16,8 @@ WndCamera::~WndCamera()
 
 void WndCamera::Initialize()
 {
-	v = &g_qeglobals.d_vCamera;
+	cv = &g_qeglobals.d_vCamera;
+	v = cv;
 	CreateWnd();
 	SetTitle("Camera View");
 	g_qeglobals.d_hwndCamera = w_hwnd;
@@ -33,6 +34,23 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		else
 			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
+
+	case WM_MOUSEWHEEL:
+		Focus();
+		fwKeys = wParam;
+		if (fwKeys & MK_CONTROL)
+		{
+			cv->ChangeFloor((short)HIWORD(wParam) > 0);
+		}
+		else
+		{
+			float fwd = 64;
+			if ((short)HIWORD(wParam) < 0) fwd *= -1;
+			if (fwKeys & MK_SHIFT) fwd *= 4;
+			cv->origin += cv->forward * fwd;
+		}
+		Sys_UpdateWindows(W_SCENE);
+		return 0;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:

@@ -124,42 +124,6 @@ void Sys_ForceUpdateWindows(int bits)
 		if ((*wvIt)->vbits & bits)
 			(*wvIt)->ForceUpdate();
 	}
-	return;
-
-
-	if (bits & W_CAMERA)
-	{
-	//	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-	//	UpdateWindow(g_qeglobals.d_hwndCamera);
-		g_qeglobals.d_wndCamera->ForceUpdate();
-	}
-	if (bits & W_XY)
-	{
-		InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
-		UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
-		// sikk---> Multiple Orthographic Views
-		if (g_qeglobals.d_savedinfo.bShow_XYZ[2])
-		{
-			InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
-		}
-		if (g_qeglobals.d_savedinfo.bShow_XYZ[1])
-		{
-			InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
-		}
-		// <---sikk
-	}
-	if (bits & W_Z)
-	{
-		InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
-		UpdateWindow(g_qeglobals.d_hwndZ);
-	}
-	if (bits & W_TEXTURE)
-	{
-		InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
-		UpdateWindow(g_qeglobals.d_hwndInspector);
-	}
 }
 
 /*
@@ -246,9 +210,6 @@ void Sys_ClearPrintf ()
 	SendMessage(g_qeglobals.d_hwndConsole, WM_SETTEXT, 0, (LPARAM)text);
 }
 
-#define SCROLLBACK_MAX_LINES	600 // PGM
-#define SCROLLBACK_DEL_CHARS	500 // PGM
-
 /*
 ==================
 Sys_Printf
@@ -259,8 +220,6 @@ void Sys_Printf (char *text, ...)
 	va_list		argptr;
 	char		buf[32768];
 	char	   *out;
-	LRESULT		result;				// PGM
-	DWORD		oldPosS, oldPosE;	// PGM
 
 	va_start(argptr, text);
 	vsprintf(buf, text, argptr);
@@ -274,36 +233,7 @@ void Sys_Printf (char *text, ...)
 
 	out = TranslateString(buf);
 
-#ifdef LATER
-	Sys_Status(out);
-#else
-
-// PGM--->
-	result = SendMessage(g_qeglobals.d_hwndConsole, EM_GETLINECOUNT, 0, 0);
-	// sikk - place the caret at the end of Console before text is inserted. 
-	// This is necessary for RichEdit Console to function correctly when text 
-	// is selected or caret position moved
-	SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, -1, -1);	
-
-	if (result >= SCROLLBACK_MAX_LINES)
-	{
-		char replaceText[5];
-		
-		replaceText[0] = '\0';
-
-		SendMessage(g_qeglobals.d_hwndConsole, WM_SETREDRAW, (WPARAM)0, (LPARAM)0);
-		SendMessage(g_qeglobals.d_hwndConsole, EM_GETSEL, (WPARAM)&oldPosS, (LPARAM)&oldPosE);
-		SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, 0, SCROLLBACK_DEL_CHARS);
-		SendMessage(g_qeglobals.d_hwndConsole, EM_REPLACESEL, (WPARAM)0, (LPARAM)replaceText);
-		SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, oldPosS, oldPosE);
-		SendMessage(g_qeglobals.d_hwndConsole, WM_SETREDRAW, (WPARAM)1, (LPARAM)0);
-	}
-// <---PGM
-
-	SendMessage(g_qeglobals.d_hwndConsole, EM_REPLACESEL, 0, (LPARAM)out);
-	SendMessage(g_qeglobals.d_hwndConsole, EM_SCROLLCARET, 0, 0); // eerie // sikk - removed comment
-
-#endif
+	WndConsole::AddText(out);
 }
 
 /*
@@ -338,63 +268,7 @@ void PrintPixels (HDC hDC)
 
 //==========================================================================
 
-/*
-==================
-QEW_StopGL
-==================
-*/
-void QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC)
-{
-	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(hGLRC);
-	ReleaseDC(hWnd, hDC);
-}
-		
-/*
-==================
-QEW_SetupPixelFormat
-==================
-*/
-int QEW_SetupPixelFormat (HDC hDC, bool zbuffer)
-{
-    static PIXELFORMATDESCRIPTOR pfd = 
-	{
-		sizeof(PIXELFORMATDESCRIPTOR),	// size of this pfd
-		1,								// version number
-		PFD_DRAW_TO_WINDOW |			// support window
-		PFD_SUPPORT_OPENGL |			// support OpenGL
-		PFD_DOUBLEBUFFER,				// double buffered
-		PFD_TYPE_RGBA,					// RGBA type
-		24,								// 24-bit color depth
-		0, 0, 0, 0, 0, 0,				// color bits ignored
-		0,								// no alpha buffer
-		0,								// shift bit ignored
-		0,								// no accumulation buffer
-		0, 0, 0, 0,						// accum bits ignored
-		32,							    // depth bits
-		0,								// no stencil buffer
-		0,								// no auxiliary buffer
-		PFD_MAIN_PLANE,					// main layer
-		0,								// reserved
-		0, 0, 0							// layer masks ignored
-    };
-    int pixelformat = 0;
 
-	zbuffer = true;
-	if (!zbuffer )
-		pfd.cDepthBits = 0;
-
-    if ((pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0)
-	{
-		printf("%d",GetLastError());
-        Error("ChoosePixelFormat: Failed");
-	}
-
-    if (!SetPixelFormat(hDC, pixelformat, &pfd))
-        Error("SetPixelFormat: Failed");
-
-	return pixelformat;
-}
 
 /*
 =================
@@ -416,16 +290,6 @@ void Error (char *error, ...)
 
 	Sys_Printf("ERROR: %s\n", text);
 	throw std::exception(text);
-
-//	err = GetLastError();
-//	sprintf(text2, "%s\nGetLastError() = %d", text, err);
-//	MessageBox(g_qeglobals.d_hwndMain, text2, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
-
-	// close logging if necessary
-//	g_qeglobals.d_savedinfo.bLogConsole = false;
-//	Sys_LogFile();
-
-//	exit(1);
 }
 
 /*

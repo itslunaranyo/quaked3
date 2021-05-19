@@ -141,7 +141,8 @@ Entity::SetKeyValueFVector
 void Entity::SetKeyValueFVector(const char *key, const vec3 vec)
 {
 	char szVec[128];
-	sprintf(szVec, "%f %f %f", vec[0], vec[1], vec[2]);
+
+	VecToString(vec, szVec);
 	SetKeyValue(key, szVec);
 }
 
@@ -156,7 +157,6 @@ void Entity::SetKeyValueIVector(const char *key, const vec3 vec)
 	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
 	SetKeyValue(key, szVec);
 }
-
 
 /*
 ==============

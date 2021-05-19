@@ -409,10 +409,6 @@ void Brush::Move(const vec3 move)
 	{
 		// lunaran: update everything
 		owner->SetOriginFromBrush();
-	//	owner->origin = owner->origin + move;
-
-		// lunaran TODO: update only once at the end of a drag or the window flickers too much
-		//EntWnd_UpdateUI();
 	}
 }
 

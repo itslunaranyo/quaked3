@@ -31,7 +31,7 @@ public:
 	void BringToTop()	{ BringWindowToTop(w_hwnd); }
 	bool HasFocus()		{ return (GetFocus() == w_hwnd); }
 	bool IsOnTop();
-	void ForceUpdate();
+	virtual void ForceUpdate();
 
 	typedef struct {
 		RECT rc;
@@ -66,6 +66,7 @@ protected:
 
 private:
 	void MakeFont();
+	int SetupPixelFormat(HDC hDC, bool zbuffer);
 
 	int FindClosestHorizontal(int h, LPRECT field);
 	int FindClosestVertical(int v, LPRECT field);

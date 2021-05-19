@@ -139,8 +139,8 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_LBUTTONDOWN:
-		g_qeglobals.d_wndEntity->BringToTop();	// sikk LMB Bring to Top
-		SetFocus(hWnd);
+		g_qeglobals.d_wndEntity->BringToTop();
+		SetFocus(w_hwnd);
 		break;
 	}
 	return CallWindowProc(DefaultFieldProc, hWnd, uMsg, wParam, lParam);
@@ -171,7 +171,7 @@ BOOL WndEntity::EntityListProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_LBUTTONDOWN:
-		g_qeglobals.d_wndEntity->BringToTop();	// sikk LMB Bring to Top
+		Focus();
 		break;
 	}
 	return CallWindowProc(DefaultEntityListProc, hWnd, uMsg, wParam, lParam);
@@ -335,6 +335,16 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
+	case WM_MOUSEWHEEL:
+		Focus();
+		POINT	point;
+		HWND	wnd;
+		point.x = (short)LOWORD(lParam);
+		point.y = (short)HIWORD(lParam);
+		wnd = WindowFromPoint(point);	// why doesn't ChildWindowFromPoint return anything?
+		SendMessage(wnd, uMsg, wParam, lParam);
+		return 0;
+
 	case WM_SIZE:
 		GetClientRect(w_hwnd, &clientRect);
 		ResizeControls();
@@ -351,12 +361,12 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_GETMINMAXINFO:
-	{
-		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-		lpmmi->ptMinTrackSize.x = minWidth;
-		lpmmi->ptMinTrackSize.y = minHeight;
-	}
-	return 0;
+		{
+			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
+			lpmmi->ptMinTrackSize.x = minWidth;
+			lpmmi->ptMinTrackSize.y = minHeight;
+		}
+		return 0;
 
 	case WM_KILLFOCUS:
 	case WM_SETFOCUS:
@@ -527,6 +537,11 @@ void WndEntity::UpdateUI()
 
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
 	RedrawWindow(g_qeglobals.d_hwndEntity, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
+}
+
+void WndEntity::ForceUpdate()
+{
+	UpdateUI();
 }
 
 /*
@@ -739,8 +754,7 @@ void WndEntity::FlagChecked(int flag)
 		return;
 	}
 
-	UpdateUI();
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE|W_ENTITY);
 }
 
 /*
@@ -750,29 +764,7 @@ WndEntity::SetKeyValue
 */
 void WndEntity::SetKeyValue(const char* key, const char* value)
 {
-	Entity *last;
-
-	last = nullptr;
-	try
-	{
-		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, value);
-		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			// skip entity brushes in sequence
-			if (b->owner == last)
-				continue;
-			last = b->owner;
-			cmd->AddEntity(last);
-		}
-		g_cmdQueue.Complete(cmd);
-	}
-	catch (...)
-	{
-		return;
-	}
-
-	UpdateUI();
-	Sys_UpdateWindows(W_SCENE);
+	Select_SetKeyValue(key,value);
 }
 
 void WndEntity::SetKeyValue()
@@ -785,7 +777,7 @@ void WndEntity::SetKeyValue()
 	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);
 	SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);
 
-	WndEntity::SetKeyValue(key, value);
+	Select_SetKeyValue(key, value);
 }
 
 /*
@@ -1020,9 +1012,5 @@ void WndEntity::RefreshEditEntity()
 		}
 	}
 }
-
-
-
-
 
 

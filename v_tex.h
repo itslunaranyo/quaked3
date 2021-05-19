@@ -34,7 +34,9 @@ public:
 	int		AddToLayout(TextureGroup * tg, int top, int* curIdx);
 	void	Layout();
 	void	Resize(int w, int h);
-	void	SetScale(float scale);
+	void	Scale(float inscale);
+	void	SetScale(float inscale);
+	void	Scroll(int dist, bool fast);
 	Texture* TexAtPos(int x, int y);
 	void	SelectTexture(int x, int y);
 	void	ChooseTexture(texdef_t *texdef, bool bSetSelection);

@@ -108,31 +108,6 @@ QE_KeyDown
 */
 bool QE_KeyDown (int key)
 {
-// sikk - temp fix for accelerator problem
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
-	{
-		switch (key)
-		{
-		case 'N':
-			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_ENTITY, 0);
-			break;
-		case 'O':
-			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CONSOLE, 0);
-			break;
-		case 'T':
-			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_TEXTURE, 0);
-			break;
-		case VK_ESCAPE:
-			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DESELECT, 0);
-			break;
-
-		default:
-			return false;
-		}
-		return true;
-	}
-// <---sikk
-
 // sikk---> Keyboard Texture Manipulation
 	switch (key)
 	{

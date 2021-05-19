@@ -94,6 +94,8 @@ void	Select_ShowAllHidden ();
 void	Select_MatchingTextures ();	// sikk - Select All Matching Textures
 void	Select_ConnectEntities ();
 void	Select_MatchingKeyValue (char *szKey, char *szValue);	// sikk - Select Matching Key/Value
+void	Select_SetKeyValue(const char *key, const char *value);
+void	Select_SetColor(const vec3 color);
 
 // returns true if pFind is in pList
 bool	OnEntityList (Entity *pFind, Entity *pList[MAX_MAP_ENTITIES], int nSize);

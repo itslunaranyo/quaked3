@@ -100,7 +100,7 @@ void WndView::RestorePosition()
 	if (pos.rc.bottom < pos.rc.top + minHeight)
 		pos.rc.bottom = pos.rc.top + minHeight;
 
-	SetPosition(pos.rc.left, pos.rc.top, pos.rc.right, pos.rc.bottom, (bool)pos.vis);
+	SetPosition(pos.rc.left, pos.rc.top, pos.rc.right, pos.rc.bottom, (pos.vis > 0));
 }
 
 void WndView::SetPosition(int l, int t, int r, int b, bool show)
@@ -624,12 +624,58 @@ void WndView::MakeFont()
 
 /*
 ==================
-WndView::CreateControls
+WndView::SetupPixelFormat
+==================
+*/
+int WndView::SetupPixelFormat(HDC hDC, bool zbuffer)
+{
+	static PIXELFORMATDESCRIPTOR pfd =
+	{
+		sizeof(PIXELFORMATDESCRIPTOR),	// size of this pfd
+		1,								// version number
+		PFD_DRAW_TO_WINDOW |			// support window
+		PFD_SUPPORT_OPENGL |			// support OpenGL
+		PFD_DOUBLEBUFFER,				// double buffered
+		PFD_TYPE_RGBA,					// RGBA type
+		24,								// 24-bit color depth
+		0, 0, 0, 0, 0, 0,				// color bits ignored
+		0,								// no alpha buffer
+		0,								// shift bit ignored
+		0,								// no accumulation buffer
+		0, 0, 0, 0,						// accum bits ignored
+		32,							    // depth bits
+		0,								// no stencil buffer
+		0,								// no auxiliary buffer
+		PFD_MAIN_PLANE,					// main layer
+		0,								// reserved
+		0, 0, 0							// layer masks ignored
+	};
+	int pixelformat = 0;
+
+	zbuffer = true;
+	if (!zbuffer)
+		pfd.cDepthBits = 0;
+
+	if ((pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0)
+	{
+		printf("%d", GetLastError());
+		Error("ChoosePixelFormat: Failed");
+	}
+
+	if (!SetPixelFormat(hDC, pixelformat, &pfd))
+		Error("SetPixelFormat: Failed");
+
+	return pixelformat;
+}
+
+/*
+==================
+WndView::OnCreate
 ==================
 */
 void WndView::OnCreate()
 {
-	QEW_SetupPixelFormat(w_hdc, false);
+	SetupPixelFormat(w_hdc, false);
 
 	if ((w_hglrc = wglCreateContext(w_hdc)) == 0)
 		Error("wglCreateContext failed.");

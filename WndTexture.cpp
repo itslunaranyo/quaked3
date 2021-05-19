@@ -25,12 +25,29 @@ void WndTexture::Initialize()
 
 int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int xPos, yPos;
+	int xPos, yPos, fwKeys;
 
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
+
+	case WM_MOUSEWHEEL:
+		Focus();
+		fwKeys = wParam;
+		if (fwKeys & MK_CONTROL)
+		{
+			if ((short)HIWORD(wParam) < 0)
+				texv->Scale(0.8f);
+			else
+				texv->Scale(1.25f);
+		}
+		else
+		{
+			texv->Scroll(((short)HIWORD(wParam) < 0) ? -64.0f : 64.0f, (fwKeys & MK_SHIFT) > 0);
+		}
+		Sys_UpdateWindows(W_TEXTURE);
+		return 0;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:

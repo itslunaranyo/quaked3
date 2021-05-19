@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <time.h>
 #include "qeBuffer.h"
+#include "mathlib.h"
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
@@ -22,7 +23,6 @@ typedef unsigned char byte;
 
 // the dec offsetof macro doesn't work very well...
 #define myoffsetof (type, identifier) ((size_t) & ((type *)0)->identifier)
-#define tmalloc(num, typ) (typ*)malloc((num) * sizeof(typ))
 
 #define	MAX_NUM_ARGVS	32
 
@@ -80,6 +80,7 @@ int 	ParseNum (char *str);
 
 void	StringTolower (char *string);
 void	StringToupper (char *string);
+void	VecToString(const vec3 vec, char *string);
 
 short	BigShort (short l);
 short	LittleShort (short l);

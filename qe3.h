@@ -29,9 +29,9 @@
 #include <vector>
 
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
+#include "mathlib.h"
 #include "cmdlib.h"
 //#include "lbmlib.h"
-#include "mathlib.h"
 #include "parse.h"
 
 #include "qedefs.h"
@@ -154,10 +154,9 @@ typedef struct
 	HWND		d_hInstanceColor,		// eerie
 				d_hwndMain,
 				d_hwndCamera,
-				d_hwndInspector,
-					d_hwndEntity,
-					d_hwndConsole,
-					d_hwndTexture,
+				d_hwndEntity,
+				d_hwndConsole,
+				d_hwndTexture,
 				d_hwndXYZ[4],			// lunaran - grid view reunification
 				d_hwndZ,
 				d_hwndStatus,
@@ -256,8 +255,8 @@ char   *QE_ExpandRelativePath (char *p);
 void	QE_SetInspectorMode(int nType);
 
 // QE Win32 function declarations
-int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
-void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
+//int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
+//void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
 
 char	*CopyString (char *s);
 

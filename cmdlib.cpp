@@ -625,6 +625,33 @@ void StringToupper (char *string)
 	}
 } 
 
+/*
+==============
+VecToString
+==============
+*/
+void VecToString(const vec3 vec, char *string)
+{
+	char szVal[3][64];
+	char *pos;
+
+	// lunaran: trim trailing zeroes, including the . if necessary, for no other reason
+	// than I think they don't look very nice
+	for (int i = 0; i < 3; i++)
+	{
+		sprintf(szVal[i], "%f", vec[i]);
+		pos = &szVal[i][strlen(szVal[i]) - 1];
+		while (*pos == '0' && pos != szVal[i])
+		{
+			*pos-- = 0;
+		}
+		if (*pos == '.')
+			*pos = 0;
+	}
+
+	sprintf(string, "%s %s %s", szVal[0], szVal[1], szVal[2]);
+}
+
 
 /*
 ============================================================================

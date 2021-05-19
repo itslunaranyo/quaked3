@@ -13,6 +13,8 @@ public:
 	WndCamera();
 	~WndCamera();
 
+	CameraView *cv;
+
 	void Initialize();
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };

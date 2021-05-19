@@ -205,6 +205,19 @@ int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
 
+	case WM_MOUSEWHEEL:
+		Focus();
+		if ((short)HIWORD(wParam) < 0)
+		{
+			v->scale = max(0.05f, v->scale * 0.8f);
+		}
+		else
+		{
+			v->scale = min(32.0f, v->scale * 1.25f);
+		}
+		Sys_UpdateWindows(vbits);
+		return 0;
+
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:

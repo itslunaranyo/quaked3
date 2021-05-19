@@ -52,11 +52,9 @@ void Select_HandleChange()
 	{
 		Sys_Status("", 3);
 	}
-	//EntWnd_UpdateUI();
-	g_qeglobals.d_wndEntity->UpdateUI();
-	SurfWnd_UpdateUI();
 
-	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+	SurfWnd_UpdateUI();
+	Sys_UpdateWindows(W_SCENE|W_ENTITY);
 	g_bSelectionChanged = false;
 }
 
@@ -1833,4 +1831,49 @@ void Select_ConnectEntities ()
 
 	Select_DeselectAll(true);
 	Select_HandleBrush(b, true);
+}
+
+
+/*
+===============
+Select_SetKeyValue
+===============
+*/
+void Select_SetKeyValue(const char *key, const char *value)
+{
+	Entity *last;
+
+	last = nullptr;
+	try
+	{
+		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, value);
+		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		{
+			// skip entity brushes in sequence
+			if (b->owner == last)
+				continue;
+			last = b->owner;
+			cmd->AddEntity(last);
+		}
+		g_cmdQueue.Complete(cmd);
+	}
+	catch (...)
+	{
+		return;
+	}
+
+	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+}
+
+/*
+===============
+Select_SetColor
+===============
+*/
+void Select_SetColor(const vec3 color)
+{
+	char szColor[128];
+
+	VecToString(color, szColor);
+	Select_SetKeyValue("_color", szColor);
 }

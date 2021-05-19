@@ -35,6 +35,30 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		QE_KeyDown(wParam);
 		return 0;
 
+	case WM_MOUSEWHEEL:
+		Focus();
+		fwKeys = wParam;
+		if (fwKeys & MK_CONTROL)
+		{
+			if ((short)HIWORD(wParam) < 0)
+			{
+				v->scale = max(0.05f, v->scale * 0.8f);
+			}
+			else
+			{
+				v->scale = min(32.0f, v->scale * 1.25f);
+			}
+		}
+		else
+		{
+			float fwd = 64;
+			if ((short)HIWORD(wParam) < 0) fwd *= -1;
+			if (fwKeys & MK_SHIFT) fwd *= 4;
+			v->origin.z += fwd / v->scale;
+		}
+		Sys_UpdateWindows(W_Z);
+		return 0;
+
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:

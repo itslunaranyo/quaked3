@@ -15,7 +15,7 @@ public:
 	//EntityView *ev;
 
 	void Initialize();
-	void UpdateUI();
+	void ForceUpdate();
 
 	void FillClassList();
 	int WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -28,7 +28,7 @@ public:
 private:
 	// lunaran - entity window now interacts through a dummy entity that acts as the union of 
 	// all selected entities (for displaying mixed selections)
-	// TODO: move this into a View class so W_ENTITY can become an update flag
+	// TODO: move this into a View class
 	Entity	g_eEditEntity;
 	char	g_nEditEntFlags[12];	// spawnflags in the entity inspector can be off/on/ambiguous
 	char	g_szEditFlagNames[8][32];
@@ -40,6 +40,7 @@ private:
 
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void UpdateListSel();
+	void UpdateUI();
 
 	void ApplyAngle(int ang);
 	void FlagChecked(int flag);
