@@ -193,7 +193,7 @@ void Drag_Setup(int x, int y, int buttons,
 	face_t *f;
 	trace_t	t;
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 	{
 		Undo_Start("Create Brush");	// sikk - Undo/Redo
 //		Sys_Printf("MSG: No selection to drag.\n");	// sikk - Pointless Message
@@ -327,7 +327,7 @@ void Drag_Begin (int x, int y, int buttons,
 	if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
 	{
 		// if Alt = pressed, don't deselect selected faces
-		Select_Deselect(!(bool)GetAsyncKeyState(VK_MENU));	// sikk - Multiple Face Selection
+		Select_DeselectAll(!(bool)GetAsyncKeyState(VK_MENU));	// sikk - Multiple Face Selection
 		Select_Ray(origin, dir, SF_SINGLEFACE);
 		return;
 	}
@@ -355,7 +355,7 @@ void Drag_Begin (int x, int y, int buttons,
 
 			UpdateWorkzone(t.brush);
 
-			Texture_SetTexture(&t.face->texdef, true);
+			Texture_ChooseTexture(&t.face->texdef, true);
 		}
 		else
 			Sys_Printf("MSG: Did not select a texture.\n");

@@ -11,10 +11,6 @@ BOOL		g_bModified;		// for quit confirmation (0 = clean, 1 = unsaved,
 char		g_szCurrentMap[MAX_PATH];
 
 brush_t		g_brActiveBrushes;		// brushes currently being displayed
-brush_t		g_brSelectedBrushes;	// highlighted
-face_t	   *g_pfaceSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
-//face_t	   *g_pfaceSelectedFace;
-//brush_t	   *g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush now
 brush_t		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
 entity_t	g_entEntities;			// head/tail of doubly linked list
@@ -24,17 +20,13 @@ brush_t		g_brCopiedBrushes;		// sikk - For Cut/Copy/Paste
 entity_t	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 
 
-/*
-=============================================================
-
-  Cross map selection saving
-
-  this could fuck up if you have only part of a complex entity selected...
-=============================================================
-*/
-
+// Cross map selection saving
+// this could fuck up if you have only part of a complex entity selected...
 brush_t		g_brBetweenBrushes;
 entity_t	g_entBetweenEntities;
+
+
+
 
 /*
 ==================
@@ -230,7 +222,7 @@ void Map_LoadFile (char *filename)
 	}
 // <---sikk
 
-	SetInspectorMode(W_CONSOLE);
+	InspWnd_SetMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("CMD: Map_LoadFile: %s\n", temp );
@@ -398,6 +390,8 @@ void Map_SaveFile (char *filename, bool use_region)
 
 	if (!use_region)
 	{
+		MessageBeep(MB_ICONEXCLAMATION);
+		/*
 		time_t	timer;
 		FILE   *f;
 		char	logname[1024];
@@ -407,7 +401,6 @@ void Map_SaveFile (char *filename, bool use_region)
 		strcat(logname, ".log");
 
 		time(&timer);
-		MessageBeep(MB_ICONEXCLAMATION);
 //		f = fopen("c:/tstamps.log", "a");
 		f = fopen(logname, "a");
 		if (f)
@@ -417,6 +410,7 @@ void Map_SaveFile (char *filename, bool use_region)
 			g_qeglobals.d_nWorkCount = 0;
 		}
 		fclose(f);
+		*/
 	}
 
 	g_bMBCheck = false;	// sikk - Reset this to false
@@ -809,11 +803,11 @@ void Map_ImportFile (char *filename, bool bCheck)
 	}
 // <---sikk
 
-	Select_Deselect(true);
+	Select_DeselectAll(true);
 
 	Undo_Start("Import File");	// sikk - Undo/Redo
 
-	SetInspectorMode(W_CONSOLE);
+	InspWnd_SetMode(W_CONSOLE);
 
 	QE_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("CMD: Map_ImportFile: %s\n", temp);
@@ -875,7 +869,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 	for (i = 0; i < nCount; i++)
 	{
 		Brush_Build(brArray[i]);
-		Select_Brush(brArray[i], true);
+		Select_HandleBrush(brArray[i], true);
 	}
 
     free(buf);

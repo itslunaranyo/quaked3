@@ -97,8 +97,6 @@ void QE_Init ()
 	YZ_Init();	// sikk - Multiple Orthographic Views
 	Z_Init();
 
-
-
 	// sikk - Update User Interface
 	QE_UpdateCommandUI();
 }
@@ -111,7 +109,7 @@ QE_KeyDown
 bool QE_KeyDown (int key)
 {
 // sikk - temp fix for accelerator problem
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity)
+	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
 	{
 		switch (key)
 		{
@@ -151,7 +149,7 @@ bool QE_KeyDown (int key)
 		else
 			VectorMA(g_qeglobals.d_camera.origin, SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
 
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_DOWN:
 		if (GetKeyState(VK_SHIFT) < 0)
@@ -166,7 +164,7 @@ bool QE_KeyDown (int key)
 		else
 			VectorMA(g_qeglobals.d_camera.origin, -SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
 
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_LEFT:
 		if (GetKeyState(VK_SHIFT) < 0)
@@ -181,7 +179,7 @@ bool QE_KeyDown (int key)
 		else
 			g_qeglobals.d_camera.angles[1] += SPEED_TURN;
 
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_RIGHT:
 		if (GetKeyState(VK_SHIFT) < 0)
@@ -196,36 +194,36 @@ bool QE_KeyDown (int key)
 		else
 			g_qeglobals.d_camera.angles[1] -= SPEED_TURN;
 
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 // <---sikk
 	case 'D':
 		g_qeglobals.d_camera.origin[2] += SPEED_MOVE;
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'C':
 		g_qeglobals.d_camera.origin[2] -= SPEED_MOVE;
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'A':
 		g_qeglobals.d_camera.angles[0] += SPEED_TURN;
 		if (g_qeglobals.d_camera.angles[0] > 85)
 			g_qeglobals.d_camera.angles[0] = 85;
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case 'Z':
 		g_qeglobals.d_camera.angles[0] -= SPEED_TURN;
 		if (g_qeglobals.d_camera.angles[0] < -85)
 			g_qeglobals.d_camera.angles[0] = -85;
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
 		VectorMA (g_qeglobals.d_camera.origin, -SPEED_MOVE, g_qeglobals.d_camera.right, g_qeglobals.d_camera.origin);
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_PERIOD:
 		VectorMA (g_qeglobals.d_camera.origin, SPEED_MOVE, g_qeglobals.d_camera.right, g_qeglobals.d_camera.origin);
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case '0':	// sikk - fixed and added shortcut key
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_GRID_TOGGLE, 0);
@@ -327,7 +325,10 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLIPSELECTED, 0);
 		break;
 	case VK_TAB:
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_NEXTVIEW, 0);
+		if (GetKeyState(VK_SHIFT) < 0)
+			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_SWAPGRIDCAM, 0);
+		else
+			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_NEXTVIEW, 0);
 		break;
 	case VK_END:
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_CENTER, 0);
@@ -551,7 +552,7 @@ QE_SingleBrush
 */
 bool QE_SingleBrush ()
 {
-	if ((g_brSelectedBrushes.next == &g_brSelectedBrushes) || 
+	if ((!Select_HasBrushes()) ||
 		(g_brSelectedBrushes.next->next != &g_brSelectedBrushes))
 	{
 		Sys_Printf("WARNING: Must have a single brush selected.\n");
@@ -722,11 +723,11 @@ void QE_UpdateCommandUI ()
 // Edit Menu
 //===================================
 	// Cut
-	EnableMenuItem(hMenu, ID_EDIT_CUT, (g_brSelectedBrushes.next != &g_brSelectedBrushes ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (g_brSelectedBrushes.next != &g_brSelectedBrushes ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+	EnableMenuItem(hMenu, ID_EDIT_CUT, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
+	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_CUT, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Copy
-	EnableMenuItem(hMenu, ID_EDIT_COPY, (g_brSelectedBrushes.next != &g_brSelectedBrushes ? MF_ENABLED : MF_GRAYED));
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (g_brSelectedBrushes.next != &g_brSelectedBrushes ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
+	EnableMenuItem(hMenu, ID_EDIT_COPY, (Select_HasBrushes() ? MF_ENABLED : MF_GRAYED));
+	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_COPY, (Select_HasBrushes() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Paste
 	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_brCopiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
 	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_brCopiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));

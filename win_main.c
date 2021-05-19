@@ -7,13 +7,6 @@
 #include "io.h"
 
 
-
-// sikk---> Show/Hide window
-bool g_bShowEntity = true;
-bool g_bShowConsole = true;
-bool g_bShowTexture = true;
-// <---sikk
-
 /*
 ==============================================================================
 
@@ -63,7 +56,7 @@ void RunBsp (char *command)
 	STARTUPINFO	startupinfo;
 	PROCESS_INFORMATION	ProcessInformation;
 
-	SetInspectorMode(W_CONSOLE);
+	InspWnd_SetMode(W_CONSOLE);
 
 	if (g_hBSP_Process)
 	{
@@ -377,6 +370,25 @@ void SetWindowRect (HWND hwnd, RECT *rc)
 	MoveWindow(hwnd, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, TRUE);
 }
 
+void SwapGridCam()
+{
+	WINDOWPLACEMENT camWP, gridWP;
+
+	memset(&camWP, 0, sizeof(camWP));
+	memset(&gridWP, 0, sizeof(gridWP));
+	camWP.length = gridWP.length = sizeof(gridWP);
+
+	GetWindowPlacement(g_qeglobals.d_hwndCamera, &camWP);
+	GetWindowPlacement(g_qeglobals.d_hwndXY, &gridWP);
+
+	// either of these appears to do the trick. do both anyway.
+	SetWindowRect(g_qeglobals.d_hwndCamera, &gridWP.rcNormalPosition);
+	SetWindowPlacement(g_qeglobals.d_hwndCamera, &gridWP);
+
+	SetWindowRect(g_qeglobals.d_hwndXY, &camWP.rcNormalPosition);
+	SetWindowPlacement(g_qeglobals.d_hwndXY, &camWP);
+}
+
 /*
 ==============
 DoWindowPosition
@@ -399,7 +411,7 @@ void DoWindowPosition (int nStyle)
 	{
 	case 0:	// QE3 Default
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -421,7 +433,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 
 		// Set XY rect
 		xy.top = parent.top;
@@ -440,7 +452,7 @@ void DoWindowPosition (int nStyle)
 
 	case 1:	// QE3 Reverse
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -462,7 +474,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.left;
 		entity.right = parent.left + 320;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		// Set XY rect
 		xy.top = parent.top;
@@ -481,7 +493,7 @@ void DoWindowPosition (int nStyle)
 
 	case 2:	// 4 Window w/ Z (Cam Left)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -503,7 +515,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (entity.left - z.right) * 0.5;
 		
@@ -538,7 +550,7 @@ void DoWindowPosition (int nStyle)
 
 	case 3:	// 4 Window w/ Z (Cam Right)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -560,7 +572,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (entity.left - z.right) * 0.5;
 		
@@ -595,7 +607,7 @@ void DoWindowPosition (int nStyle)
 
 	case 4:	// 4 Window w/o Z (Cam Left)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -610,7 +622,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = (entity.left - parent.left) * 0.5;
 		
@@ -645,7 +657,7 @@ void DoWindowPosition (int nStyle)
 
 	case 5:	// 4 Window w/o Z (Cam Right)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -660,7 +672,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = (entity.left - parent.left) * 0.5;
 		
@@ -695,7 +707,7 @@ void DoWindowPosition (int nStyle)
 	
 	case 6:	// 4 Window Full w/ Z (Cam Left)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -717,7 +729,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (parent.right - z.right) * 0.5;
 		
@@ -752,7 +764,7 @@ void DoWindowPosition (int nStyle)
 
 	case 7:	// 4 Window Full w/ Z (Cam Right)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -774,7 +786,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (parent.right - z.right) * 0.5;
 		
@@ -809,7 +821,7 @@ void DoWindowPosition (int nStyle)
 
 	case 8:	// 4 Window Full w/o Z (Cam Left)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -824,7 +836,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = (parent.right - parent.left) * 0.5;
 		
@@ -859,7 +871,7 @@ void DoWindowPosition (int nStyle)
 
 	case 9:	// 4 Window Full w/o Z (Cam Right)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOW);
@@ -874,7 +886,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = (parent.right - parent.left) * 0.5;
 		
@@ -909,7 +921,7 @@ void DoWindowPosition (int nStyle)
 	
 	case 10:	// 2 Window (Cam Top)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -931,7 +943,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		// Set XY rect
 		xy.top = midy;
@@ -950,7 +962,7 @@ void DoWindowPosition (int nStyle)
 
 	case 11:	// 2 Window (Cam Bottom)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -972,7 +984,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		// Set XY rect
 		xy.top = parent.top;
@@ -991,7 +1003,7 @@ void DoWindowPosition (int nStyle)
 
 	case 12:	// 2 Window (Cam Left)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -1013,7 +1025,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (parent.right - z.right) * 0.5;
 		
@@ -1034,7 +1046,7 @@ void DoWindowPosition (int nStyle)
 
 	case 13:	// 2 Window (Cam Right)
 		// Show/Hide necessary windows
-		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
+		ShowWindow(g_qeglobals.d_hwndInspector, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndCamera, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXY, SW_SHOW);
 		ShowWindow(g_qeglobals.d_hwndXZ, SW_HIDE);
@@ -1056,7 +1068,7 @@ void DoWindowPosition (int nStyle)
 		entity.bottom = parent.bottom;
 		entity.left = parent.right - 320;
 		entity.right = parent.right;
-		SetWindowRect(g_qeglobals.d_hwndEntity, &entity);
+		SetWindowRect(g_qeglobals.d_hwndInspector, &entity);
 		
 		midx = z.right + (parent.right - z.right) * 0.5;
 		
@@ -1192,7 +1204,7 @@ LONG WINAPI CommandHandler (
 // sikk---> TODO: Copy still broken
 		case ID_EDIT_CUT:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
 				break;
 			Undo_Start("Cut");
 			Undo_AddBrushList(&g_brSelectedBrushes);
@@ -1202,13 +1214,13 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_EDIT_COPY:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
 				break;
 			Select_Copy();
 			break;
 		case ID_EDIT_PASTE:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
 				break;
 			Undo_Start("Paste");
 			Select_Paste();
@@ -1340,77 +1352,25 @@ LONG WINAPI CommandHandler (
 			}
 			break;
 		
-// sikk--->	quick hack for Show/Hide Entity Window
 		case ID_VIEW_ENTITY:
-			if (g_bShowEntity)
-			{
-				SetInspectorMode(W_ENTITY);
-				g_bShowEntity = false;
-				g_bShowConsole = true;
-				g_bShowTexture = true;
-			}
+			if (g_qeglobals.d_nInspectorMode != W_ENTITY)
+				InspWnd_SetMode(W_ENTITY);
 			else
-			{	
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndEntity)
-					BringWindowToTop(g_qeglobals.d_hwndEntity);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
-					SetWindowPos(g_qeglobals.d_hwndEntity, HWND_BOTTOM, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
-					g_bShowEntity = true;
-					g_bShowConsole = true;
-					g_bShowTexture = true;
-					SetForegroundWindow(g_qeglobals.d_hwndCamera);
-				}
-			}
+				InspWnd_ToTop();
 			break;
 		case ID_VIEW_CONSOLE:
-			if (g_bShowConsole)
-			{
-				SetInspectorMode(W_CONSOLE);
-				g_bShowConsole = false;
-				g_bShowEntity = true;
-				g_bShowTexture = true;
-			}
+			if (g_qeglobals.d_nInspectorMode != W_CONSOLE)
+				InspWnd_SetMode(W_CONSOLE);
 			else
-			{
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndEntity)
-					BringWindowToTop(g_qeglobals.d_hwndEntity);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
-					SetWindowPos(g_qeglobals.d_hwndEntity, HWND_BOTTOM, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
-					g_bShowConsole = true;
-					g_bShowEntity = true;
-					g_bShowTexture = true;
-					SetForegroundWindow(g_qeglobals.d_hwndCamera);
-				}
-			}
+				InspWnd_ToTop();
 			break;
 		case ID_VIEW_TEXTURE:
-			if (g_bShowTexture)
-			{
-				SetWindowText(g_qeglobals.d_hwndEntity, "Textures");
-				SetInspectorMode(W_TEXTURE);
-				g_bShowTexture = false;
-				g_bShowEntity = true;
-				g_bShowConsole = true;
-			}
+			if (g_qeglobals.d_nInspectorMode != W_TEXTURE)
+				InspWnd_SetMode(W_TEXTURE);
 			else
-			{				
-				if (GetTopWindow(hWnd) != g_qeglobals.d_hwndEntity)
-					BringWindowToTop(g_qeglobals.d_hwndEntity);
-				else
-				{
-					ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
-					SetWindowPos(g_qeglobals.d_hwndEntity, HWND_BOTTOM, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
-					g_bShowTexture = true;
-					g_bShowEntity = true;
-					g_bShowConsole = true;
-				}
-			}
+				InspWnd_ToTop();
 			break;
-// <---sikk
+
 
 // sikk---> Multiple Orthographic Views
 		case ID_VIEW_TOGGLE_XY: // NOT saved
@@ -1488,7 +1448,7 @@ LONG WINAPI CommandHandler (
 		case ID_VIEW_CENTER:
 			g_qeglobals.d_camera.angles[ROLL] = g_qeglobals.d_camera.angles[PITCH] = 0;
 			g_qeglobals.d_camera.angles[YAW] = 22.5f * floor((g_qeglobals.d_camera.angles[YAW] + 11) / 22.5f);
-			Sys_UpdateWindows(W_CAMERA|W_XY_OVERLAY);
+			Sys_UpdateWindows(W_CAMERA|W_XY);
 			break;
 		case ID_VIEW_UPFLOOR:
 			Cam_ChangeFloor(true);
@@ -1522,59 +1482,63 @@ LONG WINAPI CommandHandler (
 				SetWindowText(g_qeglobals.d_hwndXY, "XY View: Top");
 			}
 			XY_PositionView();
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY | W_CAMERA);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SWAPGRIDCAM:
+			SwapGridCam();
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_XY:
 			g_qeglobals.d_nViewType = XY;
 			SetWindowText(g_qeglobals.d_hwndXY, "XY Top");
 			XY_PositionView();
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY | W_CAMERA);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_XZ:
 			g_qeglobals.d_nViewType = XZ;
 			SetWindowText(g_qeglobals.d_hwndXY, "XZ Front");
 			XY_PositionView();
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY | W_CAMERA);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 		case ID_VIEW_YZ:
 			g_qeglobals.d_nViewType = YZ;
 			SetWindowText(g_qeglobals.d_hwndXY, "YZ Side");
 			XY_PositionView();
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY | W_CAMERA);
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 
 		case ID_VIEW_100:
 			g_qeglobals.d_xyz.scale = 1;
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_ZOOMIN:
 			g_qeglobals.d_xyz.scale *= 5.0 / 4;
 			if (g_qeglobals.d_xyz.scale > 32)
 				g_qeglobals.d_xyz.scale = 32;
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+			Sys_UpdateWindows(W_XY);
 			break;
 		case ID_VIEW_ZOOMOUT:
 			g_qeglobals.d_xyz.scale *= 4.0f / 5;
 			if (g_qeglobals.d_xyz.scale < 0.05)
 				g_qeglobals.d_xyz.scale = 0.05f;
-			Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+			Sys_UpdateWindows(W_XY);
 			break;
 
 		case ID_VIEW_Z100:
 			g_qeglobals.d_z.scale = 1;
-			Sys_UpdateWindows(W_Z | W_Z_OVERLAY);
+			Sys_UpdateWindows(W_Z);
 			break;
 		case ID_VIEW_ZZOOMIN:
 			g_qeglobals.d_z.scale *= 5.0 / 4;
 			if (g_qeglobals.d_z.scale > 16)
 				g_qeglobals.d_z.scale = 16;
-			Sys_UpdateWindows(W_Z | W_Z_OVERLAY);
+			Sys_UpdateWindows(W_Z);
 			break;
 		case ID_VIEW_ZZOOMOUT:
 			g_qeglobals.d_z.scale *= 4.0f / 5;
 			if (g_qeglobals.d_z.scale < 0.1)
 				g_qeglobals.d_z.scale = 0.1f;
-			Sys_UpdateWindows(W_Z | W_Z_OVERLAY);
+			Sys_UpdateWindows(W_Z);
 			break;
 
 		case ID_VIEW_CAMSPEED:	// sikk - Camera Speed Trackbar in toolbar
@@ -1693,7 +1657,7 @@ LONG WINAPI CommandHandler (
 
 		case ID_VIEW_HIDESHOW_HIDESELECTED:
 			Select_Hide();
-			Select_Deselect(true);
+			Select_DeselectAll(true);
 			break;
 		case ID_VIEW_HIDESHOW_SHOWHIDDEN:
 			Select_ShowAllHidden();
@@ -1740,7 +1704,7 @@ LONG WINAPI CommandHandler (
 			if (g_qeglobals.d_bClipMode)
 				Clip_UnsetMode();
 			else
-				Select_Deselect(true);
+				Select_DeselectAll(true);
 			break;
 		case ID_SELECTION_INVERT:
 			Select_Invert();
@@ -1886,7 +1850,7 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_SELECTION_SELECTALL:	// sikk - Select All
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
-			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity)
+			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector)
 				break;
 			Select_All();
 			break;
@@ -2016,7 +1980,7 @@ LONG WINAPI CommandHandler (
 		case ID_TEXTURES_UPDATEMENU:
 			Sys_BeginWait();
 			FillTextureMenu();
-			SetInspectorMode(W_CONSOLE);
+			InspWnd_SetMode(W_CONSOLE);
 			break;
 
 		case ID_TEXTURES_FLUSH_ALL:
@@ -2026,17 +1990,17 @@ LONG WINAPI CommandHandler (
 						// done to this point and forgot to save.
 			Texture_Flush();
 			Texture_Init();
-			SetInspectorMode(W_TEXTURE);
+			InspWnd_SetMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
-			SetWindowText(g_qeglobals.d_hwndEntity, "Flushed All...");
+			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed All...");
 			break;
 		case ID_TEXTURES_FLUSH_UNUSED:
 			Sys_BeginWait();
 			Texture_ShowInuse();
 			Texture_FlushUnused();
-			SetInspectorMode(W_TEXTURE);
+			InspWnd_SetMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
-			SetWindowText(g_qeglobals.d_hwndEntity, "Flushed Unused...");
+			SetWindowText(g_qeglobals.d_hwndInspector, "Flushed Unused...");
 			break;
 		// sikk - TODO: This doesn't function like Radiant and is, for
 		// the most part, pointless. Will later make it toggle along 
@@ -2044,7 +2008,7 @@ LONG WINAPI CommandHandler (
 		case ID_TEXTURES_SHOWINUSE:
 			Sys_BeginWait();
 			Texture_ShowInuse();
-			SetInspectorMode(W_TEXTURE);
+			InspWnd_SetMode(W_TEXTURE);
 			break;
 
 		case ID_TEXTURES_RESETSCALE:	// sikk - Reset Texture View Scale
@@ -2149,15 +2113,15 @@ LONG WINAPI CommandHandler (
 		case CMD_TEXTUREWAD + 63:
 			Sys_BeginWait();
 			Texture_ShowWad(LOWORD(wParam));
-			SetInspectorMode(W_TEXTURE);
+			InspWnd_SetMode(W_TEXTURE);
 			break;
 
 //===================================
 // Misc menu
 //===================================
 		case ID_MISC_BENCHMARK:
-			SendMessage(g_qeglobals.d_hwndCamera, WM_USER + 267, 0, 0);
-			SetInspectorMode(W_CONSOLE);
+			SendMessage(g_qeglobals.d_hwndCamera, WM_BENCHMARK, 0, 0);
+			InspWnd_SetMode(W_CONSOLE);
 			break;
 
 // sikk---> Color Themes
@@ -2562,7 +2526,7 @@ LONG WINAPI WMain_WndProc (
 		SaveWindowState(g_qeglobals.d_hwndYZ,		"YZWindow");	// sikk - Multiple Orthographic Views
 		SaveWindowState(g_qeglobals.d_hwndCamera,	"CameraWindow");
 		SaveWindowState(g_qeglobals.d_hwndZ,		"ZWindow");
-		SaveWindowState(g_qeglobals.d_hwndEntity,	"EntityWindow");
+		SaveWindowState(g_qeglobals.d_hwndInspector,	"EntityWindow");
 		SaveWindowState(g_qeglobals.d_hwndMain,		"MainWindow");
 
 // sikk---> Save Rebar Band Info
@@ -2649,7 +2613,7 @@ LONG WINAPI WMain_WndProc (
 			point.y = (short)HIWORD(lParam);
 			hwndTarget = ChildWindowFromPoint(g_qeglobals.d_hwndMain, point);
 
-			if (hwndTarget == g_qeglobals.d_hwndEntity && g_qeglobals.d_nInspectorMode == W_TEXTURE)
+			if (hwndTarget == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_TEXTURE)
 			{
 				if (zDelta < 0)
 					g_qeglobals.d_texturewin.originy -= 64;
@@ -2677,14 +2641,14 @@ LONG WINAPI WMain_WndProc (
 					g_qeglobals.d_xyz.scale *= 4.0f / 5;
 					if (g_qeglobals.d_xyz.scale < 0.05)
 						g_qeglobals.d_xyz.scale = 0.05f;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 				else
 				{
 					g_qeglobals.d_xyz.scale *= 5.0 / 4;
 					if (g_qeglobals.d_xyz.scale > 32)
 						g_qeglobals.d_xyz.scale = 32;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 			}
 			if (hwndTarget == g_qeglobals.d_hwndXZ)
@@ -2694,14 +2658,14 @@ LONG WINAPI WMain_WndProc (
 					g_qeglobals.d_xz.scale *= 4.0f / 5;
 					if (g_qeglobals.d_xz.scale < 0.05)
 						g_qeglobals.d_xz.scale = 0.05f;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 				else
 				{
 					g_qeglobals.d_xz.scale *= 5.0 / 4;
 					if (g_qeglobals.d_xz.scale > 32)
 						g_qeglobals.d_xz.scale = 32;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 			}
 			if (hwndTarget == g_qeglobals.d_hwndYZ)
@@ -2711,14 +2675,14 @@ LONG WINAPI WMain_WndProc (
 					g_qeglobals.d_yz.scale *= 4.0f / 5;
 					if (g_qeglobals.d_yz.scale < 0.05)
 						g_qeglobals.d_yz.scale = 0.05f;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 				else
 				{
 					g_qeglobals.d_yz.scale *= 5.0 / 4;
 					if (g_qeglobals.d_yz.scale > 32)
 						g_qeglobals.d_yz.scale = 32;
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+					Sys_UpdateWindows(W_XY);
 				}
 			}
 			if (hwndTarget == g_qeglobals.d_hwndZ)
@@ -2728,14 +2692,14 @@ LONG WINAPI WMain_WndProc (
 					g_qeglobals.d_z.scale *= 4.0f / 5;
 					if (g_qeglobals.d_z.scale < 0.05)
 						g_qeglobals.d_z.scale = 0.05f;
-					Sys_UpdateWindows(W_Z | W_Z_OVERLAY);
+					Sys_UpdateWindows(W_Z);
 				}
 				else
 				{
 					g_qeglobals.d_z.scale *= 5.0 / 4;
 					if (g_qeglobals.d_z.scale > 32)
 						g_qeglobals.d_z.scale = 32;
-					Sys_UpdateWindows(W_Z | W_Z_OVERLAY);
+					Sys_UpdateWindows(W_Z);
 				}
 			}
 		}
@@ -3111,11 +3075,11 @@ void Sys_UpdateGridStatusBar ()
 {
 	char gridstatus[128] = "";
 
-	sprintf(gridstatus, "Grid Size: %d Grid Snap: %s Clip Mode: %s Texture Lock: %s Cubic Clip: %d", 
+	sprintf(gridstatus, "Grid Size: %d  Grid Snap: %s  Clip Mode: %s  Texture Lock: %s  Cubic Clip: %d", 
 			g_qeglobals.d_nGridSize, 
-			g_qeglobals.d_savedinfo.bNoClamp ? "off" : "on", 
-			g_qeglobals.d_bClipMode ? "on" : "off", 
-			g_qeglobals.d_bTextureLock ? "on" : "off",
+			g_qeglobals.d_savedinfo.bNoClamp ? "OFF" : "On", 
+			g_qeglobals.d_bClipMode ? "On" : "Off", 
+			g_qeglobals.d_bTextureLock ? "On" : "Off",
 			g_qeglobals.d_savedinfo.nCubicScale);	// sikk - Cubic Clipping
 	Sys_Status(gridstatus, 1);
 }
@@ -3138,7 +3102,7 @@ CreateStatusBar
 HWND CreateStatusBar (HWND hWnd)
 {
 	HWND hwndSB;
-	int partsize[4] = { 192, 560, 800, -1 };	// EER //sikk - adjusted sizes
+	int partsize[4] = { 192, 640, 960, -1 };	// EER //sikk - adjusted sizes
 
 	hwndSB = CreateStatusWindow(
 		QE3_STATUSBAR_STYLE,	// window styles

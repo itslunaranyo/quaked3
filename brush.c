@@ -619,6 +619,44 @@ void Brush_AddToList (brush_t *b, brush_t *list)
 }
 
 /*
+=================
+Brush_MergeListIntoList
+=================
+*/
+void Brush_MergeListIntoList(brush_t *src, brush_t *dest)
+{
+	// properly doubly-linked lists only
+	if (!src->next || !src->prev)
+	{
+		Error("Tried to merge a list with NULL links!\n");
+		return;
+	}
+
+	if (src->next == src || src->prev == src)
+	{
+		Sys_Printf("WARNING: Tried to merge an empty list.\n");
+		return;
+	}
+	// merge at head of list - preferred for shorter search time to recently manipulated brushes
+	src->next->prev = dest;
+	src->prev->next = dest->next;
+	dest->next->prev = src->prev;
+	dest->next = src->next;
+
+	/*
+	// for merge at tail of list
+	dest->prev->next = src->next;
+	src->next->prev = dest->prev;
+	dest->prev = src->prev;
+	src->prev->next = dest;
+	*/
+
+	src->prev = src->next = src;
+}
+
+
+
+/*
 ==================
 Brush_Build
 
@@ -1482,11 +1520,9 @@ void Brush_MakeSided (int sides)
 		f->planepts[2][axis] = maxs[axis];
 	}
 
-	Brush_AddToList(b, &g_brSelectedBrushes);
+	Select_SelectBrush(b);
 	Entity_LinkBrush(g_peWorldEntity, b);
 	Brush_Build(b);
-
-	Sys_UpdateWindows(W_ALL);
 }
 
 // sikk---> Brush Primitives
@@ -1589,11 +1625,9 @@ void Brush_MakeSidedCone (int sides)
 		f->planepts[2][2] = maxs[2];
 	}
 
-	Brush_AddToList(b, &g_brSelectedBrushes);
+	Select_SelectBrush(b);
 	Entity_LinkBrush(g_peWorldEntity, b);
 	Brush_Build(b);
-
-	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -1692,11 +1726,9 @@ void Brush_MakeSidedSphere (int sides)
 			VectorAdd(f->planepts[k], mid, f->planepts[k]);
 	}
 
-	Brush_AddToList(b, &g_brSelectedBrushes);
+	Select_SelectBrush(b);
 	Entity_LinkBrush(g_peWorldEntity, b);
 	Brush_Build(b);
-
-	Sys_UpdateWindows(W_ALL);
 }
 // <---sikk
 
@@ -1724,6 +1756,7 @@ void Brush_Move (brush_t *b, vec3_t move)
 	// PGM - keep the origin vector up to date on fixed size entities.
 	if (b->owner->eclass->fixedsize)
 		VectorAdd(b->owner->origin, move, b->owner->origin);
+	// lunaran TODO: update the keyvalue dammit
 }
 
 /*

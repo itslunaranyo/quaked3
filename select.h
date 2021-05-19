@@ -4,10 +4,11 @@
 
 #define	DIST_START	999999
 
-#define	SF_SELECTED_ONLY	1
-#define	SF_ENTITIES_FIRST	2
-#define	SF_SINGLEFACE		4
-#define SF_CYCLE			8	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+#define	SF_SELECTED_ONLY	0x01
+#define	SF_ENTITIES_FIRST	0x02
+#define	SF_SINGLEFACE		0x04
+#define SF_CYCLE			0x08	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+#define SF_NOFIXEDSIZE		0x10	// lunaran - avoid selecting the 'faces' on entity brushes
 
 //========================================================================
 
@@ -30,10 +31,22 @@ typedef struct
 
 //========================================================================
 
-int g_nSelFaceCount, g_nSelFacePos;	// sikk - Multiple Face Selection
-vec3_t g_v3RotateOrigin;	// sikk - Free Rotate
+extern bool			g_bSelectionChanged;
+extern brush_t		g_brSelectedBrushes;
+
+// sikk - Multiple Face Selection
+extern face_t		*g_pfaceSelectedFaces[MAX_MAP_FACES];
+
+// <-- sikk
+
+//extern face_t		*g_pfaceSelectedFace;
+//extern brush_t	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
+vec3_t				g_v3RotateOrigin;	// sikk - Free Rotate
 
 //========================================================================
+
+void Select_HandleChange();
+void Select_SelectBrush(brush_t *b);
 
 trace_t Test_Ray (vec3_t origin, vec3_t dir, int flags);
 
@@ -45,13 +58,14 @@ void Select_GetBounds (vec3_t mins, vec3_t maxs);
 void Select_GetTrueMid (vec3_t mid);
 void Select_GetMid (vec3_t mid);
 void Select_ApplyMatrix ();
-void Select_Brush (brush_t *b, bool bComplete);
+void Select_HandleBrush (brush_t *b, bool bComplete);
 void Select_Ray (vec3_t origin, vec3_t dir, int flags);
 void Select_Delete ();
-void Select_Deselect (bool bDeselectFaces);
+void Select_DeselectFiltered();
+void Select_DeselectAll (bool bDeselectFaces);
 // sikk---> Multiple Face Selection
 bool Select_IsFaceSelected (face_t *face);
-void Select_DeselectFaces ();
+bool Select_DeselectAllFaces ();
 // <---sikk
 void Select_Clone ();
 void Select_Move (vec3_t delta);

@@ -55,7 +55,7 @@ void Texture_ShowInuse ();
 void Texture_ShowWad (int menunum);
 void Texture_InitFromWad (char *file);
 void Texture_InitPalette (byte *pal);
-void Texture_SetTexture (texdef_t *texdef, bool bSetSelection);	// sikk - Multiple Face Selection: added bSetSelection
+void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection);	// sikk - Multiple Face Selection: added bSetSelection
 void Texture_SetMode (int iMenu);	// GL_NEAREST, etc..
 void Texture_MouseDown (int x, int y, int buttons);
 void Texture_MouseUp (int x, int y, int buttons);

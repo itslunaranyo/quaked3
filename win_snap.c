@@ -63,9 +63,9 @@ bool FindClosestBottom (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
 			best = temprect.top;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
 			best = temprect.top;
 	}
@@ -125,9 +125,9 @@ bool FindClosestTop (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
 			best = temprect.bottom;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
 			best = temprect.bottom;
 	}
@@ -187,9 +187,9 @@ bool FindClosestLeft (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit)
 		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
 			best = temprect.right;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
 			best = temprect.right;
 	}
@@ -249,9 +249,9 @@ bool FindClosestRight (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit)
 		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
 			best = temprect.left;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
 			best = temprect.left;
 	}
@@ -329,9 +329,9 @@ bool FindClosestHorizontal (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
 			bestright = temprect.left;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->left - temprect.right) < abs(rect->left - bestleft))
 			bestleft = temprect.right;
 		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
@@ -419,9 +419,9 @@ bool FindClosestVertical (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
 			bestbottom = temprect.top;
 	}
-	if (h != g_qeglobals.d_hwndEntity)
+	if (h != g_qeglobals.d_hwndInspector)
 	{
-		GetWindowRect(g_qeglobals.d_hwndEntity, &temprect);
+		GetWindowRect(g_qeglobals.d_hwndInspector, &temprect);
 		if (abs(rect->top - temprect.bottom) < abs(rect->top - besttop))
 			besttop = temprect.bottom;
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))

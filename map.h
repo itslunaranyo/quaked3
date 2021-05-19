@@ -8,10 +8,6 @@ extern char			g_szCurrentMap[MAX_PATH];
 
 // head/tail of doubly linked lists
 extern brush_t		g_brActiveBrushes;		// brushes currently being displayed
-extern brush_t		g_brSelectedBrushes;	// highlighted
-extern face_t	   *g_pfaceSelectedFaces[MAX_MAP_FACES];	// sikk - Multiple Face Selection
-//extern face_t	   *g_pfaceSelectedFace;
-//extern brush_t     *g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
 extern brush_t		g_brFilteredBrushes;	// brushes that have been filtered or regioned
 
 extern entity_t		g_entEntities;

@@ -450,7 +450,7 @@ void Undo_Undo ()
 			pEntity->redoId = 0;
 
 	// deselect current sutff
-	Select_Deselect(true);
+	Select_DeselectAll(true);
 
 	// move "created" brushes to the redo
 	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush=pNextBrush)
@@ -547,7 +547,7 @@ void Undo_Undo ()
 
 		// build the brush
 //		Brush_Build(pBrush);
-		Select_Brush(pBrush, false);
+		Select_HandleBrush(pBrush, false);
 		pBrush->redoId = redo->id;
     }
 	
@@ -599,7 +599,7 @@ void Undo_Redo()
 	Undo_GeneralStart(redo->operation);
 
 	// remove current selection
-	Select_Deselect(true);
+	Select_DeselectAll(true);
 
 	// move "created" brushes back to the last undo
 	for (pBrush = g_brActiveBrushes.next; pBrush != NULL && pBrush != &g_brActiveBrushes; pBrush = pNextBrush)
@@ -686,7 +686,7 @@ void Undo_Redo()
 
 		// build the brush
 //		Brush_Build(pBrush);
-		Select_Brush(pBrush, true);
+		Select_HandleBrush(pBrush, true);
     }
 	
 	Undo_End();

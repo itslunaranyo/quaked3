@@ -910,14 +910,16 @@ int WINAPI WinMain (
     MSG		msg;
 	double	curtime, oldtime, delta;
 	HACCEL	accelerators;
-	HWND	hwnd_splash;
+	HWND	hwndSplash;
 	char	szProject[_MAX_PATH];	// sikk - Load Last Project
     time_t	lTime;
 
 	g_qeglobals.d_hInstance = hInstance;
 
 // sikk - Quickly made Splash Screen
-//	hwnd_splash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
+#ifndef _DEBUG
+	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
+#endif
 
 	InitCommonControls ();
 
@@ -941,7 +943,7 @@ int WINAPI WinMain (
 	WXZ_Create(hInstance);	// sikk - Multiple Orthographic Views
 	WYZ_Create(hInstance);	// sikk - Multiple Orthographic Views
 	WZ_Create(hInstance);
-	EntWnd_Create(hInstance);
+	InspWnd_Create(hInstance);
 
 	// sikk - Print App name and current time for logging purposes
 	time(&lTime);	
@@ -999,7 +1001,7 @@ int WINAPI WinMain (
 		{	// sikk - We don't want QE3 to handle accelerator shortcuts when 
 			// editing text in the Entity & Console Windows
 			if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg) ||
-				(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndEntity))
+				(GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
@@ -1008,6 +1010,8 @@ int WINAPI WinMain (
 			if (msg.message == WM_QUIT)
 				g_bHaveQuit = true;
 		}
+
+		Select_HandleChange();
 
 		CheckBspProcess();
 
@@ -1018,11 +1022,11 @@ int WINAPI WinMain (
 			delta = 0.2;
 
 // sikk---> Quickly made Splash Screen
-		/*
-		if (hwnd_splash)
-			if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 5)
-				DestroyWindow(hwnd_splash);
-		*/
+#ifndef _DEBUG
+		if (hwndSplash)
+			if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
+				DestroyWindow(hwndSplash);
+#endif
 // <---sikk
 
 		// run time dependant behavior
@@ -1034,7 +1038,7 @@ int WINAPI WinMain (
 			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndCamera);
 		}
-		if (g_nUpdateBits & (W_XY | W_XY_OVERLAY))
+		if (g_nUpdateBits & (W_XY))
 		{
 			InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndXY);
@@ -1051,7 +1055,7 @@ int WINAPI WinMain (
 			}
 // <---sikk
 		}
-		if (g_nUpdateBits & (W_Z | W_Z_OVERLAY))
+		if (g_nUpdateBits & (W_Z))
 		{
 			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndZ);
@@ -1059,7 +1063,7 @@ int WINAPI WinMain (
 		if (g_nUpdateBits & W_TEXTURE)
 		{
 			InvalidateRect(g_qeglobals.d_hwndTexture, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndEntity);
+			UpdateWindow(g_qeglobals.d_hwndInspector);
 		}
 
 		g_nUpdateBits = 0;

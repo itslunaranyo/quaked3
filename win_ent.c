@@ -5,8 +5,17 @@
 #include "qe3.h"
 
 
-#define DLGBORDER_X		5
-#define DLGBORDER_Y		5
+
+/*
+===============================================================
+
+ENTITY WINDOW
+
+===============================================================
+*/
+
+#define DLGBORDER_X		4
+#define DLGBORDER_Y		4
 
 int g_nEntDlgIds[ENT_LAST] = 
 {
@@ -51,14 +60,6 @@ HWND		g_hwndEnt[ENT_LAST];
 bool		g_bMultipleEntities;
 entity_t   *g_peEditEntity;
 
-static void EntWnd_ToTop()
-{
-	if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndEntity)
-		BringWindowToTop(g_qeglobals.d_hwndEntity);
-	SetFocus(g_qeglobals.d_hwndCamera);
-}
-
-
 
 /*
 =========================
@@ -93,11 +94,14 @@ BOOL CALLBACK FieldWndProc (
 		{
 			if (hWnd == g_hwndEnt[ENT_KEYFIELD])
 			{
-				SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (long)"");
 				SetFocus(g_hwndEnt[ENT_VALUEFIELD]);
+				SendMessage(g_hwndEnt[ENT_VALUEFIELD], EM_SETSEL, 0, -1);
 			}
 			else
+			{
 				SetFocus(g_hwndEnt[ENT_KEYFIELD]);
+				SendMessage(g_hwndEnt[ENT_KEYFIELD], EM_SETSEL, 0, -1);
+			}
 		}
 		if (LOWORD(wParam) == VK_RETURN)
 		{
@@ -118,7 +122,11 @@ BOOL CALLBACK FieldWndProc (
 //	case WM_NCHITTEST:
 
 	case WM_LBUTTONDOWN:
-		EntWnd_ToTop();
+		// sikk---> LMB Bring to Top
+		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndInspector)
+			BringWindowToTop(g_qeglobals.d_hwndInspector);
+		// <---sikk
+		SetFocus(hWnd);
 		break;
 	}
 	return CallWindowProc(OldFieldWindowProc, hWnd, uMsg, wParam, lParam);
@@ -143,15 +151,15 @@ BOOL CALLBACK EntityListWndProc (
 	case WM_KEYDOWN:
 		if (LOWORD(wParam) == VK_RETURN)
 		{
-			SendMessage(g_qeglobals.d_hwndEntity, WM_COMMAND, (LBN_DBLCLK << 16) + IDC_E_LIST, 0);
+			SendMessage(g_qeglobals.d_hwndInspector, WM_COMMAND, (LBN_DBLCLK << 16) + IDC_E_LIST, 0);
 			return 0;
 		}
 		break;
 
 // sikk---> LMB Bring to Top
 	case WM_LBUTTONDOWN:
-		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndEntity)
-			BringWindowToTop(g_qeglobals.d_hwndEntity);
+		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndInspector)
+			BringWindowToTop(g_qeglobals.d_hwndInspector);
 		break;
 // <---sikk
 	}
@@ -160,15 +168,20 @@ BOOL CALLBACK EntityListWndProc (
 
 /*
 ================
-GetEntityControls
-
-Finds the controls from the dialog and
-moves them to the window
+EntWnd_CreateControls
 ================
 */
-void GetEntityControls (HWND h)
+void EntWnd_CreateControls(HINSTANCE hInstance)
 {
 	int i;
+	HWND h;
+
+	// kind of silly: create a dialog that contains all the controls, move the buttons and labels
+	// to the desired window, then destroy the dialog
+
+	h = CreateDialog(hInstance, (char *)IDD_ENTITY, g_qeglobals.d_hwndMain, (DLGPROC)NULL);
+	if (!h)
+		Error("CreateDialog: Failed.");
 
 	for (i = 0; i < ENT_LAST; i++)
 	{
@@ -176,23 +189,24 @@ void GetEntityControls (HWND h)
 			continue;
 		if (i == ENT_KEYFIELD || i == ENT_VALUEFIELD)
 			continue;
-		g_hwndEnt[i] = GetDlgItem(h, g_nEntDlgIds[i]);		
+		g_hwndEnt[i] = GetDlgItem(h, g_nEntDlgIds[i]);
 		if (g_hwndEnt[i])
 		{
 			SetParent(g_hwndEnt[i], g_qeglobals.d_hwndEntity);
 			SendMessage(g_hwndEnt[i], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 		}
 	}
+	DestroyWindow(h);
 
-	LoadLibraryA("RICHED32.DLL") ;	// sikk - For Enhanced Editing	
+	LoadLibraryA("RICHED32.DLL");	// sikk - For Enhanced Editing	
 
 	// SetParent apears to not modify some internal state
 	// on listboxes, so create it from scratch...
 
 // sikk---> Misc aesthetic changes
-	g_hwndEnt[ENT_CLASSLIST] = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"listbox", 
-		NULL, 
+	g_hwndEnt[ENT_CLASSLIST] = CreateWindowEx(WS_EX_CLIENTEDGE,
+		"listbox",
+		NULL,
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
 		5, 5, 180, 99,
 		g_qeglobals.d_hwndEntity,
@@ -202,9 +216,9 @@ void GetEntityControls (HWND h)
 	if (!g_hwndEnt[ENT_CLASSLIST])
 		Error("CreateWindowEx: Failed.");
 
-	g_hwndEnt[ENT_PROPS] = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"listbox", 
-		NULL, 
+	g_hwndEnt[ENT_PROPS] = CreateWindowEx(WS_EX_CLIENTEDGE,
+		"listbox",
+		NULL,
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_USETABSTOPS | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
@@ -214,9 +228,9 @@ void GetEntityControls (HWND h)
 	if (!g_hwndEnt[ENT_PROPS])
 		Error("CreateWindowEx: Failed.");
 
-	g_hwndEnt[ENT_COMMENT] = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"edit", 
-		NULL, 
+	g_hwndEnt[ENT_COMMENT] = CreateWindowEx(WS_EX_CLIENTEDGE,
+		"edit",
+		NULL,
 		ES_MULTILINE | ES_READONLY | WS_CHILD | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
@@ -226,9 +240,9 @@ void GetEntityControls (HWND h)
 	if (!g_hwndEnt[ENT_COMMENT])
 		Error("CreateWindowEx: Failed.");
 
-	g_hwndEnt[ENT_KEYFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"RichEdit", 
-		NULL, 
+	g_hwndEnt[ENT_KEYFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE,
+		"RichEdit",	// lunaran TODO: what
+		NULL,
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
@@ -238,9 +252,9 @@ void GetEntityControls (HWND h)
 	if (!g_hwndEnt[ENT_KEYFIELD])
 		Error("CreateWindowEx: Failed.");
 
-	g_hwndEnt[ENT_VALUEFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"RichEdit", 
-		NULL, 
+	g_hwndEnt[ENT_VALUEFIELD] = CreateWindowEx(WS_EX_CLIENTEDGE,
+		"RichEdit",	// lunaran TODO: why
+		NULL,
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
@@ -250,26 +264,13 @@ void GetEntityControls (HWND h)
 	if (!g_hwndEnt[ENT_VALUEFIELD])
 		Error("CreateWindowEx: Failed.");
 
-	g_qeglobals.d_hwndConsole = CreateWindowEx(WS_EX_CLIENTEDGE, 
-		"RichEdit", 
-		NULL, 
-		ES_MULTILINE | ES_READONLY | WS_CHILD | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL,
-		5, 100, 180, 99,
-		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_STATUS,
-		g_qeglobals.d_hInstance,
-		NULL);
-	if (!g_qeglobals.d_hwndConsole)
-		Error("CreateWindowEx: Failed.");
-// <---sikk
-
-	g_qeglobals.d_hwndTexture = WTex_Create(g_qeglobals.d_hInstance);
+	// <---sikk
 
 #if 0
 	for (i = 0; i < 12; i++)
 	{
-		g_hwndEnt[ENT_CHECK1 + i] = CreateWindow("button", 
-			NULL, 
+		g_hwndEnt[ENT_CHECK1 + i] = CreateWindow("button",
+			NULL,
 			BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
 			5, 100, 180, 99,
 			entwindow,
@@ -287,80 +288,9 @@ void GetEntityControls (HWND h)
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 
-    SendMessage(g_qeglobals.d_hwndConsole, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
-}
-
-/*
-===============================================================
-
-ENTITY WINDOW
-
-===============================================================
-*/
-
-/*
-==============
-EntWnd_FillClassList
-==============
-*/
-void EntWnd_FillClassList ()
-{
-	eclass_t   *pec;
-	int			iIndex;
-
-	SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_RESETCONTENT, 0 , 0);
-
-	for (pec = g_pecEclass; pec; pec = pec->next)
-	{
-		iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_ADDSTRING, 0 , (LPARAM)pec->name);
-		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)pec);
-	}	
 
 }
 
-/*
-==============
-EntWnd_CreateWindow
-==============
-*/
-static void EntWnd_CreateWindow (HINSTANCE hInstance)
-{
-    WNDCLASS   wc;
-
-    /* Register the entity class */
-	memset(&wc, 0, sizeof(wc));
-
-    wc.style         = 0;
-    wc.lpfnWndProc   = (WNDPROC)EntityWndProc;
-    wc.cbClsExtra    = 0;
-    wc.cbWndExtra    = 0;
-    wc.hInstance     = hInstance;
-    wc.hIcon         = 0;
-    wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);	// sikk - was-> GetStockObject (LTGRAY_BRUSH);
-    wc.lpszMenuName  = NULL;
-    wc.lpszClassName = ENT_WINDOW_CLASS;
-
-    if (!RegisterClass(&wc))
-        Error("WEnt_Register: Failed.");
-
-// sikk---> changed window to "tool window"
-	g_qeglobals.d_hwndEntity = CreateWindowEx(
-		WS_EX_TOOLWINDOW,							// Extended window style
-		ENT_WINDOW_CLASS ,							// registered class name
-		"Entity View",								// window name
-		QE3_CHILD_STYLE,							// window style
-		g_nScreenWidth - 320, g_nScreenHeight - 520,	// position of window
-		100, 480,									// window size
-		g_qeglobals.d_hwndMain,						// parent or owner window
-		0,											// menu or child-window identifier
-		hInstance,									// application instance
-		NULL);										// window-creation data
-// <---sikk
-
-	if (!g_qeglobals.d_hwndEntity)
-		Error("Could not create Entity Window.");
-}
 
 /*
 ==============
@@ -369,18 +299,39 @@ EntWnd_Create
 */
 void EntWnd_Create (HINSTANCE hInstance)
 {
-	HWND h;
+	WNDCLASS	wc;
 
-	g_qeglobals.d_nInspectorMode = W_ENTITY;
+	/* Register the texture class */
+	memset(&wc, 0, sizeof(wc));
 
-	EntWnd_CreateWindow(hInstance);
+	wc.style = 0;
+	wc.lpfnWndProc = (WNDPROC)EntityWndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = g_qeglobals.d_hInstance;
+	wc.hIcon = 0;
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);	// sikk - was-> GetStockObject (LTGRAY_BRUSH);
+	wc.lpszMenuName = NULL;
+	wc.lpszClassName = ENTITY_WINDOW_CLASS;
 
-	h = CreateDialog(hInstance, (char *)IDD_ENTITY, g_qeglobals.d_hwndMain, (DLGPROC)NULL);
-	if (!h)
-		Error("CreateDialog: Failed.");
+	if (!RegisterClass(&wc))
+		Error("EntWnd_Register: Failed.");
 
-	GetEntityControls(h);
-	DestroyWindow(h);
+	g_qeglobals.d_hwndEntity = CreateWindowEx(0,//WS_EX_CLIENTEDGE,	// extended window style
+		ENTITY_WINDOW_CLASS,				// registered class name
+		"Entity View",						// window name
+		WS_BORDER | WS_CHILD | WS_VISIBLE,	// window style
+		20, 20, 64, 64,						// size and position of window
+		g_qeglobals.d_hwndInspector,		// parent or owner window
+		0,									// menu or child-window identifier
+		hInstance,							// application instance
+		NULL);								// window-creation data
+
+	if (!g_qeglobals.d_hwndEntity)
+		Error("Could not create Entity Window.");
+
+	EntWnd_CreateControls(hInstance);
 
 	OldFieldWindowProc = (void *)GetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC);
 	SetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC, (long)FieldWndProc);
@@ -391,65 +342,31 @@ void EntWnd_Create (HINSTANCE hInstance)
 
 	EntWnd_FillClassList();
 
-	LoadWindowState(g_qeglobals.d_hwndEntity, "EntityWindow");
-
-	ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
-	SetInspectorMode(W_CONSOLE);
 }
+
+
 
 /*
 ==============
-SetInspectorMode
+EntWnd_FillClassList
 ==============
 */
-void SetInspectorMode (int nType)
+void EntWnd_FillClassList()
 {
-	RECT	rc;
-	HMENU	hMenu = GetMenu(g_qeglobals.d_hwndMain);
+	eclass_t   *pec;
+	int			iIndex;
 
-	// Is the caller asking us to cycle to the next window?
-	if (nType == -1)
+	SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_RESETCONTENT, 0, 0);
+
+	for (pec = g_pecEclass; pec; pec = pec->next)
 	{
-		if (g_qeglobals.d_nInspectorMode == W_ENTITY)
-			nType = W_TEXTURE;
-		else if (g_qeglobals.d_nInspectorMode == W_TEXTURE)
-			nType = W_CONSOLE;
-		else
-			nType = W_ENTITY;
-	}		
-
-	g_qeglobals.d_nInspectorMode = nType;
-	switch(nType)
-	{
-	case W_ENTITY:
-		SetWindowText(g_qeglobals.d_hwndEntity, "Entities");
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_ENABLED);
-		break;
-
-	case W_TEXTURE:
-//		SetWindowText(g_qeglobals.d_hwndEntity, "Textures"); // title is set by textures.c
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
-		break;
-
-	case W_CONSOLE:
-		SetWindowText(g_qeglobals.d_hwndEntity, "Console");		
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
-		break;
-
-	default:
-		break;
+		iIndex = SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)pec->name);
+		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)pec);
 	}
 
-	GetWindowRect(g_qeglobals.d_hwndEntity, &rc);
-	EntWnd_Resize(rc.right - rc.left - 8, rc.bottom - rc.top - 32);
-
-	RedrawWindow(g_qeglobals.d_hwndEntity, NULL, NULL, 
-				 RDW_ERASE | RDW_INVALIDATE | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
-
-	SetWindowPos(g_qeglobals.d_hwndEntity, HWND_TOP, 
-				 rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 
-				 SWP_NOSIZE | SWP_NOMOVE);
 }
+
+
 
 /*
 ==============
@@ -603,7 +520,8 @@ bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
 	int			i;
 	brush_t	   *b;
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
+	if (!Select_HasBrushes())
 	{
 		g_peEditEntity = g_peWorldEntity;
 		g_bMultipleEntities = false;
@@ -624,30 +542,33 @@ bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
 	if (nIndex != LB_ERR)
 		SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
 
-	if (pec == NULL)
-		return true;
-
-	// Set up the description
-	SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
-
-	for (i = 0; i < 8; i++)
+	if (pec)
 	{
-		HWND hwnd = g_hwndEnt[ENT_CHECK1 + i];
-		if (pec->flagnames[i] && pec->flagnames[i][0] != 0)
-		{
-			EnableWindow(hwnd, TRUE);
-			SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)pec->flagnames[i]);
-		} 
-		else 
-		{
-			// disable check box
-			SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)" ");
-			EnableWindow(hwnd, FALSE);
-		}
-	}
 
-	EntWnd_FlagsFromEnt();
-	EntWnd_RefreshKeyValues();
+		// Set up the description
+		SendMessage(g_hwndEnt[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString(pec->comments));
+
+		for (i = 0; i < 8; i++)
+		{
+			HWND hwnd = g_hwndEnt[ENT_CHECK1 + i];
+			if (pec->flagnames[i] && pec->flagnames[i][0] != 0 && pec->flagnames[i][0] != '?')	// lunaran - respect ? convention for unused spawnflags
+			{
+				EnableWindow(hwnd, TRUE);
+				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)pec->flagnames[i]);
+			}
+			else
+			{
+				// disable check box
+				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)" ");
+				EnableWindow(hwnd, FALSE);
+			}
+		}
+
+		EntWnd_FlagsFromEnt();
+		EntWnd_RefreshKeyValues();
+	}
+	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
+	RedrawWindow(g_qeglobals.d_hwndInspector, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 	return false;
 }
 
@@ -656,13 +577,16 @@ bool EntWnd_UpdateSel (int nIndex, eclass_t *pec)
 EntWnd_UpdateEntitySel
 ==============
 */
-bool EntWnd_UpdateEntitySel (eclass_t *pec)
+bool EntWnd_UpdateEntitySel ()
 {
 	int iIndex;
-	
-	iIndex = (int)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
-
-	return EntWnd_UpdateSel(iIndex, pec);
+	// lunaran TODO: clear entity inspector when no selection
+	if (Select_HasBrushes())
+	{
+		eclass_t *pec = g_brSelectedBrushes.next->owner->eclass;
+		iIndex = (int)SendMessage(g_hwndEnt[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
+		return EntWnd_UpdateSel(iIndex, pec);
+	}
 }
 
 /*
@@ -681,7 +605,7 @@ void EntWnd_CreateEntity ()
 	char		sz[1024];
 
 	// check to make sure we have a brush
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 	{
 	    MessageBox(g_qeglobals.d_hwndMain, "You must have a brush selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
 		return;
@@ -720,14 +644,14 @@ void EntWnd_CreateEntity ()
 		return;
 	}
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 		g_peEditEntity = g_peWorldEntity;
 	else
 		g_peEditEntity = g_brSelectedBrushes.next->owner;
 
 	EntWnd_RefreshKeyValues();
-	Select_Deselect(true);
-	Select_Brush(g_peEditEntity->brushes.onext, true);
+	Select_DeselectAll(true);
+	Select_HandleBrush(g_peEditEntity->brushes.onext, true);
 
 	Undo_EndBrushList(&g_brSelectedBrushes);
 	Undo_End();	// sikk - Undo/Redo
@@ -833,92 +757,24 @@ void EntWnd_EditKeyValue ()
 }
 
 //HDWP	defer;	// sikk - unused
-int		g_nCol;
-
-/*
-==============
-MOVE
-==============
-*/
-static void MOVE(HWND e, int x, int y, int w, int h)
-{
-	SetWindowPos(e, HWND_TOP, g_nCol + x, y, w, h, SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
-}
-
-static void MOVERECT(HWND e, RECT r)
-{
-	SetWindowPos(e, HWND_TOP, g_nCol + r.left, r.top, r.right, r.bottom, SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOZORDER);
-}
-
-static RECT ShrinkRect(RECT in, int shx, int shy)
-{
-	RECT out = in;
-
-	out.left += shx;
-	out.right -= 2 * shx;
-	out.top += shy;
-	out.bottom -= 2 * shy;
-
-	return out;
-}
 
 /*
 ===============
 EntWnd_Resize
 ===============
 */
-
-void EntWnd_Resize(int nWidth, int nHeight)
+void EntWnd_Resize(int nWidth, int nHeight) 
 {
-	int		y, x, xCheck, yCheck;
-	int		i, flagOffset;
-	int		w, h, fold;
-
-	if (nWidth < 32 || nHeight < 32)
-		return;
+	int		i, x, y, w, h;
+	int		xCheck, yCheck, fold;
+	RECT	rectClasses, rectComment, rectProps, rectFlags, rectKV, rectAngle;
+	int		flagRows, flagCols, flagOffset;
 
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
+	InspWnd_Move(g_qeglobals.d_hwndEntity, 0, 0, nWidth, nHeight);
 
-	{
-		//==========================================
-		//
-		// console
-		//
-		if (g_qeglobals.d_nInspectorMode == W_CONSOLE)
-			g_nCol = 0;
-		else
-			g_nCol = nWidth;
+	yCheck = 20;	// distance from top of one check to the next
 
-		MOVE(g_qeglobals.d_hwndConsole, 0, 0, nWidth, nHeight);// DLGBORDER_X, DLGBORDER_Y, nWidth - (2 * DLGBORDER_X), nHeight - (2 * DLGBORDER_Y));
-
-		//==========================================
-
-		//
-		// texture controls
-		//
-		if (g_qeglobals.d_nInspectorMode == W_TEXTURE)
-			g_nCol = 0;
-		else
-			g_nCol = nWidth;
-
-		MOVE(g_qeglobals.d_hwndTexture, 0, 0, nWidth, nHeight);// DLGBORDER_X, DLGBORDER_Y, nWidth - (2 * DLGBORDER_X), nHeight - (2 * DLGBORDER_Y));
-
-		//==========================================
-
-		//
-		// entity controls
-		//
-		if (g_qeglobals.d_nInspectorMode == W_ENTITY)
-			g_nCol = 0;
-		else
-			g_nCol = nWidth;
-	}
-
-	// yCheck = distance from top of one check to the next
-	yCheck = 20;
-
-	RECT rectClasses, rectComment, rectProps, rectFlags, rectKV, rectAngle;
-	int flagRows, flagCols;
 	fold = (4 * nHeight) / 9;
 
 	if (nWidth > 450)
@@ -987,10 +843,10 @@ void EntWnd_Resize(int nWidth, int nHeight)
 	rectAngle.left = DLGBORDER_X;
 	rectAngle.top = rectKV.top + rectKV.bottom;
 	rectAngle.right = 300;
-	rectAngle.bottom = nHeight - rectAngle.top;
-	
-	MOVERECT(g_hwndEnt[ENT_CLASSLIST], rectClasses);
-	MOVERECT(g_hwndEnt[ENT_COMMENT], rectComment);
+	rectAngle.bottom = nHeight - rectAngle.top - DLGBORDER_Y;
+
+	InspWnd_MoveRect(g_hwndEnt[ENT_CLASSLIST], rectClasses);
+	InspWnd_MoveRect(g_hwndEnt[ENT_COMMENT], rectComment);
 
 	x = rectFlags.left;
 	xCheck = nWidth / flagCols;	// xCheck = width of a single check box
@@ -999,45 +855,47 @@ void EntWnd_Resize(int nWidth, int nHeight)
 		y = rectFlags.top;
 		for (i = 0; i < flagRows; i++)
 		{
-			MOVE(g_hwndEnt[ENT_CHECK1 + i + flagOffset], x, y, xCheck, yCheck);
+			InspWnd_Move(g_hwndEnt[ENT_CHECK1 + i + flagOffset], x, y, xCheck, yCheck);
 			y += yCheck;
 		}
 		x += xCheck;
 	}
 
-	MOVERECT(g_hwndEnt[ENT_PROPS], rectProps);
+	InspWnd_MoveRect(g_hwndEnt[ENT_PROPS], rectProps);
 
 	w = rectKV.right - (DLGBORDER_X + 45);
-	MOVE(g_hwndEnt[ENT_KEYLABEL], DLGBORDER_X, rectKV.top, 40, yCheck);
-	MOVE(g_hwndEnt[ENT_KEYFIELD], DLGBORDER_X + 40, rectKV.top, rectKV.right, yCheck);
-	MOVE(g_hwndEnt[ENT_VALUELABEL], DLGBORDER_X, rectKV.top + yCheck, 40, yCheck);
-	MOVE(g_hwndEnt[ENT_VALUEFIELD], DLGBORDER_X + 40, rectKV.top + yCheck, rectKV.right, yCheck);
+	InspWnd_Move(g_hwndEnt[ENT_KEYLABEL], DLGBORDER_X, rectKV.top, 40, yCheck);
+	InspWnd_Move(g_hwndEnt[ENT_KEYFIELD], DLGBORDER_X + 40, rectKV.top, rectKV.right, yCheck);
+	InspWnd_Move(g_hwndEnt[ENT_VALUELABEL], DLGBORDER_X, rectKV.top + yCheck, 40, yCheck);
+	InspWnd_Move(g_hwndEnt[ENT_VALUEFIELD], DLGBORDER_X + 40, rectKV.top + yCheck, rectKV.right, yCheck);
 
 	x = rectAngle.right / 9;
 	y = rectAngle.bottom / 3;
-	MOVE(g_hwndEnt[ENT_DIR135], rectAngle.left, rectAngle.top, x, y);
-	MOVE(g_hwndEnt[ENT_DIR90], rectAngle.left + x, rectAngle.top, x, y);
-	MOVE(g_hwndEnt[ENT_DIR45], rectAngle.left + 2 * x, rectAngle.top, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR135], rectAngle.left, rectAngle.top, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR90], rectAngle.left + x, rectAngle.top, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR45], rectAngle.left + 2 * x, rectAngle.top, x, y);
 
-	MOVE(g_hwndEnt[ENT_DIR180], rectAngle.left, rectAngle.top + y, x, y);
-	MOVE(g_hwndEnt[ENT_DIR0], rectAngle.left + 2 * x, rectAngle.top + y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR180], rectAngle.left, rectAngle.top + y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR0], rectAngle.left + 2 * x, rectAngle.top + y, x, y);
 
-	MOVE(g_hwndEnt[ENT_DIR225], rectAngle.left, rectAngle.top + 2*y, x, y);
-	MOVE(g_hwndEnt[ENT_DIR270], rectAngle.left + x, rectAngle.top + 2 * y, x, y);
-	MOVE(g_hwndEnt[ENT_DIR315], rectAngle.left + 2 * x, rectAngle.top + 2 * y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR225], rectAngle.left, rectAngle.top + 2 * y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR270], rectAngle.left + x, rectAngle.top + 2 * y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIR315], rectAngle.left + 2 * x, rectAngle.top + 2 * y, x, y);
 
-	MOVE(g_hwndEnt[ENT_DIRUP], rectAngle.left + 3.5*x, rectAngle.top + 0.5 * y, x, y);
-	MOVE(g_hwndEnt[ENT_DIRDOWN], rectAngle.left + 3.5*x, rectAngle.top + 1.5 * y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIRUP], rectAngle.left + 3.5*x, rectAngle.top + 0.5 * y, x, y);
+	InspWnd_Move(g_hwndEnt[ENT_DIRDOWN], rectAngle.left + 3.5*x, rectAngle.top + 1.5 * y, x, y);
 
-	MOVE(g_hwndEnt[ENT_ADDPROP], rectAngle.left + 5*x, rectAngle.top, x * 1.5, y);	// sikk - Entity Window Addition
-	MOVE(g_hwndEnt[ENT_DELPROP], rectAngle.left + 5*x, rectAngle.top + y, x * 1.5, y);
-	MOVE(g_hwndEnt[ENT_COLOR], rectAngle.left + 5*x, rectAngle.top + y * 2, x * 1.5, y);	// sikk - Entity Window Addition
+	InspWnd_Move(g_hwndEnt[ENT_ADDPROP], rectAngle.left + 5 * x, rectAngle.top, x * 1.5, y);	// sikk - Entity Window Addition
+	InspWnd_Move(g_hwndEnt[ENT_DELPROP], rectAngle.left + 5 * x, rectAngle.top + y, x * 1.5, y);
+	InspWnd_Move(g_hwndEnt[ENT_COLOR], rectAngle.left + 5 * x, rectAngle.top + y * 2, x * 1.5, y);	// sikk - Entity Window Addition
 
-	MOVE(g_hwndEnt[ENT_CREATE], rectAngle.left + 7 * x, rectAngle.top + y * 0.5, x * 2, y * 2);	// sikk - Entity Window Addition
+	InspWnd_Move(g_hwndEnt[ENT_CREATE], rectAngle.left + 7 * x, rectAngle.top + y * 0.5, x * 2, y * 2);	// sikk - Entity Window Addition
 
 	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
-//	InvalidateRect(entwindow, NULL, TRUE);
+	RedrawWindow(g_qeglobals.d_hwndInspector, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
+
+
 
 /*
 =========================
@@ -1051,50 +909,17 @@ BOOL CALLBACK EntityWndProc (
     LPARAM	lParam	// second message parameter
 	)
 {
-	RECT	rc;
-
-	GetClientRect(hwndDlg, &rc);
-
     switch (uMsg)
     {
-	case WM_GETMINMAXINFO:
-		{
-			LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;;
-			lpmmi->ptMinTrackSize.x = 320;
-			lpmmi->ptMinTrackSize.y = 480; // 500
-		}
-		return 0;
-
-	case WM_WINDOWPOSCHANGING:
-		{
-			LPWINDOWPOS lpwp = (LPWINDOWPOS)lParam;
-			DefWindowProc(hwndDlg, uMsg, wParam, lParam);
-			lpwp->flags |= SWP_NOCOPYBITS;
-			EntWnd_Resize(lpwp->cx - 8, lpwp->cy - 32);
-		}
-		return 0;
-
-// sikk---> Window Management
-	case WM_SIZING:
-		if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 300))
-			return TRUE;
-		break;
-
-	case WM_MOVING:
-		if (TryDocking(hwndDlg, wParam, (LPRECT)lParam, 0))
-			return TRUE;
-		break;
-// <---sikk
-
 	case WM_COMMAND: 
 		switch (LOWORD(wParam)) 
 		{
 		case IDC_E_CREATE:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_CreateEntity();
 			break;
 		case IDC_E_COLOR:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == true)
 			{
 				extern void EntWnd_AddKeyValue(void);
@@ -1113,100 +938,100 @@ BOOL CALLBACK EntityWndProc (
 			break;
 
 		case IDC_E_ADDPROP:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_AddKeyValue();
 			break;
 		case IDC_E_DELPROP:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_RemoveKeyValue();
 			break;
 		case IDC_E_0:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(0);
 			break;
 		case IDC_E_45:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(45);
 			break;
 		case IDC_E_90:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(90);
 			break;
 		case IDC_E_135:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(135);
 			break;
 		case IDC_E_180:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(180);
 			break;
 		case IDC_E_225:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(225);
 			break;
 		case IDC_E_270:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(270);
 			break;
 		case IDC_E_315:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(315);
 			break;
 		case IDC_E_UP:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(-1);
 			break;
 		case IDC_E_DOWN:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_ApplyAngle(-2);
 			break;
 
 		case IDC_E_FLAG1:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(1);
 			break;
 		case IDC_E_FLAG2:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(2);
 			break;
 		case IDC_E_FLAG3:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(3);
 			break;
 		case IDC_E_FLAG4:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(4);
 			break;
 		case IDC_E_FLAG5:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(5);
 			break;
 		case IDC_E_FLAG6:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(6);
 			break;
 		case IDC_E_FLAG7:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(7);
 			break;
 		case IDC_E_FLAG8:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(8);
 			break;
 		case IDC_E_FLAG9:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(9);
 			break;
 		case IDC_E_FLAG10:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(10);
 			break;
 		case IDC_E_FLAG11:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(11);
 			break;
 		case IDC_E_FLAG12:
-			EntWnd_ToTop();
+			InspWnd_ToTop();
 			EntWnd_FlagChecked(12);
 			break;
 
@@ -1256,8 +1081,9 @@ BOOL CALLBACK EntityWndProc (
 
 // sikk---> LMB Bring to Top
 	case WM_LBUTTONDOWN:
-		if (GetTopWindow(g_qeglobals.d_hwndMain) != hwndDlg)
-			BringWindowToTop(hwndDlg);
+	case WM_RBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+		InspWnd_ToTop();
 		break;
 // <---sikk
 	}

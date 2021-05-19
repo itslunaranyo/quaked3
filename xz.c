@@ -167,7 +167,7 @@ void XZ_Drag_NewBrush (int x, int y)
 		return;
 
 	// delete the current selection
-	if (g_brSelectedBrushes.next != &g_brSelectedBrushes)
+	if (Select_HasBrushes())
 		Brush_Free(g_brSelectedBrushes.next);
 
 	XZ_SnapToPoint(pressx, pressy, mins);
@@ -254,7 +254,7 @@ void XZ_MouseDown (int x, int y, int buttons)
 		up[1] = 0;
 		up[2] = 1 / g_qeglobals.d_xz.scale;
 
-		press_selection = (g_brSelectedBrushes.next != &g_brSelectedBrushes);
+		press_selection = (Select_HasBrushes());
 
 		Sys_GetCursorPos(&cursorx, &cursory);
 
@@ -301,7 +301,7 @@ void XZ_MouseDown (int x, int y, int buttons)
 //			g_qeglobals.d_camera.origin[1] = point[1];
 			XZ_VectorCopy(point, g_qeglobals.d_camera.origin);
 
-			Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
+			Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		}
 
 		// MMB = angle camera
@@ -330,7 +330,7 @@ void XZ_MouseDown (int x, int y, int buttons)
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
+					Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 				}
 			}
 		}
@@ -453,7 +453,7 @@ void XZ_MouseMoved (int x, int y, int buttons)
 			// update g_v3RotateOrigin to new brush
 			Select_GetTrueMid(g_v3RotateOrigin);	// sikk - Free Rotate
 
-			Sys_UpdateWindows(W_XY_OVERLAY | W_CAMERA | W_Z);
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 			return;
 		}
 
@@ -463,7 +463,7 @@ void XZ_MouseMoved (int x, int y, int buttons)
 			XZ_SnapToPoint(x, y, point);
 			XZ_VectorCopy(point, g_qeglobals.d_camera.origin);
 
-			Sys_UpdateWindows(W_XY_OVERLAY | W_CAMERA | W_Z);
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 			return;
 		}
 
@@ -493,7 +493,7 @@ void XZ_MouseMoved (int x, int y, int buttons)
 				if (point[n1] || point[n2])
 				{
 					g_qeglobals.d_camera.angles[nAngle] = 180 / Q_PI * atan2(point[n1], point[n2]);
-					Sys_UpdateWindows(W_XY_OVERLAY | W_CAMERA);
+					Sys_UpdateWindows(W_XY | W_CAMERA);
 				}
 			}
 			return;
@@ -555,7 +555,7 @@ void XZ_MouseMoved (int x, int y, int buttons)
 					g_qeglobals.d_xz.origin[nDim2] += (y - cursory) / g_qeglobals.d_xz.scale;
 
 					Sys_SetCursorPos(cursorx, cursory);
-					Sys_UpdateWindows(W_XY | W_XY_OVERLAY| W_Z);
+					Sys_UpdateWindows(W_XY| W_Z);
 
 					sprintf(xystring, "xyz Origin: (%d %d %d)", (int)g_qeglobals.d_xz.origin[0], (int)g_qeglobals.d_xz.origin[1], (int)g_qeglobals.d_xz.origin[2]);
 					Sys_Status(xystring, 0);
@@ -641,7 +641,7 @@ void XZ_MouseMoved (int x, int y, int buttons)
 					g_qeglobals.d_xz.scale = (float)0.05;
 
 				Sys_SetCursorPos(cursorx, cursory);
-				Sys_UpdateWindows(W_XY | W_XY_OVERLAY);
+				Sys_UpdateWindows(W_XY);
 			}
 			return;
 		}

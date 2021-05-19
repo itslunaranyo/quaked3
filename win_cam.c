@@ -100,7 +100,7 @@ LONG WINAPI WCam_WndProc (
         }
 		return 0;
 		
-	case WM_USER + 267:	// benchmark
+	case WM_BENCHMARK:
         { 
 			PAINTSTRUCT		ps;
 			WINDOWPLACEMENT wp;

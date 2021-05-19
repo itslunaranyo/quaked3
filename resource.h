@@ -178,6 +178,7 @@
 #define IDC_SPIN_TEXSCALE               1280
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
+#define IDC_MFCPROPERTYGRID1            1283
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -385,14 +386,15 @@
 #define ID_WINDOW_4WINDOWFULLNOZCAMRIGHT 40419
 #define ID_VIEW_SHOWDETAIL              40421
 #define ID_VIEW_SHOWHINT                40422
+#define ID_VIEW_SWAPGRIDCAM             40423
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        185
-#define _APS_NEXT_COMMAND_VALUE         40423
-#define _APS_NEXT_CONTROL_VALUE         1282
+#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_COMMAND_VALUE         40425
+#define _APS_NEXT_CONTROL_VALUE         1284
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

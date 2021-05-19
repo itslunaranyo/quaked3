@@ -323,7 +323,7 @@ void Clip_DropPoint (int x, int y)
 // <---sikk				
 		(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
 	}
-	Sys_UpdateWindows(W_XY | W_XY_OVERLAY| W_Z);
+	Sys_UpdateWindows(W_XY| W_Z);
 }
 
 /*

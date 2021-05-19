@@ -136,7 +136,7 @@ void Cam_ChangeFloor (bool up)
 
 	g_qeglobals.d_camera.origin[2] += current - bestd;
 
-	Sys_UpdateWindows(W_CAMERA | W_Z_OVERLAY);
+	Sys_UpdateWindows(W_CAMERA | W_Z);
 }
 
 
@@ -162,7 +162,7 @@ void Cam_PositionDrag ()
 		g_qeglobals.d_camera.origin[2] -= y;
 
 		Sys_SetCursorPos(cursorx, cursory);
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+		Sys_UpdateWindows(W_CAMERA | W_XY);
 	}
 }
 
@@ -237,7 +237,7 @@ void Cam_PositionRotate ()
 	x -= cursorx;
 	y -= cursory;
 
-	if (g_brSelectedBrushes.next != &g_brSelectedBrushes)
+	if (Select_HasBrushes())
 	{
 		mins[0] = mins[1] = mins[2] = 99999;
 		maxs[0] = maxs[1] = maxs[2] = -99999;
@@ -255,14 +255,14 @@ void Cam_PositionRotate ()
 		origin[1] = (mins[1] + maxs[1]) / 2;
 		origin[2] = (mins[2] + maxs[2]) / 2;
 	}
-	else if (g_nSelFaceCount)
+	else if (Select_HasFaces())
 	{
 		mins[0] = mins[1] = mins[2] = 99999;
 		maxs[0] = maxs[1] = maxs[2] = -99999;
 
 //		f = g_pfaceSelectedFace;
 		// rotate around last selected face
-		f = g_pfaceSelectedFaces[g_nSelFaceCount - 1];	// sikk - Multiple Face Selection
+		f = g_pfaceSelectedFaces[Select_NumFaces() - 1];	// sikk - Multiple Face Selection
 		for (j = 0; j < f->face_winding->numpoints; j++)
 		{
 			for (i = 0; i < 3; i++)
@@ -375,7 +375,7 @@ void Cam_MouseControl (float dtime)
 		VectorMA(g_qeglobals.d_camera.origin, yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
 		g_qeglobals.d_camera.angles[YAW] += xf * -dtime * (g_qeglobals.d_savedinfo.nCameraSpeed * 0.5);
 	}
-	Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY);
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 /*
@@ -937,10 +937,17 @@ void Cam_Draw ()
 	// blend on top
 	glMatrixMode(GL_PROJECTION);
 
-	glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
-	glEnable(GL_BLEND);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+//	glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// lunaran: brighten & clarify selection tint, use selection color preference
+	glColor4f(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][0],
+			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][1],
+			g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES][2],
+			0.5f);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glDisable(GL_TEXTURE_2D);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
@@ -950,12 +957,11 @@ void Cam_Draw ()
 //	if (g_pfaceSelectedFace)
 //		Face_Draw(g_pfaceSelectedFace);
 // sikk---> Multiple Face Selection
-	if (g_nSelFaceCount)
-	{
-		int i;
-		for (i = 0; i < g_nSelFaceCount; i++)
+//	if (Select_HasFaces())
+//	{
+		for (int i = 0; i < Select_NumFaces(); i++)
 			Face_Draw(g_pfaceSelectedFaces[i]);
-	}
+//	}
 // <---sikk
 
 	// non-zbuffered outline

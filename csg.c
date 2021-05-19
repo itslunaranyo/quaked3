@@ -82,7 +82,7 @@ void CSG_Hollow ()
 
 	Sys_Printf("CMD: CSG Hollowing...\n");
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return;
@@ -531,7 +531,7 @@ void CSG_Subtract ()
 
 	Sys_Printf("CMD: CSG Subtracting...\n");
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return;
@@ -661,7 +661,7 @@ void CSG_Merge ()
 
 	Sys_Printf("CMD: CSG Merging...\n");
 
-	if (g_brSelectedBrushes.next == &g_brSelectedBrushes)
+	if (!Select_HasBrushes())
 	{
 		Sys_Printf("WARNING: No brushes selected.\n");
 		return;
@@ -729,8 +729,6 @@ void CSG_Merge ()
 		Brush_Free(b);
 	}
 
-	Brush_AddToList(newbrush, &g_brSelectedBrushes);
-
-	Sys_Printf("MSG: Done.\n");
-	Sys_UpdateWindows(W_ALL);
+	Select_SelectBrush(newbrush);
+	Sys_Printf("MSG: Merge done.\n");
 }

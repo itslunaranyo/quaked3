@@ -28,7 +28,9 @@
 #define	XZ_WINDOW_CLASS			"QXZ"	// sikk - Multiple Orthographic Views
 #define	YZ_WINDOW_CLASS			"QYZ"	// sikk - Multiple Orthographic Views
 #define	Z_WINDOW_CLASS   		"QZ"
-#define	ENT_WINDOW_CLASS		"QENT"
+#define	INSPECTOR_WINDOW_CLASS	"QINSP"
+#define	CONSOLE_WINDOW_CLASS	"QCONS"
+#define	ENTITY_WINDOW_CLASS		"QENT"
 #define	TEXTURE_WINDOW_CLASS	"QTEX"
 
 #define	ZWIN_WIDTH		48
@@ -92,14 +94,15 @@
 // window bits
 #define	W_CAMERA		0x0001
 #define	W_XY			0x0002
-#define	W_XY_OVERLAY	0x0004
 #define	W_Z				0x0008
 #define	W_TEXTURE		0x0010
-#define	W_Z_OVERLAY		0x0020
 #define W_CONSOLE		0x0040
 #define W_ENTITY		0x0080
 
 #define	W_ALL			0xFFFFFFFF
+
+#define WM_SELECTIONCHANGED	(WM_USER + 266)
+#define WM_BENCHMARK		(WM_USER + 267)
 
 // toolbar ID's
 #define ID_REBAR		1000

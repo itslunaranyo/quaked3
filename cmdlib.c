@@ -432,7 +432,7 @@ void StripExtension (char *path)
 	while (length > 0 && path[length] != '.')
 	{
 		length--;
-		if (path[length] == '/')
+		if (path[length] == PATHSEPERATOR)
 			return;		// no extension
 	}
 	if (length)

@@ -74,6 +74,7 @@ int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
 
 brush_t	   *Brush_Alloc ();
 void		Brush_AddToList (brush_t *b, brush_t *list);
+void		Brush_MergeListIntoList(brush_t *src, brush_t *dest);
 void		Brush_Build (brush_t *b);
 void		Brush_BuildWindings (brush_t *b);
 void		Brush_CheckTexdef (brush_t *b, face_t *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug

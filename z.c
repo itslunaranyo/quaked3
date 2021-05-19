@@ -83,7 +83,7 @@ void Z_MouseDown (int x, int y, int buttons)
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
 		g_qeglobals.d_camera.origin[2] = org[2];
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
+		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 }
 
@@ -149,7 +149,7 @@ void Z_MouseMoved (int x, int y, int buttons)
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
 		g_qeglobals.d_camera.origin[2] = (y - (g_qeglobals.d_z.height / 2)) / g_qeglobals.d_z.scale;
-		Sys_UpdateWindows(W_CAMERA | W_XY_OVERLAY | W_Z);
+		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 
 // sikk---> Mouse Zoom
@@ -171,7 +171,7 @@ void Z_MouseMoved (int x, int y, int buttons)
 				g_qeglobals.d_z.scale = (float)0.1;
 
 			Sys_SetCursorPos(cursorx, cursory);
-			Sys_UpdateWindows(W_Z | W_XY_OVERLAY);
+			Sys_UpdateWindows(W_Z | W_XY);
 		}
 		return;
 	}

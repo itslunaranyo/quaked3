@@ -29,8 +29,8 @@ BOOL CALLBACK AboutDlgProc(
 	char	szRenderer[1024];
 	char	szVersion[1024];
 	char	szVendor[1024];
-	char	szExtensions[4096];
-	char	szExtensionscopy[4096];
+	char	szExtensions[16384];	// lunaran: was 4096, this should work for another few years
+	char	szExtensionscopy[16384];
 	char   *psz;
 
 	switch (uMsg)
@@ -39,7 +39,7 @@ BOOL CALLBACK AboutDlgProc(
 		sprintf(szRenderer, "Renderer:\t%s", glGetString(GL_RENDERER));
 		sprintf(szVersion, "Version:\t\t%s", glGetString(GL_VERSION));
 		sprintf(szVendor, "Vendor:\t\t%s", glGetString(GL_VENDOR));
-		strcpy(szExtensions, glGetString(GL_EXTENSIONS));
+		strncpy(szExtensions, glGetString(GL_EXTENSIONS),8192);
 		szExtensionscopy[0] = 0;
 
 		for (psz = strtok(szExtensions, " \n\t"); psz; psz = strtok(NULL, " \n"))
@@ -94,10 +94,10 @@ void DoAbout ()
 
 /*
 ============
-SelectBrush
+FindBrush
 ============
 */
-void SelectBrush (int entitynum, int brushnum)
+void FindBrush (int entitynum, int brushnum)
 {
 	int			i;
 	brush_t	   *b;
@@ -136,8 +136,7 @@ void SelectBrush (int entitynum, int brushnum)
 		}
 	}
 
-	Brush_RemoveFromList(b);
-	Brush_AddToList(b, &g_brSelectedBrushes);
+	Select_SelectBrush(b);
 
 	Sys_UpdateWindows(W_ALL);
 	for (i = 0; i < 3; i++)
@@ -209,7 +208,7 @@ BOOL CALLBACK FindBrushDlgProc (
 		case IDOK:
 			GetDlgItemText(hwndDlg, IDC_EDIT_FINDENTITY, szEntity, 255);
 			GetDlgItemText(hwndDlg, IDC_EDIT_FINDBRUSH, szBrush, 255);
-			SelectBrush(atoi(szEntity), atoi(szBrush));
+			FindBrush(atoi(szEntity), atoi(szBrush));
 			EndDialog(hwndDlg, 1);
 			return TRUE;
 
@@ -827,11 +826,12 @@ Set the fields to the current texdef
 */
 void SetTexMods ()
 {
-	char		sz[8];
+	char		sz[16];
 	texdef_t   *pt;
+	float shiftxp, shiftyp, rotp;
 
-// sikk - So Dialog is updated with texture info from first selected face
-	if (g_nSelFaceCount)
+	// sikk - So Dialog is updated with texture info from first selected face
+	if (Select_HasFaces())
 		pt = &g_pfaceSelectedFaces[0]->texdef;
 	else
 		pt = &g_qeglobals.d_texturewin.texdef;
@@ -840,9 +840,14 @@ void SetTexMods ()
 
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, pt->name);
 
-	sprintf(sz, "%d", (int)pt->shift[0]);
+	// lunaran: trunc safety
+	shiftxp = pt->shift[0] + ((pt->shift[0] < 0) ? -0.01f : 0.01f);
+	shiftyp = pt->shift[1] + ((pt->shift[1] < 0) ? -0.01f : 0.01f);
+	rotp = pt->rotate + ((pt->rotate < 0) ? -0.01f : 0.01f);
+
+	sprintf(sz, "%d", (int)shiftxp);	
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
-	sprintf(sz, "%d", (int)pt->shift[1]);
+	sprintf(sz, "%d", (int)shiftyp);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
 	sprintf(sz, "%4.2f", pt->scale[0]);
@@ -850,7 +855,7 @@ void SetTexMods ()
 	sprintf(sz, "%4.2f", pt->scale[1]);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
-	sprintf(sz, "%d", (int)pt->rotate);
+	sprintf(sz, "%d", (int)rotp);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
 // FIT:
 	sprintf(sz, "%d", (int)g_nHeight);
@@ -875,7 +880,7 @@ void GetTexMods ()
 	texdef_t   *pt;
 
 // sikk - So Dialog is updated with texture info from first selected face
-	if (g_nSelFaceCount)
+	if (Select_HasFaces())
 		pt = &g_pfaceSelectedFaces[0]->texdef;
 	else
 		pt = &g_qeglobals.d_texturewin.texdef;
@@ -921,7 +926,7 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 	texdef_t *pt;
 
 // sikk - So Dialog is updated with texture info from first selected face
-	if (g_nSelFaceCount)
+	if (Select_HasFaces())
 		pt = &g_pfaceSelectedFaces[0]->texdef;
 	else
 		pt = &g_qeglobals.d_texturewin.texdef;
@@ -1660,8 +1665,8 @@ void OnSelect (HWND hTree)
 		entity_t *pEntity = (entity_t *)tvI.lParam;
 		if (pEntity)
 		{
-			Select_Deselect(true);
-			Select_Brush(pEntity->brushes.onext, true);
+			Select_DeselectAll(true);
+			Select_HandleBrush(pEntity->brushes.onext, true);
 		}
 	}
 

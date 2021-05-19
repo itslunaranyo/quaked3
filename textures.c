@@ -49,8 +49,10 @@ void Texture_Init ()
 	byte   *pal;
 
 	// load the palette
-// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
-	sprintf(name, "%s/%spalette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"), ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
+	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
+	// lunaran - reverted, it was hardcoded because that's where quake.exe expects it to be
+	sprintf(name, "%s/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+
 	LoadFile(name, &pal);
 	if (!pal)
 		Error("Could not load %s", name);
@@ -496,7 +498,6 @@ void FillTextureMenu ()
 	int		handle;
 	char    temp[1024];
 	char	path[1024];
-	char	filename[1024];
 	char    dirstring[1024];
 	char   *s;
 
@@ -527,11 +528,10 @@ void FillTextureMenu ()
 	{
 		do
 		{
-			sprintf(filename, "%s/%s", dirstring, fileinfo.name);
-			Sys_Printf("MSG: FoundFile: %s\n", filename);
+			Sys_Printf("MSG: FoundFile: %s/%s\n", dirstring, fileinfo.name);
 
-			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)filename);
-			strcpy(g_szTextureMenuNames[g_nTextureNumMenus], filename);
+			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)fileinfo.name);
+			strcpy(g_szTextureMenuNames[g_nTextureNumMenus], fileinfo.name);
 //			sprintf(g_szWadString, "%s%s%s", g_szWadString, g_szWadString[0] ? ";" : "", filename);	// sikk - Wad Loading
 
 			if (++g_nTextureNumMenus == MAX_TEXTUREDIRS)
@@ -607,7 +607,7 @@ void Texture_InitFromWad (char *file)
 	int			 numlumps;
 	int			 i;
 
-	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "basepath"), file);
+	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), file);
 
 	if ((f = fopen(filepath, "rb")) == NULL)
 	{
@@ -699,11 +699,11 @@ void Texture_ShowWad (int menunum)
 	Texture_InitFromWad(wadname);
 
 	SortTextures();
-	SetInspectorMode(W_TEXTURE);
+	InspWnd_SetMode(W_TEXTURE);
 	Sys_UpdateWindows(W_TEXTURE);
 
-	sprintf(name, "Textures: %s", g_szCurrentWad);
-	SetWindowText(g_qeglobals.d_hwndEntity, name);
+	//sprintf(name, "Textures: %s", g_szCurrentWad);
+	//SetWindowText(g_qeglobals.d_hwndInspector, name);
 
 	// select the first texture in the list
 	if (!g_qeglobals.d_texturewin.texdef.name[0])
@@ -734,11 +734,11 @@ void Texture_ShowInuse ()
 			Texture_ForName(f->texdef.name);
 
 	SortTextures();
-	SetInspectorMode(W_TEXTURE);
+	InspWnd_SetMode(W_TEXTURE);
 	Sys_UpdateWindows(W_TEXTURE);
 
 	sprintf(name, "Textures: in use");
-	SetWindowText(g_qeglobals.d_hwndEntity, name);
+	SetWindowText(g_qeglobals.d_hwndInspector, name);
 
 	// select the first texture in the list
 	if (!g_qeglobals.d_texturewin.texdef.name[0])
@@ -822,10 +822,10 @@ static int	textures_cursorx, textures_cursory;
 
 /*
 ============
-Texture_SetTexture
+Texture_ChooseTexture
 ============
 */
-void Texture_SetTexture (texdef_t *texdef, bool bSetSelection)
+void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 {
 	int			x, y;
 	char		sz[256];
@@ -943,7 +943,7 @@ void SelectTexture (int mx, int my)
 			tex.scale[1] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 
 			strcpy(tex.name, q->name);
-			Texture_SetTexture(&tex, true);
+			Texture_ChooseTexture(&tex, true);
 			return;
 		}
 	}
@@ -1272,8 +1272,8 @@ LONG WINAPI WTex_WndProc (
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
 // sikk---> LMB Bring to Top
-		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndEntity)
-			BringWindowToTop(g_qeglobals.d_hwndEntity);
+		if (GetTopWindow(g_qeglobals.d_hwndMain) != g_qeglobals.d_hwndInspector)
+			BringWindowToTop(g_qeglobals.d_hwndInspector);
 // <---sikk
 		SetCapture(g_qeglobals.d_hwndTexture);
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
@@ -1306,17 +1306,16 @@ LONG WINAPI WTex_WndProc (
 
 /*
 ==================
-WTex_Create
+TexWnd_Create
 
 We need to create a seperate window for the textures
 in the inspector window, because we can't share
 gl and gdi drawing in a single window
 ==================
 */
-HWND WTex_Create (HINSTANCE hInstance)
+HWND TexWnd_Create (HINSTANCE hInstance)
 {
     WNDCLASS	wc;
-	HWND		hwnd;
 
     /* Register the texture class */
 	memset (&wc, 0, sizeof(wc));
@@ -1335,20 +1334,34 @@ HWND WTex_Create (HINSTANCE hInstance)
     if (!RegisterClass (&wc))
         Error("WTex_Register: Failed.");
 
-	hwnd = CreateWindowEx(WS_EX_CLIENTEDGE,	// extended window style
+	g_qeglobals.d_hwndTexture = CreateWindowEx(0,//WS_EX_CLIENTEDGE,	// extended window style
 		TEXTURE_WINDOW_CLASS,				// registered class name
 		"Texture View",						// window name
 		WS_BORDER | WS_CHILD | WS_VISIBLE,	// window style
 		20,	20,	64,	64,						// size and position of window
-		g_qeglobals.d_hwndEntity,			// parent or owner window
+		g_qeglobals.d_hwndInspector,		// parent or owner window
 		0,									// menu or child-window identifier
 		hInstance,							// application instance
 		NULL);								// window-creation data
-	if (!hwnd)
+
+	if (!g_qeglobals.d_hwndTexture)
 		Error("Could not create Texture Window.");
 
-	return hwnd;
+	return g_qeglobals.d_hwndTexture;
 }
+
+
+/*
+===============
+TexWnd_Resize
+===============
+*/
+void TexWnd_Resize(int nWidth, int nHeight)
+{
+	InspWnd_Move(g_qeglobals.d_hwndTexture, 0, 0, nWidth, nHeight);
+}
+
+
 
 /*
 ==================

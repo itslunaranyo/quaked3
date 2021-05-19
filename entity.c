@@ -726,7 +726,7 @@ void Entity_Write (entity_t *e, FILE *f, bool use_region)
 
 	// if fixedsize, calculate a new origin based on the current
 	// brush position
-	if (e->eclass->fixedsize || ValueForKey(e, "origin") != "")	// sikk - Point Entity->Brush Entity Hack (added ValueForKey check)
+	if (e->eclass->fixedsize || *ValueForKey(e, "origin"))	// sikk - Point Entity->Brush Entity Hack (added ValueForKey check)
 	{
 		VectorSubtract(e->brushes.onext->mins, e->eclass->mins, origin);
 		sprintf(text, "%d %d %d", (int)origin[0], (int)origin[1], (int)origin[2]);
@@ -895,7 +895,7 @@ entity_t *Entity_Create (eclass_t *c)
 		}
 	}
 
-	EntWnd_UpdateEntitySel(e->eclass);	// sikk - Update Enitity Inspector 
+	g_bSelectionChanged = true;
 
 	Sys_UpdateWindows(W_ALL);
 	return e;
