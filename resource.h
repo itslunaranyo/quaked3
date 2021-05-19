@@ -165,6 +165,7 @@
 #define IDC_CHECK_RADIANTLIGHTS         1257
 #define IDC_CHECK_LOADLASTPROJECT       1258
 #define IDC_CHECK_BRUSHPRECISION        1259
+#define IDC_CHECK_SORTTEXBYWAD          1260
 #define IDC_EDIT_SCALEX                 1263
 #define IDC_EDIT_SCALEY                 1264
 #define IDC_EDIT_SCALEZ                 1265
@@ -178,7 +179,6 @@
 #define IDC_SPIN_TEXSCALE               1280
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
-#define IDC_MFCPROPERTYGRID1            1283
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -387,13 +387,14 @@
 #define ID_VIEW_SHOWDETAIL              40421
 #define ID_VIEW_SHOWHINT                40422
 #define ID_VIEW_SWAPGRIDCAM             40423
+#define ID_THEMES_BLUEGRAY              40425
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
-#define _APS_NEXT_COMMAND_VALUE         40425
+#define _APS_NEXT_COMMAND_VALUE         40426
 #define _APS_NEXT_CONTROL_VALUE         1284
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

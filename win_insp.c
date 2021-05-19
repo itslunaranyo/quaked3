@@ -96,6 +96,7 @@ void InspWnd_SetMode(int nType)
 			nType = W_ENTITY;
 	}
 
+	// lunaran FIXME: ShowWindow does fuckall
 	g_qeglobals.d_nInspectorMode = nType;
 	switch (nType)
 	{

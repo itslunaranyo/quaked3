@@ -938,9 +938,6 @@ int WINAPI WinMain (
 
 	Sys_LogFile();
 
-	// lunaran TEMP
-	g_qeglobals.d_savedinfo.bSortTexByWad = true;
-
 	WCam_Create(hInstance);
 	WXY_Create(hInstance);
 	WXZ_Create(hInstance);	// sikk - Multiple Orthographic Views

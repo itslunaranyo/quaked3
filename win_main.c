@@ -1988,7 +1988,7 @@ LONG WINAPI CommandHandler (
 //			Map_New();	// sikk - I don't understand the point to start a new map. 
 						// We want to flush all textures, not flush everything I've
 						// done to this point and forgot to save.
-			Texture_Flush();
+			Texture_FlushAll();
 			Texture_Init();
 			InspWnd_SetMode(W_TEXTURE);
 			Sys_UpdateWindows(W_TEXTURE);
@@ -2012,7 +2012,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_TEXTURES_RESETSCALE:	// sikk - Reset Texture View Scale
-			g_qeglobals.d_texturewin.scale = 1;
+			TexWnd_SetScale(1.0f);
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 
@@ -2126,8 +2126,6 @@ LONG WINAPI CommandHandler (
 
 // sikk---> Color Themes
 // I will continue to add themes as I am able to get the colors used by other popular 3D apps
-//								{COLOR_BRUSHES},	{COLOR_CAMERABACK},	   {COLOR_CAMERAGRID}, {COLOR_GRIDBACK},   {COLOR_GRIDBLOCK},
-//								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDRY}, {COLOR_VIEWNAME}
 		case ID_THEMES_QE4:
 			{
 				vec3_t v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
@@ -2192,7 +2190,16 @@ LONG WINAPI CommandHandler (
 			}
 			break;
 // <---sikk
-			
+//								{COLOR_BRUSHES},	{COLOR_CAMERABACK},	   {COLOR_CAMERAGRID}, {COLOR_GRIDBACK},   {COLOR_GRIDBLOCK},
+//								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDRY}, {COLOR_VIEWNAME}
+		case ID_THEMES_BLUEGRAY:
+			{
+				vec3_t v[] = {	{0.75f,0.75f,0.75f},  {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, {0.25f, 0.25f, 0.25f}, {0.35f, 0.35f, 0.35f},
+								{0.35f, 0.35f, 0.35f}, {0.3f, 0.3f, 0.3f}, {0.0f, 1.0f,  1.0f},  {0.2f,  0.4f,  0.4f},  {0.0f, 1.0f,  1.0f}	};
+				DoTheme(v);
+			}
+			break;
+
 		case ID_COLORS_VIEWNAME:
 			DoColor(COLOR_VIEWNAME);
 			Sys_UpdateWindows(W_ALL);

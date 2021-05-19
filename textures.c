@@ -28,14 +28,6 @@ int		g_nTextureExtensionNumber = 1;
 int		g_nTextureNumMenus;
 char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
 
-// current wad
-char	g_szCurrentWad[1024];
-//char	g_szWadString[1024];	// sikk - Wad Loading
-
-// texture layout functions
-qtexture_t *g_qtCurrentTexture;
-int			g_nCurrentX, g_nCurrentY, g_nCurrentRow;
-
 //=====================================================
 
 /*
@@ -73,9 +65,14 @@ void Texture_Init ()
 	g_qeglobals.d_texturewin.scale = 1.0f;	// sikk - Mouse Zoom Texture Window
 }
 
+/*
+==============
+texcmp
+==============
+*/
 int texcmp(qtexture_t* a, qtexture_t* b)
 {
-	if (g_qeglobals.d_savedinfo.bSortTexByWad)
+	if (g_qeglobals.d_savedinfo.bSortTexByWad && a->wad && b->wad)
 	{
 		int cmp;
 		cmp = strcmp(a->wad, b->wad);
@@ -450,6 +447,7 @@ void Texture_MakeNotexture ()
 	notexture = q = qmalloc(sizeof(*q));
 	strcpy(q->name, "notexture");
     q->width = q->height = 64;
+	q->wad = NULL;
     
 	memset(data, 0, sizeof(data));
 	data[0][2] = data[3][2] = 255;
@@ -469,6 +467,7 @@ void Texture_MakeNotexture ()
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
 
 /*
 ===============
@@ -576,6 +575,37 @@ void Texture_ClearInuse ()
 		q->inuse = false;
 }
 
+
+/*
+==================
+Texture_FlushAll
+==================
+*/
+void Texture_FlushAll()
+{
+	qtexture_t	*q, *qprev, *qnextex;
+	unsigned int n;
+
+	if (g_qeglobals.d_qtextures)
+	{
+		q = g_qeglobals.d_qtextures->next;
+		qprev = g_qeglobals.d_qtextures;
+		while (q != NULL && q != g_qeglobals.d_qtextures)
+		{
+			qnextex = q->next;
+
+			n = q->texture_number;
+			glDeleteTextures(1, &n);
+			qprev->next = qnextex;
+			free(q);
+
+			q = qnextex;
+		}
+	}
+	TexWnd_Layout();
+}
+
+
 /*
 ==================
 Texture_FlushUnused
@@ -607,6 +637,7 @@ void Texture_FlushUnused ()
 			q = qnextex;
 		}
 	}
+	TexWnd_Layout();
 }
 
 /*
@@ -646,8 +677,6 @@ void Texture_InitFromWad (char *file)
 		free(wadfile);
 		return;
 	}
-
-	strcpy(g_szCurrentWad, file);
 
 	wadinfo = (wadinfo_t *)wadfile;
 	numlumps = LittleLong(wadinfo->numlumps);
@@ -720,6 +749,7 @@ void Texture_ShowWad (int menunum)
 
 	SortTextures();
 	InspWnd_SetMode(W_TEXTURE);
+	TexWnd_Layout();
 	Sys_UpdateWindows(W_TEXTURE);
 
 	// select the first texture in the list
@@ -767,67 +797,77 @@ void Texture_ShowInuse ()
 
 TEXTURE LAYOUT
 
+lunaran: cache texture window layout instead of rebuilding it every frame
+
 ============================================================================
 */
 
-/*
-==================
-Texture_StartPos
-==================
-*/
-void Texture_StartPos ()
-{
-	g_qtCurrentTexture = g_qeglobals.d_qtextures;
-	g_nCurrentX = 8;
-	g_nCurrentY = -8;
-	g_nCurrentRow = 0;
-}
 
 /*
-==================
-Texture_NextPos
-==================
+============
+Texture_ChooseTexture
+============
 */
-qtexture_t *Texture_NextPos (int *x, int *y)
+void TexWnd_Layout()
 {
-	qtexture_t	*q, *qPrev;
-	qPrev = g_qtCurrentTexture;
+	qtexture_t	*q;
+	int			curIdx, curX, curY, curRowHeight;
+	char*		wad;
 
-	while (1)
+	curX = 8;
+	curY = -8;
+	curRowHeight = 0;
+	g_qeglobals.d_texturewin.count = 0;
+
+	if (g_qeglobals.d_texturewin.layout)
 	{
-		q = g_qtCurrentTexture;
-		if (!q)
-			return q;
-		g_qtCurrentTexture = g_qtCurrentTexture->next;
-		if (q->name[0] == '(')	// fake color texture
-			continue;
-		if (q->inuse)			// allways show in use
-			break;
-		break;
+		free(g_qeglobals.d_texturewin.layout);
+		g_qeglobals.d_texturewin.layout = NULL;
 	}
-
-	// go to the next row unless the texture is the first on the row
-	// lunaran TODO: row breaks for new wads when sorted
-	if (g_nCurrentX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8 && g_nCurrentRow)
-	{	
-		g_nCurrentX = 8;
-		g_nCurrentY -= g_nCurrentRow + FONT_HEIGHT + 4;
-		g_nCurrentRow = 0;
+	for (q = g_qeglobals.d_qtextures; q; q = q->next)
+	{
+		if (q->name[0] == '(') continue;	// fake color texture
+		g_qeglobals.d_texturewin.count++;
 	}
+	if (!g_qeglobals.d_texturewin.count) return;
 
-	*x = g_nCurrentX;
-	*y = g_nCurrentY;
+	g_qeglobals.d_texturewin.layout = qmalloc(sizeof(texWndPlacement_t) * g_qeglobals.d_texturewin.count);
 
-	// Is our texture larger than the row? If so, grow the 
-	// row height to match it
-    if (g_nCurrentRow < q->height * g_qeglobals.d_texturewin.scale)	// sikk - Mouse Zoom Texture Window
-		g_nCurrentRow = q->height * g_qeglobals.d_texturewin.scale;	// sikk - Mouse Zoom Texture Window
+	curIdx = 0;
+	wad = NULL;
+	for (q = g_qeglobals.d_qtextures; q; q = q->next)
+	{
+		if (q->name[0] == '(') continue;
 
-	// never go less than 64, or the names get all crunched up
-	g_nCurrentX += q->width * g_qeglobals.d_texturewin.scale < 64 ? 64 : q->width * g_qeglobals.d_texturewin.scale;	// sikk - Mouse Zoom Texture Window
-	g_nCurrentX += 8;
+		// go to the next row unless the texture is the first on the row
+		// lunaran: row breaks for new wads when sorted
+		if ((curX + q->width * g_qeglobals.d_texturewin.scale > g_qeglobals.d_texturewin.width - 8 ||
+			(q->wad != wad && g_qeglobals.d_savedinfo.bSortTexByWad) )
+			&& curRowHeight)
+		{
+			curX = 8;
+			curY -= curRowHeight + FONT_HEIGHT + 4;
+			curRowHeight = 0;
+		}
+		wad = q->wad;
 
-	return q;
+		g_qeglobals.d_texturewin.layout[curIdx].tex = q;
+		g_qeglobals.d_texturewin.layout[curIdx].x = curX;
+		g_qeglobals.d_texturewin.layout[curIdx].y = curY;
+		g_qeglobals.d_texturewin.layout[curIdx].w = q->width * g_qeglobals.d_texturewin.scale;
+		g_qeglobals.d_texturewin.layout[curIdx].h = q->height * g_qeglobals.d_texturewin.scale;
+
+		// Is our texture larger than the row? If so, grow the row height to match it
+		if (curRowHeight < q->height * g_qeglobals.d_texturewin.scale)	// sikk - Mouse Zoom Texture Window
+			curRowHeight = q->height * g_qeglobals.d_texturewin.scale;	// sikk - Mouse Zoom Texture Window
+
+		// never go less than 64, or the names get all crunched up
+		curX += q->width * g_qeglobals.d_texturewin.scale < 64 ? 64 : q->width * g_qeglobals.d_texturewin.scale;	// sikk - Mouse Zoom Texture Window
+		curX += 8;
+
+		curIdx++;
+	}
+	g_qeglobals.d_texturewin.length = curY - curRowHeight - FONT_HEIGHT - 8 + g_qeglobals.d_texturewin.height;
 }
 
 /*
@@ -840,6 +880,13 @@ qtexture_t *Texture_NextPos (int *x, int *y)
 
 static int	textures_cursorx, textures_cursory;
 
+void Texture_UpdateStatus(texdef_t* texdef)
+{
+	char		sz[256];
+	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, 0, 0);// q->width, q->height);	// lunaran TODO: texdef doens't contain a pointer to the texture?
+	Sys_Status(sz, 3);
+}
+
 /*
 ============
 Texture_ChooseTexture
@@ -847,9 +894,9 @@ Texture_ChooseTexture
 */
 void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 {
-	int			x, y;
-	char		sz[256];
-	qtexture_t *q;
+	//int			x, y;
+	//qtexture_t *q;
+	texWndPlacement_t* twp;
 
 	if (texdef->name[0] == '(')
 	{
@@ -867,33 +914,27 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 		Select_SetTexture(texdef);
 
 	// scroll origin so the texture is completely on screen
-	Texture_StartPos();
-	while (1)
+	for (int i = 0; i < g_qeglobals.d_texturewin.count; i++)
 	{
-		q = Texture_NextPos(&x, &y);
-		if (!q)
-			break;
-		if (!strcmpi(texdef->name, q->name))
+		twp = &g_qeglobals.d_texturewin.layout[i];
+		if (!strcmpi(texdef->name, twp->tex->name))
 		{
-			if (y > g_qeglobals.d_texturewin.originy)
+			if (twp->y > g_qeglobals.d_texturewin.originy)
 			{
-				g_qeglobals.d_texturewin.originy = y;
+				g_qeglobals.d_texturewin.originy = twp->y;
 				Sys_UpdateWindows(W_TEXTURE);
-				sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, q->width, q->height);
-				Sys_Status(sz, 3);
+				Texture_UpdateStatus(texdef);
 				return;
 			}
 
-			if (y - q->height * g_qeglobals.d_texturewin.scale - 2 * FONT_HEIGHT < g_qeglobals.d_texturewin.originy - g_qeglobals.d_texturewin.height)	// sikk - Mouse Zoom Texture Window
+			if (twp->y - twp->h - 2 * FONT_HEIGHT < g_qeglobals.d_texturewin.originy - g_qeglobals.d_texturewin.height)	// sikk - Mouse Zoom Texture Window
 			{
-				g_qeglobals.d_texturewin.originy = y - q->height * g_qeglobals.d_texturewin.scale - 2 * FONT_HEIGHT + g_qeglobals.d_texturewin.height;	// sikk - Mouse Zoom Texture Window
+				g_qeglobals.d_texturewin.originy = twp->y - twp->h - 2 * FONT_HEIGHT + g_qeglobals.d_texturewin.height;	// sikk - Mouse Zoom Texture Window
 				Sys_UpdateWindows(W_TEXTURE);
-				sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, q->width, q->height);
-				Sys_Status(sz, 3);
+				Texture_UpdateStatus(texdef);
 				return;
 			}
-			sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, q->width, q->height);
-			Sys_Status(sz, 3);
+			Texture_UpdateStatus(texdef);
 			return;
 		}
 	}
@@ -901,35 +942,42 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 
 /*
 ==============
-GetTextureUnderMouse
+Texture_TexAtWndPos
 
 Sets texture window's caption to the name and size of the texture
 under the current mouse position.
 ==============
 */
-void GetTextureUnderMouse (int mx, int my)
+qtexture_t* Texture_TexAtWndPos (int wx, int wy)
 {
-	int			x, y;
-	qtexture_t *q;
-	char		texstring[256];
+	texWndPlacement_t* twp;
 
-	my += g_qeglobals.d_texturewin.originy - g_qeglobals.d_texturewin.height;
+	wy += g_qeglobals.d_texturewin.originy - g_qeglobals.d_texturewin.height;
 	
-	Texture_StartPos();
-	while (1)
+	for (int i = 0; i < g_qeglobals.d_texturewin.count; i++)
 	{
-		q = Texture_NextPos(&x, &y);
-		if (!q)
-			break;
-		if (mx > x && mx - x < q->width * g_qeglobals.d_texturewin.scale	// sikk - Mouse Zoom Texture Window
-			&& my < y && y - my < q->height * g_qeglobals.d_texturewin.scale + FONT_HEIGHT)	// sikk - Mouse Zoom Texture Window
+		twp = &g_qeglobals.d_texturewin.layout[i];
+		if (wx > twp->x && wx - twp->x < twp->w	&& // sikk - Mouse Zoom Texture Window
+			wy < twp->y && twp->y - wy < twp->h + FONT_HEIGHT)	// sikk - Mouse Zoom Texture Window
 		{
-			sprintf(texstring, "%s (%dx%d)", q->name, q->width, q->height);
-			Sys_Status(texstring, 0);
-			return;
+			return twp->tex;
 		}
 	}
+	return NULL;
+}
 
+void TexWnd_MouseOver(int mx, int my)
+{
+	char		texstring[256];
+	qtexture_t*	tex;
+
+	tex = Texture_TexAtWndPos(mx, my);
+	if (tex)
+	{
+		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
+		Sys_Status(texstring, 0);
+		return;
+	}
 	sprintf(texstring, "");
 	Sys_Status(texstring, 0);
 }
@@ -943,29 +991,21 @@ By mouse click
 */
 void SelectTexture (int mx, int my)
 {
-	int			x, y;
-	qtexture_t *q;
-	texdef_t	tex;
+	texWndPlacement_t* twp;
+	texdef_t	texdef;
 
-	my += g_qeglobals.d_texturewin.originy - g_qeglobals.d_texturewin.height;
-	
-	Texture_StartPos();
-	while (1)
+	qtexture_t*	tw;
+
+	tw = Texture_TexAtWndPos(mx, my);
+	if (tw);
 	{
-		q = Texture_NextPos(&x, &y);
-		if (!q)
-			break;
-		if (mx > x && mx - x < q->width * g_qeglobals.d_texturewin.scale && 
-			my < y && y - my < q->height * g_qeglobals.d_texturewin.scale + FONT_HEIGHT)	// sikk - Mouse Zoom Texture Window
-		{
-			memset(&tex, 0, sizeof(tex));
-			tex.scale[0] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
-			tex.scale[1] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
+		memset(&texdef, 0, sizeof(texdef));
+		texdef.scale[0] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
+		texdef.scale[1] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog
 
-			strcpy(tex.name, q->name);
-			Texture_ChooseTexture(&tex, true);
-			return;
-		}
+		strcpy(texdef.name, tw->name);
+		Texture_ChooseTexture(&texdef, true);
+		return;
 	}
 
 	Sys_Printf("WARNING: Did not select a texture.\n");
@@ -974,52 +1014,60 @@ void SelectTexture (int mx, int my)
 // sikk--->	Mouse Zoom Texture Window
 /*
 ==============
-GetTextureZoomPos
-
-Find first visible texture with old scale and determine the y origin
-that will place it at the top with the new scale
+TexWnd_SetScale
 ==============
 */
-void GetTextureZoomPos (float oldscale, float newscale)
+void TexWnd_SetScale(float scale)
 {
-	int			x, y;
-	qtexture_t *q, *firsttexture;
+	char		texscalestring[128];
+	texWndPlacement_t* twp;
+	qtexture_t *firsttexture;
+	int i;
 
-	Texture_StartPos();
-	while (1)
+	if (scale > 8)
+		scale = 8;
+	if (scale < 0.25)
+		scale = 0.25f;
+
+	// Find first visible texture with old scale and determine the y origin
+	// that will place it at the top with the new scale
+	for (i = 0; i < g_qeglobals.d_texturewin.count; i++)
 	{
-		q = firsttexture = Texture_NextPos(&x, &y);
-		if (!q)
-			break;
+		twp = &g_qeglobals.d_texturewin.layout[i];
+		firsttexture = twp->tex;
 
-		if (oldscale < newscale)
+		if (g_qeglobals.d_texturewin.scale < scale)
 		{
-			if ((y - q->height * oldscale < g_qeglobals.d_texturewin.originy) && (y > g_qeglobals.d_texturewin.originy - 64))
+			if ((twp->y - twp->h < g_qeglobals.d_texturewin.originy) && (twp->y > g_qeglobals.d_texturewin.originy - 64))
 				break;
 		}
 		else
 		{
-			if ((y - q->height * oldscale - FONT_HEIGHT < g_qeglobals.d_texturewin.originy) && (y > g_qeglobals.d_texturewin.originy - 64))
+			if ((twp->y - twp->h - FONT_HEIGHT < g_qeglobals.d_texturewin.originy) && (twp->y > g_qeglobals.d_texturewin.originy - 64))
 				break;
 		}
 	}
 
-	if (!q)
-		return;
-
-	g_qeglobals.d_texturewin.scale = newscale;
-	Texture_StartPos();
-
-	while (1)
+	if (i < g_qeglobals.d_texturewin.count)
 	{
-		q = Texture_NextPos(&x, &y);
+		g_qeglobals.d_texturewin.scale = scale;
+		TexWnd_Layout();
 
-		if (!q)
-			return;
+		for (i = 0; i < g_qeglobals.d_texturewin.count; i++)
+		{
+			twp = &g_qeglobals.d_texturewin.layout[i];
 
-		if (q == firsttexture)
-			g_qeglobals.d_texturewin.originy = y;
+			if (twp->tex == firsttexture)
+			{
+				g_qeglobals.d_texturewin.originy = twp->y;
+				break;
+			}
+		}
 	}
+	sprintf(texscalestring, "Texture scale: %3.0f%%", scale * 100.0f);
+	Sys_Status(texscalestring, 0);
+
+	TexWnd_Layout();
 }
 // <---sikk
 
@@ -1056,7 +1104,6 @@ Texture_MouseMoved
 */
 void Texture_MouseMoved (int x, int y, int buttons)
 {
-	char	texscalestring[128];
 	float	scale = 1;	// sikk - Mouse Zoom Texture Window (changed from "int")
 
 	if (buttons & MK_SHIFT)
@@ -1071,23 +1118,16 @@ void Texture_MouseMoved (int x, int y, int buttons)
 		if (y != textures_cursory)
 		{
 			int		i;
-			float	oldscale, newscale;
+			float	newscale;
 
-			oldscale = newscale = g_qeglobals.d_texturewin.scale;
+			newscale = g_qeglobals.d_texturewin.scale;
 			scale = 1;
 			for (i = abs(y - textures_cursory); i > 0; i--)
 				scale *=  y > textures_cursory ? (1.008) : (0.992063492);
 			newscale *= scale;
-			if (newscale > 8)
-				newscale = 8;
-			if (newscale < 0.25)
-				newscale = 0.25f;
 			Sys_SetCursorPos(textures_cursorx, textures_cursory);
+			TexWnd_SetScale(newscale);
 
-			sprintf(texscalestring, "Texture scale: %3.0f%%", newscale * 100.0f);
-			Sys_Status(texscalestring, 0);
-
-			GetTextureZoomPos(oldscale, newscale);
 			Sys_UpdateWindows(W_TEXTURE);
 		}
 		return;
@@ -1102,6 +1142,8 @@ void Texture_MouseMoved (int x, int y, int buttons)
 		if (y != textures_cursory)
 		{
 			g_qeglobals.d_texturewin.originy += (y - textures_cursory) * scale;
+			if (g_qeglobals.d_texturewin.originy < g_qeglobals.d_texturewin.length)
+				g_qeglobals.d_texturewin.originy = g_qeglobals.d_texturewin.length;
 			if (g_qeglobals.d_texturewin.originy > 0)
 				g_qeglobals.d_texturewin.originy = 0;
 			Sys_SetCursorPos(textures_cursorx, textures_cursory);
@@ -1110,7 +1152,7 @@ void Texture_MouseMoved (int x, int y, int buttons)
 //		return;
 	}
 	else 
-		GetTextureUnderMouse(x, g_qeglobals.d_texturewin.height - 1 - y);
+		TexWnd_MouseOver(x, g_qeglobals.d_texturewin.height - 1 - y);
 }
 
 
@@ -1131,8 +1173,7 @@ Texture_Draw
 */
 void Texture_Draw (int width, int height)
 {
-	qtexture_t *q;
-	int			x, y;
+	texWndPlacement_t* twp;
 	char	   *name;
 
 	glClearColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_TEXTUREBACK][0],
@@ -1148,32 +1189,27 @@ void Texture_Draw (int width, int height)
 	glEnable(GL_TEXTURE_2D);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	g_qeglobals.d_texturewin.width = width;
-	g_qeglobals.d_texturewin.height = height;
-	Texture_StartPos();
 
-	while (1)
+	for (int i = 0; i < g_qeglobals.d_texturewin.count; i++)
 	{
-		q = Texture_NextPos(&x, &y);
-		if (!q)
-			break;
+		twp = &g_qeglobals.d_texturewin.layout[i];
 
 		// Is this texture visible?
-		if ((y - q->height * g_qeglobals.d_texturewin.scale - FONT_HEIGHT < g_qeglobals.d_texturewin.originy) &&	
-			(y > g_qeglobals.d_texturewin.originy - height))	// sikk - Mouse Zoom Texture Window
+		if ((twp->y - twp->h - FONT_HEIGHT < g_qeglobals.d_texturewin.originy) &&
+			(twp->y > g_qeglobals.d_texturewin.originy - height))	// sikk - Mouse Zoom Texture Window
 		{
 			// if in use, draw a background
-			if (q->inuse)
+			if (twp->tex->inuse)
 			{
 				glLineWidth(1);
 				glColor3f(0.5, 1, 0.5);
 				glDisable(GL_TEXTURE_2D);
 
 				glBegin(GL_LINE_LOOP);
-				glVertex2f(x - 1, y + 1  -FONT_HEIGHT);
-				glVertex2f(x - 1, y - q->height * g_qeglobals.d_texturewin.scale - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(x + 1 + q->width * g_qeglobals.d_texturewin.scale, y - q->height * g_qeglobals.d_texturewin.scale - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(x + 1 + q->width * g_qeglobals.d_texturewin.scale, y + 1 - FONT_HEIGHT);		// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x - 1, twp->y + 1  -FONT_HEIGHT);
+				glVertex2f(twp->x - 1, twp->y - twp->h - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x + 1 + twp->w, twp->y - twp->h - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x + 1 + twp->w, twp->y + 1 - FONT_HEIGHT);		// sikk - Mouse Zoom Texture Window
 				glEnd();
 
 				glEnable(GL_TEXTURE_2D);
@@ -1181,30 +1217,30 @@ void Texture_Draw (int width, int height)
 
 			// Draw the texture
 			glColor3f(1, 1, 1);
-			glBindTexture(GL_TEXTURE_2D, q->texture_number);
+			glBindTexture(GL_TEXTURE_2D, twp->tex->texture_number);
 			glBegin(GL_QUADS);
 			glTexCoord2f(0, 0);
-			glVertex2f(x, y - FONT_HEIGHT);
+			glVertex2f(twp->x, twp->y - FONT_HEIGHT);
 			glTexCoord2f(1, 0);
-			glVertex2f(x + q->width * g_qeglobals.d_texturewin.scale, y - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
+			glVertex2f(twp->x + twp->w, twp->y - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
 			glTexCoord2f(1, 1);
-			glVertex2f(x + q->width * g_qeglobals.d_texturewin.scale, y - FONT_HEIGHT - q->height * g_qeglobals.d_texturewin.scale);	// sikk - Mouse Zoom Texture Window
+			glVertex2f(twp->x + twp->w, twp->y - FONT_HEIGHT - twp->h);	// sikk - Mouse Zoom Texture Window
 			glTexCoord2f(0, 1);
-			glVertex2f(x, y - FONT_HEIGHT - q->height * g_qeglobals.d_texturewin.scale);
+			glVertex2f(twp->x, twp->y - FONT_HEIGHT - twp->h);
 			glEnd();
 
 			// draw the selection border
-			if (!strcmpi(g_qeglobals.d_texturewin.texdef.name, q->name))
+			if (!strcmpi(g_qeglobals.d_texturewin.texdef.name, twp->tex->name))
 			{
 				glLineWidth(3);
 				glColor3f(1, 0, 0);
 				glDisable(GL_TEXTURE_2D);
 
 				glBegin(GL_LINE_LOOP);
-				glVertex2f(x - 4, y - FONT_HEIGHT + 4);
-				glVertex2f(x - 4, y - FONT_HEIGHT - q->height * g_qeglobals.d_texturewin.scale - 4);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(x + 4 + q->width * g_qeglobals.d_texturewin.scale, y - FONT_HEIGHT - q->height * g_qeglobals.d_texturewin.scale - 4);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(x + 4 + q->width * g_qeglobals.d_texturewin.scale, y - FONT_HEIGHT + 4);		// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x - 4, twp->y - FONT_HEIGHT + 4);
+				glVertex2f(twp->x - 4, twp->y - FONT_HEIGHT - twp->h - 4);	// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x + 4 + twp->w, twp->y - FONT_HEIGHT - twp->h - 4);	// sikk - Mouse Zoom Texture Window
+				glVertex2f(twp->x + 4 + twp->w, twp->y - FONT_HEIGHT + 4);		// sikk - Mouse Zoom Texture Window
 				glEnd();
 
 				glEnable(GL_TEXTURE_2D);
@@ -1216,14 +1252,14 @@ void Texture_Draw (int width, int height)
 			glDisable(GL_TEXTURE_2D);
 
 			// don't draw the directory name
-			for (name = q->name; *name && *name != '/' && *name != '\\'; name++)
+			for (name = twp->tex->name; *name && *name != '/' && *name != '\\'; name++)
 				;
 			if (!*name)
-				name = q->name;
+				name = twp->tex->name;
 			else
 				name++;
 
-			glRasterPos2f(x, y - FONT_HEIGHT + 2);
+			glRasterPos2f(twp->x, twp->y - FONT_HEIGHT + 2);
 			glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
 			glEnable(GL_TEXTURE_2D);
 		}
@@ -1379,19 +1415,10 @@ TexWnd_Resize
 void TexWnd_Resize(RECT rc)
 {
 	InspWnd_MoveRect(g_qeglobals.d_hwndTexture, rc);
+	g_qeglobals.d_texturewin.width = rc.right;
+	g_qeglobals.d_texturewin.height = rc.bottom;
+	TexWnd_Layout();
 }
 
 
-
-/*
-==================
-Texture_Flush
-==================
-*/
-void Texture_Flush ()
-{
-	g_nTextureExtensionNumber = 1;
-	g_qeglobals.d_qtextures = NULL;
-	strcpy(g_szCurrentWad, "");
-}
 

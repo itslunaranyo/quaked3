@@ -218,21 +218,21 @@ void EmitTextureCoordinates (float *xyzst, qtexture_t *q, face_t *f)
 	float		s, t, ns, nt;
 	float		ang, sinv, cosv;
 	vec3_t		vecs[2];
-	texdef_t   *td;
+	texdef_t   *texdef;
 
 	// get natural texture axis
 	TextureAxisFromPlane(&f->plane, vecs[0], vecs[1]);
 
-	td = &f->texdef;
+	texdef = &f->texdef;
 
-	ang = td->rotate / 180 * Q_PI;
+	ang = texdef->rotate / 180 * Q_PI;
 	sinv = sin(ang);
 	cosv = cos(ang);
 	
-	if (!td->scale[0])
-		td->scale[0] = 1;
-	if (!td->scale[1])
-		td->scale[1] = 1;
+	if (!texdef->scale[0])
+		texdef->scale[0] = 1;
+	if (!texdef->scale[1])
+		texdef->scale[1] = 1;
 
 	s = DotProduct(xyzst, vecs[0]);
 	t = DotProduct(xyzst, vecs[1]);
@@ -240,8 +240,8 @@ void EmitTextureCoordinates (float *xyzst, qtexture_t *q, face_t *f)
 	ns = cosv * s - sinv * t;
 	nt = sinv * s + cosv * t;
 
-	s = ns / td->scale[0] + td->shift[0];
-	t = nt / td->scale[1] + td->shift[1];
+	s = ns / texdef->scale[0] + texdef->shift[0];
+	t = nt / texdef->scale[1] + texdef->shift[1];
 
 	// gl scales everything from 0 to 1
 	s /= q->width;
@@ -345,7 +345,7 @@ void Face_FitTexture (face_t *face, int nHeight, int nWidth)
 	vec3_t		mins, maxs;
 	vec3_t		vecs[2];
 	vec3_t		coords[4];
-	texdef_t   *td;
+	texdef_t   *texdef;
 	winding_t  *w;
 	
 	if (nHeight < 1)
@@ -362,10 +362,10 @@ void Face_FitTexture (face_t *face, int nHeight, int nWidth)
 	for (i = 0; i < w->numpoints; i++)
 		AddPointToBounds(w->points[i], mins, maxs);
 	
-	td = &face->texdef;
+	texdef = &face->texdef;
  
 	// get the current angle
-	ang = td->rotate / 180 * Q_PI;
+	ang = texdef->rotate / 180 * Q_PI;
 	sinv = sin(ang);
 	cosv = cos(ang);
 	
@@ -419,20 +419,20 @@ void Face_FitTexture (face_t *face, int nHeight, int nWidth)
 	rot_width = (max_s - min_s);
 	rot_height = (max_t - min_t);
 
-	td->scale[0] = -(rot_width / ((float)(face->d_texture->width * nWidth)));
-	td->scale[1] = -(rot_height / ((float)(face->d_texture->height * nHeight)));
-	td->shift[0] = min_s / td->scale[0];
+	texdef->scale[0] = -(rot_width / ((float)(face->d_texture->width * nWidth)));
+	texdef->scale[1] = -(rot_height / ((float)(face->d_texture->height * nHeight)));
+	texdef->shift[0] = min_s / texdef->scale[0];
 
-	temp = (int)(td->shift[0] / (face->d_texture->width * nWidth));
+	temp = (int)(texdef->shift[0] / (face->d_texture->width * nWidth));
 	temp = (temp + 1) * face->d_texture->width * nWidth;
 
-	td->shift[0] = (int)(temp - td->shift[0]) % (face->d_texture->width * nWidth);
-	td->shift[1] = min_t / td->scale[1];
+	texdef->shift[0] = (int)(temp - texdef->shift[0]) % (face->d_texture->width * nWidth);
+	texdef->shift[1] = min_t / texdef->scale[1];
 
-	temp = (int)(td->shift[1] / (face->d_texture->height * nHeight));
+	temp = (int)(texdef->shift[1] / (face->d_texture->height * nHeight));
 	temp = (temp + 1) * (face->d_texture->height * nHeight);
 
-	td->shift[1] = (int)(temp - td->shift[1]) % (face->d_texture->height * nHeight);
+	texdef->shift[1] = (int)(temp - texdef->shift[1]) % (face->d_texture->height * nHeight);
 }
 
 /*
@@ -489,25 +489,25 @@ void Face_MoveTexture (face_t *f, vec3_t move)
 	vec3_t		pvecs[2];
 	vec_t		s, t, ns, nt;
 	vec_t		ang, sinv, cosv;
-	texdef_t   *td;
+	texdef_t   *texdef;
 
 	TextureAxisFromPlane(&f->plane, pvecs[0], pvecs[1]);
-	td = &f->texdef;
-	ang = td->rotate / 180 * Q_PI;
+	texdef = &f->texdef;
+	ang = texdef->rotate / 180 * Q_PI;
 	sinv = sin(ang);
 	cosv = cos(ang);
 
-	if (!td->scale[0])
-		td->scale[0] = 1;
-	if (!td->scale[1])
-		td->scale[1] = 1;
+	if (!texdef->scale[0])
+		texdef->scale[0] = 1;
+	if (!texdef->scale[1])
+		texdef->scale[1] = 1;
 
 	s = DotProduct(move, pvecs[0]);
 	t = DotProduct(move, pvecs[1]);
 	ns = cosv * s - sinv * t;
 	nt = sinv * s + cosv * t;
-	s = ns / td->scale[0];
-	t = nt / td->scale[1];
+	s = ns / texdef->scale[0];
+	t = nt / texdef->scale[1];
 
 	f->texdef.shift[0] -= s;
 	f->texdef.shift[1] -= t;

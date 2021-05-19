@@ -826,32 +826,32 @@ Set the fields to the current texdef
 void SetTexMods ()
 {
 	char		sz[16];
-	texdef_t   *pt;
+	texdef_t   *texdef;
 	float shiftxp, shiftyp, rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	if (Select_HasFaces())
-		pt = &g_pfaceSelectedFaces[0]->texdef;
+		texdef = &g_pfaceSelectedFaces[0]->texdef;
 	else
-		pt = &g_qeglobals.d_texturewin.texdef;
+		texdef = &g_qeglobals.d_texturewin.texdef;
 
 	SendMessage(g_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, pt->name);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
 
 	// lunaran: trunc safety
-	shiftxp = pt->shift[0] + ((pt->shift[0] < 0) ? -0.01f : 0.01f);
-	shiftyp = pt->shift[1] + ((pt->shift[1] < 0) ? -0.01f : 0.01f);
-	rotp = pt->rotate + ((pt->rotate < 0) ? -0.01f : 0.01f);
+	shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
+	shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
+	rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
 	sprintf(sz, "%d", (int)shiftxp);	
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
 	sprintf(sz, "%d", (int)shiftyp);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
-	sprintf(sz, "%4.2f", pt->scale[0]);
+	sprintf(sz, "%4.2f", texdef->scale[0]);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
-	sprintf(sz, "%4.2f", pt->scale[1]);
+	sprintf(sz, "%4.2f", texdef->scale[1]);
 	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
 	sprintf(sz, "%d", (int)rotp);
@@ -876,34 +876,34 @@ Reads the fields to get the current texdef
 void GetTexMods ()
 {
 	char		sz[64];
-	texdef_t   *pt;
+	texdef_t   *texdef;
 
 // sikk - So Dialog is updated with texture info from first selected face
 	if (Select_HasFaces())
-		pt = &g_pfaceSelectedFaces[0]->texdef;
+		texdef = &g_pfaceSelectedFaces[0]->texdef;
 	else
-		pt = &g_qeglobals.d_texturewin.texdef;
+		texdef = &g_qeglobals.d_texturewin.texdef;
 
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
-	strncpy(pt->name, sz, sizeof(pt->name) - 1);
-	if (pt->name[0] <= ' ')
+	strncpy(texdef->name, sz, sizeof(texdef->name) - 1);
+	if (texdef->name[0] <= ' ')
 	{
-		strcpy(pt->name, "none");
-		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, pt->name);
+		strcpy(texdef->name, "none");
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
 	}
 
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
-	pt->shift[0] = atof(sz);
+	texdef->shift[0] = atof(sz);
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz, 64);
-	pt->shift[1] = atof(sz);
+	texdef->shift[1] = atof(sz);
 
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz, 64);
-	pt->scale[0] = atof(sz);
+	texdef->scale[0] = atof(sz);
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz, 127);
-	pt->scale[1] = atof(sz);
+	texdef->scale[1] = atof(sz);
 
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz, 64);
-	pt->rotate = atof(sz);
+	texdef->rotate = atof(sz);
 
 // FIT:
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HFIT, sz, 64);
@@ -912,7 +912,7 @@ void GetTexMods ()
 	g_nWidth = atoi(sz);
 
 	g_bChanged = true;
-	Select_SetTexture(pt);
+	Select_SetTexture(texdef);
 }
 
 /*
@@ -922,13 +922,13 @@ UpdateSpinners
 */
 void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 {
-	texdef_t *pt;
+	texdef_t *texdef;
 
 // sikk - So Dialog is updated with texture info from first selected face
 	if (Select_HasFaces())
-		pt = &g_pfaceSelectedFaces[0]->texdef;
+		texdef = &g_pfaceSelectedFaces[0]->texdef;
 	else
-		pt = &g_qeglobals.d_texturewin.texdef;
+		texdef = &g_qeglobals.d_texturewin.texdef;
 
 // sikk---> Added Modifiers
 	switch (((LPNMHDR)lParam)->code) 
@@ -940,20 +940,20 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta < 0) 
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->shift[0] += 32;
+					texdef->shift[0] += 32;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->shift[0] += 1;
+					texdef->shift[0] += 1;
 				else
-					pt->shift[0] += 8;
+					texdef->shift[0] += 8;
 			}
 			else
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->shift[0] -= 32;
+					texdef->shift[0] -= 32;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->shift[0] -= 1;
+					texdef->shift[0] -= 1;
 				else
-					pt->shift[0] -= 8;
+					texdef->shift[0] -= 8;
 			}
 			break;
 	
@@ -961,20 +961,20 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta < 0)
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->shift[1] += 32;
+					texdef->shift[1] += 32;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->shift[1] += 1;
+					texdef->shift[1] += 1;
 				else
-					pt->shift[1] += 8;
+					texdef->shift[1] += 8;
 			}
 			else
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->shift[1] -= 32;
+					texdef->shift[1] -= 32;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->shift[1] -= 1;
+					texdef->shift[1] -= 1;
 				else
-					pt->shift[1] -= 8;
+					texdef->shift[1] -= 8;
 			}
 			break;
 
@@ -982,20 +982,20 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta < 0)
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->scale[0] += 0.5f;
+					texdef->scale[0] += 0.5f;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->scale[0] += 0.01f;
+					texdef->scale[0] += 0.01f;
 				else
-					pt->scale[0] += 0.05f;
+					texdef->scale[0] += 0.05f;
 			}
 			else
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->scale[0] -= 0.5f;
+					texdef->scale[0] -= 0.5f;
 				else if(GetKeyState(VK_CONTROL) < 0)
-					pt->scale[0] -= 0.01f;
+					texdef->scale[0] -= 0.01f;
 				else
-					pt->scale[0] -= 0.05f;
+					texdef->scale[0] -= 0.05f;
 			}
 			break;
 	
@@ -1003,20 +1003,20 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta < 0)
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->scale[1] += 0.5f;
+					texdef->scale[1] += 0.5f;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->scale[1] += 0.01f;
+					texdef->scale[1] += 0.01f;
 				else
-					pt->scale[1] += 0.05f;
+					texdef->scale[1] += 0.05f;
 			}
 			else
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->scale[1] -= 0.5f;
+					texdef->scale[1] -= 0.5f;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->scale[1] -= 0.01f;
+					texdef->scale[1] -= 0.01f;
 				else
-					pt->scale[1] -= 0.05f;
+					texdef->scale[1] -= 0.05f;
 			}
 			break;
 	
@@ -1024,27 +1024,27 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta < 0)
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->rotate += 90;
+					texdef->rotate += 90;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->rotate += 1;
+					texdef->rotate += 1;
 				else
-					pt->rotate += 15;
+					texdef->rotate += 15;
 			}
 			else
 			{
 				if (GetKeyState(VK_SHIFT) < 0)
-					pt->rotate -= 90;
+					texdef->rotate -= 90;
 				else if (GetKeyState(VK_CONTROL) < 0)
-					pt->rotate -= 1;
+					texdef->rotate -= 1;
 				else
-					pt->rotate -= 15;
+					texdef->rotate -= 15;
 			}
 
-			if (pt->rotate < 0)
-				pt->rotate += 360;
+			if (texdef->rotate < 0)
+				texdef->rotate += 360;
 
-			if (pt->rotate >= 360)
-				pt->rotate -= 360;
+			if (texdef->rotate >= 360)
+				texdef->rotate -= 360;
 			break;
 // <---sikk
 // FIT:
@@ -1066,7 +1066,7 @@ void UpdateSpinners (WPARAM wParam, LPARAM lParam)
 //
 	SetTexMods();
 	g_bChanged = true;
-	Select_SetTexture(pt);
+	Select_SetTexture(texdef);
 }
 
 /*
@@ -1185,17 +1185,17 @@ BOOL CALLBACK FindTextureDlgProc (
 	char		szFind[64];
 	char		szReplace[64];
 	bool		bSelected, bForce;
-	texdef_t   *pt;
+	texdef_t   *texdef;
 
-	pt = &g_qeglobals.d_texturewin.texdef;
+	texdef = &g_qeglobals.d_texturewin.texdef;
 
 	switch (uMsg)
     {
 	case WM_INITDIALOG:
 		SendMessage(hwndDlg, WM_SETREDRAW, 0, 0);
 		SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_FIND));
-		strcpy(szFind, pt->name);
-		strcpy(szReplace, pt->name);
+		strcpy(szFind, texdef->name);
+		strcpy(szReplace, texdef->name);
 		SetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind);
 		SetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace);
 		bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
@@ -1207,14 +1207,14 @@ BOOL CALLBACK FindTextureDlgProc (
 		{ 
 		case IDOK:
 			GetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind, 64);
-			strncpy (pt->name, szFind, sizeof(pt->name) - 1);
-			if (pt->name[0] <= ' ')
-				strcpy(pt->name, "none");
+			strncpy (texdef->name, szFind, sizeof(texdef->name) - 1);
+			if (texdef->name[0] <= ' ')
+				strcpy(texdef->name, "none");
 			
 			GetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace, 4);
-			strncpy(pt->name, szReplace, sizeof(pt->name) - 1);
-			if (pt->name[0] <= ' ')
-				strcpy(pt->name, "none");
+			strncpy(texdef->name, szReplace, sizeof(texdef->name) - 1);
+			if (texdef->name[0] <= ' ')
+				strcpy(texdef->name, "none");
 
 			bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
 			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
@@ -1226,14 +1226,14 @@ BOOL CALLBACK FindTextureDlgProc (
 
 		case IDAPPLY:
 			GetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind, 64);
-			strncpy (pt->name, szFind, sizeof(pt->name) - 1);
-			if (pt->name[0] <= ' ')
-				strcpy(pt->name, "none");
+			strncpy (texdef->name, szFind, sizeof(texdef->name) - 1);
+			if (texdef->name[0] <= ' ')
+				strcpy(texdef->name, "none");
 			
 			GetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace, 64);
-			strncpy(pt->name, szReplace, sizeof(pt->name) - 1);
-			if (pt->name[0] <= ' ')
-				strcpy(pt->name, "none");
+			strncpy(texdef->name, szReplace, sizeof(texdef->name) - 1);
+			if (texdef->name[0] <= ' ')
+				strcpy(texdef->name, "none");
 
 			bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
 			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
@@ -1949,6 +1949,7 @@ BOOL CALLBACK PreferencesDlgProc (
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bTestAfterBSP		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastProject	? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastMap		? BST_CHECKED : BST_UNCHECKED), 0);
+		SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSortTexByWad		? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bModName			? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bHeapsize			? BST_CHECKED : BST_UNCHECKED), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSkill			? BST_CHECKED : BST_UNCHECKED), 0);
@@ -1996,6 +1997,7 @@ BOOL CALLBACK PreferencesDlgProc (
 			g_qeglobals.d_savedinfo.bTestAfterBSP		= SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastProject	= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bLoadLastMap		= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_GETCHECK, 0, 0);
+			g_qeglobals.d_savedinfo.bSortTexByWad		= SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bModName			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,			BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bHeapsize			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,		BM_GETCHECK, 0, 0);
 			g_qeglobals.d_savedinfo.bSkill				= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,			BM_GETCHECK, 0, 0);

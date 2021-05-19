@@ -492,13 +492,13 @@ void Map_AddRegionBrushes ()
 {
 	vec3_t		mins, maxs;
 	int			i;
-	texdef_t	td;
+	texdef_t	texdef;
 
 	if (!g_bRegionActive)
 		return;
 
-	memset(&td, 0, sizeof(td));
-	strcpy(td.name, "REGION");
+	memset(&texdef, 0, sizeof(texdef));
+	strcpy(texdef.name, "REGION");
 
 	mins[0] = g_v3RegionMins[0] - 16;
 	maxs[0] = g_v3RegionMins[0] + 1;
@@ -506,21 +506,21 @@ void Map_AddRegionBrushes ()
 	maxs[1] = g_v3RegionMaxs[1] + 16;
 	mins[2] = -2048;
 	maxs[2] = 2048;
-	g_pbrRegionSides[0] = Brush_Create(mins, maxs, &td);
+	g_pbrRegionSides[0] = Brush_Create(mins, maxs, &texdef);
 
 	mins[0] = g_v3RegionMaxs[0] - 1;
 	maxs[0] = g_v3RegionMaxs[0] + 16;
-	g_pbrRegionSides[1] = Brush_Create(mins, maxs, &td);
+	g_pbrRegionSides[1] = Brush_Create(mins, maxs, &texdef);
 
 	mins[0] = g_v3RegionMins[0] - 16;
 	maxs[0] = g_v3RegionMaxs[0] + 16;
 	mins[1] = g_v3RegionMins[1] - 16;
 	maxs[1] = g_v3RegionMins[1] + 1;
-	g_pbrRegionSides[2] = Brush_Create(mins, maxs, &td);
+	g_pbrRegionSides[2] = Brush_Create(mins, maxs, &texdef);
 
 	mins[1] = g_v3RegionMaxs[1] - 1;
 	maxs[1] = g_v3RegionMaxs[1] + 16;
-	g_pbrRegionSides[3] = Brush_Create(mins, maxs, &td);
+	g_pbrRegionSides[3] = Brush_Create(mins, maxs, &texdef);
 
 	for (i = 0; i < 4; i++)
 	{

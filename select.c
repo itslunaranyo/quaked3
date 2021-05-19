@@ -671,12 +671,12 @@ void Select_MatchingTextures()
 {
 	brush_t	   *b, *next;
 	face_t	   *f;
-	texdef_t   *pt;
+	texdef_t   *texdef;
 
 	if (g_nSelFaceCount)
-		pt = &g_pfaceSelectedFaces[0]->texdef;
+		texdef = &g_pfaceSelectedFaces[0]->texdef;
 	else
-		pt = &g_qeglobals.d_texturewin.texdef;
+		texdef = &g_qeglobals.d_texturewin.texdef;
 
 	Select_DeselectAll(true);
 
@@ -685,7 +685,7 @@ void Select_MatchingTextures()
 		next = b->next;
 		for (f = b->brush_faces; f; f = f->next)
 		{
-			if (!strcmp(f->texdef.name, pt->name))
+			if (!strcmp(f->texdef.name, texdef->name))
 			{
 				Select_SelectFace(f);
 			}
