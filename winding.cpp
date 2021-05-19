@@ -271,8 +271,12 @@ void Winding::RemovePoint (winding_t *w, int point)
 	if (point < 0 || point >= w->numpoints)
 		Error("Winding::RemovePoint: Point out of range.");
 
-	if (point < w->numpoints-1)
-		memmove(&w->points[point], &w->points[point + 1], (int)((winding_t *)0)->points[w->numpoints - point - 1]);
+	if (point < w->numpoints - 1)
+		//memmove(&w->points[point], &w->points[point + 1], (int)((winding_t *)0)->points[w->numpoints - point - 1]);
+		for (int i = point; i < w->numpoints - 1; ++i)
+		{
+			w->points[i] = w->points[i + 1];
+		}
 
 	w->numpoints--;
 }
@@ -289,20 +293,20 @@ it will be clipped away.
 */
 winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 {
-	int			i, j;
-	int			counts[3];
-//	int			maxpts;
-	int			sides[MAX_POINTS_ON_WINDING];
-	vec_t		dists[MAX_POINTS_ON_WINDING];
-	vec_t		dot;
-	vec_t	   *p1, *p2;
-	vec3_t		mid;
+	int		i, j;
+	int		counts[3];
+//	int		maxpts;
+	int		sides[MAX_POINTS_ON_WINDING];
+	float	dists[MAX_POINTS_ON_WINDING];
+	float	dot;
+	vec3	p1, p2;
+	vec3	mid;
 
 	// lunaran - scratch max-size winding for working in place, to reduce constant winding alloc/free
 	struct {
 		int		numpoints;
 		int		maxpoints;
-		float 	points[MAX_POINTS_ON_WINDING][5];
+		windingpoint_t	points[MAX_POINTS_ON_WINDING];
 	} neww;
 
 	neww.numpoints = 0;
@@ -313,7 +317,7 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 	// determine sides for each point
 	for (i = 0; i < in->numpoints; i++)
 	{
-		dot = DotProduct(in->points[i], split->normal);
+		dot = DotProduct(in->points[i].point, split->normal);
 		dot -= split->dist;
 		dists[i] = dot;
 
@@ -347,18 +351,18 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 		
 	for (i = 0; i < in->numpoints; i++)
 	{
-		p1 = in->points[i];
+		p1 = in->points[i].point;
 		
 		if (sides[i] == SIDE_ON)
 		{
-			VectorCopy(p1, neww.points[neww.numpoints]);
+			neww.points[neww.numpoints].point = p1;
 			neww.numpoints++;
 			continue;
 		}
 	
 		if (sides[i] == SIDE_FRONT)
 		{
-			VectorCopy(p1, neww.points[neww.numpoints]);
+			neww.points[neww.numpoints].point = p1;
 			neww.numpoints++;
 		}
 		
@@ -366,7 +370,7 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 			continue;
 			
 		// generate a split point
-		p2 = in->points[(i + 1) % in->numpoints];
+		p2 = in->points[(i + 1) % in->numpoints].point;
 		
 		dot = dists[i] / (dists[i] - dists[i + 1]);
 
@@ -380,7 +384,7 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 				mid[j] = p1[j] + dot * (p2[j] - p1[j]);
 		}
 			
-		VectorCopy(mid, neww.points[neww.numpoints]);
+		neww.points[neww.numpoints].point = mid;
 		neww.numpoints++;
 	}
 	
@@ -404,7 +408,7 @@ Winding::PlanesConcave
 =============
 */
 bool Winding::PlanesConcave(winding_t *w1, winding_t *w2,
-							vec3_t normal1, vec3_t normal2,
+							const vec3 normal1, const vec3 normal2,
 							float dist1, float dist2)
 {
 	int i;
@@ -414,12 +418,12 @@ bool Winding::PlanesConcave(winding_t *w1, winding_t *w2,
 
 	// check if one of the points of winding 1 is at the back of the plane of winding 2
 	for (i = 0; i < w1->numpoints; i++)
-		if (DotProduct(normal2, w1->points[i]) - dist2 > WCONVEX_EPSILON) 
+		if (DotProduct(normal2, w1->points[i].point) - dist2 > WCONVEX_EPSILON) 
 			return true;
 
 	// check if one of the points of winding 2 is at the back of the plane of winding 1
 	for (i = 0; i < w2->numpoints; i++)
-		if (DotProduct(normal1, w2->points[i]) - dist1 > WCONVEX_EPSILON) 
+		if (DotProduct(normal1, w2->points[i].point) - dist1 > WCONVEX_EPSILON)
 			return true;
 
 	return false;
@@ -438,34 +442,34 @@ The originals will NOT be freed.
 if keep is true no points are ever removed
 =============
 */
-winding_t *Winding::TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, int keep)
+winding_t *Winding::TryMerge (winding_t &f1, winding_t &f2, const vec3 planenormal, int keep)
 {
 	int			i, j, k, l;
 	bool		keep1, keep2;
 	vec_t		dot;
-	vec_t	   *p1, *p2, *p3, *p4, *back;
-	vec3_t		normal, delta;
-	winding_t  *newf;
+	vec3		*p1, *p2, *p3, *p4, *back;
+	vec3		normal, delta;
+	winding_t	*newf;
 	
 	// find a common edge
 	p1 = p2 = NULL;	// stop compiler warning
 	j = 0;			// 
 	
-	for (i = 0; i < f1->numpoints; i++)
+	for (i = 0; i < f1.numpoints; i++)
 	{
-		p1 = f1->points[i];
-		p2 = f1->points[(i + 1) % f1->numpoints];
+		p1 = &f1.points[i].point;
+		p2 = &f1.points[(i + 1) % f1.numpoints].point;
 
-		for (j = 0; j < f2->numpoints; j++)
+		for (j = 0; j < f2.numpoints; j++)
 		{
-			p3 = f2->points[j];
-			p4 = f2->points[(j + 1) % f2->numpoints];
+			p3 = &f2.points[j].point;
+			p4 = &f2.points[(j + 1) % f2.numpoints].point;
 
 			for (k = 0; k < 3; k++)
 			{
-				if (fabs(p1[k] - p4[k]) > 0.1)//EQUAL_EPSILON) //ME
+				if (fabs((*p1)[k] - (*p4)[k]) > 0.1)//EQUAL_EPSILON) //ME
 					break;
-				if (fabs(p2[k] - p3[k]) > 0.1)//EQUAL_EPSILON) //ME
+				if (fabs((*p2)[k] - (*p3)[k]) > 0.1)//EQUAL_EPSILON) //ME
 					break;
 			}
 
@@ -473,35 +477,35 @@ winding_t *Winding::TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, 
 				break;
 		}
 
-		if (j < f2->numpoints)
+		if (j < f2.numpoints)
 			break;
 	}
 	
-	if (i == f1->numpoints)
+	if (i == f1.numpoints)
 		return NULL;			// no matching edges
 
 	// check slope of connected lines
 	// if the slopes are colinear, the point can be removed
-	back = f1->points[(i + f1->numpoints - 1) % f1->numpoints];
-	VectorSubtract(p1, back, delta);
-	CrossProduct(planenormal, delta, normal);
+	back = &f1.points[(i + f1.numpoints - 1) % f1.numpoints].point;
+	delta = *p1 - *back;
+	normal = CrossProduct(planenormal, delta);
 	VectorNormalize(normal);
 	
-	back = f2->points[(j + 2) % f2->numpoints];
-	VectorSubtract(back, p1, delta);
+	back = &f2.points[(j + 2) % f2.numpoints].point;
+	delta = *back - *p1;
 	dot = DotProduct(delta, normal);
 
 	if (dot > CONTINUOUS_EPSILON)
 		return NULL;			// not a convex polygon
 
 	keep1 = (bool)(dot < -CONTINUOUS_EPSILON);
-	back = f1->points[(i + 2) % f1->numpoints];
-	VectorSubtract(back, p2, delta);
-	CrossProduct(planenormal, delta, normal);
+	back = &f1.points[(i + 2) % f1.numpoints].point;
+	delta = *back - *p2;
+	normal = CrossProduct(planenormal, delta);
 	VectorNormalize(normal);
 
-	back = f2->points[(j + f2->numpoints - 1) % f2->numpoints];
-	VectorSubtract(back, p2, delta);
+	back = &f2.points[(j + f2.numpoints - 1) % f2.numpoints].point;
+	delta = *back - *p2;
 	dot = DotProduct(delta, normal);
 
 	if (dot > CONTINUOUS_EPSILON)
@@ -510,25 +514,25 @@ winding_t *Winding::TryMerge (winding_t *f1, winding_t *f2, vec3_t planenormal, 
 	keep2 = (bool)(dot < -CONTINUOUS_EPSILON);
 
 	// build the new polygon
-	newf = Winding::Alloc(f1->numpoints + f2->numpoints);
+	newf = Winding::Alloc(f1.numpoints + f2.numpoints);
 	
 	// copy first polygon
-	for (k = (i + 1) % f1->numpoints; k != i; k = (k + 1) % f1->numpoints)
+	for (k = (i + 1) % f1.numpoints; k != i; k = (k + 1) % f1.numpoints)
 	{
-		if (!keep && k == (i + 1) % f1->numpoints && !keep2)
+		if (!keep && k == (i + 1) % f1.numpoints && !keep2)
 			continue;
 		
-		VectorCopy(f1->points[k], newf->points[newf->numpoints]);
+		newf->points[newf->numpoints].point = f1.points[k].point;
 		newf->numpoints++;
 	}
 	
 	// copy second polygon
-	for (l = (j + 1) % f2->numpoints; l != j; l = (l + 1) % f2->numpoints)
+	for (l = (j + 1) % f2.numpoints; l != j; l = (l + 1) % f2.numpoints)
 	{
-		if (!keep && l == (j + 1) % f2->numpoints && !keep1)
+		if (!keep && l == (j + 1) % f2.numpoints && !keep1)
 			continue;
 
-		VectorCopy(f2->points[l], newf->points[newf->numpoints]);
+		newf->points[newf->numpoints].point = f2.points[l].point;
 		newf->numpoints++;
 	}
 
@@ -545,13 +549,13 @@ void Winding::TextureCoordinates(winding_t *w, Texture *q, Face *f)
 {
 	float		s, t, ns, nt;
 	float		ang, sinv, cosv;
-	vec3_t		vecs[2];
+	vec3		vecs[2];
 	texdef_t	*texdef;
-	float		*xyzst;
+	windingpoint_t		*xyzst;
 
 	for (int i = 0; i < w->numpoints; i++)
 	{
-		xyzst = w->points[i];
+		xyzst = &w->points[i];
 
 		// get natural texture axis
 		f->plane.GetTextureAxis(vecs[0], vecs[1]);
@@ -567,8 +571,8 @@ void Winding::TextureCoordinates(winding_t *w, Texture *q, Face *f)
 		if (!texdef->scale[1])
 			texdef->scale[1] = 1;
 
-		s = DotProduct(xyzst, vecs[0]);
-		t = DotProduct(xyzst, vecs[1]);
+		s = DotProduct(xyzst->point, vecs[0]);
+		t = DotProduct(xyzst->point, vecs[1]);
 
 		ns = cosv * s - sinv * t;
 		nt = sinv * s + cosv * t;
@@ -580,8 +584,8 @@ void Winding::TextureCoordinates(winding_t *w, Texture *q, Face *f)
 		s /= q->width;
 		t /= q->height;
 
-		xyzst[3] = s;
-		xyzst[4] = t;
+		xyzst->s = s;
+		xyzst->t = t;
 	}
 }
 

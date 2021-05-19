@@ -33,9 +33,9 @@ EntClass::EntClass() :
 	name(nullptr), comments(0), 
 	form(ECF_UNKNOWN), nShowFlags(0)
 {
-	VectorCopy(g_v3VecOrigin, mins);
-	VectorCopy(g_v3VecOrigin, maxs);
-	VectorCopy(g_v3VecOrigin, color);
+	mins = vec3(0);
+	maxs = vec3(0);
+	color = vec3(0);
 
 	memset(&texdef, 0, sizeof(texdef));
 	memset(flagnames, 0, MAX_FLAGS * 32);
@@ -50,9 +50,9 @@ EntClass::EntClass(const EntClass& other) :
 	name(other.name), form(other.form), comments(other.comments),
 	nShowFlags(other.nShowFlags), texdef(other.texdef)
 {
-	VectorCopy(other.mins, mins);
-	VectorCopy(other.maxs, maxs);
-	VectorCopy(other.color, color);
+	mins = other.mins;
+	maxs = other.maxs;
+	color = other.color;
 
 	memcpy(flagnames, other.flagnames, MAX_FLAGS * 32);
 }

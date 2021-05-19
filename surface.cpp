@@ -17,7 +17,7 @@
 ProjectOnPlane
 ===============
 */
-void ProjectOnPlane(vec3_t normal, float dist, vec3_t ez, vec3_t p)
+void ProjectOnPlane(const vec3 normal, const float dist, const vec3 ez, vec3 &p)
 {
 	if (fabs(ez[0]) == 1)
 		p[0] = (dist - normal[1] * p[1] - normal[2] * p[2]) / normal[0];
@@ -32,7 +32,7 @@ void ProjectOnPlane(vec3_t normal, float dist, vec3_t ez, vec3_t p)
 Back
 ===============
 */
-void Back(vec3_t dir, vec3_t p)
+void Back(const vec3 dir, vec3 &p)
 {
 	if (fabs(dir[0]) == 1)
 		p[0] = 0;
@@ -48,19 +48,15 @@ ComputeScale
 using scale[0] and scale[1]
 ===============
 */
-void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, Face *f)
+void ComputeScale(const vec3 rex, const vec3 rey, vec3 &p, Face *f)
 {
 	float px = DotProduct(rex, p);
 	float py = DotProduct(rey, p);
-	vec3_t aux;
+	vec3 aux;
+
 	px *= f->texdef.scale[0];
 	py *= f->texdef.scale[1];
-	VectorCopy(rex, aux);
-	VectorScale(aux, px, aux);
-	VectorCopy(aux, p);
-	VectorCopy(rey, aux);
-	VectorScale(aux, py, aux);
-	VectorAdd(p, aux, p);
+	p = rex * px + rey * py;
 }
 
 /*
@@ -68,36 +64,30 @@ void ComputeScale(vec3_t rex, vec3_t rey, vec3_t p, Face *f)
 ComputeAbsolute
 ===============
 */
-void ComputeAbsolute(Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
+void ComputeAbsolute(Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 {
-	vec3_t	ex, ey, ez;	        // local axis base
-	vec3_t	aux;
-	vec3_t	rex, rey;
+	vec3	ex, ey, ez;	        // local axis base
+	vec3	aux;
+	vec3	rex, rey;
 
 	// compute first local axis base
 	f->plane.GetTextureAxis(ex, ey);
-	CrossProduct(ex, ey, ez);
+	ez = CrossProduct(ex, ey);
 
-	VectorCopy(ex, aux);
-	VectorScale(aux, -f->texdef.shift[0], aux);
-	VectorCopy(aux, p1);
-	VectorCopy(ey, aux);
-	VectorScale(aux, -f->texdef.shift[1], aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(p1, p2);
-	VectorAdd(p2, ex, p2);
-	VectorCopy(p1, p3);
-	VectorAdd(p3, ey, p3);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
+	aux = ex * -f->texdef.shift[0];
+	p1 = aux;
+	aux = ey * -f->texdef.shift[1];
+	p1 = p1 + aux;
+	p2 = p1 + ex;
+	p3 = p1 + ey;
+	aux = ez * -f->texdef.rotate;
 	VectorRotate(p1, aux, p1);
 	VectorRotate(p2, aux, p2);
 	VectorRotate(p3, aux, p3);
+
 	// computing rotated local axis base
-	VectorCopy(ex, rex);
-	VectorRotate(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate(rey, aux, rey);
+	VectorRotate(ex, aux, rex);
+	VectorRotate(ey, aux, rey);
 
 	ComputeScale(rex, rey, p1, f);
 	ComputeScale(rex, rey, p2, f);
@@ -127,17 +117,17 @@ void Clamp(float *f, int nClamp)
 AbsoluteToLocal
 ===============
 */
-void AbsoluteToLocal(Plane normal2, Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
+void AbsoluteToLocal(Plane normal2, Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 {
-	vec3_t	ex, ey, ez;
-	vec3_t	aux;
-	vec3_t	rex, rey;
-	vec_t	x;
-	vec_t	y;
+	vec3	ex, ey, ez;
+	vec3	aux;
+	vec3	rex, rey;
+	float	x;
+	float	y;
 
 	// computing new local axis base
 	normal2.GetTextureAxis(ex, ey);
-	CrossProduct(ex, ey, ez);
+	ez = CrossProduct(ex, ey);
 
 	// projecting back on (ex, ey)
 	Back(ez, p1);
@@ -145,28 +135,20 @@ void AbsoluteToLocal(Plane normal2, Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
 	Back(ez, p3);
 
 	// rotation
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
+	aux = p2 - p1;
 
 	x = DotProduct(aux, ex);
 	y = DotProduct(aux, ey);
 	f->texdef.rotate = 180 * atan2(y, x) / Q_PI;
 
 	// computing rotated local axis base
-	VectorCopy(ez, aux);
-	VectorScale(aux, f->texdef.rotate, aux);
-	VectorCopy(ex, rex);
-	VectorRotate(rex, aux, rex);
-	VectorCopy(ey, rey);
-	VectorRotate(rey, aux, rey);
+	aux = ez * f->texdef.rotate;
+	VectorRotate(ex, aux, rex);
+	VectorRotate(ey, aux, rey);
 
 	// scale
-	VectorCopy(p2, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[0] = DotProduct(aux, rex);
-	VectorCopy(p3, aux);
-	VectorSubtract(aux, p1, aux);
-	f->texdef.scale[1] = DotProduct(aux, rey);
+	f->texdef.scale[0] = DotProduct(p2 - p1, rex);
+	f->texdef.scale[1] = DotProduct(p3 - p1, rey);
 
 	// shift
 	// only using p1
@@ -175,13 +157,8 @@ void AbsoluteToLocal(Plane normal2, Face *f, vec3_t p1, vec3_t p2, vec3_t p3)
 	x /= f->texdef.scale[0];
 	y /= f->texdef.scale[1];
 
-	VectorCopy(rex, p1);
-	VectorScale(p1, x, p1);
-	VectorCopy(rey, aux);
-	VectorScale(aux, y, aux);
-	VectorAdd(p1, aux, p1);
-	VectorCopy(ez, aux);
-	VectorScale(aux, -f->texdef.rotate, aux);
+	p1 = rex * x + rey * y;
+	aux = ez * -f->texdef.rotate;
 	VectorRotate(p1, aux, p1);
 	f->texdef.shift[0] = -DotProduct(p1, ex);
 	f->texdef.shift[1] = -DotProduct(p1, ey);
@@ -228,7 +205,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 
 	for (pBrush = pList->next; pBrush != pList; pBrush = pBrush->next)
 	{
-		for (pFace = pBrush->basis.faces; pFace; pFace = pFace->next)
+		for (pFace = pBrush->basis.faces; pFace; pFace = pFace->fnext)
 		{
 			if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
 			{
@@ -340,16 +317,16 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 RotateFaceTexture
 ===============
 */
-void RotateFaceTexture(Face* f, int nAxis, float fDeg, vec3_t vOrigin)
+void RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin)
 {
-	vec3_t	p1, p2, p3, rota;
-	vec3_t	vNormal;
+	vec3	p1, p2, p3, rota;
+	vec3	vNormal;
 	Plane	normal2;
 
 	p1[0] = p1[1] = p1[2] = 0;
-	VectorCopy(p1, p2);
-	VectorCopy(p1, p3);
-	VectorCopy(p1, rota);
+	p2 = p1;
+	p3 = p1;
+	rota = p1;
 	ComputeAbsolute(f, p1, p2, p3);
 
 	rota[nAxis] = fDeg;
@@ -372,14 +349,14 @@ void RotateFaceTexture(Face* f, int nAxis, float fDeg, vec3_t vOrigin)
 Surf_RotateForTransform
 ===============
 */
-void Surf_RotateForTransform(int nAxis, float fDeg, vec3_t vOrigin)
+void Surf_RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 {
 	Brush *b;
 	Face	*f;
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->fnext)
 		{
 			RotateFaceTexture(f, nAxis, fDeg, vOrigin);
 			b->Build();
@@ -438,7 +415,7 @@ void Surf_ShiftTexture(int x, int y)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->fnext)
 		{
 			f->texdef.shift[0] += x;
 			f->texdef.shift[1] += y;
@@ -478,7 +455,7 @@ void Surf_ScaleTexture(int x, int y)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->fnext)
 		{
 			f->texdef.scale[0] += x / 100.0f;
 			f->texdef.scale[1] += y / 100.0f;
@@ -519,7 +496,7 @@ void Surf_RotateTexture(int deg)
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		for (f = b->basis.faces; f; f = f->next)
+		for (f = b->basis.faces; f; f = f->fnext)
 		{
 			f->texdef.rotate += deg;
 			if (f->texdef.rotate >180)

@@ -20,7 +20,7 @@ public:
 	byte Green(byte i) { return pal[i].g; }
 	byte Blue(byte i) { return pal[i].b; }
 	unsigned ColorAsInt(byte i) { return pal[i].AsInt(); }
-	void ColorAsVec3(byte i, vec3_t c);
+	vec3 ColorAsVec3(const byte i);
 
 private:
 	bool LoadFromFileImpl(const char* file);

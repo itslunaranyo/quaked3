@@ -72,8 +72,10 @@ void Clip_ResetMode ()
 		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
 		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 	
-		g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
-		g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
+		g_qeglobals.d_brFrontSplits.next = nullptr;
+		g_qeglobals.d_brBackSplits.next = nullptr;
+		//g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
+		//g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
 	}
 	else
 	{
@@ -85,8 +87,10 @@ void Clip_ResetMode ()
 		Brush::FreeList(&g_qeglobals.d_brFrontSplits);
 		Brush::FreeList(&g_qeglobals.d_brBackSplits);
 	
-	    g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
-		g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
+		g_qeglobals.d_brFrontSplits.next = nullptr;
+		g_qeglobals.d_brBackSplits.next = nullptr;
+		//g_qeglobals.d_brFrontSplits.next = &g_qeglobals.d_brFrontSplits;
+		//g_qeglobals.d_brBackSplits.next = &g_qeglobals.d_brBackSplits;
 
 		Sys_UpdateWindows(W_ALL);
 	}
@@ -117,9 +121,9 @@ void Clip_ProduceSplitLists ()
     
 		if (g_cpClip1.bSet && g_cpClip2.bSet)
 		{
-			VectorCopy(g_cpClip1.ptClip, face.planepts[0]);
-			VectorCopy(g_cpClip2.ptClip, face.planepts[1]);
-			VectorCopy(g_cpClip3.ptClip, face.planepts[2]);
+			face.planepts[0] = g_cpClip1.ptClip;
+			face.planepts[1] = g_cpClip2.ptClip;
+			face.planepts[2] = g_cpClip3.ptClip;
 
 			if (!g_cpClip3.bSet)
 			{
@@ -314,10 +318,10 @@ void Clip_CamEndQuickClip()
 SnapToPoint
 ==================
 */
-void SnapToPoint(vec3_t point)
+void SnapToPoint(vec3 &point)
 {
 	for (int i = 0; i < 3; i++)
-		point[i] = floor(point[i] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
+		point[i] = floor(point[i] / g_qeglobals.d_nGridSize + 0.5f) * g_qeglobals.d_nGridSize;
 }
 
 /*
@@ -325,15 +329,15 @@ void SnapToPoint(vec3_t point)
 Clip_CamPointOnSelection
 ==================
 */
-void Clip_CamPointOnSelection(int x, int y, vec3_t out, int* outAxis)
+void Clip_CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 {
-	vec3_t		dir, pn, pt;
+	vec3		dir, pn, pt;
 	trace_t		t;
 	g_qeglobals.d_camera.PointToRay(x, y, dir);
 	t = Test_Ray(g_qeglobals.d_camera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
-		VectorCopy(t.face->plane.normal, pn);
+		pn = t.face->plane.normal;
 		AxializeVector(pn);
 
 		if (pn[0])
@@ -343,10 +347,10 @@ void Clip_CamPointOnSelection(int x, int y, vec3_t out, int* outAxis)
 		else
 			*outAxis = XY;
 
-		VectorMA(g_qeglobals.d_camera.origin, t.dist, dir, pt);
+		pt = g_qeglobals.d_camera.origin + t.dist * dir;
 		SnapToPoint(pt);
 		ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pt);
-		VectorCopy(pt, out);
+		out = pt;
 	}
 }
 
@@ -358,12 +362,12 @@ Clip_CamDropPoint
 void Clip_CamDropPoint(int x, int y)
 {
 	int		nAxis;
-	vec3_t	pt;
+	vec3	pt;
 	Clip_CamPointOnSelection(x, y, pt, &nAxis);
 
 	if (g_pcpMovingClip && GetCapture() == g_qeglobals.d_hwndCamera)
 	{
-		VectorCopy(pt, g_pcpMovingClip->ptClip);
+		g_pcpMovingClip->ptClip = pt;
 	}
 	else
 	{
@@ -372,7 +376,7 @@ void Clip_CamDropPoint(int x, int y)
 
 		clippoint_t		*pPt;
 		pPt = Clip_StartNextPoint();
-		VectorCopy(pt, pPt->ptClip);
+		pPt->ptClip = pt;
 	}
 	Sys_UpdateWindows(W_XY | W_CAMERA);
 }
@@ -384,12 +388,12 @@ Clip_CamGetNearestClipPoint
 */
 clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 {
-	vec3_t dir, cPt;
+	vec3 dir, cPt;
 	g_qeglobals.d_camera.PointToRay(x, y, dir);
 
 	if (g_cpClip1.bSet)
 	{
-		VectorSubtract(g_cpClip1.ptClip, g_qeglobals.d_camera.origin, cPt);
+		cPt = g_cpClip1.ptClip - g_qeglobals.d_camera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -397,7 +401,7 @@ clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 	}
 	if (g_cpClip2.bSet)
 	{
-		VectorSubtract(g_cpClip2.ptClip, g_qeglobals.d_camera.origin, cPt);
+		cPt = g_cpClip2.ptClip - g_qeglobals.d_camera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -405,7 +409,7 @@ clippoint_t *Clip_CamGetNearestClipPoint(int x, int y)
 	}
 	if (g_cpClip3.bSet)
 	{
-		VectorSubtract(g_cpClip3.ptClip, g_qeglobals.d_camera.origin, cPt);
+		cPt = g_cpClip3.ptClip - g_qeglobals.d_camera.origin;
 		VectorNormalize(cPt);
 
 		if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -539,7 +543,7 @@ void Clip_DropPoint (XYZView* xyz, int x, int y)
 Clip_GetCoordXY
 ==============
 */
-void Clip_GetCoordXY(int x, int y, vec3_t pt)
+void Clip_GetCoordXY(int x, int y, vec3 &pt)
 {
 	int nDim;
 	// lunaran - grid view reunification
@@ -559,7 +563,7 @@ Clip_XYGetNearestClipPoint
 clippoint_t* Clip_XYGetNearestClipPoint(XYZView* xyz, int x, int y)
 {
 	int nDim1, nDim2;
-	vec3_t	tdp;
+	vec3	tdp;
 
 	tdp[0] = tdp[1] = tdp[2] = 256;
 
@@ -666,15 +670,15 @@ void Clip_DrawPoints ()
 	int			i;
 
 	glPointSize(4);
-	glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER]);
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CLIPPER].r);
 	glBegin(GL_POINTS);
 
 	if (g_cpClip1.bSet)
-		glVertex3fv(g_cpClip1.ptClip);
+		glVertex3fv(&g_cpClip1.ptClip.x);
 	if (g_cpClip2.bSet)
-		glVertex3fv(g_cpClip2.ptClip);
+		glVertex3fv(&g_cpClip2.ptClip.x);
 	if (g_cpClip3.bSet)
-		glVertex3fv(g_cpClip3.ptClip);
+		glVertex3fv(&g_cpClip3.ptClip.x);
 
 	glEnd();
 	glPointSize(1);
@@ -705,7 +709,7 @@ void Clip_DrawPoints ()
 		for (pBrush = pList->next; pBrush != NULL && pBrush != pList; pBrush = pBrush->next)
 		{
 			glColor3f(1, 1, 0);
-			for (face = pBrush->basis.faces, order = 0; face; face = face->next, order++)
+			for (face = pBrush->basis.faces, order = 0; face; face = face->fnext, order++)
 			{
 				w = face->face_winding;
 				if (!w)
@@ -713,7 +717,7 @@ void Clip_DrawPoints ()
 				// draw the polygon
 				glBegin(GL_LINE_LOOP);
 				for (i = 0; i < w->numpoints; i++)
-					glVertex3fv(w->points[i]);
+					glVertex3fv(&w->points[i].point.x);
 				glEnd();
 			}
 		}

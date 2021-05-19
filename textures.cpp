@@ -121,7 +121,7 @@ Texture *Textures::CreateSolid(const char *name)
 {
 	int			gltex;
 	WadLoader	wl;
-	vec3_t		color;
+	vec3		color;
 	qeBuffer	data(4);
 	Texture		*solidtex;
 
@@ -152,7 +152,7 @@ Texture *Textures::MakeNullTexture()
 {
 	int			gltex;
 	WadLoader	wl;
-	vec3_t		color;
+	vec3		color;
 	qeBuffer	data(64*64*4);
 	int			x, y, ofs;
 
@@ -356,11 +356,10 @@ void Textures::SetParameters()
 Texture::Texture
 ==================
 */
-Texture::Texture(int w, int h, const char* n, vec3_t c, int gltex) :
-	next(nullptr), width(w), height(h), used(false), texture_number(gltex)
+Texture::Texture(int w, int h, const char* n, vec3 c, int gltex) :
+	next(nullptr), width(w), height(h), used(false), texture_number(gltex), color(c)
 {
 	strncpy(name, n, 32);
-	VectorCopy(c, color);
 	SetFlags();
 }
 
@@ -425,7 +424,7 @@ TextureGroup::ByColor
 lunaran - this would be a quick way to find entity solid color textures if I were smart
 ==================
 */
-Texture *TextureGroup::ByColor(vec3_t oc)
+Texture *TextureGroup::ByColor(const vec3 oc)
 {
 	for (Texture *tex = first; tex; tex = tex->next)
 	{
@@ -586,7 +585,7 @@ TextureGroup *WadLoader::ParseWad(qeBuffer &wadFileBuf)
 	lumpinfo_t	*lumpinfo;
 	miptex_t	*qmip;
 	int			i, gltex;
-	vec3_t		color;
+	vec3		color;
 
 	wadinfo_t *wadinfo = (wadinfo_t*)*wadFileBuf;
 
@@ -630,13 +629,13 @@ TextureGroup *WadLoader::ParseWad(qeBuffer &wadFileBuf)
 WadLoader::MiptexToRGB
 ==================
 */
-void WadLoader::MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3_t avg)
+void WadLoader::MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3 &avg)
 {
 	unsigned int i, count;
-	byte		*src;
-	vec3_t pxc;
+	byte	*src;
+	//vec3	pxc;
 
-	VectorCopy(g_v3VecOrigin, avg);
+	avg = vec3(0);
 	src = (byte *)mip + mip->offsets[0];
 	count = mip->width * mip->height;
 	texDataBuf.resize(count * 4);
@@ -648,10 +647,9 @@ void WadLoader::MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3_t avg)
 	{
 		pixel = (unsigned*)(*texDataBuf) + i;
 		*pixel = texpal.ColorAsInt(src[i]);
-		texpal.ColorAsVec3(src[i], pxc);
-		VectorAdd(avg, pxc, avg);
+		avg += texpal.ColorAsVec3(src[i]);
 	}
-	VectorScale(avg, 1.0 / count, avg);
+	avg = avg / (float)count;
 }
 
 /*
@@ -1038,6 +1036,3 @@ void TexWnd_Resize(RECT rc)
 
 	g_qeglobals.d_texturewin.stale = true;
 }
-
-
-

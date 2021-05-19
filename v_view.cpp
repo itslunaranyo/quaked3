@@ -35,16 +35,16 @@ Called for both camera view and xy view.
 void View::DrawPathLines()
 {
 	int			i, j, k;
-	vec3_t		mid, mid1;
-	Entity   *se, *te;
-	Brush	   *sb, *tb;
-	char	   *psz;
-	vec3_t		dir, s1, s2;
+	vec3		mid, mid1;
+	Entity		*se, *te;
+	Brush		*sb, *tb;
+	char		*psz;
+	vec3		dir, s1, s2;
 	vec_t		len, f;
 	int			arrows;
 	int			num_entities;
-	char	   *ent_target[MAX_MAP_ENTITIES];
-	Entity   *ent_entity[MAX_MAP_ENTITIES];
+	char		*ent_target[MAX_MAP_ENTITIES];
+	Entity		*ent_entity[MAX_MAP_ENTITIES];
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
 		return;
@@ -95,7 +95,7 @@ void View::DrawPathLines()
 			for (i = 0; i < 3; i++)
 				mid1[i] = (tb->basis.mins[i] + tb->basis.maxs[i]) * 0.5;
 
-			VectorSubtract(mid1, mid, dir);
+			dir = mid1 - mid;
 			len = VectorNormalize(dir);
 			s1[0] = -dir[1] * 8 + dir[0] * 8;
 			s2[0] = dir[1] * 8 + dir[0] * 8;
@@ -105,8 +105,8 @@ void View::DrawPathLines()
 			glColor3f(se->eclass->color[0], se->eclass->color[1], se->eclass->color[2]);
 
 			glBegin(GL_LINES);
-			glVertex3fv(mid);
-			glVertex3fv(mid1);
+			glVertex3fv(&mid.x);
+			glVertex3fv(&mid1.x);
 
 			arrows = (int)(len / 256) + 1;
 
@@ -116,9 +116,9 @@ void View::DrawPathLines()
 
 				for (j = 0; j < 3; j++)
 					mid1[j] = mid[j] + f * dir[j];
-				glVertex3fv(mid1);
+				glVertex3fv(&mid1.x);
 				glVertex3f(mid1[0] + s1[0], mid1[1] + s1[1], mid1[2]);
-				glVertex3fv(mid1);
+				glVertex3fv(&mid1.x);
 				glVertex3f(mid1[0] + s2[0], mid1[1] + s2[1], mid1[2]);
 			}
 

@@ -51,7 +51,7 @@ Z_MouseDown
 */
 void ZView::MouseDown(int x, int y, int buttons) 
 {
-	vec3_t		org, dir, vup, vright;
+	vec3		org, dir, vup, vright;
 	Brush	   *b;
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
@@ -60,7 +60,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 	vup[1] = 0; 
 	vup[2] = 1 / scale;
 
-	VectorCopy(origin, org);
+	org = origin;
 	org[2] += (y - (height / 2)) / scale;
 	org[1] = -8192;
 
@@ -176,7 +176,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 			else
 				scale *= powf(0.99f, fabs(y - cursorY));
 
-			scale = max(0.1f, min(scale, 16));
+			scale = max(0.1f, min(scale, 16.0f));
 
 
 			Sys_SetCursorPos(cursorX, cursorY);
@@ -228,7 +228,7 @@ void ZView::DrawGrid ()
 	ze = nSize * ceil(ze / nSize);
 
 	// draw major blocks
-	glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR]);
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMAJOR].x);
 
 	glBegin(GL_LINES);
 	glVertex2f(0, zb);
@@ -243,7 +243,7 @@ void ZView::DrawGrid ()
 	// draw minor blocks
 	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
 	{
-		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR]);
+		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDMINOR].x);
 
 		glBegin(GL_LINES);
 		for (zz = zb; zz < ze; zz += g_qeglobals.d_nGridSize)
@@ -289,7 +289,7 @@ void ZView::DrawCoords ()
 		ze = g_map.regionMaxs[2];
 	ze = nSize * ceil(ze / nSize);
 
-	glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT]);
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_GRIDTEXT].x);
 
 	for (z = zb; z <= ze; z += nSize)	// sikk - 'z <= ze' instead of 'z < ze' so last coord is drawn
 	{
@@ -341,7 +341,7 @@ void ZView::Draw ()
 	float		top, bottom;
 	double		start, end;
 	Texture *q;
-	vec3_t		org_top, org_bottom, dir_up, dir_down;
+	vec3		org_top, org_bottom, dir_up, dir_down;
 
 	int xCam = width / 3;
 
@@ -400,9 +400,9 @@ void ZView::Draw ()
 	dir_down[0] = 0; 
 	dir_down[1] = 0; 
 	dir_down[2] = -1;
-	VectorCopy(origin, org_top);
+	org_top = origin;
 	org_top[2] = 4096;
-	VectorCopy(origin, org_bottom);
+	org_bottom = origin;
 	org_bottom[2] = -4096;
 
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
@@ -469,7 +469,7 @@ void ZView::Draw ()
 			}
 		}
 
-		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES]);
+		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_SELBRUSHES].x);
 		glBegin(GL_LINE_LOOP);
 		glVertex2f(-xCam, brush->basis.mins[2]);
 		glVertex2f(xCam, brush->basis.mins[2]);

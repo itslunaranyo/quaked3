@@ -21,14 +21,14 @@ typedef struct label_s
 class Texture
 {
 public:
-	Texture(int w, int h, const char* n, vec3_t c, int gltex);
+	Texture(int w, int h, const char* n, const vec3 c, int gltex);
 	~Texture() {};
 
 	Texture		*next;
 	char		name[32];		// longer than the WAD2 spec to make room for the (rgb) single color texture hack names
     int			width, height;
 	int			texture_number;	// gl bind number
-	vec3_t		color;			// for flat shade mode
+	vec3		color;			// for flat shade mode
 	bool		used;			// true = is present on the level
 	unsigned	showflags;
 
@@ -52,7 +52,7 @@ public:
 	char name[32];
 
 	Texture *ForName(const char *name);
-	Texture *ByColor(vec3_t oc);
+	Texture *ByColor(const vec3 oc);
 	void ClearUsed();
 	void FlushUnused();
 	void Add(Texture* tx);
@@ -70,13 +70,13 @@ public:
 private:
 	bool ReadWad(const char* filename, qeBuffer &wadFileBuf);
 	TextureGroup *ParseWad(qeBuffer &wadFileBuf);
-	void MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3_t avg);
+	void MiptexToRGB(miptex_t *mip, qeBuffer &texDataBuf, vec3 &avg);
 };
 
 
-typedef struct
+typedef struct texdef_s
 {
-	char	name[32];		
+	char	name[32];
 //	qtexture_t* tex;		// some day
 	float	shift[2];
 	float	scale[2];

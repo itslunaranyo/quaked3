@@ -9,8 +9,144 @@
 #include "qedefs.h"
 #include <assert.h>
 
-vec3_t g_v3VecOrigin = {0.0f, 0.0f, 0.0f};
 
+bool VectorCompare(const vec3 v1, const vec3 v2)
+{
+	for (int i = 0; i < 3; i++)
+		if (fabs(v1[i] - v2[i]) > EQUAL_EPSILON)
+			return false;
+
+	return true;
+}
+
+vec_t VectorNormalize(vec3 &v)
+{
+	float l = glm::length(v);
+	v = v / l;
+	return l;
+}
+
+void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
+{
+	vec3	vWork, va;
+	int		nIndex[3][2];
+	double	dAngle;
+	float	c, s;
+
+	va = vIn;
+	vWork = va;
+	nIndex[0][0] = 1;
+	nIndex[0][1] = 2;
+	nIndex[1][0] = 2;
+	nIndex[1][1] = 0;
+	nIndex[2][0] = 0;
+	nIndex[2][1] = 1;
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (vRotation[i] != 0)
+		{
+			dAngle = vRotation[i] * Q_PI / 180.0;
+			c = (float)cos(dAngle);
+			s = (float)sin(dAngle);
+			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
+			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;
+		}
+		va = vWork;
+	}
+	out = vWork;
+}
+
+void VectorRotate2(const vec3 vIn, const vec3 vRotation, const vec3 vOrigin, vec3 &out)
+{
+	vec3 v, vo;
+	v = vIn - vOrigin;
+	VectorRotate(v, vRotation, vo);
+	out = vo + vOrigin;
+}
+
+void VectorPolar(vec3 &v, const float radius, const float theta, const float phi)
+{
+	v[0] = radius * (float)cos(theta) * (float)cos(phi);
+	v[1] = radius * (float)sin(theta) * (float)cos(phi);
+	v[2] = radius * (float)sin(phi);
+}
+
+void AddPointToBounds(const vec3 v, vec3 &mins, vec3 &maxs)
+{
+	for (int i = 0; i < 3; i++)
+	{
+		mins[i] = min(v[i], mins[i]);
+		maxs[i] = max(v[i], maxs[i]);
+	}
+}
+
+void AngleVectors(const vec3 angles, vec3 &forward, vec3 &right, vec3 &up)
+{
+	float	angle;
+	float	sr, sp, sy, cr, cp, cy;
+
+	angle = angles[YAW] * (float)(Q_PI / 180.0f);
+	sy = (float)sin(angle);
+	cy = (float)cos(angle);
+	angle = angles[PITCH] * (float)(Q_PI / 180.0f);
+	sp = (float)sin(angle);
+	cp = (float)cos(angle);
+	angle = angles[ROLL] * (float)(Q_PI / 180.0f);
+	sr = (float)sin(angle);
+	cr = (float)cos(angle);
+
+	forward = vec3(	cp * cy, 
+					cp * sy, 
+					-sp);
+	right = vec3(	-sr * sp * cy + cr * sy, 
+					-sr * sp * sy - cr * cy, 
+					-sr * cp);
+	up = vec3(	cr * sp * cy + sr * sy, 
+				cr * sp * sy - sr * cy, 
+				cr * cp);
+}
+
+void VectorToAngles(const vec3 vec, vec3 &angles)
+{
+	float	forward;
+	float	yaw, pitch;
+
+	if ((vec[0] == 0) && (vec[1] == 0))
+	{
+		yaw = 0;
+		if (vec[2] > 0)
+			pitch = 90;
+		else
+			pitch = 270;
+	}
+	else
+	{
+		yaw = (float)atan2(vec[1], vec[0]) * 180.0f / (float)Q_PI;
+		if (yaw < 0)
+			yaw += 360;
+
+		forward = (float)sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
+		pitch = (float)atan2(vec[2], forward) * 180.0f / (float)Q_PI;
+		if (pitch < 0)
+			pitch += 360;
+	}
+
+	angles = vec3(pitch, yaw, 0);
+}
+
+bool Point_Equal(const vec3 p1, const vec3 p2, const float epsilon)
+{
+	for (int i = 0; i < 3; i++)
+		if (fabs(p1[i] - p2[i]) > epsilon)
+			return false;
+
+	return true;
+}
+
+
+
+#ifdef _OLD_VEC3
 /*
 ==================
 VectorLength
@@ -186,8 +322,8 @@ void VectorRotate (vec3_t vIn, vec3_t vRotation, vec3_t out)
 	double	c;
 	double	s;
 	
-	VectorCopy(vIn, va);
-	VectorCopy(va, vWork);
+	va = vIn;
+	vWork = va;
 	nIndex[0][0] = 1;
 	nIndex[0][1] = 2;
 	nIndex[1][0] = 2;
@@ -205,9 +341,9 @@ void VectorRotate (vec3_t vIn, vec3_t vRotation, vec3_t out)
 			vWork[nIndex[i][0]] = va[nIndex[i][0]] * (vec_t)c - va[nIndex[i][1]] * (vec_t)s;
 			vWork[nIndex[i][1]] = va[nIndex[i][0]] * (vec_t)s + va[nIndex[i][1]] * (vec_t)c;
 		}
-		VectorCopy(vWork, va);
+		va = vWork;
 	}
-	VectorCopy(vWork, out);
+	out = vWork;
 }
 
 /*
@@ -219,9 +355,9 @@ void VectorRotate2 (vec3_t vIn, vec3_t vRotation, vec3_t vOrigin, vec3_t out)
 {
 	vec3_t	vTemp, vTemp2;
 	
-	VectorSubtract(vIn, vOrigin, vTemp);
+	vTemp = vIn - vOrigin;
 	VectorRotate(vTemp, vRotation, vTemp2);
-	VectorAdd(vTemp2, vOrigin, out);
+	out = vTemp2 + vOrigin;
 }
 
 // sikk---> Brush Primitives
@@ -359,3 +495,4 @@ bool Point_Equal(vec3_t p1, vec3_t p2, float epsilon)
 	return true;
 }
 
+#endif

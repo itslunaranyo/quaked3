@@ -8,7 +8,7 @@
 // which assumes that whatever classname it is asked to create as a point entity
 // is what was actually desired
 
-CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, vec3_t origin) : ent(nullptr)
+CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 origin) : ent(nullptr)
 {
 	if (!strcmp(classname, "worldspawn"))
 		Error("Cannot create a new worldspawn entity.");
@@ -24,7 +24,7 @@ CmdCreatePointEntity::~CmdCreatePointEntity()
 		delete ent;
 }
 
-void CmdCreatePointEntity::CreatePointEntity(const char *classname, vec3_t origin)
+void CmdCreatePointEntity::CreatePointEntity(const char *classname, const vec3 origin)
 {
 	EntClass* ec = EntClass::ForName(classname, false, false);
 	ent = new Entity();
@@ -33,7 +33,7 @@ void CmdCreatePointEntity::CreatePointEntity(const char *classname, vec3_t origi
 	ent->SetKeyValue("classname", classname);
 
 	ent->SetKeyValueIVector("origin", origin);
-	VectorCopy(origin, ent->origin);
+	ent->origin = origin;
 
 	ent->MakeBrush();
 }

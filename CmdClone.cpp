@@ -4,7 +4,7 @@
 
 #include "qe3.h"
 
-CmdClone::CmdClone(Brush *brList, vec3_t offset)
+CmdClone::CmdClone(Brush *brList, const vec3 offset)
 {
 	Clone(brList, offset);
 	state = LIVE;
@@ -14,20 +14,22 @@ CmdClone::~CmdClone()
 {
 }
 
-void CmdClone::Clone(Brush *brList, vec3_t offset)
+void CmdClone::Clone(Brush *brList, const vec3 offset)
 {
-	vec3_t	delta;
+	vec3	delta;
 	Brush	*n;
 	Entity	*e, *laste;
 
+	delta = offset;
+	/*
 	if (offset)
 	{
-		VectorCopy(offset, delta);
+		delta = offset;
 	}
 	else
 	{
-		VectorCopy(g_v3VecOrigin, delta);
-	}
+		delta = vec3(0);
+	}*/
 
 	laste = nullptr;
 

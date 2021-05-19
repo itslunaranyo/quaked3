@@ -209,7 +209,7 @@ BOOL DoColor (int iIndex)
 DoTheme
 =============
 */
-void DoTheme (vec3_t v[])
+void DoTheme (vec3 v[])
 {
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][0] = v[0][0];
 	g_qeglobals.d_savedinfo.v3Colors[COLOR_BRUSHES][1] = v[0][1];
@@ -2139,63 +2139,63 @@ LONG WINAPI CommandHandler (
 // I will continue to add themes as I am able to get the colors used by other popular 3D apps
 		case ID_THEMES_QE4:
 			{
-				vec3_t v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+				vec3 v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
 								{0.5f, 0.5f, 0.5f}, {0.75f, 0.75f, 0.75f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.75f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_Q3RADIANT:
 			{
-				vec3_t v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+				vec3 v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
 								{0.5f, 0.5f, 0.5f}, {1.0f,  1.0f,  1.0f},  {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.75f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_BLACKGREEN:
 			{
-				vec3_t v[] = {	{1.0f, 1.0f, 1.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
+				vec3 v[] = {	{1.0f, 1.0f, 1.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
 								{0.3f, 0.5f, 0.5f}, {0.0f,  0.0f,  0.0f},  {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.7f, 0.7f, 0.0f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_WORLDCRAFT:
 			{
-				vec3_t v[] = {	{1.0f,  1.0f,  1.0f},  {0.0f, 0.0f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f,  0.0f,  0.0f},  {0.0f, 0.5f, 0.5f},
+				vec3 v[] = {	{1.0f,  1.0f,  1.0f},  {0.0f, 0.0f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f,  0.0f,  0.0f},  {0.0f, 0.5f, 0.5f},
 								{0.35f, 0.35f, 0.35f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.25f, 0.25f, 0.25f}, {0.7f, 0.7f, 0.0f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_UNREALED:
 			{
-				vec3_t v[] = {	{0.0f,  0.0f,  0.0f},  {0.0f,  0.0f,  0.0f},  {0.0f, 0.0f, 0.5f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
+				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.0f,  0.0f,  0.0f},  {0.0f, 0.0f, 0.5f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
 								{0.47f, 0.47f, 0.47f}, {0.58f, 0.58f, 0.58f}, {0.0f, 0.0f, 0.0f}, {0.0f,  0.0f,  0.5f},  {0.5f,  0.0f,  0.75f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_BLENDER:
 			{
-				vec3_t v[] = {	{0.0f,  0.0f,  0.0f},  {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.45f, 0.45f, 0.45f}, {0.25f, 0.25f, 0.25f},
+				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.45f, 0.45f, 0.45f}, {0.25f, 0.25f, 0.25f},
 								{0.36f, 0.36f, 0.36f}, {0.4f,  0.4f,  0.4f},  {1.0f, 1.0f, 1.0f}, {0.2f,  0.2f,  0.2f},  {0.5f,  0.0f,  0.0f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_MAYA:
 			{
-				vec3_t v[] = {	{0.0f,  0.0f,  0.0f},  {0.57f, 0.57f, 0.57f}, {0.47f, 0.47f, 0.47f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
+				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.57f, 0.57f, 0.57f}, {0.47f, 0.47f, 0.47f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
 								{0.47f, 0.47f, 0.47f}, {0.58f, 0.58f, 0.58f}, {0.0f,  0.0f,  0.0f},  {0.2f,  0.2f,  0.2f},  {0.0f,  0.45f, 0.0f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_LIGHTWAVE:
 			{
-				vec3_t v[] = {	{0.0f,  0.0f,  0.0f},  {0.42f, 0.42f, 0.42f}, {0.56f, 0.56f, 0.56f}, {0.42f, 0.42f, 0.42f}, {0.25f, 0.25f, 0.25f},
+				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.42f, 0.42f, 0.42f}, {0.56f, 0.56f, 0.56f}, {0.42f, 0.42f, 0.42f}, {0.25f, 0.25f, 0.25f},
 								{0.56f, 0.56f, 0.56f}, {0.48f, 0.48f, 0.48f}, {0.75f, 0.75f, 0.75f}, {0.32f, 0.32f, 0.32f}, {0.0f,  0.75f, 0.75f}	};
 				DoTheme(v);
 			}
 			break;
 		case ID_THEMES_3DSMAX:
 			{
-				vec3_t v[] = {	{0.0f,  0.0f,  0.0f},  {0.48f, 0.48f, 0.48f}, {0.36f, 0.36f, 0.36f}, {0.48f, 0.48f, 0.48f}, {0.25f, 0.25f, 0.25f},
+				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.48f, 0.48f, 0.48f}, {0.36f, 0.36f, 0.36f}, {0.48f, 0.48f, 0.48f}, {0.25f, 0.25f, 0.25f},
 								{0.36f, 0.36f, 0.36f}, {0.42f, 0.42f, 0.42f}, {0.0f,  0.0f, 0.0f},  {0.2f,  0.2f,  0.2f},  {0.75f,  0.75f, 0.75f}	};
 				DoTheme(v);
 			}
@@ -2205,7 +2205,7 @@ LONG WINAPI CommandHandler (
 //								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDRY}, {COLOR_VIEWNAME}
 		case ID_THEMES_BLUEGRAY:
 			{
-				vec3_t v[] = {	{0.75f,0.75f,0.75f},  {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, {0.25f, 0.25f, 0.25f}, {0.4f, 0.4f, 0.4f},
+				vec3 v[] = {	{0.75f,0.75f,0.75f},  {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, {0.25f, 0.25f, 0.25f}, {0.4f, 0.4f, 0.4f},
 								{0.35f, 0.35f, 0.35f}, {0.3f, 0.3f, 0.3f}, {0.8f, 0.8f, 0.8f},  {0.2f,  0.4f,  0.4f},  {1.0f, 1.0f,  1.0f}	};
 				DoTheme(v);
 			}
@@ -2648,9 +2648,9 @@ LONG WINAPI WMain_WndProc (
 			if (hwndTarget == g_qeglobals.d_hwndCamera)
 			{
 				if (zDelta < 0)
-					VectorMA(g_qeglobals.d_camera.origin, -64, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
+					g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + -64.0f * g_qeglobals.d_camera.forward;
 				else
-					VectorMA(g_qeglobals.d_camera.origin, 64, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
+					g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + 64.0f * g_qeglobals.d_camera.forward;
 
 				Sys_UpdateWindows(W_ALL);
 			}

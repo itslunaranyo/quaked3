@@ -11,11 +11,8 @@ Map	g_map;
 
 Brush	   *g_pbrRegionSides[4];
 
-Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
+Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr), regionMins(-99999), regionMaxs(99999)
 {
-	regionMins[0] = regionMins[1] = regionMins[2] = -4096;
-	regionMaxs[0] = regionMaxs[1] = regionMaxs[2] = 4096;
-
 	g_brSelectedBrushes.CloseLinks();
 
 	/*
@@ -66,9 +63,9 @@ void Map::New()
 	world->eclass = EntClass::ForName("worldspawn", true, true);
 
 	g_qeglobals.d_camera.angles[YAW] = 0;
-	VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
+	g_qeglobals.d_camera.origin = vec3(0);
 	g_qeglobals.d_camera.origin[2] = 48;
-	VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
+	g_qeglobals.d_xyz[0].origin = vec3(0);
 
 	LoadBetween(between);
 	BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
@@ -350,15 +347,15 @@ void Map::LoadFromFile(const char *filename)
 
 		if (ent)
 		{
-			ent->GetKeyValueVector("origin", g_qeglobals.d_camera.origin);
-			ent->GetKeyValueVector("origin", g_qeglobals.d_xyz[0].origin);
+			g_qeglobals.d_camera.origin = ent->GetKeyValueVector("origin");
+			g_qeglobals.d_xyz[0].origin = ent->GetKeyValueVector("origin");
 			g_qeglobals.d_camera.angles[YAW] = ent->GetKeyValueFloat("angle");
 		}
 		else
 		{
 			g_qeglobals.d_camera.angles[YAW] = 0;
-			VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
-			VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
+			g_qeglobals.d_camera.origin = vec3(0);
+			g_qeglobals.d_xyz[0].origin = vec3(0);
 		}
 
 		//Texture_ShowInuse();
@@ -884,8 +881,8 @@ void Map::RegionTallBrush()
 
 	RegionOff();
 
-	VectorCopy(b->basis.mins, regionMins);
-	VectorCopy(b->basis.maxs, regionMaxs);
+	regionMins = b->basis.mins;
+	regionMaxs = b->basis.maxs;
 	regionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	regionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 
@@ -904,8 +901,8 @@ void Map::RegionBrush()
 
 	RegionOff();
 
-	VectorCopy(b->basis.mins, regionMins);
-	VectorCopy(b->basis.maxs, regionMaxs);
+	regionMins = b->basis.mins;
+	regionMaxs = b->basis.maxs;
 
 	Select_Delete();
 	RegionApply();
@@ -949,7 +946,7 @@ void Map::RegionApply()
 
 void Map::RegionAdd()
 {
-	vec3_t		mins, maxs;
+	vec3		mins, maxs;
 	int			i;
 	texdef_t	texdef;
 

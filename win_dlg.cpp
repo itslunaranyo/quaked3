@@ -1048,13 +1048,13 @@ BOOL CALLBACK CreateEntityDlgProc (
 DoCreateEntity
 ============
 */
-void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, vec3_t origin)
+void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 origin)
 {
 	g_bPointBased = bPointbased;
 	g_bBrushBased = bBrushbased;
 	g_bFromSelection = bSel;
 	//if (!bSel)
-		VectorCopy(origin, g_brSelectedBrushes.basis.mins);
+		g_brSelectedBrushes.basis.mins = origin;
 
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CREATEENTITY), g_qeglobals.d_hwndMain, CreateEntityDlgProc);
 }
@@ -1109,7 +1109,7 @@ BOOL CALLBACK MapInfoDlgProc (
 			if (pBrush->owner->IsWorld())
 			{
 				// we don't want to count point entity faces 
-				for (pFace = pBrush->basis.faces; pFace; pFace = pFace->next)
+				for (pFace = pBrush->basis.faces; pFace; pFace = pFace->fnext)
 					nTotalFaces++;
 				nTotalBrushes++;
 			}

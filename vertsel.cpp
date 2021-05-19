@@ -10,7 +10,7 @@
 FindPoint
 ============
 */
-int	FindPoint (vec3_t point)
+int	FindPoint (const vec3 point)
 {
 	int	i, j;
 
@@ -24,7 +24,7 @@ int	FindPoint (vec3_t point)
 			return i;
 	}
 
-	VectorCopy(point, g_qeglobals.d_v3Points[g_qeglobals.d_nNumPoints]);
+	g_qeglobals.d_v3Points[g_qeglobals.d_nNumPoints] = point;
 	g_qeglobals.d_nNumPoints++;
 
 	return g_qeglobals.d_nNumPoints - 1;
@@ -71,7 +71,7 @@ void MakeFace (Face *f)
 	if (!w)
 		return;
 	for (i = 0; i < w->numpoints; i++)
-		pnum[i] = FindPoint(w->points[i]);
+		pnum[i] = FindPoint(w->points[i].point);
 	for (i = 0; i < w->numpoints; i++)
 		FindEdge(pnum[i], pnum[(i + 1) % w->numpoints], f);
 
@@ -96,7 +96,7 @@ void SetupVertexSelection ()
 	
 	b = g_brSelectedBrushes.next;
 	
-	for (f = b->basis.faces; f; f = f->next)
+	for (f = b->basis.faces; f; f = f->fnext)
 		MakeFace(f);
 
 	Sys_UpdateWindows(W_ALL);
@@ -119,22 +119,22 @@ void SelectFaceEdge (Face *f, int p1, int p2)
 		return;
 	
 	for (i = 0; i < w->numpoints; i++)
-		pnum[i] = FindPoint(w->points[i]);
+		pnum[i] = FindPoint(w->points[i].point);
 
 	for (i = 0; i < w->numpoints; i++)
 	{
 		if (pnum[i] == p1 && pnum[(i + 1) % w->numpoints] == p2)
 		{
-			VectorCopy(g_qeglobals.d_v3Points[pnum[i]], f->planepts[0]);
-			VectorCopy(g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]], f->planepts[1]);
-			VectorCopy(g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]], f->planepts[2]);
+			f->planepts[0] = g_qeglobals.d_v3Points[pnum[i]];
+			f->planepts[1] = g_qeglobals.d_v3Points[pnum[(i + 1) % w->numpoints]];
+			f->planepts[2] = g_qeglobals.d_v3Points[pnum[(i + 2) % w->numpoints]];
 			
 			for (j = 0; j < 3; j++)
 				for (k = 0; k < 3; k++)
 					f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
-			AddPlanePoint(f->planepts[0]);
-			AddPlanePoint(f->planepts[1]);
+			AddPlanePoint(&f->planepts[0]);
+			AddPlanePoint(&f->planepts[1]);
 			break;
 		}
 	}
@@ -158,7 +158,7 @@ void SelectVertex (int p1)
 	winding_t  *w;
 
 	b = g_brSelectedBrushes.next;
-	for (f = b->basis.faces; f; f = f->next)
+	for (f = b->basis.faces; f; f = f->fnext)
 	{
 		w = b->MakeFaceWinding(f);
 
@@ -167,17 +167,17 @@ void SelectVertex (int p1)
 
 		for (i = 0; i < w->numpoints; i++)
 		{
-			if (FindPoint(w->points[i]) == p1)
+			if (FindPoint(w->points[i].point) == p1)
 			{ 
-				VectorCopy(w->points[(i + w->numpoints - 1) % w->numpoints], f->planepts[0]);
-				VectorCopy(w->points[i], f->planepts[1]);
-				VectorCopy(w->points[(i + 1) % w->numpoints], f->planepts[2]);
+				f->planepts[0] = w->points[(i + w->numpoints - 1) % w->numpoints].point;
+				f->planepts[1] = w->points[i].point;
+				f->planepts[2] = w->points[(i + 1) % w->numpoints].point;
 				
 				for (j = 0; j < 3; j++)
 					for (k = 0; k < 3; k++)
 						f->planepts[j][k] = floor(f->planepts[j][k] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
-				AddPlanePoint(f->planepts[1]);
+				AddPlanePoint(&f->planepts[1]);
 				break;
 			}
 		}
@@ -190,11 +190,11 @@ void SelectVertex (int p1)
 SelectEdgeByRay
 ============
 */
-void SelectEdgeByRay (vec3_t org, vec3_t dir)
+void SelectEdgeByRay (const vec3 org, const vec3 dir)
 {
 	int			i, j, besti;
 	float		d, bestd;
-	vec3_t		mid, temp;
+	vec3		mid, temp;
 	pedge_t	   *e;
 
 	// find the edge closest to the ray
@@ -206,10 +206,10 @@ void SelectEdgeByRay (vec3_t org, vec3_t dir)
 		for (j = 0; j < 3; j++)
 			mid[j] = 0.5 * (g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p1][j] + g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p2][j]);
 
-		VectorSubtract(mid, org, temp);
+		temp = mid - org;
 		d = DotProduct(temp, dir);
-		VectorMA(org, d, dir, temp);
-		VectorSubtract(mid, temp, temp);
+		temp = org + d * dir;
+		temp = mid - temp;
 		d = VectorLength(temp);
 
 		if (d < bestd)
@@ -242,11 +242,11 @@ void SelectEdgeByRay (vec3_t org, vec3_t dir)
 SelectVertexByRay
 ============
 */
-void SelectVertexByRay (vec3_t org, vec3_t dir)
+void SelectVertexByRay (const vec3 org, const vec3 dir)
 {
 	int		i, besti;
 	float	d, bestd;
-	vec3_t	temp;
+	vec3	temp;
 
 	// find the point closest to the ray
 	besti = -1;
@@ -254,10 +254,10 @@ void SelectVertexByRay (vec3_t org, vec3_t dir)
 
 	for (i = 0; i < g_qeglobals.d_nNumPoints; i++)
 	{
-		VectorSubtract(g_qeglobals.d_v3Points[i], org, temp);
+		temp = g_qeglobals.d_v3Points[i] - org;
 		d = DotProduct(temp, dir);
-		VectorMA(org, d, dir, temp);
-		VectorSubtract(g_qeglobals.d_v3Points[i], temp, temp);
+		temp = org + d * dir;
+		temp = g_qeglobals.d_v3Points[i] - temp;
 		d = VectorLength(temp);
 
 		if (d < bestd)
@@ -278,7 +278,7 @@ void SelectVertexByRay (vec3_t org, vec3_t dir)
 	Sys_Printf("CMD: Dragging vertex.\n");
 
 	// sikk---> Vertex Editing Splits Face
-	g_qeglobals.d_fMovePoints[g_qeglobals.d_nNumMovePoints++] = g_qeglobals.d_v3Points[besti];
+	g_qeglobals.d_fMovePoints[g_qeglobals.d_nNumMovePoints++] = &g_qeglobals.d_v3Points[besti];
 
 	// old vertex editing mode
 	if (!g_qeglobals.d_savedinfo.bVertexSplitsFace)

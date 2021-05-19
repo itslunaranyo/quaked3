@@ -96,7 +96,7 @@ CameraView::ChangeFloor
 void CameraView::ChangeFloor (bool up)
 {
 	float		d, bestd, current;
-	vec3_t		start, dir;
+	vec3		start, dir;
 	Brush	   *b;
 
 	start[0] = origin[0];
@@ -147,7 +147,7 @@ void CameraView::PositionDrag ()
 	if (x != cursorX || y != cursorY)
 	{
 		x -= cursorX;
-		VectorMA(origin, x, vright, origin);
+		origin = origin + (float)x * vright;
 		y -= cursorY;
 		origin[2] -= y;
 
@@ -161,11 +161,11 @@ void CameraView::PositionDrag ()
 CameraView::Rotate
 ================
 */
-void CameraView::Rotate (int yaw, int pitch, vec3_t org)
+void CameraView::Rotate (int yaw, int pitch, const vec3 org)
 {
 	int		i;
 	vec_t	distance;
-	vec3_t	work, forward, dir, vecdist;
+	vec3	work, forward, dir, vecdist;
 
 	for (i = 0; i < 3; i++)
 	{
@@ -174,7 +174,7 @@ void CameraView::Rotate (int yaw, int pitch, vec3_t org)
 	}
 
 	viewdistance = distance = sqrt(vecdist[0] + vecdist[1] + vecdist[2]);
-	VectorSubtract(origin, org, work);
+	work = origin - org;
 	VectorToAngles(work, angles);
 
 	if(angles[PITCH] > 100)
@@ -184,11 +184,11 @@ void CameraView::Rotate (int yaw, int pitch, vec3_t org)
 	angles[YAW] -= yaw;
 	BoundAngles();
 
-	AngleVectors(angles, forward, NULL, NULL);
+	AngleVectors(angles, forward, vec3(0), vec3(0));
 	forward[2] = -forward[2];
-	VectorMA(org, distance, forward, origin);
+	origin = org + distance * forward;
 
-	VectorSubtract(org, origin, dir);
+	dir = org - origin;
 	VectorNormalize(dir);
 	angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
 	angles[0] = asin(dir[2]) * 180 / Q_PI;
@@ -207,8 +207,8 @@ CameraView::PositionRotate
 void CameraView::PositionRotate ()
 {
 	int			x, y, i, j;
-	vec3_t		mins, maxs, forward, vecdist;
-	vec3_t		sorigin;
+	vec3		mins, maxs, forward, vecdist;
+	vec3		sorigin;
 	Brush	   *b;
 	Face	   *f;
 
@@ -249,10 +249,10 @@ void CameraView::PositionRotate ()
 		{
 			for (i = 0; i < 3; i++)
 			{
-				if (f->face_winding->points[j][i] > maxs[i])
-					maxs[i] = f->face_winding->points[j][i];
-				if (f->face_winding->points[j][i] < mins[i])
-					mins[i] = f->face_winding->points[j][i];
+				if (f->face_winding->points[j].point[i] > maxs[i])
+					maxs[i] = f->face_winding->points[j].point[i];
+				if (f->face_winding->points[j].point[i] < mins[i])
+					mins[i] = f->face_winding->points[j].point[i];
 			}
 		}
 
@@ -262,9 +262,9 @@ void CameraView::PositionRotate ()
 	}
 	else
 	{
-		AngleVectors(g_qeglobals.d_camera.angles, forward, NULL, NULL);
+		AngleVectors(g_qeglobals.d_camera.angles, forward, vec3(0), vec3(0));
 		forward[2] = -forward[2];
-		VectorMA(g_qeglobals.d_camera.origin, g_qeglobals.d_camera.viewdistance, forward, sorigin);
+		sorigin = g_qeglobals.d_camera.origin + g_qeglobals.d_camera.viewdistance * forward;
 	}
 
 	for (i = 0; i < 3; i++)
@@ -285,8 +285,8 @@ void CameraView::BoundAngles()
 {
 //	angles[YAW] = fmod(angles[YAW], 360.0f);
 
-	angles[PITCH] = fmin(angles[PITCH], 90);
-	angles[PITCH] = fmax(angles[PITCH], -90);
+	angles[PITCH] = min(angles[PITCH], 90.0f);
+	angles[PITCH] = max(angles[PITCH], -90.0f);
 }
 
 /*
@@ -347,7 +347,7 @@ void CameraView::MouseControl (float dtime)
 #if 0
 	// strafe
 	if (buttonY < yl && (buttonX < xl || buttonX > xh))
-		VectorMA(origin, xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, right, origin);
+		origin = origin + xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * right;
 	else
 #endif
 	{
@@ -365,7 +365,7 @@ void CameraView::MouseControl (float dtime)
 				xf = 0;
 		}
 		
-		VectorMA(origin, yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed, forward, origin);
+		origin = origin + yf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * forward;
 		angles[YAW] += xf * -dtime * (g_qeglobals.d_savedinfo.nCameraSpeed * 0.5);
 	}
 	Sys_UpdateWindows(W_CAMERA | W_XY);
@@ -376,7 +376,7 @@ void CameraView::MouseControl (float dtime)
 CameraView::PointToRay
 ==============
 */
-void CameraView::PointToRay(int x, int y, vec3_t rayOut)
+void CameraView::PointToRay(int x, int y, vec3 &rayOut)
 {
 	float	f, r, u;
 
@@ -397,7 +397,7 @@ CameraView::MouseDown
 */
 void CameraView::MouseDown (int x, int y, int buttons)
 {
-	vec3_t	dir;
+	vec3	dir;
 	PointToRay(x, y, dir);
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
@@ -479,7 +479,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 	int			i;
 	float		f, r, u;
 	char		camstring[256];
-	vec3_t		dir;
+	vec3		dir;
 	trace_t		t;
 
 	nCamButtonState = buttons;
@@ -505,8 +505,8 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		if (t.brush)
 		{
 			Brush	   *b;
-			int			i;
-			vec3_t		mins, maxs, size;
+//			int			i;
+			vec3		mins, maxs, size;
 
 			ClearBounds(mins, maxs);
 
@@ -519,7 +519,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 					maxs[i] = b->basis.maxs[i];
 			}
 
-			VectorSubtract(maxs, mins, size);
+			size = maxs - mins;
 			if (t.brush->owner->IsPoint())
 				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
 			else
@@ -594,14 +594,14 @@ CameraView::GetAimPoint
 pick a spot somewhere in front of the camera for dropping entities
 ============
 */
-void CameraView::GetAimPoint(vec3_t pt)
+void CameraView::GetAimPoint(vec3 &pt)
 {
 	float		dist;
 	trace_t		t;
 
 	t = Test_Ray(origin, vpn, SF_NOFIXEDSIZE);
-	dist = min(240, t.dist);
-	VectorMA(origin, dist, vpn, pt);
+	dist = min(240.0f, t.dist);
+	pt = origin + dist * vpn;
 	SnapToPoint(pt);
 }
 
@@ -615,8 +615,8 @@ void CameraView::InitCull ()
 {
 	int	i;
 
-	VectorSubtract(vpn, vright, v3Cull1);
-	VectorAdd(vpn, vright, v3Cull2);
+	v3Cull1 = vpn - vright;
+	v3Cull2 = vpn + vright;
 
 	for (i = 0; i < 3; i++)
 	{
@@ -641,7 +641,7 @@ bool CameraView::CullBrush (Brush *b)
 {
 	int		i;
 	float	d;
-	vec3_t	point;
+	vec3	point;
 
 // sikk---> Cubic Clipping
 	if (g_qeglobals.d_savedinfo.bCubicClip)
@@ -667,14 +667,14 @@ bool CameraView::CullBrush (Brush *b)
 // <---sikk
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->basis.mins[nCullv1[i]] - origin[i];
+		point[i] = ((float*)&b->basis.mins)[nCullv1[i]] - origin[i];	// lunaran: FIXME this fucking scary hack
 
 	d = DotProduct(point, v3Cull1);
 	if (d < -1)
 		return true;
 
 	for (i = 0; i < 3; i++)
-		point[i] = b->basis.mins[nCullv2[i]] - origin[i];
+		point[i] = ((float*)&b->basis.mins)[nCullv2[i]] - origin[i];	// lunaran: FIXME this fucking scary hack too
 
 	d = DotProduct(point, v3Cull2);
 	if (d < -1)
@@ -713,7 +713,7 @@ void CameraView::DrawGrid ()
 
 	i = g_qeglobals.d_savedinfo.nMapSize * 0.5;
 
-	glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID]);
+	glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_CAMERAGRID].r);
 //	glLineWidth(1);
 	glBegin(GL_LINES);
 	for (x = -i; x <= i; x += 256)
@@ -909,7 +909,7 @@ void CameraView::Draw ()
 // sikk---> Show Map Boundry Box
 	if (g_qeglobals.d_savedinfo.bShow_MapBoundry)
 	{
-		glColor3fv(g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY]);
+		glColor3fv(&g_qeglobals.d_savedinfo.v3Colors[COLOR_MAPBOUNDRY].r);
 		glBegin(GL_LINE_LOOP);
 		glVertex3f(-g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
 		glVertex3f(g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5, -g_qeglobals.d_savedinfo.nMapSize * 0.5);
@@ -968,7 +968,7 @@ void CameraView::Draw ()
 	glDisable(GL_TEXTURE_2D);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->next)
+		for (face = brush->basis.faces; face; face = face->fnext)
 			face->Draw();
 
 //	if (g_pfaceSelectedFace)
@@ -976,7 +976,7 @@ void CameraView::Draw ()
 // sikk---> Multiple Face Selection
 //	if (Select_FaceCount())
 //	{
-		for (int i = 0; i < Select_FaceCount(); i++)
+		for (i = 0; i < Select_FaceCount(); i++)
 			g_pfaceSelectedFaces[i]->Draw();
 //	}
 // <---sikk
@@ -988,7 +988,7 @@ void CameraView::Draw ()
 	glColor3f(1, 1, 1);
 
 	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->basis.faces; face; face = face->next)
+		for (face = brush->basis.faces; face; face = face->fnext)
 			face->Draw();
 
 	// edge / vertex flags
@@ -998,7 +998,7 @@ void CameraView::Draw ()
 		glColor3f(0, 1, 0);
 		glBegin(GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_nNumPoints; i++)
-			glVertex3fv(g_qeglobals.d_v3Points[i]);
+			glVertex3fv(&g_qeglobals.d_v3Points[i].x);
 		glEnd();
 		glPointSize(1);
 	}
@@ -1011,8 +1011,8 @@ void CameraView::Draw ()
 		glBegin (GL_POINTS);
 		for (i = 0; i < g_qeglobals.d_nNumEdges; i++)
 		{
-			v1 = g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p1];
-			v2 = g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p2];
+			v1 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p1].x;
+			v2 = &g_qeglobals.d_v3Points[g_qeglobals.d_pEdges[i].p2].x;
 			glVertex3f((v1[0] + v2[0]) * 0.5, (v1[1] + v2[1]) * 0.5, (v1[2] + v2[2]) * 0.5);
 		}
 		glEnd();

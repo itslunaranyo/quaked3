@@ -12,14 +12,13 @@ int g_nEntityId = 0;	// sikk - Undo/Redo
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
-	undoId(0), redoId(0), ownerId(0)
+	undoId(0), redoId(0), ownerId(0), origin(0)
 {
 	entityId = ++g_nEntityId;
+	
 	brushes.onext = brushes.oprev = &brushes;
 	brushes.owner = this;
-	origin[0] = origin[1] = origin[2] = 0;
 }
-
 
 
 /*
@@ -139,7 +138,7 @@ void Entity::SetKeyValue(const char *key, const int ivalue)
 Entity::SetKeyValueFVector
 ==============
 */
-void Entity::SetKeyValueFVector(const char *key, const vec3_t vec)
+void Entity::SetKeyValueFVector(const char *key, const vec3 vec)
 {
 	char szVec[128];
 	sprintf(szVec, "%f %f %f", vec[0], vec[1], vec[2]);
@@ -151,7 +150,7 @@ void Entity::SetKeyValueFVector(const char *key, const vec3_t vec)
 Entity::SetKeyValueIVector
 ==============
 */
-void Entity::SetKeyValueIVector(const char *key, const vec3_t vec)
+void Entity::SetKeyValueIVector(const char *key, const vec3 vec)
 {
 	char szVec[128];
 	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
@@ -218,11 +217,13 @@ int Entity::GetKeyValueInt(const char *key) const
 Entity::GetKeyValueVector
 ==============
 */
-void Entity::GetKeyValueVector(const char *key, vec3_t vec) const
+vec3 Entity::GetKeyValueVector(const char *key) const
 {
+	vec3 vec;
 	char *cv = GetKeyValue(key);
-	if (!*cv) VectorCopy(g_v3VecOrigin, vec);
+	if (!*cv) vec = vec3(0);
 	sscanf(cv, "%f %f %f", &vec[0], &vec[1], &vec[2]);
+	return vec;
 }
 
 /*
@@ -460,7 +461,7 @@ Entity *Entity::Parse (bool onlypairs)
 	else
 		has_brushes = true;
 
-	ent->GetKeyValueVector("origin", ent->origin);
+	ent->origin = ent->GetKeyValueVector("origin");
 
 	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
 	// with brushes or brush entities without any, so that all the downstream code Just Works
@@ -489,8 +490,8 @@ void Entity::CheckOrigin()
 {
 	if (IsBrush()) return;
 
-	vec3_t testorg, org;
-	GetKeyValueVector("origin", testorg);
+	vec3 testorg, org;
+	testorg = GetKeyValueVector("origin");
 
 	// be sure for now
 	if (!VectorCompare(origin, testorg))
@@ -702,11 +703,11 @@ entity origins are stored/modified three different ways (by entity.origin, by
 origin via these functions or they won't stay synced and you're a JERK
 ============
 */
-void Entity::SetOrigin(vec3_t org)
+void Entity::SetOrigin(const vec3 org)
 {
 	if (IsBrush()) return;
 
-	VectorCopy(org, origin);
+	origin = org;
 	SetKeyValueIVector("origin", org);
 	MakeBrush();
 }
@@ -724,25 +725,25 @@ void Entity::SetOriginFromKeyvalue()
 {
 	if (IsBrush()) return;
 
-	GetKeyValueVector("origin", origin);
+	origin = GetKeyValueVector("origin");
 	MakeBrush();
 }
 
 void Entity::SetOriginFromBrush()
 {
-	vec3_t	org;
+	vec3	org;
 
 	if (IsBrush()) return;
 	if (brushes.onext == &brushes) return;
 
-	VectorSubtract(brushes.onext->basis.mins, eclass->mins, org);
+	org = brushes.onext->basis.mins - eclass->mins;
 	SetKeyValueIVector("origin", org);
-	VectorCopy(org, origin);
+	origin = org;
 }
 
-void Entity::Move(vec3_t trans)
+void Entity::Move(const vec3 trans)
 {
-	VectorAdd(trans, origin, origin);
+	origin = trans + origin;
 	SetOriginFromMember();
 }
 
@@ -757,11 +758,11 @@ than translating it) or when the classname is changed
 Brush *Entity::MakeBrush()
 {
 	Brush		*b;
-	vec3_t		emins, emaxs;
+	vec3		emins, emaxs;
 
 	// create a custom brush
-	VectorAdd(eclass->mins, origin, emins);
-	VectorAdd(eclass->maxs, origin, emaxs);
+	emins = eclass->mins + origin;
+	emaxs = eclass->maxs + origin;
 	if (brushes.onext == &brushes)
 	{
 		b = Brush::Create(emins, emaxs, &eclass->texdef);
@@ -869,7 +870,7 @@ bool Entity::Create (EntClass *ecIn)
 		g_cmdQueue.Complete(cmd);
 		Select_DeselectAll(true);
 		cmd->Select();
-		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.basis.mins);	// reset
+		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
 	}
 
 	/*
@@ -893,9 +894,9 @@ bool Entity::Create (EntClass *ecIn)
 	if (c->IsPointClass())
 	{
 		// TODO: pass the location of the right-click via an appropriate method
-		VectorCopy(g_brSelectedBrushes.basis.mins, e->origin);
+		e->origin = g_brSelectedBrushes.basis.mins;
 		e->SetKeyValueIVector("origin", e->origin);
-		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.basis.mins);	// reset
+		g_brSelectedBrushes.basis.mins = vec3(0);	// reset
 
 		e->MakeBrush();
 
@@ -999,7 +1000,7 @@ Entity *Entity::Clone()
 		np->next = n->epairs;
 		n->epairs = np;
 	}
-	VectorCopy(origin, n->origin);
+	n->origin = origin;
 	//	n->CloseLinks();
 	return n;
 }

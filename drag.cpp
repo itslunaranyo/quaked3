@@ -9,12 +9,12 @@
 
 bool	g_bDragFirst;
 bool	g_bDragOK;
-vec3_t	g_v3DragXVec;
-vec3_t	g_v3DragYVec;
+vec3	g_v3DragXVec;
+vec3	g_v3DragYVec;
 
 static int		buttonstate;
 static int		pressx, pressy;
-static vec3_t	pressdelta;
+static vec3		pressdelta;
 static int		buttonx, buttony;
 
 Entity	   *g_peLink;
@@ -25,7 +25,7 @@ AxializeVector
 lunaran: matches function of TextureAxisFromPlane now, used to fail on diagonal cases
 ==============
 */
-void AxializeVector (vec3_t v)
+void AxializeVector (vec3 &v)
 {
 	int		i, bestaxis;
 	float	dot, best;
@@ -54,12 +54,12 @@ void AxializeVector (vec3_t v)
 MoveSelection
 =============
 */
-void MoveSelection (vec3_t move)
+void MoveSelection (const vec3 move)
 {
-	int			i;
-	bool		success;
-	Brush	   *b;
-	vec3_t		end;
+	int		i;
+	bool	success;
+	Brush	*b;
+	vec3	end;
 
 	if (!move[0] && !move[1] && !move[2])
 		return;
@@ -74,16 +74,16 @@ void MoveSelection (vec3_t move)
 		{
 			success = true;
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-				success &= g_brSelectedBrushes.next->MoveVertex(g_qeglobals.d_fMovePoints[0], move, end);
+				success &= g_brSelectedBrushes.next->MoveVertex(*g_qeglobals.d_fMovePoints[0], move, end);
 
-			VectorCopy(end, g_qeglobals.d_fMovePoints[0]);
+			*g_qeglobals.d_fMovePoints[0] = end;
 			return;
 		}
 // <---sikk
 
 		// all other selection types (and old vertex editing mode)
 		for (i = 0; i < g_qeglobals.d_nNumMovePoints; i++)
-			VectorAdd(g_qeglobals.d_fMovePoints[i], move, g_qeglobals.d_fMovePoints[i]);
+			*g_qeglobals.d_fMovePoints[i] = *g_qeglobals.d_fMovePoints[i] + move;
 
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
@@ -101,7 +101,7 @@ void MoveSelection (vec3_t move)
 		{
 			Sys_Printf("WARNING: Brush dragged backwards, move canceled.\n");
 			for (i = 0; i < g_qeglobals.d_nNumMovePoints; i++)
-				VectorSubtract(g_qeglobals.d_fMovePoints[i], move, g_qeglobals.d_fMovePoints[i]);
+				*g_qeglobals.d_fMovePoints[i] = *g_qeglobals.d_fMovePoints[i] - move;
 
 			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 				b->Build();
@@ -121,7 +121,7 @@ void MoveSelection (vec3_t move)
 		// of rebuilding the brushes
 		if (g_v3DragYVec[2] == 0 && g_brSelectedBrushes.next->next != &g_brSelectedBrushes)
 		{
-			VectorAdd(g_qeglobals.d_v3SelectTranslate, move, g_qeglobals.d_v3SelectTranslate);
+			g_qeglobals.d_v3SelectTranslate = g_qeglobals.d_v3SelectTranslate + move;
 		}
 		else
  			Select_Move(move);
@@ -136,8 +136,8 @@ Drag_Setup
 ===========
 */
 void Drag_Setup(int x, int y, int buttons,
-	vec3_t xaxis, vec3_t yaxis,
-	vec3_t origin, vec3_t dir)
+				const vec3 xaxis, const vec3 yaxis,
+				const vec3 origin, const vec3 dir)
 {
 	Face *f;
 	trace_t	t;
@@ -151,13 +151,13 @@ void Drag_Setup(int x, int y, int buttons,
 
 	g_bDragFirst = true;
 	g_qeglobals.d_nNumMovePoints = 0;
-	VectorCopy(g_v3VecOrigin, pressdelta);
+	pressdelta = vec3(0);
 	pressx = x;
 	pressy = y;
 
-	VectorCopy(xaxis, g_v3DragXVec);
+	g_v3DragXVec = xaxis;
 	AxializeVector(g_v3DragXVec);
-	VectorCopy(yaxis, g_v3DragYVec);
+	g_v3DragYVec = yaxis;
 	AxializeVector(g_v3DragYVec);
 
 	if (g_qeglobals.d_selSelectMode == sel_vertex)
@@ -203,7 +203,7 @@ void Drag_Setup(int x, int y, int buttons,
 			// be pressed before Shift or the brush is deselected.
 			// But it is a useful command to leave hidden as it is.  
 			Sys_Printf("CMD: Sticky dragging brush.\n");
-			for (f = t.brush->basis.faces; f; f = f->next)
+			for (f = t.brush->basis.faces; f; f = f->fnext)
 				t.brush->SelectFaceForDragging(f, false);
 		}
 		else
@@ -247,7 +247,7 @@ void Drag_Setup(int x, int y, int buttons,
 Drag_TrySelect
 ===========
 */
-bool Drag_TrySelect(int buttons, vec3_t origin, vec3_t dir)
+bool Drag_TrySelect(int buttons, const vec3 origin, const vec3 dir)
 {
 	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
 
@@ -278,16 +278,16 @@ bool Drag_TrySelect(int buttons, vec3_t origin, vec3_t dir)
 Drag_Begin
 ===========
 */
-void Drag_Begin (int x, int y, int buttons, 
-				 vec3_t xaxis, vec3_t yaxis, 
-				 vec3_t origin, vec3_t dir)
+void Drag_Begin(int x, int y, int buttons, 
+				const vec3 xaxis, const vec3 yaxis,
+				const vec3 origin, const vec3 dir)
 {
 //	int		nDim1, nDim2;
 //	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
 	trace_t	t;
 
 	g_bDragOK = false;
-	VectorCopy(g_v3VecOrigin, pressdelta);
+	pressdelta = vec3(0);
 
 	g_bDragFirst = true;
 	g_peLink = NULL;
@@ -404,7 +404,7 @@ void Drag_MouseMoved (int x, int y, int buttons)
 {
 	int		i;
 	char	movestring[128];
-	vec3_t	move, delta;
+	vec3	move, delta;
 
 	if (!buttons)
 	{
@@ -435,8 +435,8 @@ void Drag_MouseMoved (int x, int y, int buttons)
 	sprintf(movestring, "Drag: (%d %d %d)", (int)move[0], (int)move[1], (int)move[2]);
 	Sys_Status(movestring, 0);
 
-	VectorSubtract(move, pressdelta, delta);
-	VectorCopy(move, pressdelta);
+	delta = move - pressdelta;
+	pressdelta = move;
 
 	MoveSelection(delta);
 }
@@ -452,7 +452,7 @@ void Drag_MouseUp ()
 	if (g_qeglobals.d_v3SelectTranslate[0] || g_qeglobals.d_v3SelectTranslate[1] || g_qeglobals.d_v3SelectTranslate[2])
 	{
 		Select_Move(g_qeglobals.d_v3SelectTranslate);
-		VectorCopy(g_v3VecOrigin, g_qeglobals.d_v3SelectTranslate);
+		g_qeglobals.d_v3SelectTranslate = vec3(0);
 		Sys_UpdateWindows(W_CAMERA);
 	}
 	Undo::EndBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo

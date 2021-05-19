@@ -5,7 +5,7 @@
 #include "qe3.h"
 
 
-static vec3_t	s_pointvecs[MAX_POINTFILE];
+static vec3		s_pointvecs[MAX_POINTFILE];
 static int		s_num_points, s_check_point;
 
 /*
@@ -33,7 +33,7 @@ advance camera to next point
 */
 void Pointfile_Next ()
 {
-	vec3_t dir;
+	vec3 dir;
 
 	if (s_check_point >= s_num_points - 2)
 	{
@@ -41,13 +41,13 @@ void Pointfile_Next ()
 		return;
 	}
 	s_check_point++;
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_camera.origin);
+	g_qeglobals.d_camera.origin = s_pointvecs[s_check_point];
 	// lunaran - grid view reunification
 	for (int i = 0; i < 4; i++)
 	{
-		VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz[i].origin);
+		g_qeglobals.d_xyz[i].origin = s_pointvecs[s_check_point];
 	}
-	VectorSubtract(s_pointvecs[s_check_point + 1], g_qeglobals.d_camera.origin, dir);
+	dir = s_pointvecs[s_check_point + 1] - g_qeglobals.d_camera.origin;
 	VectorNormalize(dir);
 	g_qeglobals.d_camera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
 	g_qeglobals.d_camera.angles[0] = asin(dir[2]) * 180 / Q_PI;
@@ -64,7 +64,7 @@ advance camera to previous point
 */
 void Pointfile_Prev ()
 {
-	vec3_t	dir;
+	vec3	dir;
 
 	if (s_check_point == 0)
 	{
@@ -72,13 +72,13 @@ void Pointfile_Prev ()
 		return;
 	}
 	s_check_point--;
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_camera.origin);
+	g_qeglobals.d_camera.origin = s_pointvecs[s_check_point];
 	// lunaran - grid view reunification
 	for (int i = 0; i < 4; i++)
 	{
-		VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz[i].origin);
+		g_qeglobals.d_xyz[i].origin = s_pointvecs[s_check_point];
 	}
-	VectorSubtract(s_pointvecs[s_check_point + 1], g_qeglobals.d_camera.origin, dir);
+	dir = s_pointvecs[s_check_point + 1] - g_qeglobals.d_camera.origin;
 	VectorNormalize(dir);
 	g_qeglobals.d_camera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
 	g_qeglobals.d_camera.angles[0] = asin(dir[2]) * 180 / Q_PI;
@@ -95,7 +95,7 @@ bool Pointfile_Check ()
 {
 	char	name[1024];
 	FILE   *f;
-	vec3_t	v;
+	vec3	v;
 
 	strcpy(name, g_map.name);
 	StripExtension(name);
@@ -123,10 +123,10 @@ bool Pointfile_Check ()
 			break;
 		if (s_num_points < MAX_POINTFILE)
 		{
-			VectorCopy(v, s_pointvecs[s_num_points]);
+			s_pointvecs[s_num_points] = v;
 			s_num_points++;
 		}
-		glVertex3fv(v);
+		glVertex3fv(&v.x);
 	} while (1);
 	glEnd();
 	glLineWidth(1);
@@ -155,7 +155,7 @@ void Pointfile_Draw ()
 	glBegin(GL_LINE_STRIP);
 
 	for (i = 0; i < s_num_points; i++)
-		glVertex3fv(s_pointvecs[i]);
+		glVertex3fv(&s_pointvecs[i].x);
 
 	glEnd();
 	glLineWidth(1);

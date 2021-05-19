@@ -94,10 +94,12 @@ void Palette::GenerateGammaTable(byte *gammatable)
 	}
 }
 
-void Palette::ColorAsVec3(byte i, vec3_t c)
+vec3 Palette::ColorAsVec3(const byte i)
 {
+	vec3 c;
 	c[0] = pal[i].r / 255.0f;
 	c[1] = pal[i].g / 255.0f;
 	c[2] = pal[i].b / 255.0f;
+	return c;
 }
 

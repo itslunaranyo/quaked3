@@ -5,8 +5,8 @@
 #include "qe3.h"
 
 
-#define	SPEED_MOVE	32
-#define	SPEED_TURN	22.5
+#define	SPEED_MOVE	32.0f
+#define	SPEED_TURN	22.5f
 
 qeglobals_t  g_qeglobals;
 
@@ -148,7 +148,7 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(0, 5);
 		else
-			VectorMA(g_qeglobals.d_camera.origin, SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
+			g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + SPEED_MOVE * g_qeglobals.d_camera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -163,7 +163,7 @@ bool QE_KeyDown (int key)
 		else if (GetKeyState(VK_CONTROL) < 0)
 			Surf_ScaleTexture(0, -5);
 		else
-			VectorMA(g_qeglobals.d_camera.origin, -SPEED_MOVE, g_qeglobals.d_camera.forward, g_qeglobals.d_camera.origin);
+			g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + -SPEED_MOVE * g_qeglobals.d_camera.forward;
 
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -217,11 +217,11 @@ bool QE_KeyDown (int key)
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
-		VectorMA (g_qeglobals.d_camera.origin, -SPEED_MOVE, g_qeglobals.d_camera.right, g_qeglobals.d_camera.origin);
+		g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + -SPEED_MOVE * g_qeglobals.d_camera.right;
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_PERIOD:
-		VectorMA (g_qeglobals.d_camera.origin, SPEED_MOVE, g_qeglobals.d_camera.right, g_qeglobals.d_camera.origin);
+		g_qeglobals.d_camera.origin = g_qeglobals.d_camera.origin + SPEED_MOVE * g_qeglobals.d_camera.right;
 		Sys_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case '0':	// sikk - fixed and added shortcut key
