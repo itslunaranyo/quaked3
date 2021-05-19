@@ -21,7 +21,7 @@ double I_FloatTime (void)
 	
 	time(&t);
 	
-	return t;
+	return (double)t;
 #if 0
 	// more precise, less portable
 	struct timeval	tp;
@@ -307,7 +307,7 @@ int LoadFile (char *filename, void **bufferptr)
 	int			 length;
 	FILE		*f;
 	void		*buffer;
-	extern void *qmalloc(size_t size);
+	//extern void *qmalloc(size_t size);
 
 	f = fopen(filename, "rb");
 	if (!f)

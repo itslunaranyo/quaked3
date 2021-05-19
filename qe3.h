@@ -224,7 +224,8 @@ extern UINT		g_unMouseWheel;	// sikk - Mousewheel Handling
 /*
 ** global declarations
 */
-int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
+extern int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
+extern bool	g_bSnapCheck;
 
 //========================================================================
 
@@ -245,7 +246,6 @@ char   *QE_ExpandRelativePath (char *p);
 int		QEW_SetupPixelFormat (HDC hDC, bool zbuffer);
 void	QEW_StopGL (HWND hWnd, HGLRC hGLRC, HDC hDC);
 
-void   *qmalloc (int size);
 char   *CopyString (char *s);
 
 // system functions
@@ -295,13 +295,6 @@ void	ConsoleWnd_Resize(RECT rc);
 // win_ent.c
 void	EntWnd_Create (HINSTANCE hInstance);
 void	EntWnd_Resize(RECT rc);
-
-BOOL CALLBACK FieldWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK EntityListWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL CALLBACK EntityWndProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-LRESULT (CALLBACK* OldFieldWindowProc) (HWND, UINT, WPARAM, LPARAM);
-LRESULT (CALLBACK* OldEntityListWindowProc) (HWND, UINT, WPARAM, LPARAM);
 
 void	EntWnd_RefreshEditEntity();
 void	EntWnd_UpdateListSel();

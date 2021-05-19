@@ -41,14 +41,14 @@ eclass_t *Eclass_InitFromText (char *text)
 	eclass_t   *e;
 	char		color[128];
 
-	e = qmalloc(sizeof(*e));
+	e = (eclass_t*)qmalloc(sizeof(*e));
 	memset(e, 0, sizeof(*e));
 	
 	text += strlen("/*QUAKED ");
 	
 	// grab the name
 	text = COM_Parse(text);
-	e->name = qmalloc(strlen(g_szComToken) + 1);
+	e->name = (char*)qmalloc(strlen(g_szComToken) + 1);
 	strcpy(e->name, g_szComToken);
 	g_szDebugName = e->name;
 	
@@ -123,7 +123,7 @@ eclass_t *Eclass_InitFromText (char *text)
 	
 	// copy the comment block out
 	len = t - text;
-	e->comments = qmalloc(len + 1);
+	e->comments = (char*)qmalloc(len + 1);
 	memcpy(e->comments, text, len);
 #if 0
 	for (i = 0; i < len; i++)
@@ -136,23 +136,23 @@ eclass_t *Eclass_InitFromText (char *text)
 
 	// setup show flags
 	e->nShowFlags = 0;
-	if (strcmpi(e->name, "light") == 0)
+	if (_strcmpi(e->name, "light") == 0)
 		e->nShowFlags |= ECLASS_LIGHT;
 
-	if ((strnicmp(e->name, "info_player_start",			strlen("info_player_start")) == 0) || 
-		(strnicmp(e->name, "info_player_start2",		strlen("info_player_start2")) == 0) || 
-		(strnicmp(e->name, "info_player_deathmatch",	strlen("info_player_deathmatch")) == 0) || 
-		(strnicmp(e->name, "info_player_coop",			strlen("info_player_coop")) == 0) || 
-		(strnicmp(e->name, "info_teleport_destination",	strlen("info_teleport_destination")) == 0) || 
-		(strnicmp(e->name, "info_intermission",			strlen("info_intermission")) == 0) || 
+	if ((_strnicmp(e->name, "info_player_start",			strlen("info_player_start")) == 0) || 
+		(_strnicmp(e->name, "info_player_start2",		strlen("info_player_start2")) == 0) || 
+		(_strnicmp(e->name, "info_player_deathmatch",	strlen("info_player_deathmatch")) == 0) || 
+		(_strnicmp(e->name, "info_player_coop",			strlen("info_player_coop")) == 0) || 
+		(_strnicmp(e->name, "info_teleport_destination",	strlen("info_teleport_destination")) == 0) || 
+		(_strnicmp(e->name, "info_intermission",			strlen("info_intermission")) == 0) || 
 // sikk---> added monsters
-		(strnicmp(e->name, "monster_",					strlen("monster_")) == 0) || 
+		(_strnicmp(e->name, "monster_",					strlen("monster_")) == 0) || 
 // <---sikk
-		(strnicmp(e->name, "path_corner",				strlen("path_corner")) == 0) || 
-		(strnicmp(e->name, "viewthing",					strlen("viewthing")) == 0))
+		(_strnicmp(e->name, "path_corner",				strlen("path_corner")) == 0) || 
+		(_strnicmp(e->name, "viewthing",					strlen("viewthing")) == 0))
 		e->nShowFlags |= ECLASS_ANGLE;
 
-	if (strcmpi(e->name, "path") == 0)
+	if (_strcmpi(e->name, "path") == 0)
 		e->nShowFlags |= ECLASS_PATH;
 	
 	return e;
@@ -174,7 +174,7 @@ void Eclass_InsertAlphabetized (eclass_t *e)
 	}
 
 	s = g_pecEclass;
-	if (stricmp (e->name, s->name) < 0)
+	if (_stricmp (e->name, s->name) < 0)
 	{
 		e->next = s;
 		g_pecEclass = e;
@@ -183,7 +183,7 @@ void Eclass_InsertAlphabetized (eclass_t *e)
 
 	do
 	{
-		if (!s->next || stricmp (e->name, s->next->name) < 0)
+		if (!s->next || _stricmp (e->name, s->next->name) < 0)
 		{
 			e->next = s->next;
 			s->next = e;
@@ -210,7 +210,7 @@ void Eclass_ScanFile (char *filename)
 
 	Sys_Printf("CMD: ScanFile: %s\n", temp);
 
-	size = LoadFile(filename, (void *)&data);
+	size = LoadFile(filename, (void**)&data);
 	
 	for (i = 0; i < size; i++)
 	{
@@ -366,17 +366,17 @@ void SetKeyValue (entity_t *ent, char *key, char *value)
 		if (!strcmp(ep->key, key))
 		{
 			free(ep->value);
-			ep->value = qmalloc(strlen(value) + 1);
+			ep->value = (char*)qmalloc(strlen(value) + 1);
 			strcpy(ep->value, value);
 			return;
 		}
 	}
-	ep = qmalloc(sizeof(*ep));
+	ep = (epair_t*)qmalloc(sizeof(*ep));
 	ep->next = ent->epairs;
 	ent->epairs = ep;
-	ep->key = qmalloc(strlen(key) + 1);
+	ep->key = (char*)qmalloc(strlen(key) + 1);
 	strcpy(ep->key, key);
-	ep->value = qmalloc(strlen(value) + 1);
+	ep->value = (char*)qmalloc(strlen(value) + 1);
 	strcpy(ep->value, value);
 
 	g_bModified = true;
@@ -580,13 +580,13 @@ epair_t *ParseEpair ()
 {
 	epair_t	*e;
 	
-	e = qmalloc(sizeof(*e));
+	e = (epair_t*)qmalloc(sizeof(*e));
 	
-	e->key = qmalloc(strlen(g_szToken) + 1);
+	e->key = (char*)qmalloc(strlen(g_szToken) + 1);
 	strcpy(e->key, g_szToken);
 
 	GetToken(false);
-	e->value = qmalloc(strlen(g_szToken) + 1);
+	e->value = (char*)qmalloc(strlen(g_szToken) + 1);
 	strcpy(e->value, g_szToken);
 
 	return e;
@@ -616,7 +616,7 @@ entity_t *Entity_Parse (bool onlypairs)
 	if (strcmp(g_szToken, "{"))
 		Error("Entity_Parse: { not found.");
 	
-	ent = qmalloc(sizeof(*ent));
+	ent = (entity_t*)qmalloc(sizeof(*ent));
 	ent->entityId = g_nEntityId++;
 	ent->brushes.onext = ent->brushes.oprev = &ent->brushes;
 
@@ -880,7 +880,7 @@ entity_t *Entity_Create (eclass_t *c)
 		}
 
 	// create it
-	e = qmalloc(sizeof(*e));
+	e = (entity_t*)qmalloc(sizeof(*e));
 	e->entityId = g_nEntityId++;	// sikk - Undo/Redo
 	e->brushes.onext = e->brushes.oprev = &e->brushes;
 	e->eclass = c;
@@ -973,7 +973,7 @@ entity_t *Entity_Clone (entity_t *e)
 	entity_t	*n;
 	epair_t		*ep, *np;
 
-	n = qmalloc(sizeof(*n));
+	n = (entity_t*)qmalloc(sizeof(*n));
 	n->entityId = g_nEntityId++;	// sikk - Undo/Redo
 	n->brushes.onext = n->brushes.oprev = &n->brushes;
 	n->eclass = e->eclass;
@@ -986,7 +986,7 @@ entity_t *Entity_Clone (entity_t *e)
 
 	for (ep = e->epairs; ep; ep = ep->next)
 	{
-		np = qmalloc(sizeof(*np));
+		np = (epair_t*)qmalloc(sizeof(*np));
 		np->key = CopyString(ep->key);
 		np->value = CopyString(ep->value);
 		np->next = n->epairs;

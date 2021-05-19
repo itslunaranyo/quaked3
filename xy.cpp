@@ -988,7 +988,7 @@ bool FilterBrush (brush_t *b)
 		return (b->owner->eclass->nShowFlags & ECLASS_LIGHT);
 
 	if (g_qeglobals.d_savedinfo.nExclude & EXCLUDE_PATHS)
-		return (b->owner->eclass->nShowFlags & ECLASS_PATH);
+		return ((b->owner->eclass->nShowFlags & ECLASS_PATH) != 0);
 
 	return false;
 }

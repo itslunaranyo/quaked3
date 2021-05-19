@@ -44,12 +44,12 @@ void Texture_Init ()
 	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
 	// lunaran - check both, old location was hardcoded because that's where quake.exe expects it to be
 	sprintf(name, "%s/gfx/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
-	LoadFile(name, &pal);
+	LoadFile(name, (void**)&pal);
 	if (!pal)
 	{
 		Sys_Printf("Could not load %s, trying texturepath ...\n", name);
 		sprintf(name, "%s/palette.lmp", ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
-		LoadFile(name, &pal);
+		LoadFile(name, (void**)&pal);
 		if (!pal)
 		{
 			Error("Could not load %s", name);
@@ -352,14 +352,14 @@ qtexture_t *Texture_LoadTexture (miptex_t *qtex)
 	int			total[3];
     qtexture_t *q;
     
-    q = qmalloc(sizeof(*q));
+    q = (qtexture_t*)qmalloc(sizeof(*q));
     width = LittleLong(qtex->width);
     height = LittleLong(qtex->height);
 
     q->width = width;
     q->height = height;
 
-	dest = qmalloc(width * height * 4);
+	dest = (unsigned int*)qmalloc(width * height * 4);
 
     count = width * height;
     source = (byte *)qtex + LittleLong(qtex->offsets[0]);
@@ -410,7 +410,7 @@ qtexture_t *Texture_CreateSolid (char *name)
 	byte		data[4];
 	qtexture_t *q;
 
-    q = qmalloc(sizeof(*q));
+    q = (qtexture_t*)qmalloc(sizeof(*q));
 	
 	sscanf(name, "(%f %f %f)", &q->color[0], &q->color[1], &q->color[2]);
 
@@ -444,7 +444,7 @@ void Texture_MakeNotexture ()
     qtexture_t *q;
     byte		data[4][4];
 
-	notexture = q = qmalloc(sizeof(*q));
+	notexture = q = (qtexture_t*)qmalloc(sizeof(*q));
 	strcpy(q->name, "notexture");
     q->width = q->height = 64;
 	q->wad = NULL;
@@ -672,7 +672,7 @@ void Texture_InitFromWad (char *file)
 //	LoadFileNoCrash (filepath, (void **)&wadfile);
 	LoadFile(filepath, (void **)&wadfile);
 
-	if (strncmp(wadfile, "WAD2", 4))
+	if (strncmp((char*)wadfile, "WAD2", 4))
 	{
 		Sys_Printf("WARNING: %s is not a valid wadfile.\n", file);
 		free(wadfile);
@@ -683,7 +683,7 @@ void Texture_InitFromWad (char *file)
 	numlumps = LittleLong(wadinfo->numlumps);
 	lumpinfo = (lumpinfo_t *)(wadfile + LittleLong(wadinfo->infotableofs));
 
-	wname = qmalloc(32 * sizeof(char));	// we do leak this tiny bit of memory if the same wad is loaded twice but I can live with that
+	wname = (char*)qmalloc(32 * sizeof(char));	// we do leak this tiny bit of memory if the same wad is loaded twice but I can live with that
 	strncpy(wname, file, 31);
 
 	for (i = 0; i < numlumps; i++, lumpinfo++)
@@ -832,7 +832,7 @@ void TexWnd_Layout()
 	}
 	if (!g_qeglobals.d_texturewin.count) return;
 
-	g_qeglobals.d_texturewin.layout = qmalloc(sizeof(texWndPlacement_t) * g_qeglobals.d_texturewin.count);
+	g_qeglobals.d_texturewin.layout = (texWndPlacement_t*)qmalloc(sizeof(texWndPlacement_t) * g_qeglobals.d_texturewin.count);
 
 	curIdx = 0;
 	wad = NULL;
@@ -925,7 +925,7 @@ void Texture_ChooseTexture (texdef_t *texdef, bool bSetSelection)
 	for (int i = 0; i < g_qeglobals.d_texturewin.count; i++)
 	{
 		twp = &g_qeglobals.d_texturewin.layout[i];
-		if (!strcmpi(texdef->name, twp->tex->name))
+		if (!_strcmpi(texdef->name, twp->tex->name))
 		{
 			if (twp->y > g_qeglobals.d_texturewin.originy)
 			{
@@ -1241,7 +1241,7 @@ void TexWnd_Draw (int width, int height)
 			glEnd();
 
 			// draw the selection border
-			if (!strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
+			if (!_strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
 			{
 				glLineWidth(3);
 				glColor3f(1, 0, 0);

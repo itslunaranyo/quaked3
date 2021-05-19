@@ -178,7 +178,7 @@ void LoadLBM (char *filename, byte **picture, byte **palette)
 			break;
 
 		case CMAPID:
-			cmapbuffer = malloc(768);
+			cmapbuffer = (byte*)malloc(768);
 			memset(cmapbuffer, 0, 768);
 			memcpy(cmapbuffer, LBM_P, chunklength);
 			break;
@@ -186,7 +186,7 @@ void LoadLBM (char *filename, byte **picture, byte **palette)
 		case BODYID:
 			body_p = LBM_P;
 
-			pic_p = picbuffer = malloc(bmhd.w * bmhd.h);
+			pic_p = picbuffer = (byte*)malloc(bmhd.w * bmhd.h);
 			if (formtype == PBMID)
 			{
 				// unpack PBM
@@ -242,7 +242,7 @@ void WriteLBMfile (char *filename, byte *data,
 	int		length;
 	bmhd_t  basebmhd;
 
-	lbm = lbmptr = malloc(width * height + 1000);
+	lbm = lbmptr = (byte*)malloc(width * height + 1000);
 
 	// start FORM
 	*lbmptr++ = 'F';
@@ -406,7 +406,7 @@ void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *heigh
 	
 	if (palette)
 	{
-		*palette = malloc(768);
+		*palette = (byte*)malloc(768);
 		memcpy(*palette, (byte *)pcx + len - 768, 768);
 	}
 
@@ -418,7 +418,7 @@ void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *heigh
 	if (!pic)
 		return;
 
-	out = malloc((pcx->ymax + 1) * (pcx->xmax + 1));
+	out = (byte*)malloc((pcx->ymax + 1) * (pcx->xmax + 1));
 	if (!out)
 		Error("Skin_Cache: Could not allocate.");
 
@@ -462,7 +462,7 @@ void WritePCXfile (char *filename, byte *data, int width, int height, byte *pale
 	pcx_t  *pcx;
 	byte   *pack;
 	  
-	pcx = malloc(width * height * 2 + 1000);
+	pcx = (pcx_t*)malloc(width * height * 2 + 1000);
 	memset (pcx, 0, sizeof(*pcx));
 
 	pcx->manufacturer = 0x0a;	// PCX id
@@ -663,7 +663,7 @@ void LoadTGA (char *name, byte **pixels, int *width, int *height)
 		*width = columns;
 	if (height)
 		*height = rows;
-	targa_rgba = malloc(numPixels * 4);
+	targa_rgba = (byte*)malloc(numPixels * 4);
 	*pixels = targa_rgba;
 
 	if (targa_header.id_length != 0)

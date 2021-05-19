@@ -43,7 +43,7 @@ extern face_t		*g_pfaceSelectedFaces[MAX_MAP_FACES];
 
 //extern face_t		*g_pfaceSelectedFace;
 //extern brush_t	*g_pfaceSelectedFaceBrush;	// sikk - g_pfaceSelectedFace has "owner" brush
-vec3_t				g_v3RotateOrigin;	// sikk - Free Rotate
+extern vec3_t		g_v3RotateOrigin;	// sikk - Free Rotate
 
 //========================================================================
 

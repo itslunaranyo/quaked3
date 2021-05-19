@@ -102,8 +102,8 @@ void NewBspCommand (HWND hwndDlg)
 
 	if (i != CB_ERR && i != CB_ERRSPACE)
 	{
-		g_szBspNames[index] = strdup(buf);
-		g_szBspCommands[index] = strdup("");
+		g_szBspNames[index] = _strdup(buf);
+		g_szBspCommands[index] = _strdup("");
 		SendMessage(h, CB_SETCURSEL, (WPARAM)i, 0);
 		SendMessage(hwndDlg, WM_COMMAND, (WPARAM)(CBN_SELCHANGE << 16) + IDC_COMBO_BSPNAME, (LPARAM)h);
 	}
@@ -160,7 +160,7 @@ void AcceptBspCommand (HWND hwndDlg)
 	index = GetBspIndex(buf);
 	GetDlgItemText(hwndDlg, IDC_EDIT_BSPCOMMAND, buf2, 511);
 	free(g_szBspCommands[index]);
-	g_szBspCommands[index] = strdup(buf2);
+	g_szBspCommands[index] = _strdup(buf2);
 }
 
 //=======================================================================
@@ -642,7 +642,7 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 	switch (uMsg)
     {
 	case WM_INITDIALOG:
-		hb = LoadImage(g_qeglobals.d_hInstance, (LPCTSTR)IDB_FIND, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
+		hb = (HBITMAP)LoadImage(g_qeglobals.d_hInstance, (LPCTSTR)IDB_FIND, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
 				
 		for (i = 0; i < MAX_BSPCOMMANDS; i++)
 		{
@@ -722,8 +722,8 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 						}
 					}
 					buf[i2] = 0;
-					g_szBspNames[index] = strdup(name);
-					g_szBspCommands[index] = strdup(buf);
+					g_szBspNames[index] = _strdup(name);
+					g_szBspCommands[index] = _strdup(buf);
 				}
 			}
 			SendMessage(h, CB_SETCURSEL, 0, 0);

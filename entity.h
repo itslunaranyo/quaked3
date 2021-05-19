@@ -60,10 +60,13 @@ void		Eclass_ScanFile (char *filename);
 void		SetSpawnFlag(entity_t *ent, int flag, bool on);
 char	   *ValueForKey (entity_t *ent, char *key);
 void		SetKeyValue (entity_t *ent, char *key, char *value);
+void		SetKeyValueIVector(entity_t *ent, char *key, vec3_t vec);
+void		SetKeyValueFVector(entity_t *ent, char *key, vec3_t vec);
 void 		DeleteKey (entity_t *ent, char *key);
 float		FloatForKey (entity_t *ent, char *key);
 int			IntForKey (entity_t *ent, char *key);
 void 		GetVectorForKey (entity_t *ent, char *key, vec3_t vec);
+
 void		Entity_Free (entity_t *e);
 entity_t   *Entity_Parse (bool onlypairs);
 void		Entity_Write (entity_t *e, FILE *f, bool use_region);

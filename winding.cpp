@@ -121,7 +121,7 @@ winding_t *Winding_Clone (winding_t *w)
 	winding_t *c;
 	
 	size = (int)((winding_t *)0)->points[w->numpoints];
-	c = qmalloc(size);
+	c = (winding_t*)qmalloc(size);
 	memcpy(c, w, size);
 
 	return c;

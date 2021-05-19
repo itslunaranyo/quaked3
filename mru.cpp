@@ -436,12 +436,15 @@ BOOL LoadMruInIni (LPMRUMENU lpMruMenu, LPSTR lpszSection, LPSTR lpszFile)
 
 BOOL IsWin395OrHigher(void)
 {
+	/*
 	WORD wVer;
 
 	wVer = LOWORD(GetVersion());
 	wVer = (((WORD)LOBYTE(wVer)) << 8) | (WORD)HIBYTE(wVer);
 
 	return (wVer >= 0x035F);              // 5F = 95 dec
+	*/
+	return true;	// lunaran - of course it is
 }
 
 //*************************************************************
@@ -487,7 +490,7 @@ BOOL SaveMruInReg (LPMRUMENU lpMruMenu, LPSTR lpszKey)
 		wsprintf(szEntry, "File%lu", (DWORD)i + 1);
 		if (!GetMenuItem(lpMruMenu, i, FALSE, lpTxt, lpMruMenu->wMaxSizeLruItem + 10))
 			*lpTxt = '\0';
-		RegSetValueEx(hCurKey, szEntry, 0, REG_SZ, lpTxt, lstrlen(lpTxt));
+		RegSetValueEx(hCurKey, szEntry, 0, REG_SZ, (BYTE*)lpTxt, lstrlen(lpTxt));
     }
 	RegCloseKey(hCurKey);
 	GlobalFreePtr(lpTxt);
@@ -569,6 +572,7 @@ BOOL LoadMruInReg (LPMRUMENU lpMruMenu, LPSTR lpszKey)
 //              09/24/94   G. Vollant   Created
 //
 //*************************************************************
+/*
 WIN32KIND GetWin32Kind ()
 {
 	BOOL IsWin395OrHigher(void);
@@ -585,4 +589,6 @@ WIN32KIND GetWin32Kind ()
 	else
 		return WIN32S;
 }
+*/
+
 #endif

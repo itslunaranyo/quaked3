@@ -5,6 +5,13 @@
 #include "qe3.h"
 
 
+BOOL CALLBACK FieldWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK EntityListWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK EntityWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+LRESULT(CALLBACK* OldFieldWindowProc) (HWND, UINT, WPARAM, LPARAM);
+LRESULT(CALLBACK* OldEntityListWindowProc) (HWND, UINT, WPARAM, LPARAM);
+
 
 /*
 ===============================================================
@@ -217,7 +224,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
 		5, 5, 180, 99,
 		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_LIST,
+		(HMENU)IDC_E_LIST,
 		g_qeglobals.d_hInstance,
 		NULL);
 	if (!g_hwndEnt[ENT_CLASSLIST])
@@ -229,7 +236,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		LBS_NOTIFY | LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_USETABSTOPS | WS_CHILD | WS_VISIBLE | WS_VSCROLL,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_PROPS,
+		(HMENU)IDC_E_PROPS,
 		g_qeglobals.d_hInstance,
 		NULL);
 	if (!g_hwndEnt[ENT_PROPS])
@@ -241,7 +248,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		ES_MULTILINE | ES_READONLY | WS_CHILD | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_COMMENT,
+		(HMENU)IDC_E_COMMENT,
 		g_qeglobals.d_hInstance,
 		NULL);
 	if (!g_hwndEnt[ENT_COMMENT])
@@ -253,7 +260,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_KEY_FIELD,
+		(HMENU)IDC_E_KEY_FIELD,
 		g_qeglobals.d_hInstance,
 		NULL);
 	if (!g_hwndEnt[ENT_KEYFIELD])
@@ -265,7 +272,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 		ES_AUTOHSCROLL | WS_CHILD | WS_TABSTOP | WS_VISIBLE,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndEntity,
-		(void *)IDC_E_VALUE_FIELD,
+		(HMENU)IDC_E_VALUE_FIELD,
 		g_qeglobals.d_hInstance,
 		NULL);
 	if (!g_hwndEnt[ENT_VALUEFIELD])
@@ -281,7 +288,7 @@ void EntWnd_CreateControls(HINSTANCE hInstance)
 			BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE,
 			5, 100, 180, 99,
 			entwindow,
-			(void *)IDC_E_STATUS,
+			(HMENU)IDC_E_STATUS,
 			main_instance,
 			NULL);
 		if (!g_hwndEnt[ENT_CHECK1 + i])
@@ -338,11 +345,11 @@ void EntWnd_Create (HINSTANCE hInstance)
 
 	EntWnd_CreateControls(hInstance);
 
-	OldFieldWindowProc = (void *)GetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC);
+	OldFieldWindowProc = (WNDPROC)GetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC);
 	SetWindowLong(g_hwndEnt[ENT_KEYFIELD], GWL_WNDPROC, (long)FieldWndProc);
 	SetWindowLong(g_hwndEnt[ENT_VALUEFIELD], GWL_WNDPROC, (long)FieldWndProc);
 
-	OldEntityListWindowProc = (void *)GetWindowLong(g_hwndEnt[ENT_CLASSLIST], GWL_WNDPROC);
+	OldEntityListWindowProc = (WNDPROC)GetWindowLong(g_hwndEnt[ENT_CLASSLIST], GWL_WNDPROC);
 	SetWindowLong(g_hwndEnt[ENT_CLASSLIST], GWL_WNDPROC, (long)EntityListWndProc);
 
 	EntWnd_FillClassList();
@@ -452,7 +459,7 @@ void EntWnd_RefreshEditEntity()
 			}
 			for (ep = eo->epairs; ep; ep = ep->next)
 			{
-				if (!strcmpi(ep->key, "spawnflags"))
+				if (!_strcmpi(ep->key, "spawnflags"))
 				{
 					EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), true);
 				}
@@ -464,16 +471,16 @@ void EntWnd_RefreshEditEntity()
 		{
 			for (int i = 0; i < 8; i++)
 			{
-				if (stricmp(g_szEditFlagNames[i], eo->eclass->flagnames[i]))
+				if (_stricmp(g_szEditFlagNames[i], eo->eclass->flagnames[i]))
 					strncpy(g_szEditFlagNames[i], "~\0", 2);
 			}
-			if (!strcmpi(ep->key, "spawnflags"))
+			if (!_strcmpi(ep->key, "spawnflags"))
 			{
 				EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), false);
 			}
 			if (!*ValueForKey(&g_eEditEntity, ep->key))
 				SetKeyValue(&g_eEditEntity, ep->key, ep->value);
-			else if (strcmpi(ValueForKey(&g_eEditEntity, ep->key), ep->value) == 0)
+			else if (_strcmpi(ValueForKey(&g_eEditEntity, ep->key), ep->value) == 0)
 				continue;
 			else
 				SetKeyValue(&g_eEditEntity, ep->key, KVMIXED);
@@ -505,7 +512,7 @@ void EntWnd_RefreshKeyValues ()
 	// Walk through list and add pairs
 	for (pep = g_eEditEntity.epairs; pep; pep = pep->next)
 	{
-		if (!strcmpi(pep->value, KVMIXED))
+		if (!_strcmpi(pep->value, KVMIXED))
 			sprintf(sz, "%s\t%s", pep->key, KVMIXEDLABEL);
 		else
 			sprintf(sz, "%s\t%s", pep->key, pep->value);
@@ -683,7 +690,7 @@ void EntWnd_CreateEntity ()
 
 	SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
 
-	if (!stricmp(sz, "worldspawn"))
+	if (!_stricmp(sz, "worldspawn"))
 	{
 	    MessageBox(g_qeglobals.d_hwndMain, "Cannot create a new worldspawn entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
 		return;
@@ -785,7 +792,7 @@ void EntWnd_EditKeyValue ()
 		val++;
 
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)sz);
-	if (strcmpi(val, KVMIXEDLABEL))
+	if (_strcmpi(val, KVMIXEDLABEL))
 		SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)val);
 	else
 		SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)"");
@@ -959,7 +966,7 @@ BOOL CALLBACK EntityWndProc (
 			break;
 		case IDC_E_COLOR:
 			InspWnd_ToTop();
-			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == true)
+			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == TRUE)
 			{
 				extern void EntWnd_AddKeyValue(void);
 				

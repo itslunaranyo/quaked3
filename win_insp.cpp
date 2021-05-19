@@ -248,7 +248,7 @@ void ConsoleWnd_Create(HINSTANCE hInstance)
 		ES_MULTILINE | ES_READONLY | WS_CHILD | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL,
 		5, 100, 180, 99,
 		g_qeglobals.d_hwndInspector,
-		(void *)IDC_E_STATUS,
+		(HMENU)IDC_E_STATUS,
 		g_qeglobals.d_hInstance,
 		NULL);
 

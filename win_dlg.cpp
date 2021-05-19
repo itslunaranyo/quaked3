@@ -39,7 +39,7 @@ BOOL CALLBACK AboutDlgProc(
 		sprintf(szRenderer, "Renderer:\t%s", glGetString(GL_RENDERER));
 		sprintf(szVersion, "Version:\t\t%s", glGetString(GL_VERSION));
 		sprintf(szVendor, "Vendor:\t\t%s", glGetString(GL_VENDOR));
-		strncpy(szExtensions, glGetString(GL_EXTENSIONS),8192);
+		strncpy(szExtensions, (char*)glGetString(GL_EXTENSIONS),8192);
 		szExtensionscopy[0] = 0;
 
 		for (psz = strtok(szExtensions, " \n\t"); psz; psz = strtok(NULL, " \n"))
@@ -239,7 +239,6 @@ void DoFindBrush ()
 =====================================================================
 */
 
-bool	g_bSnapCheck;
 
 /*
 ============
@@ -1568,7 +1567,7 @@ BOOL CALLBACK PreferencesDlgProc (
 		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)nGamma); 
 
 		// Set Button Bitmaps
-		hb = LoadImage(g_qeglobals.d_hInstance, (LPCTSTR)IDB_FIND, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
+		hb = (HBITMAP)LoadImage(g_qeglobals.d_hInstance, (LPCTSTR)IDB_FIND, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
 		SendDlgItemMessage(hwndDlg, IDC_BUTTON_GAMEPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
 		SendDlgItemMessage(hwndDlg, IDC_BUTTON_PREFABPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
 

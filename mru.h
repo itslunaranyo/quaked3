@@ -61,6 +61,8 @@ BOOL LoadMruInIni (LPMRUMENU lpMruMenu, LPSTR lpszSection, LPSTR lpszFile);
 BOOL SaveMruInReg (LPMRUMENU lpMruMenu, LPSTR lpszKey);
 BOOL LoadMruInReg (LPMRUMENU lpMruMenu, LPSTR lpszKey);
 
+// lunaran - unused
+/*
 typedef enum 
 {
 	WIN32S,
@@ -68,6 +70,7 @@ typedef enum
 	WIN95ORGREATHER
 } WIN32KIND;
 WIN32KIND GetWin32Kind();
+*/
 #endif
 
 //////////////////////////////////////////////////////////////

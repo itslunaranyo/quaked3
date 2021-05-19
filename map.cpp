@@ -25,7 +25,7 @@ entity_t	g_entCopiedEntities;	// sikk - For Cut/Copy/Paste
 brush_t		g_brBetweenBrushes;
 entity_t	g_entBetweenEntities;
 
-
+int	g_nNumBrushes, g_nNumEntities, g_nNumTextures;
 
 
 /*
@@ -432,7 +432,7 @@ void Map_New ()
 	Sys_Printf("CMD: Map_New\n");
 	Map_Free();
 
-	g_peWorldEntity = qmalloc(sizeof(*g_peWorldEntity));
+	g_peWorldEntity = (entity_t*)qmalloc(sizeof(*g_peWorldEntity));
 	g_peWorldEntity->brushes.onext = g_peWorldEntity->brushes.oprev = &g_peWorldEntity->brushes;
 	SetKeyValue(g_peWorldEntity, "classname", "worldspawn");
 // sikk---> Wad Loading

@@ -29,7 +29,7 @@ typedef struct
 
 //========================================================================
 
-int g_nCamButtonState;
+extern int g_nCamButtonState;
 
 //extern camera_t	camera;	// sikk - moved to qeglobals_t
 

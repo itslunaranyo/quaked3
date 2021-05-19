@@ -13,6 +13,8 @@ vec3_t	g_v3SelectOrigin;
 vec3_t	g_v3SelectMatrix[3];
 bool	g_bSelectFlipOrder;
 
+vec3_t				g_v3RotateOrigin;	// sikk - Free Rotate
+
 
 //============================================================
 //
@@ -1021,7 +1023,7 @@ void Select_NextBrushInGroup()
 	b = g_brSelectedBrushes.next;
 	if (b != &g_brSelectedBrushes)
 	{
-		if (strcmpi(b->owner->eclass->name, "worldspawn") != 0)
+		if (_strcmpi(b->owner->eclass->name, "worldspawn") != 0)
 		{
 			e = b->owner;
 			Select_DeselectAll(true);
@@ -1594,7 +1596,7 @@ void Select_InsertBrush ()
 	}
 
 	// create it
-	e = qmalloc(sizeof(*e));
+	e = (entity_t*)qmalloc(sizeof(*e));
 //	e->entityId = g_nEntityId++;	// sikk - Undo/Redo
 	e->brushes.onext = e->brushes.oprev = &e->brushes;
 	e->eclass = ec;

@@ -17,6 +17,8 @@ brush_t    *g_pbrTransBrushes[MAX_MAP_BRUSHES];
 int			g_nNumTransBrushes;
 // <---sikk
 
+int g_nCamButtonState;
+
 /*
 ============
 Cam_Init

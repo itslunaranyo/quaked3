@@ -141,7 +141,7 @@ brush_t* Brush_ConvexMerge(brush_t *bList)
 		pointBufSize = 0;
 		for (b = bList; b; b = b->next) for (bf = b->brush_faces; bf; bf = bf->next)
 			pointBufSize += bf->face_winding->numpoints;
-		pointBuf = qmalloc(sizeof(vec_t) * 3 * pointBufSize);
+		pointBuf = (vec_t*)qmalloc(sizeof(vec_t) * 3 * pointBufSize);
 
 		numPoints = 0;
 		nextPoint = pointBuf;
@@ -168,7 +168,7 @@ brush_t* Brush_ConvexMerge(brush_t *bList)
 	}
 
 	numPlanes = numPoints * 2 - 4;
-	planeBuf = qmalloc(sizeof(plane_t) * numPlanes);
+	planeBuf = (plane_t*)qmalloc(sizeof(plane_t) * numPlanes);
 	result = Brush_Alloc();
 
 	// find all planes defined by the outermost points
@@ -177,7 +177,7 @@ brush_t* Brush_ConvexMerge(brush_t *bList)
 		int		x, y, z, t;
 		int		lCount, rCount, pl;
 		float	dot;
-		vec3_t	dp;
+	//	vec3_t	dp;
 		vec_t	*pT;
 
 		pl = 0;
@@ -420,7 +420,7 @@ brush_t *Brush_Merge (brush_t *brush1, brush_t *brush2, int onlyshape)
 			if (Plane_Equal(&face1->plane, &face2->plane, false))
 			{
 				//if the texture references should be the same but are not
-				if (!onlyshape && stricmp(face1->texdef.name, face2->texdef.name) != 0) 
+				if (!onlyshape && _stricmp(face1->texdef.name, face2->texdef.name) != 0) 
 					return NULL;
 				continue;
 			}
@@ -646,7 +646,7 @@ brush_t *Brush_MergeList (brush_t *brushlist, int onlyshape)
 					if (Plane_Equal(&face1->plane, &face2->plane, false))
 					{
 						//if the texture references should be the same but are not
-						if (!onlyshape && stricmp(face1->texdef.name, face2->texdef.name) != 0) 
+						if (!onlyshape && _stricmp(face1->texdef.name, face2->texdef.name) != 0) 
 							return NULL;
 						continue;
 					}
@@ -900,7 +900,7 @@ CSG_Merge
 void CSG_Merge ()
 {
 	brush_t		*b, *next, *newlist, *newbrush;
-	entity_t	*owner;
+	//entity_t	*owner;
 
 	Sys_Printf("CMD: CSG Merging...\n");
 

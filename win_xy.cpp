@@ -1,16 +1,15 @@
 //==============================
-//	win_xz.c
+//	win_xy.c
 //==============================
 
-// windows specific xz view code
+// windows specific xy view code
 
 #include "qe3.h"
 
+static HDC   s_hdcXY;
+static HGLRC s_hglrcXY;
 
-static HDC   s_hdcXZ;
-static HGLRC s_hglrcXZ;
-
-static unsigned s_stippleXZ[32] =
+static unsigned s_stipple[32] =
 {
 	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
 	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
@@ -19,7 +18,7 @@ static unsigned s_stippleXZ[32] =
 	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
 	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
 	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
-	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555
+	0xaaaaaaaa, 0x55555555,0xaaaaaaaa, 0x55555555,
 };
 
 // sikk---> Context Menu
@@ -30,14 +29,92 @@ static unsigned s_stippleXZ[32] =
 int		g_nMouseX, g_nMouseY;
 bool	g_bMoved;
 vec3_t	g_v3Origin;
+int		g_dXYZcurrent;	// ugh come on
 
+
+xyz_t* XYZWnd_WinFromHandle(HWND xyzwin)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		if (g_qeglobals.d_hwndXYZ[i] == xyzwin)
+			return &g_qeglobals.d_xyz[i];
+	}
+	if (g_dXYZcurrent != -1)
+		return &g_qeglobals.d_xyz[g_dXYZcurrent];
+	return NULL;
+}
+HWND XYZWnd_HandleFromWin(xyz_t* xyz)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		if (&g_qeglobals.d_xyz[i] == xyz)
+			return g_qeglobals.d_hwndXYZ[i];
+	}
+	return NULL;
+}
 
 /*
 ============
-DoXZPopupMenu
+XYZWnd_SetViewAxis
 ============
 */
-void DoXZPopupMenu (int x, int y)
+void XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis)
+{
+	xyz_t* xyz = XYZWnd_WinFromHandle(xyzwin);
+	xyz->dViewType = viewAxis;
+
+	if (xyz->dViewType == YZ)
+		SetWindowText(xyzwin, "YZ View: Side");
+	else if (xyz->dViewType == XZ)
+		SetWindowText(xyzwin, "XZ View: Front");
+	else
+		SetWindowText(xyzwin, "XY View: Top");
+
+	XYZ_PositionView(xyz);
+	Sys_UpdateWindows(W_XY);
+}
+
+/*
+============
+XYZWnd_CycleViewAxis
+============
+*/
+void XYZWnd_CycleViewAxis(HWND xyzwin)
+{
+	xyz_t* xyz = XYZWnd_WinFromHandle(xyzwin);
+	XYZWnd_SetViewAxis(xyzwin, (xyz->dViewType + 1) % 3);
+}
+
+/*
+============
+GetSelectionInfo
+============
+*/
+int GetSelectionInfo ()
+{
+	int		 retval = 0;
+	brush_t	*b;
+
+	// lunaran TODO: what the fuck
+	for(b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		if(b->owner->eclass->fixedsize)
+			retval = SELECTION_POINTENT;
+		else if(!_stricmp(b->owner->eclass->name, "worldspawn"))
+			retval = SELECTION_BRUSHES;
+		else
+			retval = SELECTION_BRUSHENT;
+	}
+
+	return retval;
+}
+
+/*
+============
+XYZWnd_DoPopupMenu
+============
+*/
+void XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y)
 {
 	HMENU	hMenu;
 	POINT	point;
@@ -76,8 +153,8 @@ void DoXZPopupMenu (int x, int y)
 	case SELECTION_BRUSHES:
 		EnableMenuItem(hMenu, ID_SELECTION_CONNECT, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_UNGROUPENTITY, MF_GRAYED);
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED);
 		EnableMenuItem(hMenu, ID_SELECTION_INSERTBRUSH, MF_GRAYED);
+		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED);
 		break;
 	default:
 		EnableMenuItem(hMenu, ID_EDIT_CUT, MF_GRAYED);
@@ -106,10 +183,10 @@ void DoXZPopupMenu (int x, int y)
 		break;
 	}
 
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XZ ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_YZ ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_savedinfo.bShow_XYZ[2] ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_savedinfo.bShow_XYZ[1] ? MF_ENABLED : MF_GRAYED));
 		
-	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, g_qeglobals.d_hwndXZ, NULL);
+	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, XYZWnd_HandleFromWin(xyz), NULL);
 
 	switch (retval)
 	{
@@ -120,8 +197,9 @@ void DoXZPopupMenu (int x, int y)
 		DoCreateEntity(false, true, true, g_v3Origin);
 		break;
 	case ID_MENU_CREATEPOINTENTITY:
-		XZ_ToGridPoint(x, y, g_v3Origin);
-		g_v3Origin[1] = g_qeglobals.d_v3WorkMin[1];
+		XYZ_ToGridPoint(xyz, x, y, g_v3Origin);
+		g_v3Origin[xyz->dViewType] = g_qeglobals.d_v3WorkMin[xyz->dViewType];
+
 		DoCreateEntity(true, false, false, g_v3Origin);
 		break;
 	default:
@@ -134,10 +212,10 @@ void DoXZPopupMenu (int x, int y)
 
 /*
 ============
-WXZ_WndProc
+XYZWnd_Proc
 ============
 */
-LONG WINAPI WXZ_WndProc (
+LONG WINAPI XYZWnd_Proc (
     HWND	hWnd,	// handle to window
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -149,40 +227,43 @@ LONG WINAPI WXZ_WndProc (
     PAINTSTRUCT	ps;
 
     GetClientRect(hWnd, &rect);
+	xyz_t* xyz = XYZWnd_WinFromHandle(hWnd);
 
     switch (uMsg)
     {
 	case WM_CREATE:
-		s_hdcXZ = GetDC(hWnd);
+		xyz->hdc = GetDC(hWnd);
 
-		QEW_SetupPixelFormat(s_hdcXZ, false);
+		QEW_SetupPixelFormat(xyz->hdc, false);
 
-		if ((s_hglrcXZ = wglCreateContext(s_hdcXZ)) == 0)
-			Error("WXZ_WndProc: wglCreateContext failed.");
-		if (!wglMakeCurrent(s_hdcXZ, s_hglrcXZ))
-			Error("WXZ_WndProc: wglMakeCurrent failed.");
-		if (!wglShareLists(g_qeglobals.d_hglrcBase, s_hglrcXZ))
-			Error("WXZ_WndProc: wglShareLists failed.");
+		if ((xyz->hglrc = wglCreateContext(xyz->hdc)) == 0)
+			Error("XYZWnd_Proc: wglCreateContext failed.");
 
-		glPolygonStipple((char *)s_stippleXZ);
+		if (!wglMakeCurrent(xyz->hdc, xyz->hglrc))
+			Error("XYZWnd_Proc: wglMakeCurrent failed.");
+
+		if (!wglShareLists(g_qeglobals.d_hglrcBase, xyz->hglrc))
+			Error("XYZWnd_Proc: wglShareLists failed.");
+
+		glPolygonStipple((GLubyte *)s_stipple);
 		glLineStipple(3, 0xaaaa);
 		return 0;
 
 	case WM_DESTROY:
-		QEW_StopGL(hWnd, s_hglrcXZ, s_hdcXZ);
+		QEW_StopGL(hWnd, xyz->hglrc, xyz->hdc);
 		return 0;
 
 	case WM_PAINT:
 	    BeginPaint(hWnd, &ps);
 
-		if (!wglMakeCurrent(s_hdcXZ, s_hglrcXZ))
+		if (!wglMakeCurrent(xyz->hdc, xyz->hglrc))
 			Error("wglMakeCurrent: Failed.");
 
 		QE_CheckOpenGLForErrors();
-		XZ_Draw();
+		XYZ_Draw(xyz);
 		QE_CheckOpenGLForErrors();
 
-		SwapBuffers(s_hdcXZ);
+		SwapBuffers(xyz->hdc);
 
 		EndPaint(hWnd, &ps);
 		return 0;
@@ -195,13 +276,13 @@ LONG WINAPI WXZ_WndProc (
 	case WM_LBUTTONDOWN:
 		if (GetTopWindow(g_qeglobals.d_hwndMain) != hWnd)
 			BringWindowToTop(hWnd);
-		SetFocus(g_qeglobals.d_hwndXZ);
-		SetCapture(g_qeglobals.d_hwndXZ);
-		fwKeys = wParam;	// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
+		SetFocus(hWnd);
+		SetCapture(hWnd);
+		fwKeys = wParam;        // key flags 
+		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
+		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XZ_MouseDown(xPos, yPos, fwKeys);
+		XYZ_MouseDown(xyz, xPos, yPos, fwKeys);
 // sikk---> Context Menu
 		if(uMsg == WM_RBUTTONDOWN)
 		{
@@ -215,16 +296,16 @@ LONG WINAPI WXZ_WndProc (
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 	case WM_LBUTTONUP:
-		fwKeys = wParam;	// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
+		fwKeys = wParam;        // key flags 
+		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
+		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XZ_MouseUp(xPos, yPos, fwKeys);
+		XYZ_MouseUp(xyz, xPos, yPos, fwKeys);
 		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 // sikk---> Context Menu
 		if (uMsg == WM_RBUTTONUP && !g_bMoved)
-			DoXZPopupMenu(xPos, yPos);
+			XYZWnd_DoPopupMenu(xyz, xPos, yPos);
 // <---sikk
 		return 0;
 
@@ -238,11 +319,11 @@ LONG WINAPI WXZ_WndProc (
 // <---sikk
 
 	case WM_MOUSEMOVE:
-		fwKeys = wParam;	// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
+		fwKeys = wParam;        // key flags 
+		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
+		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 		yPos = (int)rect.bottom - 1 - yPos;
-		XZ_MouseMoved(xPos, yPos, fwKeys);
+		XYZ_MouseMoved(xyz, xPos, yPos, fwKeys);
 // sikk---> Context Menu
 		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
 			g_bMoved = true;
@@ -250,9 +331,9 @@ LONG WINAPI WXZ_WndProc (
 		return 0;
 
 	case WM_SIZE:
-		g_qeglobals.d_xz.width = rect.right;
-		g_qeglobals.d_xz.height = rect.bottom;
-		InvalidateRect(g_qeglobals.d_hwndXZ, NULL, FALSE);
+		xyz->width = rect.right;
+		xyz->height = rect.bottom;
+		InvalidateRect(hWnd, NULL, FALSE);
 		return 0;
 // sikk---> Window Management
 	case WM_SIZING:
@@ -265,7 +346,7 @@ LONG WINAPI WXZ_WndProc (
 			return TRUE;
 		break;
 // <---sikk
-	case WM_NCCALCSIZE:	// don't let windows copy pixels
+	case WM_NCCALCSIZE:// don't let windows copy pixels
 		DefWindowProc(hWnd, uMsg, wParam, lParam);
 		return WVR_REDRAW;
 
@@ -284,18 +365,21 @@ LONG WINAPI WXZ_WndProc (
 
 /*
 ==============
-WXZ_Create
+WXY_Create
 ==============
 */
-void WXZ_Create (HINSTANCE hInstance)
+void WXYZ_Create (HINSTANCE hInstance, int slot)
 {
-    WNDCLASS   wc;
+    WNDCLASS	wc;
+	char		szLabel[32];
 
-    /* Register the xz class */
+    /* Register the xy class */
 	memset(&wc, 0, sizeof(wc));
 
-    wc.style         = CS_OWNDC;
-    wc.lpfnWndProc   = (WNDPROC)WXZ_WndProc;
+	sprintf(szLabel, XYZ_WINDOW_CLASS, slot);
+	
+	wc.style         = CS_OWNDC;
+    wc.lpfnWndProc   = (WNDPROC)XYZWnd_Proc;
     wc.cbClsExtra    = 0;
     wc.cbWndExtra    = 0;
     wc.hInstance     = hInstance;
@@ -303,37 +387,47 @@ void WXZ_Create (HINSTANCE hInstance)
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = NULL;
     wc.lpszMenuName  = NULL;
-    wc.lpszClassName = XZ_WINDOW_CLASS;
+	wc.lpszClassName = szLabel;
 
     if (!RegisterClass(&wc))
-        Error("WXZ_Register: Failed.");
+        Error("WXY_Register: Failed.");
 
+	// lunaran: xyz windowproc looks up hwnd to find which xyz window is being called, but 
+	// createwindowex doesn't return the hwnd until after calling the windowproc a few times,
+	// so keep a temporary note to bypass the still-null pointer during those calls
+	g_dXYZcurrent = slot;
 // sikk---> changed window to "tool window"
-	g_qeglobals.d_hwndXZ = CreateWindowEx(
-		WS_EX_TOOLWINDOW,						// extended window style
-		XZ_WINDOW_CLASS,						// registered class name
-		"XZ View: Front",						// window name
-		QE3_CHILD_STYLE,						// window style
-		ZWIN_WIDTH, 384,						// position of window
-		384, 256,								// window size
-		g_qeglobals.d_hwndMain,					// parent or owner window
-		0,										// menu or child-window identifier
-		hInstance,								// application instance
-		NULL);									// window-creation data
+	g_qeglobals.d_hwndXYZ[slot] = CreateWindowEx(
+		WS_EX_TOOLWINDOW,					// extended window style
+		szLabel,							// registered class name
+		"XYZ View",							// window name
+		QE3_CHILD_STYLE,					// window style
+		ZWIN_WIDTH, 64,						// position of window
+		384, 256,							// window size
+		g_qeglobals.d_hwndMain,				// parent or owner window
+		0,									// menu or child-window identifier
+		hInstance,							// application instance
+		NULL);								// window-creation data
 // <---sikk
-	if (!g_qeglobals.d_hwndXZ)
-		Error("Could not create XZ Window.");
+	if (!g_qeglobals.d_hwndXYZ[slot] )
+		Error("Could not create XYZ Window.");
+	g_dXYZcurrent = -1;
 
-	LoadWindowState(g_qeglobals.d_hwndXZ, "XZWindow");
-    ShowWindow(g_qeglobals.d_hwndXZ, SW_SHOWDEFAULT);
+	sprintf(szLabel, "XYZWindow%d", slot);
+	LoadWindowState(g_qeglobals.d_hwndXYZ[slot], szLabel);
+	XYZWnd_SetViewAxis(g_qeglobals.d_hwndXYZ[slot], (slot+2)%3);
+	if (g_qeglobals.d_savedinfo.bShow_XYZ[slot])
+	    ShowWindow(g_qeglobals.d_hwndXYZ[slot], SW_SHOW);
+	else
+		ShowWindow(g_qeglobals.d_hwndXYZ[slot], SW_HIDE);
 }
 
-/*	// sikk - Unused
+/*
 ==================
-WXZ_InitPixelFormat
+WXY_InitPixelFormat
 ==================
 *//*
-static void WXZ_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD)
+static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD)
 {
 	memset(pPFD, 0, sizeof(*pPFD));
 
@@ -349,10 +443,10 @@ static void WXZ_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD)
 
 /*
 ==================
-WXZ_Print
+WXY_Print
 ==================
 */
-void WXZ_Print ()
+void WXY_Print ()
 {
 	PRINTDLG pd;
 	DOCINFO	di;
@@ -363,7 +457,7 @@ void WXZ_Print ()
 	// initialize the PRINTDLG struct and execute it
 	memset(&pd, 0, sizeof(pd));
 	pd.lStructSize = sizeof(pd);
-	pd.hwndOwner = g_qeglobals.d_hwndXZ;
+	pd.hwndOwner = g_qeglobals.d_hwndXYZ[0];
 	pd.Flags = PD_RETURNDC;
 	pd.hInstance = 0;
 	if (!PrintDlg(&pd) || !pd.hDC)
@@ -389,8 +483,8 @@ void WXZ_Print ()
 		return;
 	}
 
-	// read pixels from the XZ window
-	GetWindowRect(g_qeglobals.d_hwndXZ, &r);
+	// read pixels from the XY window
+	GetWindowRect(g_qeglobals.d_hwndXYZ[0], &r);
 
 	bmwidth  = r.right - r.left;
 	bmheight = r.bottom - r.top;
@@ -401,7 +495,7 @@ void WXZ_Print ()
 	StretchBlt(pd.hDC,		// handle to destination device context
 		0, 0,				// x, y coordinate of upper-left corner of destination rectangle
 		pwidth, pheight,	// width, height of destination rectangle
-		s_hdcXZ,			// handle to source device context
+		g_qeglobals.d_xyz[0].hdc,			// handle to source device context
 		0, 0,				// x, y coordinate of upper-left corner of source rectangle
 		bmwidth, bmheight,	// width, height of source rectangle
 		SRCCOPY);			// raster operation code

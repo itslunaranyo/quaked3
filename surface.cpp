@@ -195,7 +195,7 @@ void AbsoluteToLocal(plane_t normal2, face_t *f, vec3_t p1, vec3_t p2, vec3_t p3
 	Clamp(&f->texdef.rotate, 360);
 
 	// lunaran fix: prefer small rotation and fewer negative scales
-	if (abs(f->texdef.rotate) >= 90 && (f->texdef.scale[0] < 0 || f->texdef.scale[1] < 0))
+	if (fabs(f->texdef.rotate) >= 90 && (f->texdef.scale[0] < 0 || f->texdef.scale[1] < 0))
 	{
 		if (f->texdef.rotate < 0)
 			f->texdef.rotate += 180;
@@ -230,7 +230,7 @@ void Surf_FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
 	{
 		for (pFace = pBrush->brush_faces; pFace; pFace = pFace->next)
 		{
-			if (bForce || strcmpi(pFace->texdef.name, pFind) == 0)
+			if (bForce || _strcmpi(pFace->texdef.name, pFind) == 0)
 			{
 				pFace->d_texture = Texture_ForName(pFace->texdef.name);
 				strcpy(pFace->texdef.name, pReplace);

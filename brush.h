@@ -62,16 +62,29 @@ typedef struct brush_s
 // <---sikk
 } brush_t;
 
+class Bush
+{
+	Bush();
+	~Bush();
+
+	Bush	*prev, *next;	// links in active/selected
+	Bush	*oprev, *onext;	// links in entity
+	struct entity_s	*owner;
+	face_t *brush_faces;
+	vec3_t	mins, maxs;
+	bool	hiddenBrush;
+
+	// sikk---> Undo/Redo
+	int undoId;			// undo ID		
+	int redoId;			// redo ID
+	int ownerId;		// entityId of the owner entity for undo
+	// <---sikk
+};
+
 //========================================================================
 
-bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when
-					// a bad texdef is found during saving map so it doesn't
-					// continuously popup with each bad face. It's reset to 
-					// "false" after saving is complete.
-
-int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
-						// brush from spamming the console from bad texture name 
-						// warnings when saving.
+extern bool g_bMBCheck;
+extern int	g_nBrushNumCheck;
 			 
 //========================================================================
 
@@ -105,7 +118,7 @@ brush_t    *Brush_Parse ();
 face_t     *Brush_Ray (vec3_t origin, vec3_t dir, brush_t *b, float *dist);
 void		Brush_RemoveEmptyFaces (brush_t *b);
 void		Brush_SelectFaceForDragging (brush_t *b, face_t *f, bool shear);
-void		Brush_SetTexture (brush_t *b, texdef_t *texdef);
+void		Brush_SetTexture (brush_t *b, texdef_t *texdef, int nSkipFlags);
 void		Brush_SideSelect (brush_t *b, vec3_t origin, vec3_t dir, bool shear);
 void		Brush_SnapPlanepts (brush_t *b);
 void		Brush_Write (brush_t *b, FILE *f);
@@ -115,9 +128,10 @@ winding_t  *Brush_MakeFaceWinding (brush_t *b, face_t *face);
 bool		Brush_Convex (brush_t *b);
 bool		Brush_MoveVertex (brush_t *b, vec3_t vertex, vec3_t delta, vec3_t end);
 void		Brush_ResetFaceOriginals (brush_t *b);
+// <---sikk
+
 void		Face_MakePlane (face_t *f);
 void		Face_SetColor (brush_t *b, face_t *f);
-// <---sikk
 
 face_t	   *Face_Alloc ();
 face_t	   *Face_Clone (face_t *f);

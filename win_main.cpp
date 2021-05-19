@@ -2275,7 +2275,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_MISC_SELECTENTITYCOLOR:
-			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == true)
+			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == TRUE)
 			{
 				char buffer[64];
 				
@@ -2794,8 +2794,8 @@ void WMain_Create (HINSTANCE hInstance)
 	//
 	// load misc info from registry
 	//
-	i = sizeof(g_qeglobals.d_savedinfo);
-	LoadRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, &i);
+	long l = sizeof(g_qeglobals.d_savedinfo);
+	LoadRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, &l);
 	
 	if (g_qeglobals.d_savedinfo.nSize != sizeof(g_qeglobals.d_savedinfo))
 	{
@@ -2981,7 +2981,7 @@ BOOL SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize)
 		return FALSE;
 
 
-	lres = RegSetValueEx(hKeyId, pszName, 0, REG_BINARY, pvBuf, lSize);
+	lres = RegSetValueEx(hKeyId, pszName, 0, REG_BINARY, (BYTE*)pvBuf, lSize);
 
 	RegCloseKey(hKeyId);
 
@@ -3009,7 +3009,7 @@ BOOL LoadRegistryInfo (const char *pszName, void *pvBuf, long *plSize)
 	if (lres != ERROR_SUCCESS)
 		return FALSE;
 
-	lres = RegQueryValueEx(hKey, pszName, NULL, &lType, pvBuf, plSize);
+	lres = RegQueryValueEx(hKey, pszName, NULL, (LPDWORD)&lType, (LPBYTE)pvBuf, (LPDWORD)plSize);
 
 	RegCloseKey(hKey);
 

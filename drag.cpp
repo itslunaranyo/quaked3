@@ -66,7 +66,8 @@ MoveSelection
 */
 void MoveSelection (vec3_t move)
 {
-	int			i, success;
+	int			i;
+	bool		success;
 	brush_t	   *b;
 	vec3_t		end;
 
@@ -320,7 +321,7 @@ bool Drag_TrySelect(int buttons, vec3_t origin, vec3_t dir)
 	if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
 	{
 		// if Alt = pressed, don't deselect selected faces
-		Select_DeselectAll(!(bool)GetAsyncKeyState(VK_MENU));	// sikk - Multiple Face Selection
+		Select_DeselectAll((GetAsyncKeyState(VK_MENU) == 0));	// sikk - Multiple Face Selection
 		Select_Ray(origin, dir, SF_SINGLEFACE);
 		return true;
 	}
@@ -337,7 +338,7 @@ void Drag_Begin (int x, int y, int buttons,
 				 vec3_t origin, vec3_t dir)
 {
 	int		nDim1, nDim2;
-	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+//	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
 	trace_t	t;
 
 	g_bDragOK = false;
@@ -394,7 +395,7 @@ void Drag_Begin (int x, int y, int buttons,
 				{
 					Undo_Start("Set Brush Texture");
 					Undo_AddBrush(t.brush);
-					Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef);
+					Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef, 0);
 					Undo_EndBrush(t.brush);
 					Undo_End();
 					Sys_UpdateWindows(W_ALL);

@@ -15,12 +15,13 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
-typedef enum {false, true} bool;
+//typedef enum {false, true} bool;
 typedef unsigned char byte;
 #endif
 
 // the dec offsetof macro doesn't work very well...
 #define myoffsetof (type, identifier) ((size_t) & ((type *)0)->identifier)
+#define tmalloc(num, typ) (typ*)malloc((num) * sizeof(typ))
 
 #define	MAX_NUM_ARGVS	32
 
@@ -37,6 +38,8 @@ extern char		g_szComToken[1024];
 extern bool		g_bComEOF;
 
 //========================================================================
+
+void   *qmalloc(int size);
 
 char   *COM_Parse (char *data);
 
