@@ -204,6 +204,9 @@ Winding::Free
 */
 void Winding::Free(winding_t *w)
 {
+	assert(w->maxpoints <= MAX_POINTS_ON_WINDING);
+	assert(w->maxpoints >= 6);
+
 	int maxW = w->maxpoints / 6;
 
 	memset(w, 0xEF, sizeof(winding_t) * maxW);
@@ -402,6 +405,38 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 	return out;
 }
 
+
+bool Winding::WindingsEqual(winding_t *w1, winding_t *w2, bool flip)
+{
+	int offset, i, io;
+
+	if (w1->numpoints != w2->numpoints)
+		return false;
+
+	offset = -1;
+
+	for (i = 0; i < w2->numpoints; i++)
+	{
+		if (w1->points[0].point == w2->points[i].point)
+		{
+			offset = i;
+			break;
+		}
+	}
+	if (offset == -1)
+		return false;	// no points in common
+
+	// w1 point 0 == w2 point 'offset'
+	for (i = 0; i < w1->numpoints; i++)
+	{
+		io = ((flip ? offset - i: offset + i) + w1->numpoints) % w1->numpoints;
+		if (w1->points[i].point != w2->points[io].point)
+			return false;
+	}
+	return true;
+}
+
+
 /*
 =============
 Winding::PlanesConcave
@@ -428,6 +463,7 @@ bool Winding::PlanesConcave(winding_t *w1, winding_t *w2,
 
 	return false;
 }
+
 
 /*
 =============

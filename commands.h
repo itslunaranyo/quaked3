@@ -26,6 +26,8 @@
 #include "CmdCzgCylinder.h"
 #include "CmdCone.h"
 #include "CmdSphere.h"
+#include "CmdHollow.h"
+#include "CmdMerge.h"
 
 //#include "Cmd.h"
 

@@ -45,6 +45,8 @@ class Face : public SlabAllocator<Face>
 public:
 	Face();
 	Face(Brush* b);	// no orphan (brushless) faces
+	Face(Face* f);	// copy face
+	Face(Brush* b, Face* f);	// copy face to new brush
 	~Face();
 
 	Face		*fnext;

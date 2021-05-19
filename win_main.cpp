@@ -1773,30 +1773,13 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CSGHOLLOW:
-			Undo::Start("CSG Hollow");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			CSG_Hollow();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
+			CSG::Hollow();
 			break;
 		case ID_SELECTION_CSGSUBTRACT:
-			Undo::Start("CSG Subtract");
-			CSG_Subtract();
-			Undo::End();
+			CSG::Subtract();
 			break;
 		case ID_SELECTION_CSGMERGE:
-			Undo::Start("CSG Merge");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			CSG_Merge();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_SELECTION_CSGCONVEXMERGE:
-			Undo::Start("CSG Convex Merge");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			CSG_ConvexMerge();
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
+			CSG::Merge();
 			break;
 
 		case ID_SELECTION_CLIPPER:

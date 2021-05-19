@@ -3,43 +3,44 @@
 //==============================
 
 #include "qe3.h"
-
+#include <algorithm>
 
 /*
 ====================
-CSG_SplitBrushByFace
+CSG::SplitBrushByFace
 
 The incoming brush is NOT freed.
 The incoming face is NOT left referenced.
 ====================
 */
-void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
+void CSG::SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 {
 	Brush	*b;
 	Face	*nf;
 	vec3	temp;
 
-	b = in->Clone();
-	nf = f->Clone();
-
-	nf->texdef = b->basis.faces->texdef;
-	nf->fnext = b->basis.faces;
-	b->basis.faces = nf;
-
-	b->Build();
-	b->RemoveEmptyFaces();
-
-	if (!b->basis.faces)
-	{	// completely clipped away
-		delete b;
-		*back = NULL;
-	}
-	else
+	if (back)
 	{
-		//in->owner->LinkBrush(b);
-		*back = b;
-	}
+		b = in->Clone();
+		nf = f->Clone();
 
+		nf->texdef = b->basis.faces->texdef;
+		nf->fnext = b->basis.faces;
+		b->basis.faces = nf;
+
+		b->Build();
+		b->RemoveEmptyFaces();
+
+		if (!b->basis.faces)
+		{	// completely clipped away
+			delete b;
+			*back = nullptr;
+		}
+		else
+		{
+			*back = b;
+		}
+	}
 	b = in->Clone();
 	nf = f->Clone();
 
@@ -58,99 +59,124 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	if (!b->basis.faces)
 	{	// completely clipped away
 		delete b;
-		*front = NULL;
+		*front = nullptr;
 	}
 	else
 	{
-		//in->owner->LinkBrush(b);
 		*front = b;
 	}
 }
 
 /*
-==============
-CSG_Hollow
-==============
+====================
+CSG_DoSimpleMerge
+
+simple face-pair merge for trying to reunify a brush after a single SplitBrushByFace op.
+not used by user-facing merge, only for cleaning up after subtracting by multiple 
+brushes at once.
+====================
 */
-void CSG_Hollow ()
+Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 {
-	int			i;
-	Brush	   *b, *front, *back, *next;
-	Face	   *f;
-	Face		split;
-	vec3		move;
+	Face *f1, *f2;
+	std::vector<Face*> faces, skipfaces;
 
-	Sys_Printf("CMD: CSG Hollowing...\n");
-
-	if (!Select_HasBrushes())
+	for (f1 = a->basis.faces; f1; f1 = f1->fnext)
 	{
-		Sys_Printf("WARNING: No brushes selected.\n");
-		return;
-	}
-
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
-	{
-		next = b->next;
-
-		if (b->owner->IsPoint() || b->hiddenBrush)
-			continue;
-
-		for (f = b->basis.faces; f; f = f->fnext)
+		for (f2 = b->basis.faces; f2; f2 = f2->fnext)
 		{
-			split = *f;
-			move = f->plane.normal * (float)g_qeglobals.d_nGridSize;
-			for (i = 0; i < 3; i++)
-				split.planepts[i] = split.planepts[i] - move;
+			if (!f1->plane.EqualTo(&f2->plane, true))
+				continue;	// windings can't be equal if planes aren't
 
-			CSG_SplitBrushByFace(b, &split, &front, &back);
-
-			if (back)
-				delete back;
-			if (front)
+			if (Winding::WindingsEqual(f1->face_winding, f2->face_winding, true))
 			{
-				front->owner->LinkBrush(front);
-				front->AddToList(&g_brSelectedBrushes);
+				// face to face, ignore both
+				skipfaces.push_back(f1);
+				skipfaces.push_back(f2);
 			}
 		}
-		delete b;
 	}
-	Sys_UpdateWindows(W_ALL);
+
+	if (skipfaces.size() == 0)
+		return nullptr;	// no common faces to glue together
+
+	bool match;
+	for (f1 = a->basis.faces; f1; f1 = f1->fnext)
+	{
+		if (std::find(skipfaces.begin(), skipfaces.end(), f1) == skipfaces.end())
+			faces.push_back(f1);
+	}
+	for (f2 = b->basis.faces; f2; f2 = f2->fnext)
+	{
+		if (std::find(skipfaces.begin(), skipfaces.end(), f2) != skipfaces.end())
+			continue;
+
+		match = false;
+		for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
+		{
+			if ((*fIt)->plane.EqualTo(&f2->plane, false))
+			{
+				if ((*fIt)->d_texture != f2->d_texture)
+					return nullptr;	// never merge together two planes with different textures
+				match = true;
+				break;
+			}
+		}
+		if (!match)
+			faces.push_back(f2);
+	}
+
+	Brush *out = new Brush();
+	out->owner = a->owner;
+	for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
+	{
+		f1 = new Face(out, *fIt);
+	}
+	out->Build();
+	return out;
 }
 
 /*
 ==============
-Brush_ConvexMerge
+CSG::DoMerge
 
 lunaran: a super-naive brute force convex hull solver
+more than fast enough in the normal use case of merging only a handful of brushes
+supercedes old CSG merge which was buggy and weird
 
-this is more than fast enough in the normal use case of merging only a handful of
-brushes, and only gets n^2 slow with super-large merges.
-something like quickHull would absolutely be faster in those cases, but the extra 
-gymnastics wouldn't be worth writing.
+notexmerge: if true, don't combine coincident planes if they have different textures
+		if false, coincident planes' texdefs are overwritten with first one found
+convex: if true, always merge any input brushes and create new planes to force convexity
+		if false, don't merge the input brushes if their union wouldn't be convex
 ==============
 */
-Brush* Brush_ConvexMerge(Brush *bList)
+Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)// , bool convex)
 {
-	Brush		*result;
-	Brush		*b;
-	Face		*f, *bf;
-	vec3		*pointBuf;
-	Plane		*planeBuf;
-	int			numPoints, numPlanes;
+	Brush	*result;
+	Brush	*b;
+	Face	*f, *bf;
+	vec3	*pointBuf;
+	Plane	*planeBuf;
+	int		numPoints, numPlanes;
+	vec3	*nextPoint, *curPoint;
+	int		pointBufSize;
 
 	// put all input points in a buffer
+	pointBufSize = 0;
+	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 	{
-		vec3	*nextPoint, *curPoint;
-		int		pointBufSize;
+		b = *brIt;
+		for (bf = b->basis.faces; bf; bf = bf->fnext)
+			pointBufSize += bf->face_winding->numpoints;	// buffer size is very greedy
+	}
+	pointBuf = new vec3[pointBufSize]();// (vec3*)qmalloc(sizeof(vec3) * pointBufSize);
 
-		pointBufSize = 0;
-		for (b = bList; b; b = b->next) for (bf = b->basis.faces; bf; bf = bf->fnext)
-			pointBufSize += bf->face_winding->numpoints;
-		pointBuf = (vec3*)qmalloc(sizeof(vec3) * pointBufSize);
-
-		numPoints = 0;
-		nextPoint = pointBuf;
-		for (b = bList; b; b = b->next) for (bf = b->basis.faces; bf; bf = bf->fnext)
+	numPoints = 0;
+	nextPoint = pointBuf;
+	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+	{
+		b = *brIt;
+		for (bf = b->basis.faces; bf; bf = bf->fnext)
 		{
 			for (int i = 0; i < bf->face_winding->numpoints; i++)
 			{
@@ -172,108 +198,123 @@ Brush* Brush_ConvexMerge(Brush *bList)
 		}
 	}
 
+	// find all planes defined by the outermost points
 	numPlanes = numPoints * 2 - 4;
-	planeBuf = (Plane*)qmalloc(sizeof(Plane) * numPlanes);
+	planeBuf = new Plane[numPlanes]();// (Plane*)qmalloc(sizeof(Plane) * numPlanes);
 	result = new Brush();
 
-	// find all planes defined by the outermost points
+	Plane	p;
+	int		x, y, z, t;
+	int		lCount, rCount, pl;
+	float	dot;
+	vec3	*pT;
+
+	pl = 0;
+	// for every unique trio of points
+	for (x = 0; x < numPoints-2; x++) for (y = x+1; y < numPoints-1; y++) for (z = y+1; z < numPoints; z++)
 	{
-		Plane	p;
-		int		x, y, z, t;
-		int		lCount, rCount, pl;
-		float	dot;
-	//	vec3_t	dp;
-		vec3	*pT;
+		int yf, zf;
+		yf = y;
+		zf = z;
+		if (!p.FromPoints(pointBuf[x], pointBuf[y], pointBuf[z]))
+			continue;
 
-		pl = 0;
-		// for every unique trio of points
-		for (x = 0; x < numPoints-2; x++) for (y = x+1; y < numPoints-1; y++) for (z = y+1; z < numPoints; z++)
+		lCount = rCount = 0;
+		// compare all other points to the plane
+		for (t = 0; t < numPoints; t++)
 		{
-			int yf, zf;
-			yf = y;
-			zf = z;
-			if (!p.FromPoints(pointBuf[x], pointBuf[y], pointBuf[z]))
-				continue;
-
-			lCount = rCount = 0;
-			// compare all other points to the plane
-			for (t = 0; t < numPoints; t++)
-			{
-				if (t == x || t == y || t == z) continue;
+			if (t == x || t == y || t == z) continue;
 				
-				pT = &pointBuf[t];
-				dot = DotProduct(*pT, p.normal) - p.dist;
-				// skip coplanar points
-				if (dot < 0) lCount++;
-				if (dot > 0) rCount++;
-			}
-			// if all are on one side or the other, put plane in result buffer
-			if (!rCount)
-			{
-				yf = z;
-				zf = y;
-				// redo the plane rather than negating it because signs might cancel
-				p.FromPoints(pointBuf[x], pointBuf[yf], pointBuf[zf]);
-			}
-			if (!rCount || !lCount)
-			{
-				// avoid duplicates in plane buffer now since many collinear plane points could lead to a ton of duplicate planes
-				int pN;
-				for (pN = 0; pN < pl; pN++)
-					if (p.EqualTo(&planeBuf[pN], false))
-						break;
+			pT = &pointBuf[t];
+			dot = DotProduct(*pT, p.normal) - p.dist;
+			// skip coplanar points
+			if (dot < 0) lCount++;
+			if (dot > 0) rCount++;
+		}
+		// if all are on one side or the other, put plane in result buffer
+		if (!rCount)
+		{
+			yf = z;
+			zf = y;
+			// redo the plane rather than negating it because signs might cancel
+			p.FromPoints(pointBuf[x], pointBuf[yf], pointBuf[zf]);
+		}
+		if (!rCount || !lCount)
+		{
+			// avoid duplicates in plane buffer now since many collinear plane points could lead to a ton of duplicate planes
+			int pN;
+			for (pN = 0; pN < pl; pN++)
+				if (p.EqualTo(&planeBuf[pN], false))
+					break;
 
-				if (pN == pl)
+			if (pN == pl)
+			{
+				planeBuf[pl] = p;
+				pl++;
+
+				// add a face to the brush now while we still have the plane points
+				f = new Face(result);
+				f->plane = p;
+				for (int j = 0; j < 3; j++)
 				{
-					planeBuf[pl] = p;
-					pl++;
-
-					// add a face to the brush now while we still have the plane points
-					f = new Face(result);
-					f->plane = p;
-					for (int j = 0; j < 3; j++)
-					{
-						f->planepts[0] = pointBuf[x];
-						f->planepts[1] = pointBuf[yf];
-						f->planepts[2] = pointBuf[zf];
-					}
+					f->planepts[0] = pointBuf[x];
+					f->planepts[1] = pointBuf[yf];
+					f->planepts[2] = pointBuf[zf];
 				}
 			}
 		}
-		numPlanes = pl;
 	}
+	numPlanes = pl;
 
 	assert(numPlanes > 3);
-	free(pointBuf);
-	free(planeBuf);
+	//free(pointBuf);
+	//free(planeBuf);
+	delete pointBuf;
+	delete planeBuf;
 
 	for (f = result->basis.faces; f; f = f->fnext)
 	{
 		// compare result planes to original brush planes, preserve texdefs from matching planes
 		bool match = false;
-		for (b = bList; b; b = b->next)
+		Texture* ftx = nullptr;
+		for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 		{
+			b = *brIt;
 			for (bf = b->basis.faces; bf; bf = bf->fnext)
 			{
 				if (bf->plane.EqualTo(&f->plane, true))
 				{
+					if (match && ftx != bf->d_texture)
+					{
+						// clashing textures on this plane when notexmerge was specified, abort merge
+						delete result;
+						return nullptr;
+					}
 					f->texdef = bf->texdef;
-					f->d_texture = bf->d_texture;
+					ftx = f->d_texture = bf->d_texture;
 					match = true;
-					break;
+					if (!notexmerge)
+						break;
 				}
 			}
-			if (match) break;
+			if (match && !notexmerge)
+				break;
 		}
 		if (!match)
 		{
+		/*	if (!convex)
+			{
+				// a concave-only merge wouldn't create any new planes
+				delete result;
+				return nullptr;
+			}*/
 			// apply workzone texdef to the rest
 			f->texdef = g_qeglobals.d_workTexDef;
 			f->d_texture = Textures::ForName(f->texdef.name);
 		}
 	}
 
-	bList->owner->LinkBrush(result);
+	result->owner = brList.front()->owner;
 	result->Build();
 
 	return result;
@@ -321,192 +362,8 @@ bool CSG_CanMerge()
 }
 
 /*
-=============
-CSG_ConvexMerge
-=============
-*/
-void CSG_ConvexMerge()
-{
-	Brush* bListStart, *b, *next;
-
-	Sys_Printf("CMD: CSG Convex Merging...\n");
-
-	if (!CSG_CanMerge())
-		return;
-
-	bListStart = NULL;
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
-	{
-		next = b->next;
-
-		b->RemoveFromList();
-		b->next = bListStart;
-		b->prev = NULL;
-		bListStart = b;
-	}
-
-	b = Brush_ConvexMerge(bListStart);
-	Select_SelectBrush(b);
-	// free the original brushes
-	for (b = bListStart; b; b = next)
-	{
-		next = b->next;
-		b->next = NULL;
-		b->prev = NULL;
-		delete b;
-	}
-
-	Sys_Printf("MSG: Merge done.\n");
-}
-
-/*
-=============
-Brush_Merge
-
-Returns a new brush that is created by merging brush1 and brush2.
-May return NULL if brush1 and brush2 do not create a convex brush when merged.
-The input brushes brush1 and brush2 stay intact.
-
-If onlyshape is true then the merge is allowed based on the shape only
-otherwise the texture references of faces in the same plane have to
-be the same as well.
-=============
-*/
-Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
-{
-	int			i, shared;
-	Brush    *newbrush;
-	Face     *face1, *face2, *newface, *f;
-
-	// check for bounding box overlapp
-	for (i = 0; i < 3; i++)
-	{
-		if (brush1->basis.mins[i] > brush2->basis.maxs[i] + ON_EPSILON || 
-			brush1->basis.maxs[i] < brush2->basis.mins[i] - ON_EPSILON)
-		{
-			// never merge if the brushes overlap
-			return NULL;
-		}
-	}
-
-	shared = 0;
-	// check if the new brush would be convex... flipped planes make a brush non-convex
-	for (face1 = brush1->basis.faces; face1; face1 = face1->fnext)
-	{
-		// don't check the faces of brush 1 and 2 touching each other
-		for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-		{
-			if (face1->plane.EqualTo(&face2->plane, true))
-			{
-				shared++;
-				// there may only be ONE shared side
-				if (shared > 1)
-					return NULL;
-				break;
-			}
-		}
-		// if this face plane is shared
-		if (face2) 
-			continue;
-
-		for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-		{
-			// don't check the faces of brush 1 and 2 touching each other
-			for (f = brush1->basis.faces; f; f = f->fnext)
-				if (face2->plane.EqualTo(&f->plane, true))
-					break;
-
-			if (f)
-				continue;
-
-			if (face1->plane.EqualTo(&face2->plane, false))
-			{
-				//if the texture references should be the same but are not
-				if (!onlyshape && _stricmp(face1->texdef.name, face2->texdef.name) != 0) 
-					return NULL;
-				continue;
-			}
-
-			if (Winding::PlanesConcave(face1->face_winding, face2->face_winding,	
-									  face1->plane.normal, face2->plane.normal,
-									  face1->plane.dist, face2->plane.dist))
-				return NULL;
-		}
-	}
-
-	newbrush = new Brush();
-
-	for (face1 = brush1->basis.faces; face1; face1 = face1->fnext)
-	{
-		// don't add the faces of brush 1 and 2 touching each other
-		for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-			if (face1->plane.EqualTo(&face2->plane, true))
-				break;
-
-		if (face2)
-			continue;
-
-		// don't add faces with the same plane twice
-		for (f = newbrush->basis.faces; f; f = f->fnext)
-		{
-			if (face1->plane.EqualTo(&f->plane, false))
-				break;
-			if (face1->plane.EqualTo(&f->plane, true))
-				break;
-		}
-
-		if (f)
-			continue;
-
-		newface = new Face(newbrush);
-		newface->texdef = face1->texdef;
-		newface->planepts[0] = face1->planepts[0];
-		newface->planepts[1] = face1->planepts[1];
-		newface->planepts[2] = face1->planepts[2];
-		newface->plane = face1->plane;
-	}
-
-	for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-	{
-		// don't add the faces of brush 1 and 2 touching each other
-		for (face1 = brush1->basis.faces; face1; face1 = face1->fnext)
-			if (face2->plane.EqualTo(&face1->plane, true))
-				break;
-
-		if (face1)
-			continue;
-
-		// don't add faces with the same plane twice
-		for (f = newbrush->basis.faces; f; f = f->fnext)
-		{
-			if (face2->plane.EqualTo(&f->plane, false))
-				break;
-			if (face2->plane.EqualTo(&f->plane, true))
-				break;
-		}
-
-		if (f)
-			continue;
-
-		newface = new Face(newbrush);
-		newface->texdef = face2->texdef;
-		newface->planepts[0] = face2->planepts[0];
-		newface->planepts[1] = face2->planepts[1];
-		newface->planepts[2] = face2->planepts[2];
-		newface->plane = face2->plane;
-	}
-
-	// link the new brush to an entity
-	brush1->owner->LinkBrush(newbrush);
-	// build windings for the faces
-	newbrush->Build();
-
-	return newbrush;
-}
-
-/*
 ====================
-Brush_MergeListPairs
+CSG::BrushMergeListPairs
 
 Returns a list with merged brushes.
 Tries to merge brushes pair wise.
@@ -514,14 +371,14 @@ The input list is destroyed.
 Input and output should be a single linked list using .next
 ====================
 */
-Brush *Brush_MergeListPairs (Brush *brushlist, int onlyshape)
+Brush *CSG::BrushMergeListPairs (Brush *brushlist, bool onlyshape)
 {
-	int			nummerges, merged;
-	Brush	   *b1, *b2, *tail, *newbrush, *newbrushlist;
-	Brush	   *lastb2;
+	int		nummerges, merged;
+	Brush	*b1, *b2, *tail, *newbrush, *newbrushlist;
+	Brush	*lastb2;
 
 	if (!brushlist)
-		return NULL;
+		return nullptr;
 
 	nummerges = 0;
 
@@ -532,21 +389,21 @@ Brush *Brush_MergeListPairs (Brush *brushlist, int onlyshape)
 				break;
 
 		merged = 0;
-		newbrushlist = NULL;
+		newbrushlist = nullptr;
 
 		for (b1 = brushlist; b1; b1 = brushlist)
 		{
 			lastb2 = b1;
 			for (b2 = b1->next; b2; b2 = b2->next)
 			{
-				newbrush = Brush_Merge(b1, b2, onlyshape);
+				newbrush = CSG_DoSimpleMerge(b1, b2);
 				if (newbrush)
 				{
 					tail->next = newbrush;
 					lastb2->next = b2->next;
 					brushlist = brushlist->next;
-					b1->next = b1->prev = NULL;
-					b2->next = b2->prev = NULL;
+					b1->next = b1->prev = nullptr;
+					b2->next = b2->prev = nullptr;
 					delete b1;
 					delete b2;
 
@@ -577,169 +434,40 @@ Brush *Brush_MergeListPairs (Brush *brushlist, int onlyshape)
 }
 
 /*
-===============
-Brush_MergeList
-
-Tries to merge all brushes in the list into one new brush.
-The input brush list stays intact.
-Returns NULL if no merged brush can be created.
-To create a new brush the brushes in the list may not overlap and
-the outer faces of the brushes together should make a new convex brush.
-
-If onlyshape is true then the merge is allowed based on the shape only
-otherwise the texture references of faces in the same plane have to
-be the same as well.
-===============
-*/
-Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
-{
-	Brush	*brush1, *brush2, *brush3, *newbrush;
-	Face	*face1, *face2, *face3, *newface, *f;
-
-	if (!brushlist) 
-		return NULL;
-
-	for (brush1 = brushlist; brush1; brush1 = brush1->next)
-	{
-		// check if the new brush would be convex... flipped planes make a brush concave
-		for (face1 = brush1->basis.faces; face1; face1 = face1->fnext)
-		{
-			// don't check face1 if it touches another brush
-			for (brush2 = brushlist; brush2; brush2 = brush2->next)
-			{
-				if (brush2 == brush1) 
-					continue;
-				for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-					if (face1->plane.EqualTo(&face2->plane, true))
-						break;
-
-				if (face2) 
-					break;
-			}
-			// if face1 touches another brush
-			if (brush2)
-				continue;
-
-			for (brush2 = brush1->next; brush2; brush2 = brush2->next)
-			{
-				// don't check the faces of brush 2 touching another brush
-				for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-				{
-					for (brush3 = brushlist; brush3; brush3 = brush3->next)
-					{
-						if (brush3 == brush2) 
-							continue;
-						for (face3 = brush3->basis.faces; face3; face3 = face3->fnext)
-							if (face2->plane.EqualTo(&face3->plane, true))
-								break;
-
-						if (face3) 
-							break;
-					}
-
-					// if face2 touches another brush
-					if (brush3) 
-						continue;
-
-					if (face1->plane.EqualTo(&face2->plane, false))
-					{
-						//if the texture references should be the same but are not
-						if (!onlyshape && _stricmp(face1->texdef.name, face2->texdef.name) != 0) 
-							return NULL;
-						continue;
-					}
-
-					if (Winding::PlanesConcave(face1->face_winding, face2->face_winding,
-											  face1->plane.normal, face2->plane.normal,
-											  face1->plane.dist, face2->plane.dist))
-						return NULL;
-				}
-			}
-		}
-	}
-
-	newbrush = new Brush();
-
-	for (brush1 = brushlist; brush1; brush1 = brush1->next)
-	{
-		for (face1 = brush1->basis.faces; face1; face1 = face1->fnext)
-		{
-			// don't add face1 to the new brush if it touches another brush
-			for (brush2 = brushlist; brush2; brush2 = brush2->next)
-			{
-				if (brush2 == brush1) 
-					continue;
-				for (face2 = brush2->basis.faces; face2; face2 = face2->fnext)
-					if (face1->plane.EqualTo(&face2->plane, true))
-						break;
-
-				if (face2) 
-					break;
-			}
-
-			if (brush2) 
-				continue;
-
-			// don't add faces with the same plane twice
-			for (f = newbrush->basis.faces; f; f = f->fnext)
-			{
-				if (face1->plane.EqualTo(&f->plane, false))
-					break;
-				if (face1->plane.EqualTo(&f->plane, true))
-					break;
-			}
-
-			if (f)
-				continue;
-
-			newface = new Face(newbrush);
-			newface->texdef = face1->texdef;
-			newface->planepts[0] = face1->planepts[0];
-			newface->planepts[1] = face1->planepts[1];
-			newface->planepts[2] = face1->planepts[2];
-			newface->plane = face1->plane;
-		}
-	}
-
-	// link the new brush to an entity
-	brushlist->owner->LinkBrush(newbrush);
-	// build windings for the faces
-	newbrush->Build();
-
-	return newbrush;
-}
-
-/*
 =============
-Brush_Subtract
+CSG_BrushSubtract
 
 Returns a list of brushes that remain after B is subtracted from A.
 May by empty if A is contained inside B.
 The originals are undisturbed.
 =============
 */
-Brush *Brush_Subtract (Brush *a, Brush *b)
+Brush *CSG_BrushSubtract (Brush *a, Brush *b)
 {
 	// a - b = out (list)
 	Brush	*front, *back;
 	Brush	*in, *out, *next;
 	Face	*f;
 
+	for (int i = 0; i < 3; i++)
+		if (b->basis.mins[i] >= a->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= a->basis.mins[i] + ON_EPSILON)
+			return a;	// definately don't touch
+
 	in = a;
-	out = NULL;
+	out = nullptr;
 
 	for (f = b->basis.faces; f && in; f = f->fnext)
 	{
-		CSG_SplitBrushByFace(in, f, &front, &back);
+		CSG::SplitBrushByFace(in, f, &front, &back);
 		if (in != a)
 			delete in;
 		if (front)
 		{	// add to list
 			front->next = out;
 			out = front;
-			front->owner->LinkBrush(front);
+			//front->owner->LinkBrush(front);
 		}
-		back->owner->LinkBrush(back);
+		//back->owner->LinkBrush(back);
 		in = back;
 	}
 
@@ -751,7 +479,7 @@ Brush *Brush_Subtract (Brush *a, Brush *b)
 		for (b = out; b; b = next)
 		{
 			next = b->next;
-			b->next = b->prev = NULL;
+			b->next = b->prev = nullptr;
 			delete b;
 		}
 		return a;
@@ -761,14 +489,17 @@ Brush *Brush_Subtract (Brush *a, Brush *b)
 
 /*
 =============
-CSG_Subtract
+CSG::Subtract
 =============
 */
-void CSG_Subtract ()
+void CSG::Subtract ()
 {
-	int			i, numfragments, numbrushes;
-	Brush		fragmentlist;
-	Brush	   *b, *s, *fragments, *nextfragment, *frag, *next, *snext;
+	int		numfragments, numbrushes;
+	Brush	fragmentlist;
+	Brush	*b, *s, *fragments, *nextfragment, *frag, *next, *snext;
+
+	std::vector<Brush*> brCarved;
+	CmdAddRemove *cmdAR = new CmdAddRemove();
 
 	Sys_Printf("CMD: CSG Subtracting...\n");
 
@@ -778,8 +509,7 @@ void CSG_Subtract ()
 		return;
 	}
 
-	fragmentlist.next = &fragmentlist;
-	fragmentlist.prev = &fragmentlist;
+	fragmentlist.CloseLinks();
 
 	numfragments = 0;
 	numbrushes = 0;
@@ -795,27 +525,20 @@ void CSG_Subtract ()
 		{
 			snext = s->next;
 
-			for (i = 0; i < 3; i++)
-				if (b->basis.mins[i] >= s->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= s->basis.mins[i] + ON_EPSILON)
-					break;
-
-			if (i != 3)
-				continue;	// definately don't touch
-
-			fragments = Brush_Subtract(s, b);
+			fragments = CSG_BrushSubtract(s, b);
 
 			// if the brushes did not really intersect
 			if (fragments == s)
 				continue;
 
 			// try to merge fragments
-			fragments = Brush_MergeListPairs(fragments, true);
+			fragments = CSG::BrushMergeListPairs(fragments, true);
 
 			// add the fragments to the list
 			for (frag = fragments; frag; frag = nextfragment)
 			{
 				nextfragment = frag->next;
-				frag->next = NULL;
+				frag->next = nullptr;
 				frag->owner = s->owner;
 				frag->AddToList(&fragmentlist);
 			}
@@ -831,41 +554,39 @@ void CSG_Subtract ()
 
 			if (s->owner->IsPoint() || s->hiddenBrush)
 				continue;
+			if (std::find(brCarved.begin(), brCarved.end(), s) != brCarved.end())
+				continue;	// is already in fragments
 
-			for (i = 0; i < 3; i++)
-				if (b->basis.mins[i] >= s->basis.maxs[i] - ON_EPSILON || b->basis.maxs[i] <= s->basis.mins[i] + ON_EPSILON)
-					break;
-
-			if (i != 3)
-				continue;	// definately don't touch
-
-			fragments = Brush_Subtract(s, b);
+			fragments = CSG_BrushSubtract(s, b);
 
 			// if the brushes did not really intersect
 			if (fragments == s)
 				continue;
 
-			Undo::AddBrush(s);	// sikk - Undo/Redo
+			//Undo::AddBrush(s);	// sikk - Undo/Redo
+			//cmdAR->RemovedBrush(s);
 
 			// one extra brush chopped up
 			numbrushes++;
 
 			// try to merge fragments
-			fragments = Brush_MergeListPairs(fragments, true);
+			fragments = CSG::BrushMergeListPairs(fragments, true);
 
 			// add the fragments to the list
 			for (frag = fragments; frag; frag = nextfragment)
 			{
 				nextfragment = frag->next;
-				frag->next = NULL;
+				frag->next = nullptr;
 				frag->owner = s->owner;
 				frag->AddToList(&fragmentlist);
 			}
 
 			// free the original brush
-			delete s;
+			brCarved.push_back(s);
+			//delete s;
 		}
 	}
+	cmdAR->RemovedBrushes(brCarved);
 
 	// move all fragments to the active brush list
 	for (frag = fragmentlist.next; frag != &fragmentlist; frag = nextfragment)
@@ -873,73 +594,67 @@ void CSG_Subtract ()
 		nextfragment = frag->next;
 		numfragments++;
 		frag->RemoveFromList();
-		frag->AddToList( &g_map.brActive);
-		Undo::EndBrush(frag);	// sikk - Undo/Redo
+		//frag->AddToList( &g_map.brActive);
+		//Undo::EndBrush(frag);	// sikk - Undo/Redo
+		cmdAR->AddedBrush(frag);
 	}
 
 	if (numfragments == 0)
 	{
 		Sys_Printf("WARNING: Selected brush%s did not intersect with any other brushes.\n",
 				   (g_brSelectedBrushes.next->next == &g_brSelectedBrushes) ? "":"es");
+		delete cmdAR;
 		return;
 	}
+
+	g_cmdQueue.Complete(cmdAR);
 
 	Sys_Printf("MSG: Done. (created %d fragment%s out of %d brush%s)\n", 
 				numfragments, (numfragments == 1) ? "" : "s",
 				numbrushes, (numbrushes == 1) ? "" : "es");
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_SCENE);
+}
+
+/*
+==============
+CSG::Hollow
+==============
+*/
+void CSG::Hollow()
+{
+	Sys_Printf("CMD: CSG Hollowing...\n");
+
+	if (!Select_HasBrushes())
+	{
+		Sys_Printf("WARNING: No brushes selected.\n");
+		return;
+	}
+
+	CmdHollow *cmdH = new CmdHollow();
+	cmdH->UseBrushes(&g_brSelectedBrushes);
+	g_cmdQueue.Complete(cmdH);
+	cmdH->Select();
+
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
 =============
-CSG_Merge
+CSG::Merge
 =============
 */
-void CSG_Merge ()
+void CSG::Merge ()
 {
-	Brush		*b, *next, *newlist, *newbrush;
-	//Entity	*owner;
-
 	Sys_Printf("CMD: CSG Merging...\n");
 
 	if (!CSG_CanMerge())
 		return;
 
-	newlist = NULL;
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
-	{
-		next = b->next;
+	CmdMerge *cmdM = new CmdMerge();
+	cmdM->UseBrushes(&g_brSelectedBrushes);
+	g_cmdQueue.Complete(cmdM);
+	cmdM->Select();
 
-		b->RemoveFromList();
-		b->next = newlist;
-		b->prev = NULL;
-		newlist = b;
-	}
-
-	newbrush = Brush_MergeList(newlist, true);
-	// if the new brush would not be convex
-	if (!newbrush)
-	{
-		// add the brushes back into the selection
-		for (b = newlist; b; b = next)
-		{
-			next = b->next;
-			b->next = NULL;
-			b->prev = NULL;
-			b->AddToList(&g_brSelectedBrushes);
-		}
-		Sys_Printf("WARNING: Cannot add a set of brushes with a concave hull.\n");
-		return;
-	}
-	// free the original brushes
-	for (b = newlist; b; b = next)
-	{
-		next = b->next;
-		b->next = NULL;
-		b->prev = NULL;
-		delete b;
-	}
-
-	Select_SelectBrush(newbrush);
 	Sys_Printf("MSG: Merge done.\n");
+	Sys_UpdateWindows(W_SCENE);
 }

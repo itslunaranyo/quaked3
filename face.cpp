@@ -197,13 +197,42 @@ Face::Face() : owner(nullptr), fnext(nullptr), original(nullptr), face_winding(n
 Face::Face
 ================
 */
-Face::Face(Brush* b) : owner(nullptr), fnext(nullptr), original(nullptr), face_winding(nullptr), d_texture(nullptr)
+Face::Face(Brush *b) : 
+	owner(b), fnext(b->basis.faces), 
+	original(nullptr), face_winding(nullptr), d_texture(nullptr)
 {
 	assert(b);
 
 	texdef = { 0,0,0,0 };
 
-	owner = b;
+	b->basis.faces = this;
+}
+
+Face::Face(Face *f) : 
+	owner(nullptr), 
+	texdef(f->texdef), d_texture(f->d_texture), 
+	original(nullptr), face_winding(nullptr)
+{
+	assert(f);
+
+	planepts[0] = f->planepts[0];
+	planepts[1] = f->planepts[1];
+	planepts[2] = f->planepts[2];
+	plane = f->plane;
+}
+
+Face::Face(Brush *b, Face *f) : 
+	owner(b), original(nullptr), face_winding(nullptr), 
+	texdef(f->texdef), d_texture(f->d_texture)
+{
+	assert(b);
+	assert(f);
+
+	planepts[0] = f->planepts[0];
+	planepts[1] = f->planepts[1];
+	planepts[2] = f->planepts[2];
+	plane = f->plane;
+
 	fnext = b->basis.faces;
 	b->basis.faces = this;
 }

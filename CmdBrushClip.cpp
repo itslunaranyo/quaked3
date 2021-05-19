@@ -77,7 +77,7 @@ void CmdBrushClip::CreateSplitLists()
 
 	for (auto brIt = brIn.begin(); brIt != brIn.end(); ++brIt)
 	{
-		CSG_SplitBrushByFace(*brIt, &splif, &f, &b);
+		CSG::SplitBrushByFace(*brIt, &splif, &f, &b);
 		if (f)
 			brFront.push_back(f);
 		if (b)
