@@ -1240,6 +1240,37 @@ void Brush::ResetFaceOriginals()
 //=========================================================================
 
 
+void Brush::MakeCzgCylinder(int degree)
+{
+	int axis;
+	Brush* b;
+
+	if (!QE_SingleBrush())
+	{
+		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		return;
+	}
+
+	// lunaran - grid view reunification
+	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
+	if (xyz)
+		axis = xyz->dViewType;
+	else
+		axis = XY;
+
+	b = g_brSelectedBrushes.next;
+	CmdCzgCylinder *cmdCzgC = new CmdCzgCylinder();
+
+	cmdCzgC->SetAxis(axis);
+	cmdCzgC->SetDegree(degree);
+	cmdCzgC->UseBrush(b);
+
+	g_cmdQueue.Complete(cmdCzgC);
+
+	Sys_UpdateWindows(W_SCENE);
+}
+
+
 /*
 =============
 Brush::MakeSided
@@ -1249,41 +1280,14 @@ Makes the current brush have the given number of 2d sides
 */
 void Brush::MakeSided(int sides)
 {
-	int			i, axis;
-	float		width;
-	float		sv, cv;
-	vec3		mins, maxs;
-	vec3		mid;
-	Brush		*b;
-	Face		*f;
-	texdef_t	*texdef;
-
-	if (sides < 3)
-	{
-		Sys_Printf("WARNING: Brush must have at least 3 sides.\n");
-		return;
-	}
-
-	if (sides >= MAX_POINTS_ON_WINDING - 4)
-	{
-		Sys_Printf("WARNING: Couldn't create brush: Too many sides, you absolute madman.\n");
-		return;
-	}
+	int axis;
+	Brush* b;
 
 	if (!QE_SingleBrush())
 	{
 		Sys_Printf("WARNING: Must have a single brush selected.\n");
 		return;
 	}
-
-	b = g_brSelectedBrushes.next;
-	mins = b->basis.mins;
-	maxs = b->basis.maxs;
-	texdef = &g_qeglobals.d_workTexDef;
-
-	// lunaran - replace geometry, keep same brush
-	//delete b;
-	b->ClearFaces();
 
 	// lunaran - grid view reunification
 	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
@@ -1292,71 +1296,16 @@ void Brush::MakeSided(int sides)
 	else
 		axis = XY;
 
-	// find center of brush
-	width = 8;
+	b = g_brSelectedBrushes.next;
+	CmdCylinder	*cmdCyl = new CmdCylinder();
 
-	for (i = 0; i < 3; i++)
-	{
-		mid[i] = (maxs[i] + mins[i]) * 0.5;
-		if (i == axis)
-			continue;
+	cmdCyl->SetAxis(axis);
+	cmdCyl->SetSides(sides);
+	cmdCyl->UseBrush(b);
 
-		if ((maxs[i] - mins[i]) * 0.5 > width)
-			width = (maxs[i] - mins[i]) * 0.5;
-	}
-
-	//b = new Brush();
-
-	// create top face
-	f = new Face(b);
-	f->texdef = *texdef;
-
-	f->planepts[2][(axis + 1) % 3] = mins[(axis + 1) % 3];
-	f->planepts[2][(axis + 2) % 3] = mins[(axis + 2) % 3];
-	f->planepts[2][axis] = maxs[axis];
-	f->planepts[1][(axis + 1) % 3] = maxs[(axis + 1) % 3];
-	f->planepts[1][(axis + 2) % 3] = mins[(axis + 2) % 3];
-	f->planepts[1][axis] = maxs[axis];
-	f->planepts[0][(axis + 1) % 3] = maxs[(axis + 1) % 3];
-	f->planepts[0][(axis + 2) % 3] = maxs[(axis + 2) % 3];
-	f->planepts[0][axis] = maxs[axis];
-
-	// create bottom face
-	f = new Face(b);
-	f->texdef = *texdef;
-
-	f->planepts[0][(axis + 1) % 3] = mins[(axis + 1) % 3];
-	f->planepts[0][(axis + 2) % 3] = mins[(axis + 2) % 3];
-	f->planepts[0][axis] = mins[axis];
-	f->planepts[1][(axis + 1) % 3] = maxs[(axis + 1) % 3];
-	f->planepts[1][(axis + 2) % 3] = mins[(axis + 2) % 3];
-	f->planepts[1][axis] = mins[axis];
-	f->planepts[2][(axis + 1) % 3] = maxs[(axis + 1) % 3];
-	f->planepts[2][(axis + 2) % 3] = maxs[(axis + 2) % 3];
-	f->planepts[2][axis] = mins[axis];
-
-	for (i = 0; i < sides; i++)
-	{
-		f = new Face(b);
-		f->texdef = *texdef;
-
-		sv = sin(i * Q_PI * 2 / sides);
-		cv = cos(i * Q_PI * 2 / sides);
-
-		f->planepts[0][(axis + 1) % 3] = floor(mid[(axis + 1) % 3] + width * cv + 0.5);
-		f->planepts[0][(axis + 2) % 3] = floor(mid[(axis + 2) % 3] + width * sv + 0.5);
-		f->planepts[0][axis] = mins[axis];
-		f->planepts[1][(axis + 1) % 3] = f->planepts[0][(axis + 1) % 3];
-		f->planepts[1][(axis + 2) % 3] = f->planepts[0][(axis + 2) % 3];
-		f->planepts[1][axis] = maxs[axis];
-		f->planepts[2][(axis + 1) % 3] = floor(f->planepts[0][(axis + 1) % 3] - width * sv + 0.5);
-		f->planepts[2][(axis + 2) % 3] = floor(f->planepts[0][(axis + 2) % 3] + width * cv + 0.5);
-		f->planepts[2][axis] = maxs[axis];
-	}
-
-	//Select_SelectBrush(b);
-	//g_map.world->LinkBrush(b);
-	b->Build();
+	g_cmdQueue.Complete(cmdCyl);
+	
+	Sys_UpdateWindows(W_SCENE);
 }
 
 // sikk---> Brush Primitives
@@ -1364,32 +1313,13 @@ void Brush::MakeSided(int sides)
 =============
 Brush::MakeSidedCone
 
-Makes the current brush have the given
-number of 2D sides and turns it into a cone
+Makes the current brush have the given number of 2D sides and turns it into a cone
 =============
 */
 void Brush::MakeSidedCone(int sides)
 {
-	int			i;
-	float		width;
-	float		sv, cv;
-	vec3		mins, maxs;
-	vec3		mid;
-	Brush	   *b;
-	Face	   *f;
-	texdef_t   *texdef;
-
-	if (sides < 3)
-	{
-		Sys_Printf("WARNING: Cone must have at least 3 sides.\n");
-		return;
-	}
-
-	if (sides >= MAX_POINTS_ON_WINDING - 2)
-	{
-		Sys_Printf("WARNING: Couldn't create brush. Too many sides.\n");
-		return;
-	}
+	int axis;
+	Brush* b;
 
 	if (!QE_SingleBrush())
 	{
@@ -1397,94 +1327,35 @@ void Brush::MakeSidedCone(int sides)
 		return;
 	}
 
+	// lunaran - grid view reunification
+	XYZView* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
+	if (xyz)
+		axis = xyz->dViewType;
+	else
+		axis = XY;
+
 	b = g_brSelectedBrushes.next;
-	mins = b->basis.mins;
-	maxs = b->basis.maxs;
-	texdef = &g_qeglobals.d_workTexDef;
+	CmdCone	*cmdCone = new CmdCone();
 
-	delete b;
+	cmdCone->SetAxis(axis);
+	cmdCone->SetSides(sides);
+	cmdCone->UseBrush(b);
 
-	// find center of brush
-	width = 8;
+	g_cmdQueue.Complete(cmdCone);
 
-	for (i = 0; i < 2; i++)
-	{
-		mid[i] = (maxs[i] + mins[i]) * 0.5;
-		if (maxs[i] - mins[i] > width)
-			width = maxs[i] - mins[i];
-	}
-
-	width /= 2;
-
-	b = new Brush();
-
-	// create bottom face
-	f = new Face(b);
-	f->texdef = *texdef;
-
-	f->planepts[0][0] = mins[0];
-	f->planepts[0][1] = mins[1];
-	f->planepts[0][2] = mins[2];
-
-	f->planepts[1][0] = maxs[0];
-	f->planepts[1][1] = mins[1];
-	f->planepts[1][2] = mins[2];
-
-	f->planepts[2][0] = maxs[0];
-	f->planepts[2][1] = maxs[1];
-	f->planepts[2][2] = mins[2];
-
-	for (i = 0; i < sides; i++)
-	{
-		f = new Face(b);
-		f->texdef = *texdef;
-
-		sv = sin(i * Q_PI * 2 / sides);
-		cv = cos(i * Q_PI * 2 / sides);
-
-		f->planepts[0][0] = floor(mid[0] + width * cv + 0.5);
-		f->planepts[0][1] = floor(mid[1] + width * sv + 0.5);
-		f->planepts[0][2] = mins[2];
-
-		f->planepts[1][0] = mid[0];
-		f->planepts[1][1] = mid[1];
-		f->planepts[1][2] = maxs[2];
-
-		f->planepts[2][0] = floor(f->planepts[0][0] - width * sv + 0.5);
-		f->planepts[2][1] = floor(f->planepts[0][1] + width * cv + 0.5);
-		f->planepts[2][2] = maxs[2];
-	}
-
-	Select_SelectBrush(b);
-	g_map.world->LinkBrush(b);
-	b->Build();
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
 =============
 Brush::MakeSidedSphere
 
-Makes the current brush have the given
-number of 2d sides and turns it into a sphere
+Makes the current brush have the given number of 2d sides and turns it into a sphere
 =============
 */
 void Brush::MakeSidedSphere(int sides)
 {
-	int			i, j, k;
-	double		radius;
-	double		dt, dp;
-	double		t, p;
-	vec3		mins, maxs;
-	vec3		mid;
-	Brush	   *b;
-	Face	   *f;
-	texdef_t   *texdef;
-
-	if (sides < 4)
-	{
-		Sys_Printf("WARNING: Sphere must have at least 4 sides.\n");
-		return;
-	}
+	Brush* b;
 
 	if (!QE_SingleBrush())
 	{
@@ -1493,68 +1364,15 @@ void Brush::MakeSidedSphere(int sides)
 	}
 
 	b = g_brSelectedBrushes.next;
-	mins = b->basis.mins;
-	maxs = b->basis.maxs;
-	texdef = &g_qeglobals.d_workTexDef;
+	CmdSphere *cmdSph = new CmdSphere();
 
-	delete b;
+	cmdSph->SetSides(sides);
+	cmdSph->UseBrush(b);
 
-	// find center of brush
-	radius = 8;
+	g_cmdQueue.Complete(cmdSph);
 
-	for (i = 0; i < 2; i++)
-	{
-		mid[i] = (maxs[i] + mins[i]) * 0.5;
-		if (maxs[i] - mins[i] > radius)
-			radius = maxs[i] - mins[i];
-	}
+	Sys_UpdateWindows(W_SCENE);
 
-	radius /= 2;
-
-	b = new Brush();
-
-	dt = (2 * Q_PI / sides);
-	dp = (Q_PI / sides);
-
-	for (i = 0; i <= sides - 1; i++)
-	{
-		for (j = 0; j <= sides - 2; j++)
-		{
-			t = i * dt;
-			p = (j * dp - Q_PI / 2);
-
-			f = new Face(b);
-			f->texdef = *texdef;
-
-			VectorPolar(f->planepts[0], radius, t, p);
-			VectorPolar(f->planepts[1], radius, t, p + dp);
-			VectorPolar(f->planepts[2], radius, t + dt, p + dp);
-
-			for (k = 0; k < 3; k++)
-				f->planepts[k] = f->planepts[k] + mid;
-		}
-	}
-
-	p = ((sides - 1) * dp - Q_PI / 2);
-
-	for (i = 0; i <= sides - 1; i++)
-	{
-		t = i * dt;
-
-		f = new Face(b);
-		f->texdef = *texdef;
-
-		VectorPolar(f->planepts[0], radius, t, p);
-		VectorPolar(f->planepts[1], radius, t + dt, p + dp);
-		VectorPolar(f->planepts[2], radius, t + dt, p);
-
-		for (k = 0; k < 3; k++)
-			f->planepts[k] = f->planepts[k] + mid;
-	}
-
-	Select_SelectBrush(b);
-	g_map.world->LinkBrush(b);
-	b->Build();
 }
 // <---sikk
 

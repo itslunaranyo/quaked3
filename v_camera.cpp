@@ -996,7 +996,7 @@ void CameraView::Draw ()
 		glPointSize(1);
 	}
 
-	Clip_DrawPoints();
+	Clip_Draw();
 
 	glEnable(GL_DEPTH_TEST);
 

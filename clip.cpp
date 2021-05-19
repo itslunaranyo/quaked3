@@ -16,9 +16,6 @@ int				g_nClipAxis;
 
 // lunaran - moved from globals in anticipation of wrapping clip tool in an object
 bool	    d_bClipSwitch;
-//Brush		d_brFrontSplits;
-//Brush		d_brBackSplits;
-//Brush		*d_pbrSplitList;
 
 CmdBrushClip *g_pcmdBC;
 
@@ -35,17 +32,19 @@ void Clip_Crosshair(bool bCrossHair)
 ============================================================================
 */
 
-
+/*
+==================
+Clip_StartCommand
+==================
+*/
 void Clip_StartCommand()
 {
 	if (g_pcmdBC) return;
 
 	g_pcmdBC = new CmdBrushClip();
+	g_pcmdBC->SetSide(d_bClipSwitch ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
 	g_pcmdBC->StartBrushes(&g_brSelectedBrushes);
-	d_bClipSwitch = false;
 }
-
-
 
 /*
 ==================
@@ -87,14 +86,6 @@ void Clip_ResetMode ()
 		g_cpClip2.bSet = false;
 		g_cpClip3.ptClip = vec3(0);
 		g_cpClip3.bSet = false;
-
-		//Brush::FreeList(&d_brFrontSplits);
-		//Brush::FreeList(&d_brBackSplits);
-	
-		//d_brFrontSplits.next = nullptr;
-		//d_brBackSplits.next = nullptr;
-		//d_brFrontSplits.next = &d_brFrontSplits;
-		//d_brBackSplits.next = &d_brBackSplits;
 	}
 	else
 	{
@@ -103,14 +94,6 @@ void Clip_ResetMode ()
 			ReleaseCapture();
 			g_pcpMovingClip = NULL;
 		}
-		//Brush::FreeList(&d_brFrontSplits);
-		//Brush::FreeList(&d_brBackSplits);
-	
-		//d_brFrontSplits.next = nullptr;
-		//d_brBackSplits.next = nullptr;
-		//d_brFrontSplits.next = &d_brFrontSplits;
-		//d_brBackSplits.next = &d_brBackSplits;
-
 	}
 	if (g_pcmdBC)
 	{
@@ -152,76 +135,6 @@ void Clip_PointsUpdated()
 
 /*
 ==================
-Clip_ProduceSplitLists
-==================
-*/
-void Clip_ProduceSplitLists ()
-{
-	/*
-	Brush	   *pBrush;
-	Brush	   *pFront;
-	Brush	   *pBack;
-	Face		face;
-
-	Brush::FreeList(&d_brFrontSplits);
-	Brush::FreeList(&d_brBackSplits);
-
-	d_brFrontSplits.next = &d_brFrontSplits;
-	d_brBackSplits.next = &d_brBackSplits;
-
-	for (pBrush = g_brSelectedBrushes.next; pBrush != NULL && pBrush != &g_brSelectedBrushes; pBrush = pBrush->next)
-	{
-		pFront = NULL;
-		pBack = NULL;
-    
-		if (g_cpClip1.bSet && g_cpClip2.bSet)
-		{
-			face.planepts[0] = g_cpClip1.ptClip;
-			face.planepts[1] = g_cpClip2.ptClip;
-			face.planepts[2] = g_cpClip3.ptClip;
-
-			if (!g_cpClip3.bSet)
-			{
-				if (g_nClipAxis == YZ)
-				{
-					face.planepts[0][0] = pBrush->basis.mins[0];
-					face.planepts[1][0] = pBrush->basis.mins[0];
-					face.planepts[2][1] = (g_cpClip1.ptClip[1] + g_cpClip2.ptClip[1]) * 0.5f;
-					face.planepts[2][2] = (g_cpClip1.ptClip[2] + g_cpClip2.ptClip[2]) * 0.5f;
-					face.planepts[2][0] = pBrush->basis.maxs[0];
-				}
-				else if (g_nClipAxis == XZ)
-				{
-					face.planepts[0][1] = pBrush->basis.mins[1];
-					face.planepts[1][1] = pBrush->basis.mins[1];
-					face.planepts[2][0] = (g_cpClip1.ptClip[0] + g_cpClip2.ptClip[0]) * 0.5f;
-					face.planepts[2][2] = (g_cpClip1.ptClip[2] + g_cpClip2.ptClip[2]) * 0.5f;
-					face.planepts[2][1] = pBrush->basis.maxs[1];
-				}
-				else
-				{
-					face.planepts[0][2] = pBrush->basis.mins[2];
-					face.planepts[1][2] = pBrush->basis.mins[2];
-					face.planepts[2][0] = (g_cpClip1.ptClip[0] + g_cpClip2.ptClip[0]) * 0.5f;
-					face.planepts[2][1] = (g_cpClip1.ptClip[1] + g_cpClip2.ptClip[1]) * 0.5f;
-					face.planepts[2][2] = pBrush->basis.maxs[2];
-				}
-			}
-
-			CSG_SplitBrushByFace(pBrush, &face, &pFront, &pBack);
-			if (pBack)
-				pBack->AddToList(&d_brBackSplits);
-			if (pFront)
-				pFront->AddToList(&d_brFrontSplits);
-		}
-	}
-	*/
-}
-
-
-
-/*
-==================
 Clip_Clip
 ==================
 */
@@ -232,27 +145,7 @@ void Clip_Clip ()
 
 	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
 		return;
-	/*
-	Undo::Start("Clip Selected");
-	Undo::AddBrushList(&g_brSelectedBrushes);
 
-	hold_brushes.next = hold_brushes.prev = &hold_brushes;
-	Clip_ProduceSplitLists();
-
-	pList = (d_bClipSwitch) ? &d_brFrontSplits : &d_brBackSplits;
-    
-	if (pList->next != pList)
-	{
-		Brush::CopyList(pList, &hold_brushes);
-		Brush::FreeList(&d_brFrontSplits);
-		Brush::FreeList(&d_brBackSplits);
-		Select_Delete();
-		Brush::CopyList(&hold_brushes, &g_brSelectedBrushes);
-	}
-
-	Undo::EndBrushList(&g_brSelectedBrushes);
-	Undo::End();
-	*/
 	g_cmdQueue.Complete(g_pcmdBC);
 	g_pcmdBC->Select();
 	g_pcmdBC = nullptr;
@@ -270,24 +163,6 @@ void Clip_Split ()
 {
 	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
 		return;
-	/*
-	Undo::Start("Split Selected");
-	Undo::AddBrushList(&g_brSelectedBrushes);
-
-	Clip_ProduceSplitLists();
-	if ((d_brFrontSplits.next != &d_brFrontSplits) &&
-		(d_brBackSplits.next != &d_brBackSplits))
-	{
-		Select_Delete();
-		Brush::CopyList(&d_brFrontSplits, &g_brSelectedBrushes);
-		Brush::CopyList(&d_brBackSplits, &g_brSelectedBrushes);
-		Brush::FreeList(&d_brFrontSplits);
-		Brush::FreeList(&d_brBackSplits);
-	}
-
-	Undo::EndBrushList(&g_brSelectedBrushes);
-	Undo::End();
-	*/
 
 	g_pcmdBC->SetSide(CmdBrushClip::clipside::CLIP_BOTH);
 	g_cmdQueue.Complete(g_pcmdBC);
@@ -733,19 +608,18 @@ void Clip_EndPoint ()
 
 /*
 ==============
-Clip_DrawPoints
+Clip_Draw
 ==============
 */
-void Clip_DrawPoints ()
+void Clip_Draw ()
 {
 	if (!g_qeglobals.d_bClipMode || !g_pcmdBC)
 		return;
 	
-	char		strMsg[8];
-	Brush    *pBrush;
-	//Brush    *pList;
-	Face	   *face;
-	winding_t  *w;
+	char		strMsg[4];
+	Brush		*pBrush;
+	Face		*face;
+	winding_t	*w;
 	int			order;
 	int			i;
 
@@ -783,12 +657,8 @@ void Clip_DrawPoints ()
 	}
 	if (g_cpClip1.bSet && g_cpClip2.bSet)
 	{
-		//Clip_ProduceSplitLists();
-		//pList = (d_bClipSwitch) ? &d_brFrontSplits : &d_brBackSplits;
-
 		std::vector<Brush*> *brList = (d_bClipSwitch) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront;
 
-		//for (pBrush = pList->next; pBrush != NULL && pBrush != pList; pBrush = pBrush->next)
 		for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
 		{
 			pBrush = *brIt;

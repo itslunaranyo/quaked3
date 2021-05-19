@@ -6,7 +6,7 @@
 
 // 3-Point Clipping Tool
 
-#include "v_xy.h"
+class XYZView;
 class CmdBrushClip;
 
 typedef struct
@@ -27,13 +27,12 @@ extern CmdBrushClip	*g_pcmdBC;
 
 void SnapToPoint(vec3 &point);
 
-void Clip_ProduceSplitLists ();
-void Clip_SetMode ();
-void Clip_UnsetMode ();
-void Clip_ResetMode ();
+void Clip_SetMode();
+void Clip_UnsetMode();
+void Clip_ResetMode();
 void Clip_Clip();
-void Clip_Split ();
-void Clip_Flip ();
+void Clip_Split();
+void Clip_Flip();
 
 void Clip_CamStartQuickClip(int x, int y);
 void Clip_CamEndQuickClip();
@@ -43,9 +42,9 @@ void Clip_CamEndPoint();
 
 void Clip_StartQuickClip(XYZView* xyz, int x, int y);
 void Clip_EndQuickClip();
-void Clip_DropPoint (XYZView* xyz, int x, int y);
-void Clip_MovePoint (XYZView* xyz, int x, int y);
-void Clip_EndPoint ();
-void Clip_DrawPoints ();
+void Clip_DropPoint(XYZView* xyz, int x, int y);
+void Clip_MovePoint(XYZView* xyz, int x, int y);
+void Clip_EndPoint();
+void Clip_Draw();
 
 #endif

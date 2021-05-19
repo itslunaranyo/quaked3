@@ -223,10 +223,12 @@ BEGIN
         MENUITEM MFT_SEPARATOR
         POPUP "&Primitives",                    65535,MFT_STRING,MFS_ENABLED
         BEGIN
-            MENUITEM "&Cylinder...\tB",             ID_BRUSH_CYLINDER,MFT_STRING,MFS_ENABLED
-            MENUITEM "C&one...\tCtrl+B",            ID_BRUSH_CONE,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Sphere...\tCtrl+Shift+B",    ID_BRUSH_SPHERE,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Torus...",                   ID_BRUSH_TORUS,MFT_STRING,MFS_GRAYED
+            MENUITEM "Czg Cylinder (&12)\tB",       ID_PRIMITIVES_CZGCYLINDER1,MFT_STRING,MFS_ENABLED
+            MENUITEM "Czg Cylinder (&24)\tCtrl+B",  ID_PRIMITIVES_CZGCYLINDER2,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Cylinder...",                ID_BRUSH_CYLINDER,MFT_STRING,MFS_ENABLED
+            MENUITEM "C&one...",                    ID_BRUSH_CONE,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Sphere...",                  ID_BRUSH_SPHERE,MFT_STRING,MFS_ENABLED
         END
     END
     POPUP "&Grid",                          65535,MFT_STRING,MFS_ENABLED

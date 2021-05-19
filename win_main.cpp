@@ -1686,11 +1686,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CLONE:
-		//	Undo::Start("Clone");
-		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_Clone();
-		//	Undo::EndBrushList(&g_brSelectedBrushes);
-		//	Undo::End();
 			break;
 		case ID_SELECTION_DESELECT:
 			if (g_qeglobals.d_bClipMode)
@@ -1702,18 +1698,7 @@ LONG WINAPI CommandHandler (
 			Select_Invert();
 			break;
 		case ID_SELECTION_DELETE:
-			//{	// sikk - TODO: Undo doesn't function properly with mixed selection  
-			//	Brush *brush;
-
-			//	Undo::Start("Delete");
-			//	Undo::AddBrushList(&g_brSelectedBrushes);
-				// add all deleted entities to the undo
-			//	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-			//		Undo::AddEntity(brush->owner);
-				Select_Delete();
-			//	Undo::EndBrushList(&g_brSelectedBrushes);
-			//	Undo::End();
-			//}
+			Select_Delete();
 			break;
 
 		case ID_SELECTION_FLIPX:
@@ -1824,18 +1809,10 @@ LONG WINAPI CommandHandler (
 			break;
 		// lunaran - moved undo into the actual clip & split actions
 		case ID_SELECTION_CLIPSELECTED:
-		//	Undo::Start("Clip Selected");
-		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Clip_Clip();
-		//	Undo::EndBrushList(&g_brSelectedBrushes);
-		//	Undo::End();
 			break;
 		case ID_SELECTION_SPLITSELECTED:
-		//	Undo::Start("Split Selected");
-		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Clip_Split();
-		//	Undo::EndBrushList(&g_brSelectedBrushes);
-		//	Undo::End();
 			break;
 		case ID_SELECTION_FLIPCLIP:
 			Clip_Flip();
@@ -2326,88 +2303,25 @@ LONG WINAPI CommandHandler (
 //===================================
 // Brush menu
 //===================================
-			/*
-		case ID_BRUSH_3SIDED:
-			Undo::Start("3 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(3);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_4SIDED:
-			Undo::Start("4 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(4);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_5SIDED:
-			Undo::Start("5 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(5);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_6SIDED:
-			Undo::Start("6 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(6);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_7SIDED:
-			Undo::Start("7 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(7);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_8SIDED:
-			Undo::Start("8 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(8);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-		case ID_BRUSH_9SIDED:
-			Undo::Start("9 Sided");
-			Undo::AddBrushList(&g_brSelectedBrushes);
-			Brush_MakeSided(9);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
-			break;
-			*/
 
 // sikk---> Brush Primitives
 		case ID_BRUSH_CYLINDER:
-			Undo::Start("Make Cylinder");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(0);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_BRUSH_CONE:
-			Undo::Start("Make Cone");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(1);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
 		case ID_BRUSH_SPHERE:
-			Undo::Start("Make Sphere");
-			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(2);
-			Undo::EndBrushList(&g_brSelectedBrushes);
-			Undo::End();
 			break;
-//		case ID_BRUSH_TORUS:
-//			Undo::Start("Make Torus");
-//			Undo::AddBrushList(&g_brSelectedBrushes);
-//			DoSides(3);
-//			Undo::EndBrushList(&g_brSelectedBrushes);
-//			Undo::End();
-//			break;
 // <---sikk
+		case ID_PRIMITIVES_CZGCYLINDER1:
+			Brush::MakeCzgCylinder(1);
+			break;
+		case ID_PRIMITIVES_CZGCYLINDER2:
+			Brush::MakeCzgCylinder(2);
+			break;
+
 
 //===================================
 // Window menu

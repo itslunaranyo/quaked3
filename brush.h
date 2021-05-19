@@ -69,6 +69,7 @@ public:
 	// <---sikk
 
 	// TODO: make not static; these all start with a single brush anyway
+	static void MakeCzgCylinder(int degree);
 	static void	MakeSided (int sides);
 	static void	MakeSidedCone (int sides);	// sikk - Brush Primitves
 	static void	MakeSidedSphere (int sides);	// sikk - Brush Primitves

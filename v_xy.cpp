@@ -1789,7 +1789,7 @@ void XYZView::Draw ()
 				 -g_qeglobals.d_v3SelectTranslate[2]);
 
 	// clipper
-	Clip_DrawPoints();
+	Clip_Draw();
 
 	if (!(dViewType == XY))
 		glPopMatrix();

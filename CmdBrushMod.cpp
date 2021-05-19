@@ -1,5 +1,8 @@
-#include "qe3.h"
+//==============================
+//	cmdbrushmod.cpp
+//==============================
 
+#include "qe3.h"
 
 CmdBrushMod::CmdBrushMod()
 {
@@ -107,7 +110,7 @@ void CmdBrushMod::Swap()
 	for (auto brbIt = brbasisCache.begin(); brbIt != brbasisCache.end(); ++brbIt)
 	{
 		brbIt->swap();
-		//brbIt->br->Build();
+		brbIt->br->Build();
 	}
 }
 
