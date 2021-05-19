@@ -331,7 +331,7 @@
 #define ID_THEMES_WORLDCRAFT            40268
 #define ID_EDIT_ENTITYINFO              40269
 #define ID_VIEW_SHOWAXIS                40270
-#define ID_VIEW_SHOWMAPBOUNDARY          40271
+#define ID_VIEW_SHOWMAPBOUNDARY         40271
 #define ID_VIEW_CENTERONSELECTION       40272
 #define ID_VIEW_SHOWLIGHTRADIUS         40276
 #define ID_HELP_HELP                    40278
@@ -345,7 +345,7 @@
 #define ID_FILE_NEWPROJECT              40306
 #define ID_VIEW_SHOWCAMERAGRID          40307
 #define ID_COLORS_CAMERAGRID            40308
-#define ID_COLORS_MAPBOUNDARY            40309
+#define ID_COLORS_MAPBOUNDARY           40309
 #define ID_VIEW_CAMERA                  40312
 #define ID_SELECTION_SCALE              40322
 #define ID_SELECTION_SCALELOCKX         40323

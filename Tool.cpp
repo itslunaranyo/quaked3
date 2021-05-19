@@ -190,3 +190,14 @@ bool Tool::FilterInput(UINT uMsg)
 			(uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) ||
 			(uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) );
 }
+
+/*
+==================
+Tool::Crosshair
+==================
+*/
+void Tool::Crosshair(bool bCrossHair)
+{
+	SetCursor((bCrossHair) ? LoadCursor(NULL, IDC_CROSS) : LoadCursor(NULL, IDC_ARROW));
+}
+

@@ -48,7 +48,6 @@ private:
 	void Split();
 	void Flip();
 
-	void Crosshair(bool bCrossHair);
 	void StartCommand();
 	clippoint_t* StartNextPoint();
 

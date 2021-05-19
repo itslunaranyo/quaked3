@@ -7,17 +7,11 @@
 #include "CmdCreatePointEntity.h"
 #include "io.h"
 
-int g_nEntityId = 0;	// sikk - Undo/Redo
-
-//===================================================================
-
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
-	undoId(0), redoId(0), ownerId(0), origin(0)
+	origin(0)
 {
-	entityId = ++g_nEntityId;
-	
 	brushes.onext = brushes.oprev = &brushes;
 	brushes.owner = this;
 }

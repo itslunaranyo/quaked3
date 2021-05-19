@@ -211,6 +211,10 @@ void QE_Init ()
 /*
 ===========
 QE_KeyDown
+
+any key combos which are ctrl+ or alt+ are in the accelerator table
+any key combos which are shift+ can't be and have to go here, or else capital letters typed
+	into non-modal dialogs are intercepted early ...
 ===========
 */
 bool QE_KeyDown (int key)
@@ -348,7 +352,7 @@ bool QE_KeyDown (int key)
 	case 'E':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGEDGES, 0);
 		break;
-	case 'F':	// sikk - added shortcut key
+	case 'F':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGFACES, 0);
 		break;
 	case 'V':
@@ -360,7 +364,10 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_GRID_SNAPTOGRID, 0);
 		break;*/
 	case 'H':
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDESELECTED, 0);
+		if (shift)
+			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDEUNSELECTED, 0);
+		else
+			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDESELECTED, 0);
 		break;
 	case 'I':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_INVERT, 0);

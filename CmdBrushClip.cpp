@@ -77,10 +77,17 @@ void CmdBrushClip::CreateSplitLists()
 	for (auto brIt = brIn.begin(); brIt != brIn.end(); ++brIt)
 	{
 		CSG::SplitBrushByFace(*brIt, &splitf, &f, &b);
+		assert(b || f);
 		if (f)
+		{
+			assert(std::find(brFront.begin(), brFront.end(), f) == brFront.end());
 			brFront.push_back(f);
+		}
 		if (b)
+		{
+			assert(std::find(brBack.begin(), brBack.end(), b) == brBack.end());
 			brBack.push_back(b);
+		}
 	}
 }
 

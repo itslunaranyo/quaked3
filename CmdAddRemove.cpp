@@ -117,23 +117,25 @@ int CmdAddRemove::EntityDelta()
 
 void CmdAddRemove::Do_Impl()
 {
-	Sequester(brRemoved);
+	// add brushes to the scene before removing any, so empty entities aren't
+	// detected and removed prematurely
+	Restore(entAdded);
+	Restore(brAdded);
 
+	Sequester(brRemoved);
 	// check if removing all the brushes we've been fed leads to any empty entities
 	// and mark them for removal too
 	Brush* br;
 	for (auto brIt = brRemoved.begin(); brIt != brRemoved.end(); ++brIt)
 	{
 		br = *brIt;
-		if (br->owner->brushes.next == &br->owner->brushes &&
+		if (br->owner->brushes.onext == &br->owner->brushes &&
 			br->owner->GetEntClass() != EntClass::worldspawn)	// never delete worldspawn
 		{
 			RemovedEntity(br->owner);
 		}
 	}
 	Sequester(entRemoved);
-	Restore(entAdded);
-	Restore(brAdded);
 }
 
 

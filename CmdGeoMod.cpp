@@ -209,8 +209,6 @@ void CmdGeoMod::FinalizeBrushList()
 	if (brMods.empty())
 		Error("No brushes specified for geometry mod!");
 
-	cmdBM.ModifyBrushes(brMods);	// backup the geometry into undo now
-
 	Face* f;
 	std::vector<vec3> allverts;
 
@@ -221,6 +219,8 @@ void CmdGeoMod::FinalizeBrushList()
 	{
 		for (f = (*brIt)->faces; f; f = f->fnext)
 		{
+			if (!f->face_winding)
+				continue;
 			for (int i = 0; i < f->face_winding->numpoints; i++)
 			{
 				allverts.push_back(glm::round(f->face_winding->points[i].point));
@@ -309,6 +309,8 @@ void CmdGeoMod::ApplyTranslation(vec3 tr)
 void CmdGeoMod::FinalizePolygons()
 {
 	assert(modState == BRUSHES_DONE);
+
+	cmdBM.ModifyBrushes(brMods);	// backup the geometry into undo now
 
 	for (auto brIt = brushMeshes.begin(); brIt != brushMeshes.end(); ++brIt)
 	{
@@ -505,7 +507,7 @@ bool CmdGeoMod::Polygon::Resolve()
 	Plane p;
 	std::vector<Plane> pBuf;
 	std::vector<vec3*> polyVerts;
-	int x, y, z, i;
+	int x, y, z;
 	unsigned tries;
 	int rCount, vCount;
 	float dot;
@@ -524,6 +526,7 @@ bool CmdGeoMod::Polygon::Resolve()
 		convex wrap to expand over other polygons).
 	================ */
 #ifdef _DEBUG
+	int i;
 	for (i = 0; i < (int)mesh->polies.size(); i++) // we can't loop more times than there are polygons to absorb anyway
 #else
 	while (1)
@@ -729,6 +732,7 @@ CmdGeoMod::Polygon *CmdGeoMod::Polygon::FindNeighborForMerge(const std::vector<P
 CmdGeoMod::Polygon::Polygon(CmdGeoMod &gm, Face *f, Mesh *m) : 
 	dynamic(false), solved(false), tdOrig(f->texdef), mesh(m)
 {
+	assert(f->face_winding);
 	vec3 pt;
 
 	// make new plane from original winding, since we don't know where the hell

@@ -5,7 +5,7 @@
 #include "qe3.h"
 #include "CmdBrushClip.h"
 
-#define CLIP_CAMDOT 0.9996f
+#define CLIP_CAMDOT 0.9997f
 
 ClipTool::ClipTool() : 
 	ptMoving(nullptr),
@@ -194,16 +194,6 @@ void ClipTool::SelectionChanged()
 }
 
 /*
-==================
-ClipTool::Crosshair
-==================
-*/
-void ClipTool::Crosshair(bool bCrossHair)
-{
-	SetCursor((bCrossHair) ? LoadCursor(NULL, IDC_CROSS) : LoadCursor(NULL, IDC_ARROW));
-}
-
-/*
 ============================================================================
 
 	CLIP MODE
@@ -287,7 +277,7 @@ ClipTool::Clip
 */
 void ClipTool::Clip ()
 {
-	if (!g_pcmdBC)
+	if (!g_pcmdBC || !points[1].set)
 		return;
 
 	g_cmdQueue.Complete(g_pcmdBC);
@@ -304,7 +294,7 @@ ClipTool::Split
 */
 void ClipTool::Split ()
 {
-	if (!g_pcmdBC)
+	if (!g_pcmdBC || !points[1].set)
 		return;
 
 	g_pcmdBC->SetSide(CmdBrushClip::clipside::CLIP_BOTH);
@@ -321,7 +311,7 @@ ClipTool::Flip
 */
 void ClipTool::Flip ()
 {
-	if (!g_pcmdBC)
+	if (!g_pcmdBC || !points[1].set)
 		return;
 
 	backside = !backside;

@@ -22,6 +22,7 @@ public:
 
 private:
 	bool textureLock;
+	float entAngMod;
 
 	mat4 mat;
 	std::vector<Brush*> brMoved;

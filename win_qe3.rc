@@ -95,7 +95,7 @@ BEGIN
             MENUITEM "Show Camera &Grid",           ID_VIEW_SHOWCAMERAGRID,MFT_STRING,MFS_CHECKED
             MENUITEM "Show C&oordinates",           ID_VIEW_SHOWCOORDINATES,MFT_STRING,MFS_CHECKED
             MENUITEM "Show L&ight Radius",          ID_VIEW_SHOWLIGHTRADIUS,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show &Map Boundary",           ID_VIEW_SHOWMAPBOUNDARY,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Map Boundary",          ID_VIEW_SHOWMAPBOUNDARY,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Names",                 ID_VIEW_SHOWNAMES,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Path",                  ID_VIEW_SHOWPATH,MFT_STRING,MFS_CHECKED
             MENUITEM "Show Sizing Info",            ID_VIEW_SHOWSIZEINFO,MFT_STRING,MFS_CHECKED
@@ -534,7 +534,7 @@ BEGIN
     PUSHBUTTON      "315",IDC_E_315,35,325,15,15
     PUSHBUTTON      "Up",IDC_E_UP,60,305,15,15
     PUSHBUTTON      "Dn",IDC_E_DOWN,60,320,15,15
-    PUSHBUTTON      "Add Key",IDC_E_ADDPROP,90,295,35,15
+    DEFPUSHBUTTON   "Add Key",IDC_E_ADDPROP,90,295,35,15
     PUSHBUTTON      "Del Key",IDC_E_DELPROP,90,310,35,15
     PUSHBUTTON      "Sel Color",IDC_E_COLOR,90,325,35,15
     PUSHBUTTON      "Create Entity",IDC_E_CREATE,150,305,50,20
@@ -902,8 +902,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,33,0
- PRODUCTVERSION 3,2,33,0
+ FILEVERSION 3,2,34,0
+ PRODUCTVERSION 3,2,34,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -920,14 +920,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 33)"
-            VALUE "FileVersion", "3.2.33.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 33)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 34)"
+            VALUE "FileVersion", "3.2.34.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 34)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.33.0"
+            VALUE "ProductVersion", "3.2.34.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -981,6 +981,7 @@ BEGIN
     "P",            ID_SELECTION_EXPORTPREFAB, VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_RETURN,      ID_SELECTION_FLIPCLIP,  VIRTKEY, CONTROL, NOINVERT
     VK_TAB,         ID_SELECTION_GROUPNEXTBRUSH, VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_SELECTION_INSERTBRUSH, VIRTKEY, CONTROL, NOINVERT
     "A",            ID_SELECTION_SELECTALL, VIRTKEY, CONTROL, NOINVERT
     "A",            ID_SELECTION_SELECTALLTYPE, VIRTKEY, SHIFT, CONTROL, NOINVERT
     "C",            ID_SELECTION_SELECTCOMPLETETALL, VIRTKEY, ALT, NOINVERT
@@ -995,7 +996,6 @@ BEGIN
     VK_OEM_5,       ID_VIEW_CUBICCLIP,      VIRTKEY, CONTROL, NOINVERT
     VK_OEM_6,       ID_VIEW_CUBICCLIPZOOMIN, VIRTKEY, CONTROL, NOINVERT
     VK_OEM_4,       ID_VIEW_CUBICCLIPZOOMOUT, VIRTKEY, CONTROL, NOINVERT
-    "H",            ID_VIEW_HIDESHOW_HIDEUNSELECTED, VIRTKEY, SHIFT, NOINVERT
     "H",            ID_VIEW_HIDESHOW_SHOWHIDDEN, VIRTKEY, CONTROL, NOINVERT
     "1",            ID_VIEW_TOGGLE_XY,      VIRTKEY, ALT, NOINVERT
     "2",            ID_VIEW_TOGGLE_XZ,      VIRTKEY, ALT, NOINVERT
@@ -1004,7 +1004,6 @@ BEGIN
     VK_HOME,        ID_VIEW_Z100,           VIRTKEY, CONTROL, NOINVERT
     VK_INSERT,      ID_VIEW_ZZOOMIN,        VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_VIEW_ZZOOMOUT,       VIRTKEY, CONTROL, NOINVERT
-    "I",            ID_SELECTION_INSERTBRUSH, VIRTKEY, CONTROL, NOINVERT
 END
 
 

@@ -6,6 +6,8 @@
 #include "CmdGeoMod.h"
 #include <algorithm>
 
+#define GT_HANDLE_HITSIZE	7
+
 GeoTool::GeoTool(gt_mode_t gtm) :
 	mode(gtm), state(GT_NONE),
 	cmdGM(nullptr), pointBuf(nullptr),
@@ -28,7 +30,6 @@ void GeoTool::ToggleMode(gt_mode_t gtm)
 		new GeoTool(gtm);
 	else
 	{
-		//gt->mode ^= gtm;
 		gt->_toggleMode(gtm);
 		if (!gt->mode)
 			delete gt;
@@ -45,7 +46,7 @@ void GeoTool::_toggleMode(gt_mode_t gtm)
 	}
 	mode ^= gtm;
 	if (!mode) return;
-	if (!g_qeglobals.d_savedinfo.bVFEModesExclusive)
+	if (g_qeglobals.d_savedinfo.bVFEModesExclusive)
 		return;
 	
 	if (!(mode & gtm))
@@ -53,21 +54,21 @@ void GeoTool::_toggleMode(gt_mode_t gtm)
 		switch (gtm)	// mode was toggled off, deselect any handles of that type
 		{
 		case GT_VERTEX:
-			for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
+			for (auto hIt = handles.begin(); hIt != handles.end() && hIt->selected; ++hIt)
 			{
 				if (hIt->numPoints == 1)
 					hIt->selected = false;
 			}
 			break;
 		case GT_EDGE:
-			for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
+			for (auto hIt = handles.begin(); hIt != handles.end() && hIt->selected; ++hIt)
 			{
 				if (hIt->numPoints == 2)
 					hIt->selected = false;
 			}
 			break;
 		case GT_FACE:
-			for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
+			for (auto hIt = handles.begin(); hIt != handles.end() && hIt->selected; ++hIt)
 			{
 				if (hIt->numPoints > 2)
 					hIt->selected = false;
@@ -101,8 +102,8 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 
 		vWnd.GetMsgXY(lParam, mx, my);
 		mcDown = v.GetMouseContext(mx, my);
-		mca = v.GetMouseContext(mcDown.pt[0] - 4, mcDown.pt[1] - 4);
-		mcb = v.GetMouseContext(mcDown.pt[0] + 4, mcDown.pt[1] + 4);
+		mca = v.GetMouseContext(mcDown.pt[0] - GT_HANDLE_HITSIZE, mcDown.pt[1] - GT_HANDLE_HITSIZE);
+		mcb = v.GetMouseContext(mcDown.pt[0] + GT_HANDLE_HITSIZE, mcDown.pt[1] + GT_HANDLE_HITSIZE);
 		DragStart(mca, mcb, v.vup);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -110,16 +111,19 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		Sys_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
+		vWnd.GetMsgXY(lParam, mx, my);
+		mc = v.GetMouseContext(mx, my);
 		if (keys & MK_LBUTTON && hot)
 		{
-			vec3 pt;
-			vWnd.GetMsgXY(lParam, mx, my);
-			mc = v.GetMouseContext(mx, my);
 			DragMove(mc);
 
 			Sys_UpdateWindows(W_SCENE);
 			return true;
 		}
+		mca = v.GetMouseContext(mc.pt[0] - GT_HANDLE_HITSIZE, mc.pt[1] - GT_HANDLE_HITSIZE);
+		mcb = v.GetMouseContext(mc.pt[0] + GT_HANDLE_HITSIZE, mc.pt[1] + GT_HANDLE_HITSIZE);
+		Hover(mca, mcb, v.vup);
+
 		return false;
 	case WM_LBUTTONUP:
 		if (!hot) return false;
@@ -151,8 +155,8 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 
 		vWnd.GetMsgXY(lParam, mx, my);
 		mcDown = v.GetMouseContext(mx, my);
-		mca = v.GetMouseContext(mcDown.pt[0] - 4, mcDown.pt[1] - 4);
-		mcb = v.GetMouseContext(mcDown.pt[0] + 4, mcDown.pt[1] + 4);
+		mca = v.GetMouseContext(mcDown.pt[0] - GT_HANDLE_HITSIZE, mcDown.pt[1] - GT_HANDLE_HITSIZE);
+		mcb = v.GetMouseContext(mcDown.pt[0] + GT_HANDLE_HITSIZE, mcDown.pt[1] + GT_HANDLE_HITSIZE);
 		DragStart(mca, mcb, (v.dViewType == XY) ? vec3(0,1,0) : vec3(0,0,1));
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -160,16 +164,18 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 		Sys_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
+		vWnd.GetMsgXY(lParam, mx, my);
+		mc = v.GetMouseContext(mx, my);
 		if (keys & MK_LBUTTON && hot)
 		{
-			vec3 pt;
-			vWnd.GetMsgXY(lParam, mx, my);
-			mc = v.GetMouseContext(mx, my);
 			DragMove(mc);
 
 			Sys_UpdateWindows(W_SCENE);
 			return true;
 		}
+		mca = v.GetMouseContext(mc.pt[0] - GT_HANDLE_HITSIZE, mc.pt[1] - GT_HANDLE_HITSIZE);
+		mcb = v.GetMouseContext(mc.pt[0] + GT_HANDLE_HITSIZE, mc.pt[1] + GT_HANDLE_HITSIZE);
+		Hover(mca, mcb, (v.dViewType == XY) ? vec3(0, 1, 0) : vec3(0, 0, 1));
 		return false;
 	case WM_LBUTTONUP:
 		if (!hot) return false;
@@ -360,6 +366,16 @@ void GeoTool::DragFinish(const mouseContext_t &mc)
 	state = GT_NONE;
 }
 
+void GeoTool::Hover(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up)
+{
+	if (BoxTestHandles(mca.org, mca.ray, mcb.org, mcb.ray, up, handlesHit))
+		Crosshair(true);
+	else
+		Crosshair(false);
+}
+
+//==============================
+
 void GeoTool::DoSelect(std::vector<handle*>& hlist)
 {
 	if (CtrlDown())
@@ -411,6 +427,10 @@ bool GeoTool::BoxTestHandles(const vec3 org1, const vec3 dir1, const vec3 org2, 
 
 	for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
 	{
+		if (!(mode & GT_VERTEX) && hIt->numPoints == 1 ||
+			!(mode & GT_EDGE) && hIt->numPoints == 2 ||
+			!(mode & GT_FACE) && hIt->numPoints > 2)
+			continue;
 		if (DotProduct(hIt->origin, p[0].normal) < p[0].dist) continue;
 		if (DotProduct(hIt->origin, p[1].normal) < p[1].dist) continue;
 		if (DotProduct(hIt->origin, p[2].normal) < p[2].dist) continue;
@@ -465,13 +485,11 @@ bool GeoTool::AnySelected(std::vector<handle*>& hlist)
 	return false;
 }
 
-
 void GeoTool::DeselectAllHandles()
 {
 	for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
 		hIt->selected = false;
 }
-
 
 
 //==============================

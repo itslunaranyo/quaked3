@@ -669,10 +669,9 @@ bool CameraView::CullBrush (Brush *b)
 	return false;
 }
 
-// sikk---> Camera Grid
 /*
 ==============
-CameraView::Draw2D
+CameraView::DrawGrid
 ==============
 */
 void CameraView::DrawGrid ()
@@ -699,11 +698,10 @@ void CameraView::DrawGrid ()
 	}
 	glEnd();
 }
-// <---sikk
 
 /*
 ==============
-CameraView::Draw
+CameraView::DrawActive
 
 draw active (unselected) brushes, sorting out the transparent ones for a separate draw
 ==============
@@ -718,15 +716,8 @@ void CameraView::DrawActive()
 			continue;
 		if (CullBrush(brush))
 			continue;
-	// sikk---> Transparent Brushes
 		// TODO: Make toggle via Preferences Option. 
 		assert(brush->faces->texdef.tex);
-		/*
-		if (!strncmp(brush->faces->texdef.tex->name, "*", 1) ||
-			!strcmp(brush->faces->texdef.tex->name, "clip") ||
-			!strncmp(brush->faces->texdef.tex->name, "hint", 4) ||
-			!strcmp(brush->faces->texdef.tex->name, "trigger"))
-			*/
 		if (brush->showFlags & BFL_TRANS)
 			g_pbrTransBrushes[numTransBrushes++] = brush;
 		else
@@ -741,7 +732,6 @@ void CameraView::DrawActive()
 	for (i = 0; i < numTransBrushes; i++ )
 		g_pbrTransBrushes[i]->Draw();
 	glDisable(GL_BLEND);
-	// <---sikk
 }
 
 /*

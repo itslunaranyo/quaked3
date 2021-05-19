@@ -44,27 +44,13 @@ the selected brushes off of their old positions
 */
 void Modify_Clone()
 {
-	vec3	delta(0);
+	vec3	delta(g_qeglobals.d_nGridSize);
 
 	if (g_qeglobals.d_selSelectMode != sel_brush) return;
 	if (!Selection::HasBrushes()) return;
 
 	// move cloned brushes based on active XY view
-	switch (QE_BestViewAxis())//XYZWnd_GetTopWindowViewType())
-	{
-	case XZ:
-		delta[0] = g_qeglobals.d_nGridSize;
-		delta[2] = g_qeglobals.d_nGridSize;
-		break;
-	case YZ:
-		delta[1] = g_qeglobals.d_nGridSize;
-		delta[2] = g_qeglobals.d_nGridSize;
-		break;
-	default:
-	case XY:
-		delta[0] = g_qeglobals.d_nGridSize;
-		delta[1] = g_qeglobals.d_nGridSize;
-	}
+	delta[g_qeglobals.d_wndGrid[0]->xyzv->GetAxis()] = 0;
 
 	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
 	Selection::DeselectAll();
@@ -198,11 +184,11 @@ void Modify_ShowHidden()
 	Brush *b;
 
 	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
-		b->showFlags &= !BFL_HIDDEN;
+		b->showFlags -= BFL_HIDDEN & b->showFlags;
 
 	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
-		b->showFlags &= !BFL_HIDDEN;
-
+		b->showFlags -= BFL_HIDDEN & b->showFlags;
+	
 	Sys_UpdateWindows(W_SCENE);
 }
 

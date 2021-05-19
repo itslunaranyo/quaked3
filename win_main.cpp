@@ -2693,13 +2693,11 @@ int WINAPI WinMain (
     time_t	lTime;
 
 	g_qeglobals.d_hInstance = hInstance;
-	/*
 // sikk - Quickly made Splash Screen
 #ifndef _DEBUG
 	HWND	hwndSplash;
 	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
 #endif
-*/
 	InitCommonControls ();
 
 	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
@@ -2796,7 +2794,8 @@ int WINAPI WinMain (
 			{
 				WMain_HandleMWheel(msg);
 
-				// lunaran - this magically makes tab work in the surface dialog
+				// lunaran - send keys to dialogs first before trying accelerators, so we can tab through
+				// the surface dialog and such
 				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
 				{
 					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
@@ -2815,14 +2814,12 @@ int WINAPI WinMain (
 			Selection::HandleChange();
 
 			Sys_CheckBspProcess();
-			/*
 			// sikk---> Quickly made Splash Screen
 #ifndef _DEBUG
 			if (hwndSplash)
 				if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
 					DestroyWindow(hwndSplash);
 #endif
-*/
 			// <---sikk
 
 			// run time dependent behavior

@@ -29,12 +29,6 @@ public:
 	EntClass	*eclass;
 	EPair		*epairs;
 
-// sikk---> Undo/Redo
-	int			undoId, redoId;
-	int			ownerId;	// entityId of the owner entity for undo
-	int			entityId;	// entity ID
-// <---sikk
-
 	bool		IsPoint() const { return (eclass->IsPointClass()); }
 	bool		IsBrush() const { return !(eclass->IsPointClass()); }
 	bool		IsWorld() const { return (eclass == EntClass::worldspawn); }

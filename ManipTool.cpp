@@ -506,6 +506,15 @@ void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
 	cmdGM = new CmdGeoMod();
 	std::vector<vec3> points;
 	std::vector<Brush*> brList;
+
+	// we can't rely on the list of face pointers, because as soon as the
+	// CmdGeoMod gets a hold of them they'll be duped and replaced and
+	// the faces we're pointing to will be in 'undo space' without windings
+	std::vector<winding_t*> fSideWindings;
+	fSideWindings.reserve(fSides.size());
+	for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
+		fSideWindings.push_back((*fIt)->face_winding);
+
 	if (Selection::HasBrushes())
 	{
 		cmdGM->SetBrushes(&g_brSelectedBrushes);
@@ -521,12 +530,15 @@ void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
 		}
 		cmdGM->SetBrushes(brList);
 	}
+	
+	auto wIt = fSideWindings.begin();
 	for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
 	{
 		points.clear();
 		for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
 			points.push_back((*fIt)->face_winding->points[i].point);
 		cmdGM->SetPoints((*fIt)->owner, points);
+		++wIt;
 	}
 	state = MT_SHEAR;
 }

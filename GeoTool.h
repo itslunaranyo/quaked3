@@ -70,6 +70,7 @@ private:
 	void DragStart(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up);
 	void DragMove(const mouseContext_t &mc);
 	void DragFinish(const mouseContext_t &mc);
+	void Hover(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up);
 
 	void DoSelect(std::vector<handle*> &hlist);
 	bool BoxTestHandles(const vec3 org1, const vec3 dir1, const vec3 org2, const vec3 dir2, const vec3 up, std::vector<handle*>& hlist);

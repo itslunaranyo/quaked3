@@ -43,6 +43,8 @@ public:
 	static bool FilterInput(UINT uMsg);
 
 protected:
+	void Crosshair(bool bCrossHair);
+
 	bool ShiftDown() { return (GetKeyState(VK_SHIFT) < 0); }
 	bool CtrlDown() { return (GetKeyState(VK_CONTROL) < 0); }
 	bool AltDown() { return (GetKeyState(VK_MENU) < 0); }

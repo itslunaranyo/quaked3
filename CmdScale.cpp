@@ -30,20 +30,38 @@ void CmdScale::UseBrushes(Brush *brList)
 		UseBrush(b);
 }
 
-void CmdScale::Scale(const vec3 pivot, const vec3 scale)
+void CmdScale::Scale(const vec3 pivot, const vec3 sc)
 {
-	if (scale == vec3(1))
+	if (sc == vec3(1))
 		return;
-	if (glm::any(glm::equal(scale, vec3(0))))
+	if (glm::any(glm::equal(sc, vec3(0))))
 		return;
 
-	mat4 tr1, sc, tr2;
+	mat4 tr1, scm, tr2;
 
 	tr1 = glm::translate(mat4(1), pivot);
-	sc = glm::scale(mat4(1), scale);
+	scm = glm::scale(mat4(1), sc);
 	tr2 = glm::translate(mat4(1), -pivot);
 
-	mat = (tr1 * sc) * tr2;
+	mat = (tr1 * scm) * tr2;
+	scale = sc;
+}
+
+float CmdScale::MirrorAngle(const float angle, const vec3 sc)
+{
+	if (sc.x < 0)
+	{
+		if (sc.y < 0)
+			return angle + 180.0f;
+
+		return 540.0f - angle;
+	}
+	else if (sc.y < 0)
+	{
+		return 360.0f - angle;
+	}
+	
+	return angle;
 }
 
 //==============================
@@ -63,7 +81,15 @@ void CmdScale::Do_Impl()
 	}
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 	{
-		(*eIt)->Transform(mat);
+		Entity *e = *eIt;
+		e->Transform(mat);
+
+		if (e->eclass->form & EntClass::ECF_ANGLE && (scale.x < 0 || scale.y < 0))
+		{
+			float ang = e->GetKeyValueFloat("angle");
+			ang = MirrorAngle(ang, scale);
+			e->SetKeyValue("angle", qround(ang, 1) % 360);
+		}
 	}
 
 	if (brScaled.size())
@@ -75,7 +101,13 @@ void CmdScale::Undo_Impl()
 	mat4 matinv = glm::inverse(mat);
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 	{
-		(*eIt)->Transform(matinv);
+		Entity *e = *eIt;
+		e->Transform(matinv);
+		if (e->eclass->form & EntClass::ECF_ANGLE && (scale.x < 0 || scale.y < 0))
+		{
+			float ang = MirrorAngle(e->GetKeyValueFloat("angle"), scale);
+			e->SetKeyValue("angle", qround(ang, 1) % 360);
+		}
 	}
 
 	if (brScaled.size())
@@ -86,7 +118,13 @@ void CmdScale::Redo_Impl()
 {
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 	{
-		(*eIt)->Transform(mat);
+		Entity *e = *eIt;
+		e->Transform(mat);
+		if (e->eclass->form & EntClass::ECF_ANGLE && (scale.x < 0 || scale.y < 0))
+		{
+			float ang = MirrorAngle(e->GetKeyValueFloat("angle"), scale);
+			e->SetKeyValue("angle", qround(ang, 1) % 360);
+		}
 	}
 
 	if (brScaled.size())
