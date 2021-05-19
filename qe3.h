@@ -309,6 +309,7 @@ void	EntWnd_UpdateUI();
 void	EntWnd_CreateEntity ();
 void	EntWnd_FillClassList ();
 void	EntWnd_AddKeyValue ();
+void	EntWnd_AddKeyValue(const char* key, const char* value);
 void	EntWnd_RemoveKeyValue ();
 void	EntWnd_EditKeyValue ();
 void	EntWnd_CreateControls (HINSTANCE hInstance);
@@ -320,6 +321,7 @@ void	WCam_Create (HINSTANCE hInstance);
 LONG	WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // win_xy.c
+int		XYZWnd_GetTopWindowViewType();
 void	WXYZ_Create (HINSTANCE hInstance, int slot);
 LONG	WINAPI XYZWnd_Proc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused

@@ -432,10 +432,10 @@ EntWnd_RefreshEditEntity
 void EntWnd_RefreshEditEntity()
 {
 	Entity *eo;
-	epair_t *ep;
+	EPair *ep;
 	bool first;
 
-	Entity_FreeEpairs(&g_eEditEntity);
+	g_eEditEntity.FreeEpairs();
 	g_eEditEntity.eclass = NULL;
 	memset(g_nEditEntFlags, 0, 12 * sizeof(char));
 
@@ -458,11 +458,11 @@ void EntWnd_RefreshEditEntity()
 			}
 			for (ep = eo->epairs; ep; ep = ep->next)
 			{
-				if (!_strcmpi(ep->key, "spawnflags"))
+				if (ep->key == "spawnflags")
 				{
-					EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), true);
+					EntWnd_RefreshEditEntityFlags(eo->GetKeyValueInt("spawnflags"), true);
 				}
-				SetKeyValue(&g_eEditEntity, ep->key, ep->value);
+				g_eEditEntity.SetKeyValue((char*)*ep->key, (char*)*ep->value);
 			}
 			first = false;
 		}
@@ -473,16 +473,17 @@ void EntWnd_RefreshEditEntity()
 				if (_stricmp(g_szEditFlagNames[i], eo->eclass->flagnames[i]))
 					strncpy(g_szEditFlagNames[i], "~\0", 2);
 			}
-			if (!_strcmpi(ep->key, "spawnflags"))
+			if (ep->key == "spawnflags")
 			{
-				EntWnd_RefreshEditEntityFlags(IntForKey(eo, "spawnflags"), false);
+				EntWnd_RefreshEditEntityFlags(eo->GetKeyValueInt("spawnflags"), false);
 			}
-			if (!*ValueForKey(&g_eEditEntity, ep->key))
-				SetKeyValue(&g_eEditEntity, ep->key, ep->value);
-			else if (_strcmpi(ValueForKey(&g_eEditEntity, ep->key), ep->value) == 0)
+			if (!*g_eEditEntity.GetKeyValue((char*)*ep->key))
+				g_eEditEntity.SetKeyValue((char*)*ep->key, (char*)*ep->value);
+//			else if (_strcmpi(ValueForKey(&g_eEditEntity, (char*)*ep->key), (char*)*ep->value) == 0)
+			else if (ep->value == g_eEditEntity.GetKeyValue((char*)*ep->key))
 				continue;
 			else
-				SetKeyValue(&g_eEditEntity, ep->key, KVMIXED);
+				g_eEditEntity.SetKeyValue((char*)*ep->key, KVMIXED);
 		}
 	}
 }
@@ -497,7 +498,7 @@ Reset the key/value listbox and fill it with the kv pairs from the entity being 
 */
 void EntWnd_RefreshKeyValues ()
 {
-	epair_t	   *pep;
+	EPair	   *pep;
 	RECT		rc;
 	char		sz[4096];
 	int			nTabs[] = {64};	// sikk - Tab fix
@@ -511,10 +512,10 @@ void EntWnd_RefreshKeyValues ()
 	// Walk through list and add pairs
 	for (pep = g_eEditEntity.epairs; pep; pep = pep->next)
 	{
-		if (!_strcmpi(pep->value, KVMIXED))
-			sprintf(sz, "%s\t%s", pep->key, KVMIXEDLABEL);
+		if (pep->value == KVMIXED)
+			sprintf(sz, "%s\t%s", (char*)*pep->key, KVMIXEDLABEL);
 		else
-			sprintf(sz, "%s\t%s", pep->key, pep->value);
+			sprintf(sz, "%s\t%s", (char*)*pep->key, (char*)*pep->value);
 
 		SendMessage(g_hwndEnt[ENT_PROPS], LB_ADDSTRING, 0, (LPARAM)sz);
 	}
@@ -534,8 +535,8 @@ static void EntWnd_ApplyAngle(int ang)
 	sprintf(sz, "%d", ang);
 
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		SetKeyValue(b->owner, "angle", sz);
-	SetKeyValue(&g_eEditEntity, "angle", sz);
+		b->owner->SetKeyValue("angle", sz);
+	g_eEditEntity.SetKeyValue("angle", sz);
 
 	EntWnd_RefreshKeyValues();
 	Sys_UpdateWindows(W_CAMERA);
@@ -567,7 +568,7 @@ static void EntWnd_FlagChecked(int flag)
 		else
 			eo = b->owner;
 
-		SetSpawnFlag(b->owner, f, on);
+		b->owner->SetSpawnFlag(f, on);
 	}
 
 	EntWnd_UpdateUI();
@@ -690,7 +691,7 @@ void EntWnd_CreateEntity ()
 
 	SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
 	ec = EntClass::ForName(sz, false, true);
-	e = Entity_Create(ec);
+	e = Entity::Create(ec);
 
 	if (!e)
 	{
@@ -701,6 +702,7 @@ void EntWnd_CreateEntity ()
 	Select_DeselectAll(true);
 	Select_HandleBrush(e->brushes.onext, true);
 
+	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
 /*
@@ -708,15 +710,10 @@ void EntWnd_CreateEntity ()
 EntWnd_AddKeyValue
 ===============
 */
-void EntWnd_AddKeyValue ()
+void EntWnd_AddKeyValue(const char* key, const char* value)
 {
-	char	key[4096];
-	char	value[4096];
 	Entity *last;
 
-	// Get current selection text
-	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);	
-	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);	
 	last = nullptr;
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -725,21 +722,34 @@ void EntWnd_AddKeyValue ()
 			continue;
 		last = b->owner;
 
-		SetKeyValue(b->owner, key, value);
+		b->owner->SetKeyValue(key, value);
 		if (!strcmp(key, "origin"))
 		{
-			Entity_SetOriginFromKeyvalue(b->owner);
+			b->owner->SetOriginFromKeyvalue();
 			b->Build();
-			g_bSelectionChanged = true;
-			Sys_UpdateWindows(W_CAMERA|W_XY|W_Z);
 		}
 		else if (!strcmp(key, "classname"))
-			Entity_ChangeClassname(b->owner, value);
+			b->owner->ChangeClassname(value);
+
+		g_bSelectionChanged = true;
+		Sys_UpdateWindows(W_CAMERA|W_XY|W_Z);
 	}
-	SetKeyValue(&g_eEditEntity, key, value);
+	g_eEditEntity.SetKeyValue(key, value);
 
 	// refresh the prop listbox
 	EntWnd_RefreshKeyValues();
+}
+
+void EntWnd_AddKeyValue()
+{
+	char	key[1024];
+	char	value[1024];
+
+	// Get current selection text
+	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);
+	SendMessage(g_hwndEnt[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);
+
+	EntWnd_AddKeyValue(key, value);
 }
 
 /*
@@ -755,8 +765,8 @@ void EntWnd_RemoveKeyValue ()
 	SendMessage(g_hwndEnt[ENT_KEYFIELD], WM_GETTEXT, sizeof(sz) - 1, (LPARAM)sz);	
 
 	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		DeleteKey(b->owner, sz);
-	DeleteKey(&g_eEditEntity, sz);
+		b->owner->DeleteKeyValue(sz);
+	g_eEditEntity.DeleteKeyValue(sz);
 
 	// refresh the prop listbox
 	EntWnd_RefreshKeyValues();	

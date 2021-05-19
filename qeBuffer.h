@@ -27,6 +27,8 @@ public:
 	byte& operator[](unsigned i) { assert(i < len); return buf[i]; }
 	byte& operator[](unsigned i) const { assert(i < len); return buf[i]; }
 
+	bool operator==(const char* other) const { return ( strncmp((char*)buf, other, len) == 0 ); }
+
 	void resize(size_t size) { 
 		destroy(); 
 		len = size;

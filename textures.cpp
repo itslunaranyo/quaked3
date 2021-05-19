@@ -559,7 +559,7 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 {
 	char	filepath[MAX_PATH];
 
-	sprintf(filepath, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), filename);
+	sprintf(filepath, "%s/%s", g_qeglobals.d_entityProject->GetKeyValue("texturepath"), filename);
 
 	if (LoadFile(filepath, wadFileBuf) <= 0)
 	{
@@ -856,7 +856,7 @@ void FillTextureMenu ()
 //	strcpy(g_szWadString, "");	// sikk - Wad Loading
 
 	// add everything
-	strcpy(dirstring, ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
+	strcpy(dirstring, g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
 	sprintf(path, "%s*.wad", dirstring);	// sikk - Wad Loading
 
 	QE_ConvertDOSToUnixName(temp, dirstring);

@@ -158,7 +158,7 @@ Entity *Map_FindClass (char *cname)
 	Entity *ent;
 
 	for (ent = g_entEntities.next; ent != &g_entEntities; ent = ent->next)
-		if (!strcmp(cname, ValueForKey(ent, "classname")))
+		if (!strcmp(ent->GetKeyValue("classname"), cname))
 			return ent;
 
 	return NULL;
@@ -196,7 +196,7 @@ void Map_Free ()
 		while (g_brFilteredBrushes.next != &g_brFilteredBrushes)
 			delete g_brFilteredBrushes.next;
 		while (g_entEntities.next != &g_entEntities)
-			Entity_Free(g_entEntities.next);
+			delete g_entEntities.next;
 	}
 
 	g_peWorldEntity = NULL;
@@ -247,10 +247,10 @@ void Map_LoadFile (char *filename)
 
 	while (1)
 	{
-		ent = Entity_Parse(false);
+		ent = Entity::Parse(false);
 		if (!ent)
 			break;
-		if (!strcmp(ValueForKey(ent, "classname"), "worldspawn"))
+		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
 		{
 			if (g_peWorldEntity)
 				Sys_Printf("WARNING: Multiple worldspawn.\n");
@@ -276,11 +276,11 @@ void Map_LoadFile (char *filename)
 		return;
 	}
 
-	if (!*ValueForKey(g_peWorldEntity, "wad"))
+	if (!*g_peWorldEntity->GetKeyValue("wad"))
 		Sys_Printf("WARNING: No \"wad\" key.\n");
 	else
 	{
-		strcpy(wadkey, ValueForKey(g_peWorldEntity, "wad"));
+		strcpy(wadkey, g_peWorldEntity->GetKeyValue("wad"));
 
 		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
 			Textures::LoadWad(tempwad);
@@ -305,9 +305,9 @@ void Map_LoadFile (char *filename)
 
 	if (ent)
 	{
-		GetVectorForKey(ent, "origin", g_qeglobals.d_camera.origin);
-		GetVectorForKey(ent, "origin", g_qeglobals.d_xyz[0].origin);
-		g_qeglobals.d_camera.angles[YAW] = FloatForKey(ent, "angle");
+		ent->GetKeyValueVector("origin", g_qeglobals.d_camera.origin);
+		ent->GetKeyValueVector("origin", g_qeglobals.d_xyz[0].origin);
+		g_qeglobals.d_camera.angles[YAW] = ent->GetKeyValueFloat("angle");
 	}
 	else
 	{
@@ -371,7 +371,7 @@ void Map_SaveFile (char *filename, bool use_region)
 		Map_AddRegionBrushes();
 
 	// write world entity first
-	Entity_Write(g_peWorldEntity, f, use_region);
+	g_peWorldEntity->Write(f, use_region);
 
 	// then write all other ents
 	count = 1;
@@ -381,9 +381,14 @@ void Map_SaveFile (char *filename, bool use_region)
 		count++;
 		next = e->next;
 		if (e->brushes.onext == &e->brushes)
-			Entity_Free(e);	// no brushes left, so remove it
+		{
+			delete e;	// no brushes left, so remove it
+
+			// lunaran - for the love of god why would it happen in the first place
+			assert(e->brushes.onext != &e->brushes);
+		}
 		else
-			Entity_Write(e, f, use_region);
+			e->Write(f, use_region);
 	}
 
 	fclose(f);
@@ -441,16 +446,16 @@ void Map_New ()
 	Map_Free();
 
 	g_peWorldEntity = new Entity();
-	SetKeyValue(g_peWorldEntity, "classname", "worldspawn");
+	g_peWorldEntity->SetKeyValue("classname", "worldspawn");
 
 // sikk---> Wad Loading
 	//	SetKeyValue(g_peWorldEntity, "wad", g_szWadString);
-	strcpy(buf, ValueForKey(g_qeglobals.d_entityProject, "defaultwads"));
+	strcpy(buf, g_qeglobals.d_entityProject->GetKeyValue("defaultwads"));
 	if (strlen(buf))
 	{
 		int i = 0;
 		char *temp, tempwads[1024] = "";
-		char *texpath = ValueForKey(g_qeglobals.d_entityProject, "texturepath");
+		char *texpath = g_qeglobals.d_entityProject->GetKeyValue("texturepath");
 
 		for (temp = strtok(buf, ";"); temp; temp = strtok(0, ";"), i++)
 		{
@@ -459,7 +464,7 @@ void Map_New ()
 			strcat(tempwads, texpath);
 			strcat(tempwads, temp);
 		}
-		SetKeyValue(g_peWorldEntity, "wad", tempwads);
+		g_peWorldEntity->SetKeyValue("wad", tempwads);
 	}
 // <---sikk
 
@@ -534,7 +539,7 @@ void Map_AddRegionBrushes ()
 	for (i = 0; i < 4; i++)
 	{
 		g_pbrRegionSides[i]->AddToList(&g_brSelectedBrushes);
-		Entity_LinkBrush(g_peWorldEntity, g_pbrRegionSides[i]);
+		g_peWorldEntity->LinkBrush(g_pbrRegionSides[i]);
 		g_pbrRegionSides[i]->Build();
 	}
 }
@@ -836,7 +841,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 
 	while (1)
 	{
-		ent = Entity_Parse(false);
+		ent = Entity::Parse(false);
 		if (!ent)
 			break;
 		
@@ -846,7 +851,7 @@ void Map_ImportFile (char *filename, bool bCheck)
 		for(b = ent->brushes.onext; b && b != &ent->brushes; b = b->onext)
 			Undo_EndBrush(b);	// sikk - Undo/Redo
 
-		if (!strcmp(ValueForKey(ent, "classname"), "worldspawn"))
+		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
 		{
 			// world brushes need to be added to the current world entity
 			b = ent->brushes.onext;
@@ -855,8 +860,8 @@ void Map_ImportFile (char *filename, bool bCheck)
 				bNext = b->onext;
 				b->RemoveFromList();
 				b->AddToList(&g_brActiveBrushes);
-				Entity_UnlinkBrush(b);
-				Entity_LinkBrush(g_peWorldEntity, b);
+				Entity::UnlinkBrush(b);
+				g_peWorldEntity->LinkBrush(b);
 				b->Build();
 				brArray[nCount] = b;
 				nCount++;
@@ -888,11 +893,11 @@ void Map_ImportFile (char *filename, bool bCheck)
 
     free(buf);
 
-	if (!*ValueForKey(g_peWorldEntity, "wad"))
+	if (!*g_peWorldEntity->GetKeyValue("wad"))
 		Sys_Printf("WARNING: No \"wad\" key.\n");
 	else
 	{
-		strcpy(wadkey, ValueForKey(g_peWorldEntity, "wad"));
+		strcpy(wadkey, g_peWorldEntity->GetKeyValue("wad"));
 		for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
 			Textures::LoadWad(tempwad);
 	}
@@ -947,7 +952,7 @@ void Map_ExportFile (char *filename, bool bCheck)
 	}
 
 	// write world entity first
-	Entity_WriteSelected(g_peWorldEntity, f);
+	g_peWorldEntity->WriteSelected(f);
 
 	// then write all other ents
 	nCount = 1;
@@ -955,7 +960,7 @@ void Map_ExportFile (char *filename, bool bCheck)
 	{
   		fprintf(f, "// entity %d\n", nCount);
    		nCount++;
- 		Entity_WriteSelected(e, f);
+		e->WriteSelected(f);
 		next = e->next;
 	}
 	fclose(f);

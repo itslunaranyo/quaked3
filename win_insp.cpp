@@ -104,7 +104,7 @@ void InspWnd_SetMode(int nType)
 		ShowWindow(g_qeglobals.d_hwndTexture, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndConsole, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndEntity, SW_SHOW);
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_ENABLED);
+	//	EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_ENABLED);
 		break;
 
 	case W_TEXTURE:
@@ -112,7 +112,7 @@ void InspWnd_SetMode(int nType)
 		ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndConsole, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndTexture, SW_SHOW);
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
+	//	EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
 		break;
 
 	case W_CONSOLE:
@@ -120,7 +120,7 @@ void InspWnd_SetMode(int nType)
 		ShowWindow(g_qeglobals.d_hwndEntity, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndTexture, SW_HIDE);
 		ShowWindow(g_qeglobals.d_hwndConsole, SW_SHOW);
-		EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
+	//	EnableMenuItem(hMenu, ID_MISC_SELECTENTITYCOLOR, MF_GRAYED | MF_DISABLED);
 		break;
 
 	default:

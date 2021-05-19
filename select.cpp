@@ -44,7 +44,7 @@ void Select_HandleChange()
 	{
 		Select_GetBounds(vMin, vMax);
 		VectorSubtract(vMax, vMin, vSize);
-		name = ValueForKey(g_brSelectedBrushes.next->owner, "classname");
+		name = g_brSelectedBrushes.next->owner->GetKeyValue("classname");
 		sprintf(selectionstring, "Selected: %s (%d %d %d)", name, (int)vSize[0], (int)vSize[1], (int)vSize[2]);
 		Sys_Status(selectionstring, 3);
 	}
@@ -699,7 +699,7 @@ Select_MatchingKeyValue
 void Select_MatchingKeyValue(char *szKey, char *szValue)
 {
 	Brush    *b, *bnext;
-	epair_t	   *ep;
+	EPair	   *ep;
 	bool		bFound;
 
 	Select_DeselectAll(true);
@@ -710,7 +710,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 		{
 			bnext = b->next;
 
-			if (!strcmp(ValueForKey(b->owner, szKey), szValue))
+			if (!strcmp(b->owner->GetKeyValue(szKey), szValue))
 			{
 				Select_SelectBrushSorted(b);
 			}
@@ -722,7 +722,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 		{
 			bnext = b->next;
 
-			if (strlen(ValueForKey(b->owner, szKey)))
+			if (strlen(b->owner->GetKeyValue(szKey)))
 			{
 				Select_SelectBrushSorted(b);
 			}
@@ -737,7 +737,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 
 			for (ep = b->owner->epairs; ep && !bFound; ep = ep->next)
 			{
-				if (!strcmp(ep->value, szValue))
+				if (ep->value == szValue)
 				{
 					Select_SelectBrushSorted(b);
 					bFound = true;	// this is so an entity with two different keys 
@@ -1071,6 +1071,7 @@ Select_Delete
 void Select_Delete ()
 {
 	Brush	*brush;
+	Entity	*e;
 
 //	g_pfaceSelectedFace = NULL;
 // sikk---> Multiple Face Selection
@@ -1083,10 +1084,14 @@ void Select_Delete ()
 	while (Select_HasBrushes())
 	{
 		brush = g_brSelectedBrushes.next;
+		e = brush->owner;
 		delete brush;
+
+		// remove any (not-worldspawn) entities with no brushes
+		if (e->brushes.onext == &e->brushes && e != g_peWorldEntity)
+			delete e;
 	}
 
-	// FIXME: remove any entities with no brushes
 
 	Sys_UpdateWindows(W_ALL);
 }
@@ -1130,52 +1135,34 @@ the selected brushes off of their old positions
 */
 void Select_Clone ()
 {
-	Brush	   *b, *b2, *n, *next, *next2;
-	vec3_t		delta;
-	Entity   *e;
+	vec3_t	delta;
+	Entity	*e;
+	Brush	*b, *b2, *n, *next, *next2;
+	Brush	templist;	// lunaran - select and offset the new brushes, not the old ones
+	templist.next = templist.prev = &templist;
 
-	//g_qeglobals.d_nWorkCount++;
-	g_qeglobals.d_selSelectMode = sel_brush;
+	if (g_qeglobals.d_selSelectMode != sel_brush) return;
+	if (!Select_HasBrushes()) return;
 
-	// sikk - if no brushues are selected, return
-	if (!Select_HasBrushes())
-		return;
-
-// sikk---> Move cloned brush based on active XY view. 
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[2])
+	// move cloned brushes based on active XY view
+	switch (XYZWnd_GetTopWindowViewType())
 	{
+	case XZ:
 		delta[0] = g_qeglobals.d_nGridSize;
 		delta[1] = 0;
 		delta[2] = g_qeglobals.d_nGridSize;
-	}
-	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[1])
-	{
+		break;
+	case YZ:
 		delta[0] = 0;
 		delta[1] = g_qeglobals.d_nGridSize;
 		delta[2] = g_qeglobals.d_nGridSize;
+		break;
+	default:
+	case XY:
+		delta[0] = g_qeglobals.d_nGridSize;
+		delta[1] = g_qeglobals.d_nGridSize;
+		delta[2] = 0;
 	}
-	else
-	{
-		if (g_qeglobals.d_xyz[0].dViewType == XY)
-		{
-			delta[0] = g_qeglobals.d_nGridSize;
-			delta[1] = g_qeglobals.d_nGridSize;
-			delta[2] = 0;
-		}
-		else if (g_qeglobals.d_xyz[0].dViewType == XZ)
-		{
-			delta[0] = g_qeglobals.d_nGridSize;
-			delta[1] = 0;
-			delta[2] = g_qeglobals.d_nGridSize;
-		}
-		else
-		{
-			delta[0] = 0;
-			delta[1] = g_qeglobals.d_nGridSize;
-			delta[2] = g_qeglobals.d_nGridSize;
-		}
-	}
-// <---sikk
 
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
 	{
@@ -1188,14 +1175,14 @@ void Select_Clone ()
 		{
 //		Undo_EndBrush(n);
 			n = b->Clone();
-			n->AddToList(&g_brActiveBrushes);
-			Entity_LinkBrush(g_peWorldEntity, n);
+			n->AddToList(&templist);
+			g_peWorldEntity->LinkBrush(n);
 			n->Build();
-			b->Move(delta);
+			n->Move(delta);
 			continue;
 		}
 
-		e = Entity_Clone(b->owner);
+		e = b->owner->Clone();
 		// clear the target / targetname
 // sikk - Commented out. I'm not sure why id prefered to not keep these keys
 // across clones.
@@ -1206,10 +1193,10 @@ void Select_Clone ()
 		if (b->owner->eclass->IsFixedSize())
 		{
 			n = b->Clone();
-			n->AddToList(&g_brActiveBrushes);
-			Entity_LinkBrush(e, n);
+			n->AddToList(&templist);
+			e->LinkBrush(n);
 			n->Build();
-			b->Move(delta);
+			n->Move(delta);
 			continue;
 		}
         
@@ -1233,12 +1220,16 @@ void Select_Clone ()
 			b2->AddToList(&g_brSelectedBrushes);
 			
 			n = b2->Clone();
-			n->AddToList(&g_brActiveBrushes);
-			Entity_LinkBrush(e, n);
+			n->AddToList(&templist);
+			e->LinkBrush(n);
 			n->Build();
-			b2->Move(delta);
+			n->Move(delta);
 		}
 	}
+
+	// lunaran - select and offset the new brushes, not the old ones
+	Brush::MergeListIntoList(&g_brSelectedBrushes, &g_brActiveBrushes);
+	Brush::MergeListIntoList(&templist, &g_brSelectedBrushes);
 
 	g_bSelectionChanged = true;
 	Sys_UpdateWindows(W_ALL);
@@ -1544,14 +1535,14 @@ void Select_Ungroup ()
 	{
 		b->RemoveFromList();
 		b->AddToList(&g_brActiveBrushes);
-		Entity_UnlinkBrush(b);
-		Entity_LinkBrush(g_peWorldEntity, b);
+		Entity::UnlinkBrush(b);
+		g_peWorldEntity->LinkBrush(b);
 		b->Build();
 		b->owner = g_peWorldEntity;
 		Select_HandleBrush(b, true);	// sikk - reselect the ungrouped brush  
 	}
 
-	Entity_Free(e);
+	delete e;
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -1564,7 +1555,7 @@ Select_InsertBrush
 void Select_InsertBrush ()
 {
 	EntClass   *ec;
-	epair_t	   *ep;
+	EPair	   *ep;
 	Entity   *e, *e2;
 	Brush	   *b;
 	bool		bCheck = false, bInserting = false;
@@ -1623,8 +1614,8 @@ void Select_InsertBrush ()
 	// change the selected brushes over to the new entity
 	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		Entity_UnlinkBrush(b);
-		Entity_LinkBrush(e, b);
+		Entity::UnlinkBrush(b);
+		e->LinkBrush(b);
 		b->Build();	// so the key brush gets a name
 	}
 
@@ -1723,12 +1714,12 @@ void Select_ConnectEntities ()
 		return;
 	}
 
-	target = ValueForKey(e1, "target");
+	target = e1->GetKeyValue("target");
 	if (target && target[0])
 		strcpy(newtarg, target);
 	else
 	{
-		target = ValueForKey(e2, "targetname");
+		target = e2->GetKeyValue("targetname");
 		if (target && target[0])
 			strcpy(newtarg, target);
 		else
@@ -1738,7 +1729,7 @@ void Select_ConnectEntities ()
 			maxtarg = 0;
 			for (e = g_entEntities.next; e != &g_entEntities; e = e->next)
 			{
-				tn = ValueForKey(e, "targetname");
+				tn = e->GetKeyValue("targetname");
 				if (tn && tn[0])
 				{
 					targetnum = atoi(tn + 1);
@@ -1750,8 +1741,8 @@ void Select_ConnectEntities ()
 		}
 	}
 
-	SetKeyValue(e1, "target", newtarg);
-	SetKeyValue(e2, "targetname", newtarg);
+	e1->SetKeyValue("target", newtarg);
+	e2->SetKeyValue("targetname", newtarg);
 
 	Sys_Printf("Entities connected as '%s'.\n", newtarg);
 	Sys_UpdateWindows(W_XY | W_CAMERA);
@@ -1777,7 +1768,7 @@ void Select_Cut ()
 
 	Brush::FreeList(&g_brCopiedBrushes);
 	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
-	Entity_CleanList();
+	Entity::CleanCopiedList();
 
 	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -1795,12 +1786,12 @@ void Select_Cut ()
 			{
 				e = b->owner;
 				pentArray[nCount] = e;
-				e2 = Entity_Copy(e);
+				e2 = e->Copy();
 				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
 				{
 					eb2 = eb->Clone();
 //					Brush_AddToList(eb2, &g_brCopiedBrushes);
-					Entity_LinkBrush(e2, eb2);
+					e2->LinkBrush(eb2);
 					eb2->Build();
 				}
 				nCount++;
@@ -1826,7 +1817,7 @@ void Select_Copy ()
 
 	Brush::FreeList(&g_brCopiedBrushes);
 	g_brCopiedBrushes.next = g_brCopiedBrushes.prev = &g_brCopiedBrushes;
-	Entity_CleanList();
+	Entity::CleanCopiedList();
 
 	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
 	{
@@ -1844,12 +1835,12 @@ void Select_Copy ()
 			{
 				e = b->owner;
 				pentArray[nCount] = e;
-				e2 = Entity_Copy(e);
+				e2 = e->Copy();
 				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
 				{
 					eb2 = eb->Clone();
 //					Brush_AddToList(eb2, &g_brCopiedBrushes);
-					Entity_LinkBrush(e2, eb2);
+					e2->LinkBrush(eb2);
 					eb2->Build();
 				}
 				nCount++;
@@ -1879,21 +1870,21 @@ void Select_Paste ()
 			Undo_EndBrush(b2);
 //			pClone->owner = pBrush->owner;
 			if (b2->owner == NULL)
-				Entity_LinkBrush(g_peWorldEntity, b2);
+				g_peWorldEntity->LinkBrush(b2);
 			b2->AddToList(&g_brSelectedBrushes);
 			b2->Build();
 		}
 
 		for (e = g_entCopiedEntities.next; e != NULL && e != &g_entCopiedEntities; e = e->next)
 		{
-			e2 = Entity_Clone(e);
+			e2 = e->Clone();
 			Undo_EndEntity(e2);
 			for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
 			{
 				eb2 = eb->Clone();
 				Undo_EndBrush(eb2);
 				eb2->AddToList(&g_brSelectedBrushes);
-				Entity_LinkBrush(e2, eb2);
+				e2->LinkBrush(eb2);
 				eb2->Build();
 				g_bSelectionChanged = true;
 			}

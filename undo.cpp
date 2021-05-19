@@ -301,11 +301,11 @@ void Undo_AddEntity (Entity *entity)
 		return;
 
 	// clone the entity
-	pClone = Entity_Clone(entity);
+	pClone = entity->Clone();
 
 	// NOTE: Entity_Clone adds the entity to the entity list
 	//		 so we remove it from that list here
-	Entity_RemoveFromList(pClone);
+	pClone->RemoveFromList();
 
 	// save the old undo ID for previous undos
 	pClone->undoId = entity->undoId;
@@ -313,8 +313,8 @@ void Undo_AddEntity (Entity *entity)
 	// save the entity ID (we need a full clone)
 	pClone->entityId = entity->entityId;
 	
-	Entity_AddToList(pClone, &g_lastundo->entitylist);
-	g_undoMemorySize += Entity_MemorySize(pClone);
+	pClone->AddToList(&g_lastundo->entitylist);
+	g_undoMemorySize += pClone->MemorySize();
 }
 
 /*
@@ -469,7 +469,7 @@ void Undo_Undo ()
 			pBrush->ownerId = pBrush->owner->entityId;
 			
 			// unlink the brush from the owner entity
-			Entity_UnlinkBrush(pBrush);
+			Entity::UnlinkBrush(pBrush);
 		}
 	}
 	
@@ -492,35 +492,35 @@ void Undo_Undo ()
 				}
 			}
 			
-//			Entity_Free(pEntity);
+//			delete pEntity;
 			// move the entity to the redo
-			Entity_RemoveFromList(pEntity);
-			Entity_AddToList(pEntity, &redo->entitylist);
+			pEntity->RemoveFromList();
+			pEntity->AddToList(&redo->entitylist);
 		}
 	}
 
 	// add the undo entities back into the entity list
 	for (pEntity = undo->entitylist.next; pEntity != NULL && pEntity != &undo->entitylist; pEntity = undo->entitylist.next)
 	{
-		g_undoMemorySize -= Entity_MemorySize(pEntity);
+		g_undoMemorySize -= pEntity->MemorySize();
 		
 		// if this is the world entity
 		if (pEntity->entityId == g_peWorldEntity->entityId)
 		{
 			// free the epairs of the world entity
-			Entity_FreeEpairs(g_peWorldEntity);
+			g_peWorldEntity->FreeEpairs();
 			
 			// set back the original epairs
 			g_peWorldEntity->epairs = pEntity->epairs;
 			
 			// unhook the epairs and free the g_peWorldEntity clone that stored the epairs
 			pEntity->epairs = NULL;
-			Entity_Free(pEntity);
+			delete pEntity;
 		}
 		else
 		{
-			Entity_RemoveFromList(pEntity);
-			Entity_AddToList(pEntity, &g_entEntities);
+			pEntity->RemoveFromList();
+			pEntity->AddToList(&g_entEntities);
 			pEntity->redoId = redo->id;
 		}
 	}
@@ -536,7 +536,7 @@ void Undo_Undo ()
 		{
 			if (pEntity->entityId == pBrush->ownerId)
 			{
-				Entity_LinkBrush(pEntity, pBrush);
+				pEntity->LinkBrush(pBrush);
 				break;
 			}
 		}
@@ -544,7 +544,7 @@ void Undo_Undo ()
 		// if the brush is not linked then it should be linked into the world entity
 		// ++timo FIXME: maybe not, maybe we've lost this entity's owner!
 		if (pEntity == NULL || pEntity == &g_entEntities)
-			Entity_LinkBrush(g_peWorldEntity, pBrush);
+			g_peWorldEntity->LinkBrush(pBrush);
 
 		// build the brush
 //		Brush_Build(pBrush);
@@ -613,7 +613,7 @@ void Undo_Redo()
 			pBrush->AddToList(&g_lastundo->brushlist);
 			g_undoMemorySize += pBrush->MemorySize();
 			pBrush->ownerId = pBrush->owner->entityId;
-			Entity_UnlinkBrush(pBrush);
+			Entity::UnlinkBrush(pBrush);
 		}
 	}
 
@@ -636,12 +636,12 @@ void Undo_Redo()
 				}
 			}
 			
-//			Entity_Free(pEntity);
+//			delete pEntity;
 
 			// move the entity to the redo
-			Entity_RemoveFromList(pEntity);
-			Entity_AddToList(pEntity, &g_lastundo->entitylist);
-			g_undoMemorySize += Entity_MemorySize(pEntity);
+			pEntity->RemoveFromList();
+			pEntity->AddToList(&g_lastundo->entitylist);
+			g_undoMemorySize += pEntity->MemorySize();
 		}
 	}
 
@@ -652,18 +652,18 @@ void Undo_Redo()
 		if (pEntity->entityId == g_peWorldEntity->entityId)
 		{
 			// free the epairs of the world entity
-			Entity_FreeEpairs(g_peWorldEntity);
+			g_peWorldEntity->FreeEpairs();
 
 			// set back the original epairs
 			g_peWorldEntity->epairs = pEntity->epairs;
 
 			// free the g_peWorldEntity clone that stored the epairs
-			Entity_Free(pEntity);
+			delete pEntity;
 		}
 		else
 		{
-			Entity_RemoveFromList(pEntity);
-			Entity_AddToList(pEntity, &g_entEntities);
+			pEntity->RemoveFromList();
+			pEntity->AddToList(&g_entEntities);
 		}
 	}
 
@@ -676,14 +676,14 @@ void Undo_Redo()
 		{
 			if (pEntity->entityId == pBrush->ownerId)
 			{
-				Entity_LinkBrush(pEntity, pBrush);
+				pEntity->LinkBrush(pBrush);
 				break;
 			}
 		}
 
 		// if the brush is not linked then it should be linked into the world entity
 		if (pEntity == NULL || pEntity == &g_entEntities)
-			Entity_LinkBrush(g_peWorldEntity, pBrush);
+			g_peWorldEntity->LinkBrush(pBrush);
 
 		// build the brush
 //		Brush_Build(pBrush);
@@ -758,8 +758,8 @@ void Undo_Clear ()
 		for (pEntity = undo->entitylist.next; pEntity != NULL && pEntity != &undo->entitylist; pEntity = pNextEntity)
 		{
 			pNextEntity = pEntity->next;
-			g_undoMemorySize -= Entity_MemorySize(pEntity);
-			Entity_Free(pEntity);
+			g_undoMemorySize -= pEntity->MemorySize();
+			delete pEntity;
 		}
 
 		g_undoMemorySize -= sizeof(undo_t);
@@ -797,7 +797,7 @@ void Undo_ClearRedo ()
 		for (pEntity = redo->entitylist.next; pEntity != NULL && pEntity != &redo->entitylist; pEntity = pNextEntity)
 		{
 			pNextEntity = pEntity->next;
-			Entity_Free(pEntity);
+			delete pEntity;
 		}
 
 		free(redo);
@@ -834,8 +834,8 @@ void Undo_FreeFirstUndo ()
 	for (pEntity = undo->entitylist.next; pEntity != NULL && pEntity != &undo->entitylist; pEntity = pNextEntity)
 	{
 		pNextEntity = pEntity->next;
-		g_undoMemorySize -= Entity_MemorySize(pEntity);
-		Entity_Free(pEntity);
+		g_undoMemorySize -= pEntity->MemorySize();
+		delete pEntity;
 	}
 
 	g_undoMemorySize -= sizeof(undo_t);

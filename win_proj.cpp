@@ -635,7 +635,7 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 			   *defaultwads,
 			   *toolspath,
 			   *name, *value, prev, buf[512];
-	epair_t	   *ep;
+	EPair	   *ep;
 	HWND		h;
 	HBITMAP		hb;
 
@@ -654,16 +654,27 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 		h = GetDlgItem(hwndDlg, IDC_COMBO_BSPNAME);
 		SendMessage(h, CB_LIMITTEXT, (WPARAM)255, 0);
 		SendDlgItemMessage(hwndDlg, IDC_EDIT_BSPCOMMAND, EM_LIMITTEXT, (WPARAM)511, 0);
-		if (!g_bFirstProject)	// if project file exist
+		if (g_bFirstProject)
 		{
-			basepath		= ValueForKey(g_qeglobals.d_entityProject, "basepath");
-			remotebasepath	= ValueForKey(g_qeglobals.d_entityProject, "remotebasepath");
-			mapspath		= ValueForKey(g_qeglobals.d_entityProject, "mapspath");
-			autosavemap		= ValueForKey(g_qeglobals.d_entityProject, "autosave");
-			entitypath		= ValueForKey(g_qeglobals.d_entityProject, "entitypath");
-			texturepath		= ValueForKey(g_qeglobals.d_entityProject, "texturepath");
-			defaultwads		= ValueForKey(g_qeglobals.d_entityProject, "defaultwads");
-			toolspath		= ValueForKey(g_qeglobals.d_entityProject, "rshcmd");
+			SetDlgItemText(hwndDlg, IDC_EDIT_PROJECTDIRECTORY, "c:/quake/");
+			SetDlgItemText(hwndDlg, IDC_EDIT_REMOTEBASEPATH, "c:/quake/id1/");
+			SetDlgItemText(hwndDlg, IDC_EDIT_MAPSDIRECTORY, "c:/quake/id1/maps/");
+			SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVEMAP, "c:/quake/id1/maps/autosave.map");
+			SetDlgItemText(hwndDlg, IDC_EDIT_ENTITYFILES, "/scripts/entity.qc");
+			SetDlgItemText(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY, "c:/quake/gfx/");
+			SetDlgItemText(hwndDlg, IDC_EDIT_DEFAULTWADS, "common.wad");
+			SetDlgItemText(hwndDlg, IDC_EDIT_TOOLSDIRECTORY, "c:/quake/tools/");
+		}
+		else	// if project file exist
+		{
+			basepath		= g_qeglobals.d_entityProject->GetKeyValue("basepath");
+			remotebasepath	= g_qeglobals.d_entityProject->GetKeyValue("remotebasepath");
+			mapspath		= g_qeglobals.d_entityProject->GetKeyValue("mapspath");
+			autosavemap		= g_qeglobals.d_entityProject->GetKeyValue("autosave");
+			entitypath		= g_qeglobals.d_entityProject->GetKeyValue("entitypath");
+			texturepath		= g_qeglobals.d_entityProject->GetKeyValue("texturepath");
+			defaultwads		= g_qeglobals.d_entityProject->GetKeyValue("defaultwads");
+			toolspath		= g_qeglobals.d_entityProject->GetKeyValue("rshcmd");
 
 			SetDlgItemText(hwndDlg,	IDC_EDIT_PROJECTDIRECTORY,	basepath);
 			SetDlgItemText(hwndDlg, IDC_EDIT_REMOTEBASEPATH,	remotebasepath);
@@ -687,8 +698,8 @@ BOOL CALLBACK ProjectSettingsDlgProc (
 			{
 				if (ep->key[0] == 'b' && ep->key[1] == 's' && ep->key[2] == 'p' && ep->key[3] == '_')
 				{
-					name = ep->key + 4;
-					value = ep->value;
+					name = (char*)*ep->key + 4;
+					value = (char*)*ep->value;
 					SendMessage(h, CB_ADDSTRING, 0, (LPARAM)name);
 					index = GetNextFreeBspIndex();
 					prev = 0;

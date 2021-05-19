@@ -36,7 +36,7 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	}
 	else
 	{
-		Entity_LinkBrush(in->owner, b);
+		in->owner->LinkBrush(b);
 		*back = b;
 	}
 
@@ -62,7 +62,7 @@ void CSG_SplitBrushByFace (Brush *in, Face *f, Brush **front, Brush **back)
 	}
 	else
 	{
-		Entity_LinkBrush(in->owner, b);
+		in->owner->LinkBrush(b);
 		*front = b;
 	}
 }
@@ -270,7 +270,7 @@ Brush* Brush_ConvexMerge(Brush *bList)
 		}
 	}
 
-	Entity_LinkBrush(bList->owner, result);
+	bList->owner->LinkBrush(result);
 	result->Build();
 
 	return result;
@@ -494,7 +494,7 @@ Brush *Brush_Merge (Brush *brush1, Brush *brush2, int onlyshape)
 	}
 
 	// link the new brush to an entity
-	Entity_LinkBrush(brush1->owner, newbrush);
+	brush1->owner->LinkBrush(newbrush);
 	// build windings for the faces
 	newbrush->Build();
 
@@ -699,7 +699,7 @@ Brush *Brush_MergeList (Brush *brushlist, int onlyshape)
 	}
 
 	// link the new brush to an entity
-	Entity_LinkBrush(brushlist->owner, newbrush);
+	brushlist->owner->LinkBrush(newbrush);
 	// build windings for the faces
 	newbrush->Build();
 

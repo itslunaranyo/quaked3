@@ -32,6 +32,17 @@ vec3_t	g_v3Origin;
 int		g_dXYZcurrent;	// ugh come on
 
 
+int XYZWnd_GetTopWindowViewType()
+{
+	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[2])
+		return g_qeglobals.d_xyz[2].dViewType;
+	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[1])
+		return g_qeglobals.d_xyz[1].dViewType;
+	else
+		return g_qeglobals.d_xyz[0].dViewType;
+}
+
+
 XYZView* XYZWnd_WinFromHandle(HWND xyzwin)
 {
 	for (int i = 0; i < 4; i++)

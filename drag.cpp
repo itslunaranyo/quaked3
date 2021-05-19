@@ -128,52 +128,7 @@ void MoveSelection (vec3_t move)
 	}
 }
 
-/*
-==============
-UpdateTarget
-==============
-*/
-void UpdateTarget (vec3_t origin, vec3_t dir)
-{
-	trace_t		t;
-	Entity   *pe;
-	int			i;
-	char		sz[128];
 
-	t = Test_Ray(origin, dir, 0);
-
-	if (!t.brush)
-		return;
-
-	pe = t.brush->owner;
-
-	if (pe == NULL)
-		return;
-
-	// is this the first?
-	if (g_peLink != NULL)
-	{
-		// Get the target id from out current target
-		// if there is no id, make one
-		i = IntForKey(pe, "target");
-		if (i <= 0)
-		{
-			i = GetUniqueTargetId(1);
-			sprintf(sz, "%d", i);
-
-			SetKeyValue(pe, "target", sz);
-		}
-
-		// set the target # into our src
-		sprintf(sz, "%d", i);
-		SetKeyValue(g_peLink, "targetname", sz);
-
-		Sys_UpdateWindows(W_ENTITY);
-	}
-
-	// promote the target to the src
-	g_peLink = pe;
-}
 
 /*
 ===========

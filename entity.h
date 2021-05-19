@@ -4,12 +4,16 @@
 //	entity.h
 //==============================
 
-typedef struct epair_s
+class EPair
 {
-	struct epair_s	*next;
-	char			*key;
-	char			*value;
-} epair_t;
+public:
+	EPair() : next(nullptr) {};
+	EPair(const EPair& other) : next(other.next), key(other.key), value(other.value) {};
+	~EPair() {};
+
+	EPair		*next;
+	qeBuffer	key, value;
+};
 
 class Entity
 {
@@ -21,64 +25,65 @@ public:
 	Brush		brushes;	// head/tail of list
 	vec3_t		origin;
 	EntClass	*eclass;
-	epair_t		*epairs;
+	EPair		*epairs;
 
 // sikk---> Undo/Redo
 	int			undoId, redoId;
 	int			ownerId;	// entityId of the owner entity for undo
 	int			entityId;	// entity ID
 // <---sikk
+
+	static Entity	*Create (EntClass *c);
+	Entity			*Clone();
+	Entity			*Copy();
+	void			LinkBrush (Brush *b);
+	static void		UnlinkBrush (Brush *b);
+
+	void	ChangeClassname(EntClass* ec);
+	void	ChangeClassname(const char *classname);
+	void	MakeBrush();
+
+	void	SetOrigin(vec3_t org);
+	void	SetOriginFromMember();
+	void	SetOriginFromKeyvalue();
+	void	SetOriginFromBrush();
+
+	void	SetSpawnFlag(int flag, bool on);
+
+	void	SetKeyValue(const char *key, const char *value);
+	void	SetKeyValue(const char *key, const float fvalue);
+	void	SetKeyValue(const char *key, const int ivalue);
+	void	SetKeyValueFVector(const char *key, const vec3_t vec);
+	void	SetKeyValueIVector(const char *key, const vec3_t vec);
+
+	char	*GetKeyValue(const char *key) const;
+	float	GetKeyValueFloat(const char *key) const;
+	int		GetKeyValueInt(const char *key) const;
+	void 	GetKeyValueVector(const char *key, vec3_t vec) const;
+
+	void 	DeleteKeyValue(const char *key);
+
+	// sikk---> Undo/Redo
+	int		MemorySize();
+	void	AddToList(Entity *list);
+	void	RemoveFromList();
+	void	FreeEpairs();
+	// <---sikk
+
+	static void CleanCopiedList();
+	static Entity* Find (char *pszKey, char *pszValue);
+	static Entity* Find (char *pszKey, int iValue);
+
+	static Entity* Parse (bool onlypairs);
+	void	Write (FILE *f, bool use_region);
+	void	WriteSelected (FILE *f);	// sikk - Export Selection (Map/Prefab)
 };
 
 //========================================================================
 
-extern HWND	g_hwndEnt[ENT_LAST];
-extern int	g_nEntDlgIds[ENT_LAST];
 
-//========================================================================
 
-void		SetSpawnFlag(Entity *ent, int flag, bool on);
-char		*ValueForKey (Entity *ent, char *key);
-void		SetKeyValue (Entity *ent, char *key, char *value);
-void		SetKeyValueIVector(Entity *ent, char *key, vec3_t vec);
-void		SetKeyValueFVector(Entity *ent, char *key, vec3_t vec);
-void 		DeleteKey (Entity *ent, char *key);
-float		FloatForKey (Entity *ent, char *key);
-int			IntForKey (Entity *ent, char *key);
-void 		GetVectorForKey (Entity *ent, char *key, vec3_t vec);
-
-void		Entity_Free (Entity *e);
-Entity		*Entity_Parse (bool onlypairs);
-void		Entity_Write (Entity *e, FILE *f, bool use_region);
-void		Entity_WriteSelected (Entity *e, FILE *f);	// sikk - Export Selection (Map/Prefab)
-Entity		*Entity_Create (EntClass *c);
-Entity		*Entity_Clone (Entity *e);
-void		Entity_LinkBrush (Entity *e, Brush *b);
-void		Entity_UnlinkBrush (Brush *b);
-
-void		Entity_ChangeClassname(Entity *ent, char *value);
-void		Entity_MakeBrush(Entity *e);
-void		Entity_SetOrigin(Entity *ent, vec3_t org);
-void		Entity_SetOriginFromMember(Entity *ent);
-void		Entity_SetOriginFromKeyvalue(Entity *ent);
-void		Entity_SetOriginFromBrush(Entity *ent);
-
-// sikk---> Undo/Redo
-int			Entity_MemorySize (Entity *e);
-void		Entity_AddToList (Entity *e, Entity *list);
-void		Entity_RemoveFromList (Entity *e);
-void		Entity_FreeEpairs (Entity *e);
-// <---sikk
-// sikk---> Cut/Copy/Paste
-Entity		*Entity_Copy (Entity *e);	
-void		Entity_CleanList ();
-// <---sikk
-Entity		*FindEntity (char *pszKey, char *pszValue);
-Entity		*FindEntityInt (char *pszKey, int iValue);
-
-epair_t	   *ParseEpair ();
-
-int			GetUniqueTargetId (int iHint);
+EPair		*ParseEpair ();
 
 
 

@@ -5,13 +5,9 @@
 #include "qe3.h"
 #include "io.h"
 
-
 int g_nEntityId = 1;	// sikk - Undo/Redo
 
 //===================================================================
-
-EntClass	*eclass;
-epair_t		*epairs;
 
 
 Entity::Entity() : undoId(0), redoId(0), ownerId(0),
@@ -23,9 +19,32 @@ Entity::Entity() : undoId(0), redoId(0), ownerId(0),
 	origin[0] = origin[1] = origin[2] = 0;
 }
 
-Entity::~Entity() 
-{
 
+/*
+===============
+Entity::~Entity
+
+Frees the entity and any brushes it has.
+The entity is removed from the global entities list.
+===============
+*/
+Entity::~Entity()
+{
+	while (brushes.onext != &brushes)
+		delete brushes.onext;
+
+	if (next)
+	{
+		next->prev = prev;
+		prev->next = next;
+	}
+
+	EPair *ep, *epn;
+	for (ep = epairs; ep; ep = epn)
+	{
+		epn = ep->next;
+		delete ep;
+	}
 }
 
 
@@ -33,274 +52,260 @@ Entity::~Entity()
 
 /*
 ==============
-SetSpawnFlag
+Entity::SetSpawnFlag
 set an individual spawnflag without affecting the others
 ==============
 */
-void SetSpawnFlag(Entity *ent, int flag, bool on)
+void Entity::SetSpawnFlag(int flag, bool on)
 {
-	char*	val;
-	int		fval;
-	char	sz[32];
+//	char*	val;
+	int		ival;
 
-	val = ValueForKey(ent, "spawnflags");
-	fval = val ? atoi(val) : 0;
+	ival = GetKeyValueInt("spawnflags");
 	if (on)
-		fval |= flag;
+		ival |= flag;
 	else
-		fval ^= flag;
+		ival ^= flag;
 
-	sprintf(sz, "%d", fval);
-	SetKeyValue(ent, "spawnflags", sz);
+	SetKeyValue("spawnflags", ival);
 }
 
 /*
 ==============
-ValueForKey
+Entity::SetKeyValue
 ==============
 */
-char *ValueForKey (Entity *ent, char *key)
+void Entity::SetKeyValue(const char *key, const char *value)
 {
-	epair_t	*ep;
-	
-	if(!ent)	// sikk - return to prevent crash if no *.qe3 file is found
-		return "";
-
-	for (ep = ent->epairs; ep; ep = ep->next)
-		if (!strcmp(ep->key, key))
-			return ep->value;
-
-	return "";
-}
-
-/*
-==============
-SetKeyValue
-==============
-*/
-void SetKeyValue (Entity *ent, char *key, char *value)
-{
-	epair_t	*ep;
-
-	if (ent == NULL)
-		return;
+	EPair	*ep;
+	int vlen = strlen(value);
 
 	if (!key || !key[0])
 		return;
 
-	for (ep = ent->epairs; ep; ep = ep->next)
+	for (ep = epairs; ep; ep = ep->next)
 	{
-		if (!strcmp(ep->key, key))
+		if (ep->key == key)
 		{
-			free(ep->value);
+			if ((int)ep->value.size() <= vlen)
+				ep->value.resize(vlen + 8);
+			//ep->value.zero();
 			break;
 		}
 	}
 	if (!ep)
 	{
-		ep = (epair_t*)qmalloc(sizeof(*ep));
-		ep->next = ent->epairs;
-		ent->epairs = ep;
-		ep->key = (char*)qmalloc(strlen(key) + 1);
-		strcpy(ep->key, key);
+		ep = new EPair();
+		ep->next = epairs;
+		epairs = ep;
+		ep->key.resize(strlen(key) + 8);
+		strcpy((char*)*ep->key, key);
+		ep->value.resize(vlen + 8);
 	}
 
-	ep->value = (char*)qmalloc(strlen(value) + 1);
-	strcpy(ep->value, value);
+	strcpy((char*)*ep->value, value);
 	g_bModified = true;
 }
 
 /*
 ==============
-SetKeyValueVector
+Entity::SetKeyValue
 ==============
 */
-void SetKeyValueIVector(Entity *ent, char *key, vec3_t vec)
+void Entity::SetKeyValue(const char *key, const float fvalue)
 {
-	char szVec[256];
-	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
-	SetKeyValue(ent, key, szVec);
+	char sz[64];
+	sprintf(sz, "%f", fvalue);
+	SetKeyValue(key, sz);
 }
 
 /*
 ==============
-SetKeyValueFVector
+Entity::SetKeyValue
 ==============
 */
-void SetKeyValueFVector(Entity *ent, char *key, vec3_t vec)
+void Entity::SetKeyValue(const char *key, const int ivalue)
 {
-	char szVec[256];
+	char sz[64];
+	sprintf(sz, "%i", ivalue);
+	SetKeyValue(key, sz);
+}
+
+/*
+==============
+Entity::SetKeyValueFVector
+==============
+*/
+void Entity::SetKeyValueFVector(const char *key, const vec3_t vec)
+{
+	char szVec[128];
 	sprintf(szVec, "%f %f %f", vec[0], vec[1], vec[2]);
-	SetKeyValue(ent, key, szVec);
+	SetKeyValue(key, szVec);
 }
 
 /*
 ==============
-DeleteKey
+Entity::SetKeyValueIVector
 ==============
 */
-void DeleteKey (Entity *ent, char *key)
+void Entity::SetKeyValueIVector(const char *key, const vec3_t vec)
 {
-	epair_t	**ep, *next;
-	
+	char szVec[128];
+	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
+	SetKeyValue(key, szVec);
+}
+
+
+/*
+==============
+Entity::GetKeyValue
+==============
+*/
+char *Entity::GetKeyValue(const char *key) const
+{
+	EPair	*ep;
+
+	for (ep = epairs; ep; ep = ep->next)
+		if (ep->key == key)
+			return (char*)*ep->value;
+	return "";
+}
+
+/*
+==============
+Entity::GetKeyValueFloat
+==============
+*/
+float Entity::GetKeyValueFloat(const char *key) const
+{
+	char* cv = GetKeyValue(key);
+	if (!*cv) return 0.0;
+	return atof(cv);
+}
+
+/*
+==============
+Entity::GetKeyValueInt
+==============
+*/
+int Entity::GetKeyValueInt(const char *key) const
+{
+	char* cv = GetKeyValue(key);
+	if (!*cv) return 0.0;
+	return atoi(cv);
+}
+
+/*
+==============
+Entity::GetKeyValueVector
+==============
+*/
+void Entity::GetKeyValueVector(const char *key, vec3_t vec) const
+{
+	char *cv = GetKeyValue(key);
+	if (!*cv) VectorCopy(g_v3VecOrigin, vec);
+	sscanf(cv, "%f %f %f", &vec[0], &vec[1], &vec[2]);
+}
+
+/*
+==============
+Entity::DeleteKeyValue
+==============
+*/
+void Entity::DeleteKeyValue(const char *key)
+{
+	EPair	**ep, *next;
+
 	if (!strcmp(key, "origin"))
 	{
 		Sys_Printf("WARNING: Point entities must have an origin\n");
 		Sys_Beep();
 		return;
 	}
-	ep = &ent->epairs;
+	ep = &epairs;
 	while (*ep)
 	{
 		next = *ep;
-		if (!strcmp(next->key, key))
+		if (next->key == key)
 		{
 			*ep = next->next;
-			free(next->key);
-			free(next->value);
-			free(next);
+			delete next;
 			return;
 		}
 		ep = &next->next;
 	}
 }
 
-/*
-==============
-FloatForKey
-==============
-*/
-float FloatForKey (Entity *ent, char *key)
-{
-	char *k;
-	
-	k = ValueForKey(ent, key);
-	return atof(k);
-}
 
-/*
-==============
-IntForKey
-==============
-*/
-int IntForKey (Entity *ent, char *key)
-{
-	char *k;
-	
-	k = ValueForKey(ent, key);
-	return atoi(k);
-}
+//===================================================================
 
-/*
-==============
-GetVectorForKey
-==============
-*/
-void GetVectorForKey (Entity *ent, char *key, vec3_t vec)
-{
-	char *k;
-	
-	k = ValueForKey(ent, key);
-	sscanf(k, "%f %f %f", &vec[0], &vec[1], &vec[2]);
-}
-
-/*
-===============
-Entity_Free
-
-Frees the entity and any brushes it has.
-The entity is removed from the global entities list.
-===============
-*/
-void Entity_Free (Entity *e)
-{
-	epair_t	*ep, *next;
-
-	while (e->brushes.onext != &e->brushes)
-		delete e->brushes.onext;
-
-	if (e->next)
-	{
-		e->next->prev = e->prev;
-		e->prev->next = e->next;
-	}
-
-	for (ep = e->epairs; ep; ep = next)
-	{
-		next = ep->next;
-		free(ep);
-	}
-	delete e;
-}
 
 // sikk---> Undo/Redo
 /*
 ===============
-Entity_FreeEpairs
+Entity::FreeEpairs
 
 Frees the entity epairs.
 ===============
 */
-void Entity_FreeEpairs (Entity *e)
+void Entity::FreeEpairs ()
 {
-	epair_t	*ep, *next;
+	EPair	*ep, *next;
 
-	for (ep = e->epairs; ep; ep = next)
+	for (ep = epairs; ep; ep = next)
 	{
 		next = ep->next;
-		free (ep->key);
-		free (ep->value);
-		free (ep);
+		delete ep;
 	}
-	e->epairs = NULL;
+	epairs = nullptr;
 }
 
 /*
 ===========
-Entity_AddToList
+Entity::AddToList
 ===========
 */
-void Entity_AddToList (Entity *e, Entity *list)
+void Entity::AddToList (Entity *list)
 {
-	if (e->next || e->prev)
+	if (next || prev)
 		Error("Entity_AddToList: Already linked.");
-	e->next = list->next;
-	list->next->prev = e;
-	list->next = e;
-	e->prev = list;
+	next = list->next;
+	list->next->prev = this;
+	list->next = this;
+	prev = list;
 }
 
 /*
 ===========
-Entity_RemoveFromList
+Entity::RemoveFromList
 ===========
 */
-void Entity_RemoveFromList (Entity *e)
+void Entity::RemoveFromList ()
 {
-	if (!e->next || !e->prev)
-		Error("Entity_RemoveFromList: Not linked.");
-	e->next->prev = e->prev;
-	e->prev->next = e->next;
-	e->next = e->prev = NULL;
+	if (!next || !prev)
+		Error("Entity::RemoveFromList: Not linked.");
+	next->prev = prev;
+	prev->next = next;
+	next = prev = NULL;
 }
 
 /*
 =================
-Entity_MemorySize
+Entity::MemorySize
 =================
 */
-int Entity_MemorySize (Entity *e)
+int Entity::MemorySize ()
 {
-	epair_t	*ep;
+	EPair	*ep;
 	int size = 0;
 
-	for (ep = e->epairs; ep; ep = ep->next)
+	for (ep = epairs; ep; ep = ep->next)
 	{
-		size += _msize(ep->key);
-		size += _msize(ep->value);
-		size += _msize(ep);
+		size += ep->key.size();
+		size += ep->value.size();
+		size += sizeof(*ep);
 	}
-	size += _msize(e);
+	size += sizeof(Entity);
 	return size;
 }
 // <---sikk
@@ -310,36 +315,36 @@ int Entity_MemorySize (Entity *e)
 ParseEpair
 =================
 */
-epair_t *ParseEpair ()
+EPair *ParseEpair ()
 {
-	epair_t	*e;
+	EPair	*e;
 	
-	e = (epair_t*)qmalloc(sizeof(*e));
+	e = new EPair();
 	
-	e->key = (char*)qmalloc(strlen(g_szToken) + 1);
-	strcpy(e->key, g_szToken);
+	e->key.resize(strlen(g_szToken) + 8);
+	strcpy((char*)*e->key, g_szToken);
 
 	GetToken(false);
-	e->value = (char*)qmalloc(strlen(g_szToken) + 1);
-	strcpy(e->value, g_szToken);
+	e->value.resize(strlen(g_szToken) + 8);
+	strcpy((char*)*e->value, g_szToken);
 
 	return e;
 }
 
 /*
 ================
-Entity_Parse
+Entity::Parse
 
 If onlypairs is set, the classname info will not be looked up, and the entity
 will not be added to the global list.  Used for parsing the project.
 ================
 */
-Entity *Entity_Parse (bool onlypairs)
+Entity *Entity::Parse (bool onlypairs)
 {
-	Entity   *ent;
-	EntClass   *e;
-	Brush	   *b;
-	epair_t	   *ep;
+	Entity		*ent;
+	EntClass	*e;
+	Brush		*b;
+	EPair		*ep;
 	bool		has_brushes;
 
 	if (!GetToken(true))
@@ -383,17 +388,16 @@ Entity *Entity_Parse (bool onlypairs)
 	else
 		has_brushes = true;
 
-	GetVectorForKey(ent, "origin", ent->origin);
+	ent->GetKeyValueVector("origin", ent->origin);
 
 	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
 	// with brushes or brush entities without any, so that all the downstream code Just Works
-	e = EntClass::ForName(ValueForKey(ent, "classname"), has_brushes, false);
+	e = EntClass::ForName(ent->GetKeyValue("classname"), has_brushes, false);
 	ent->eclass = e;
 
 	if (e->IsFixedSize())
-	{	// fixed size entity
-		// create a custom brush
-		Entity_MakeBrush(ent);
+	{	// create a custom brush
+		ent->MakeBrush();
 	}
 
 	// add all the brushes to the main list
@@ -410,22 +414,21 @@ Entity *Entity_Parse (bool onlypairs)
 
 /*
 ============
-Entity_Write
+Entity::Write
 ============
 */
-void Entity_Write (Entity *e, FILE *f, bool use_region)
+void Entity::Write (FILE *f, bool use_region)
 {
-	epair_t	   *ep;
-	Brush	   *b;
-	vec3_t		origin;
-	int			count;
+	EPair	*ep;
+	Brush	*b;
+	int		count;
 
 	// if none of the entities brushes are in the region,
 	// don't write the entity at all
 	if (use_region)
 	{
 		// in region mode, save the camera position as playerstart
-		if (!strcmp(ValueForKey(e, "classname"), "info_player_start"))
+		if (!strcmp(GetKeyValue("classname"), "info_player_start"))
 		{
 			fprintf(f, "{\n");
 			fprintf(f, "\"classname\" \"info_player_start\"\n");
@@ -437,36 +440,36 @@ void Entity_Write (Entity *e, FILE *f, bool use_region)
 			return;
 		}
 
-		for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+		for (b = brushes.onext; b != &brushes; b = b->onext)
 			if (!Map_IsBrushFiltered(b))
 				break;	// got one
 
-		if (b == &e->brushes)
+		if (b == &brushes)
 			return;	// nothing visible
 	}
 
 	// if fixedsize, calculate a new origin based on the current brush position
-	if (e->eclass->IsFixedSize())// || *ValueForKey(e, "origin"))	// sikk - Point Entity->Brush Entity Hack (added ValueForKey check)
+	if (eclass->IsFixedSize())
 	{
 		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
-		vec3_t testorg;
-		GetVectorForKey(e, "origin", testorg);
+		vec3_t testorg, org;
+		GetKeyValueVector("origin", testorg);
 		// but let's be sure for now
-		if (!VectorCompare(e->origin, testorg))
+		if (!VectorCompare(origin, testorg))
 		{
-			Entity_SetOriginFromBrush(e);
-			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", e->eclass->name, origin[0], origin[1], origin[2]);
+			SetOriginFromBrush();
+			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
 		}
 	}
 
 	fprintf(f, "{\n");
-	for (ep = e->epairs; ep; ep = ep->next)
-		fprintf(f, "\"%s\" \"%s\"\n", ep->key, ep->value);
+	for (ep = epairs; ep; ep = ep->next)
+		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
 
-	if (!e->eclass->IsFixedSize())
+	if (!eclass->IsFixedSize())
 	{
 		count = 0;
-		for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+		for (b = brushes.onext; b != &brushes; b = b->onext)
 		{
 			if (!use_region || !Map_IsBrushFiltered (b))
 			{
@@ -483,42 +486,44 @@ void Entity_Write (Entity *e, FILE *f, bool use_region)
 
 /*
 =================
-Entity_WriteSelected
-
-lunaran TODO: why doesn't this just use entity_write
+Entity::WriteSelected
 =================
 */
-void Entity_WriteSelected (Entity *e, FILE *f)
+void Entity::WriteSelected (FILE *f)
 {
-	Brush	   *b;
-	epair_t	   *ep;
-	vec3_t		origin;
-	char		text[128];
-	int			count;
+	Brush	*b;
+	EPair	*ep;
+	int		count;
 
-	for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+	for (b = brushes.onext; b != &brushes; b = b->onext)
 		if (Select_IsBrushSelected(b))
 			break;	// got one
 
-	if (b == &e->brushes)
+	if (b == &brushes)
 		return;		// nothing selected
 
 	// if fixedsize, calculate a new origin based on the current brush position
-	if (e->eclass->IsFixedSize())
+	if (eclass->IsFixedSize())
 	{
-		VectorSubtract(e->brushes.onext->mins, e->eclass->mins, origin);
-		sprintf(text, "%d %d %d", (int)origin[0], (int)origin[1], (int)origin[2]);
-		SetKeyValue(e, "origin", text);
+		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
+		vec3_t testorg, org;
+		GetKeyValueVector("origin", testorg);
+		// but let's be sure for now
+		if (!VectorCompare(origin, testorg))
+		{
+			SetOriginFromBrush();
+			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
+		}
 	}
 
 	fprintf (f, "{\n");
-	for (ep = e->epairs; ep; ep = ep->next)
-		fprintf(f, "\"%s\" \"%s\"\n", ep->key, ep->value);
+	for (ep = epairs; ep; ep = ep->next)
+		fprintf(f, "\"%s\" \"%s\"\n", (char*)*ep->key, (char*)*ep->value);
 
-	if (!e->eclass->IsFixedSize())
+	if (!eclass->IsFixedSize())
 	{
 		count = 0;
-		for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+		for (b = brushes.onext; b != &brushes; b = b->onext)
 		{
 			if (Select_IsBrushSelected(b))
 			{
@@ -535,51 +540,51 @@ void Entity_WriteSelected (Entity *e, FILE *f)
 
 /*
 ============
-Entity_SetOrigin
+Entity::SetOrigin
 
 entity origins are stored/modified three different ways (by entity.origin, by 
 "origin" keyvalue, and derived from brush bounds) - always set a point entity's
 origin via these functions or they won't stay synced and you're a JERK
 ============
 */
-void Entity_SetOrigin(Entity *ent, vec3_t org)
+void Entity::SetOrigin(vec3_t org)
 {
-	if (!ent->eclass->IsFixedSize()) return;
+	if (!eclass->IsFixedSize()) return;
 
-	VectorCopy(org, ent->origin);
-	SetKeyValueIVector(ent, "origin", org);
-	Entity_MakeBrush(ent);
+	VectorCopy(org, origin);
+	SetKeyValueIVector("origin", org);
+	MakeBrush();
 }
 
 // call one of these three after updating the odd one out, to not loop
-void Entity_SetOriginFromMember(Entity *ent)
+void Entity::SetOriginFromMember()
 {
-	if (!ent->eclass->IsFixedSize()) return;
+	if (!eclass->IsFixedSize()) return;
 
-	SetKeyValueIVector(ent, "origin", ent->origin);
-	Entity_MakeBrush(ent);
+	SetKeyValueIVector("origin", origin);
+	MakeBrush();
 }
 
-void Entity_SetOriginFromKeyvalue(Entity *ent)
+void Entity::SetOriginFromKeyvalue()
 {
 	vec3_t	org;
-	if (!ent->eclass->IsFixedSize()) return;
+	if (!eclass->IsFixedSize()) return;
 
-	GetVectorForKey(ent, "origin", org);
-	VectorCopy(org, ent->origin);
-	Entity_MakeBrush(ent);
+	SetKeyValueIVector("origin", org);
+	VectorCopy(org, origin);
+	MakeBrush();
 }
 
-void Entity_SetOriginFromBrush(Entity *ent)
+void Entity::SetOriginFromBrush()
 {
 	vec3_t	org;
 
-	if (!ent->eclass->IsFixedSize()) return;
-	if (ent->brushes.onext == &ent->brushes) return;
+	if (!eclass->IsFixedSize()) return;
+	if (brushes.onext == &brushes) return;
 
-	VectorSubtract(ent->brushes.onext->mins, ent->eclass->mins, org);
-	SetKeyValueIVector(ent, "origin", org);
-	VectorCopy(org, ent->origin);
+	VectorSubtract(brushes.onext->mins, eclass->mins, org);
+	SetKeyValueIVector("origin", org);
+	VectorCopy(org, origin);
 }
 
 /*
@@ -587,26 +592,26 @@ void Entity_SetOriginFromBrush(Entity *ent)
 Entity_MakeBrush
 
 update the dummy brush for point entities after the origin is overridden (easier 
-than translating it) or the classname is changed
+than translating it) or when the classname is changed
 ============
 */
-void Entity_MakeBrush(Entity *e)
+void Entity::MakeBrush()
 {
 	Brush		*b;
-	vec3_t		mins, maxs;
+	vec3_t		emins, emaxs;
 
 	// create a custom brush
-	VectorAdd(e->eclass->mins, e->origin, mins);
-	VectorAdd(e->eclass->maxs, e->origin, maxs);
-	if (e->brushes.onext == &e->brushes)
+	VectorAdd(eclass->mins, origin, emins);
+	VectorAdd(eclass->maxs, origin, emaxs);
+	if (brushes.onext == &brushes)
 	{
-		b = Brush::Create(mins, maxs, &e->eclass->texdef);
-		Entity_LinkBrush(e, b);
+		b = Brush::Create(emins, emaxs, &eclass->texdef);
+		LinkBrush(b);
 	}
 	else
 	{
-		b = e->brushes.onext;
-		b->Recreate(mins, maxs, &e->eclass->texdef);
+		b = brushes.onext;
+		b->Recreate(emins, emaxs, &eclass->texdef);
 	}
 
 	b->Build();
@@ -614,14 +619,14 @@ void Entity_MakeBrush(Entity *e)
 
 /*
 ============
-Entity_Create
+Entity::Create
 
 Creates a new entity out of the selected_brushes list.
 If the entity class is fixed size, the brushes are only used to find a midpoint. 
 Otherwise, the brushes have their ownership transfered to the new entity.
 ============
 */
-Entity *Entity_Create (EntClass *ecIn)
+Entity *Entity::Create (EntClass *ecIn)
 {
 	Entity		*e;
 	EntClass	*c;
@@ -639,9 +644,8 @@ Entity *Entity_Create (EntClass *ecIn)
 	{
 		e = g_brSelectedBrushes.next->owner;
 
-		Entity_ChangeClassname(e, ecIn->name);
+		e->ChangeClassname(ecIn);
 
-		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		return e;
 	}
 
@@ -669,7 +673,7 @@ Entity *Entity_Create (EntClass *ecIn)
 	// create it
 	e = new Entity();
 	e->eclass = c;
-	SetKeyValue(e, "classname", c->name);
+	e->SetKeyValue("classname", c->name);
 
 	// add the entity to the entity list
 	e->next = g_entEntities.next;
@@ -681,10 +685,10 @@ Entity *Entity_Create (EntClass *ecIn)
 	{
 		// TODO: pass the location of the right-click via an appropriate method
 		VectorCopy(g_brSelectedBrushes.mins, e->origin);
-		SetKeyValueIVector(e, "origin", e->origin);
+		e->SetKeyValueIVector("origin", e->origin);
 		VectorCopy(g_v3VecOrigin, g_brSelectedBrushes.mins);	// reset
 
-		Entity_MakeBrush(e);
+		e->MakeBrush();
 
 		Select_HandleBrush(e->brushes.onext,false);
 	}
@@ -693,64 +697,64 @@ Entity *Entity_Create (EntClass *ecIn)
 		// change the selected brushes over to the new entity
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
-			Entity_UnlinkBrush(b);
-			Entity_LinkBrush(e, b);
+			Entity::UnlinkBrush(b);
+			e->LinkBrush(b);
 			b->Build();	// so the key brush gets a name
 		}
 	}
 
-	Sys_UpdateWindows(W_CAMERA|W_XY|W_Z);
 	return e;
 }
 
 /*
 ===========
-Entity_ChangeClassname
+Entity::ChangeClassname
 ===========
 */
-void Entity_ChangeClassname(Entity *ent, char *value)
+void Entity::ChangeClassname(EntClass* ec)
 {
-	bool hasbrushes;
-
-	hasbrushes = (ent->brushes.onext != ent->brushes.oprev);
-	EntClass* ec = EntClass::ForName(value, hasbrushes, false);
-	ent->eclass = ec;
-	SetKeyValue(ent, "classname", value);
+	eclass = ec;
+	SetKeyValue("classname", ec->name);
 
 	if (ec->IsFixedSize())
 	{
 		// make a new brush for the entity
-		Entity_MakeBrush(ent);
+		MakeBrush();
 	}
-	g_bSelectionChanged = true;
-	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+}
+
+void Entity::ChangeClassname(const char *classname)
+{
+	bool hasbrushes = (brushes.onext != brushes.oprev);
+	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
+	ChangeClassname(ec);
 }
 
 /*
 ===========
-Entity_LinkBrush
+Entity::LinkBrush
 ===========
 */
-void Entity_LinkBrush (Entity *e, Brush *b)
+void Entity::LinkBrush (Brush *b)
 {
 	if (b->oprev || b->onext)
-		Error("Entity_LinkBrush: Already linked.");
-	b->owner = e;
-	b->onext = e->brushes.onext;
-	b->oprev = &e->brushes;
-	e->brushes.onext->oprev = b;
-	e->brushes.onext = b;
+		Error("Entity::LinkBrush: Already linked.");
+	b->owner = this;
+	b->onext = brushes.onext;
+	b->oprev = &brushes;
+	brushes.onext->oprev = b;
+	brushes.onext = b;
 }
 
 /*
 ===========
-Entity_UnlinkBrush
+Entity::UnlinkBrush
 ===========
 */
-void Entity_UnlinkBrush (Brush *b)
+void Entity::UnlinkBrush (Brush *b)
 {
 	if (!b->owner || !b->onext || !b->oprev)
-		Error("Entity_UnlinkBrush: Not currently linked.");
+		Error("Entity::UnlinkBrush: Not currently linked.");
 	b->onext->oprev = b->oprev;
 	b->oprev->onext = b->onext;
 	b->onext = b->oprev = NULL;
@@ -762,13 +766,13 @@ void Entity_UnlinkBrush (Brush *b)
 Entity_Clone
 ===========
 */
-Entity *Entity_Clone (Entity *e)
+Entity *Entity::Clone()
 {
 	Entity	*n;
-	epair_t		*ep, *np;
+	EPair	*ep, *np;
 
 	n = new Entity();
-	n->eclass = e->eclass;
+	n->eclass = eclass;
 
 	// add the entity to the entity list
 	n->next = g_entEntities.next;
@@ -776,65 +780,31 @@ Entity *Entity_Clone (Entity *e)
 	n->next->prev = n;
 	n->prev = &g_entEntities;
 
-	for (ep = e->epairs; ep; ep = ep->next)
+	for (ep = epairs; ep; ep = ep->next)
 	{
-		np = (epair_t*)qmalloc(sizeof(*np));
-		np->key = CopyString(ep->key);
-		np->value = CopyString(ep->value);
+		np = new EPair(*ep);
 		np->next = n->epairs;
 		n->epairs = np;
 	}
-	VectorCopy(e->origin, n->origin);
+	VectorCopy(origin, n->origin);
 	return n;
 }
 
-/*
-==============
-GetUniqueTargetId
-==============
-*/
-int GetUniqueTargetId (int iHint)
-{
-	int			iMin, iMax, i;
-	bool		bFound;
-	Entity   *pe;
-	
-	bFound = false;
-	pe = g_entEntities.next;
-	iMin = 0; 
-	iMax = 0;
-	
-	for ( ; pe != NULL && pe != &g_entEntities; pe = pe->next)
-	{
-		i = IntForKey(pe, "target");
-		if (i)
-		{
-			iMin = min(i, iMin);
-			iMax = max(i, iMax);
-			if (i == iHint)
-				bFound = true;
-		}
-	}
 
-	if (bFound)
-		return iMax + 1;
-	else
-		return iHint;
-}
 
 /*
 ==============
 FindEntity
 ==============
 */
-Entity *FindEntity (char *pszKey, char *pszValue)
+Entity *Entity::Find (char *pszKey, char *pszValue)
 {
 	Entity *pe;
 	
 	pe = g_entEntities.next;
 	
 	for ( ; pe != NULL && pe != &g_entEntities; pe = pe->next)
-		if (!strcmp(ValueForKey(pe, pszKey), pszValue))
+		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
 			return pe;
 
 	return NULL;
@@ -845,14 +815,14 @@ Entity *FindEntity (char *pszKey, char *pszValue)
 FindEntityInt
 ==============
 */
-Entity *FindEntityInt (char *pszKey, int iValue)
+Entity *Entity::Find(char *pszKey, int iValue)
 {
 	Entity *pe;
 	
 	pe = g_entEntities.next;
 	
 	for ( ; pe != NULL && pe != &g_entEntities; pe = pe->next)
-		if (IntForKey(pe, pszKey) == iValue)
+		if (pe->GetKeyValueInt(pszKey) == iValue)
 			return pe;
 
 	return NULL;
@@ -861,13 +831,13 @@ Entity *FindEntityInt (char *pszKey, int iValue)
 // sikk---> Cut/Copy/Paste
 /*
 ===============
-Entity_CleanList
+Entity::CleanCopiedList
 ===============
 */
-void Entity_CleanList ()
+void Entity::CleanCopiedList ()
 {
 	Entity	*pe, *next;
-	epair_t		*ep, *enext;
+	EPair		*ep, *enext;
 
 	pe = g_entCopiedEntities.next;
 
@@ -878,9 +848,7 @@ void Entity_CleanList ()
 		for (ep = pe->epairs; ep; ep = enext)
 		{
 			enext = ep->next;
-			free(ep->key);
-			free(ep->value);
-			free(ep);
+			delete ep;
 		}
 		free (pe);
 		pe = next;
@@ -890,16 +858,16 @@ void Entity_CleanList ()
 
 /*
 ===============
-Entity_Copy
+Entity::Copy
 ===============
 */
-Entity *Entity_Copy (Entity *e)
+Entity *Entity::Copy ()
 {
 	Entity	*n;
-	epair_t		*ep, *np;
+	EPair		*ep, *np;
 
 	n = new Entity();
-	n->eclass = e->eclass;
+	n->eclass = eclass;
 
 	// add the entity to the entity list
 	n->next = g_entCopiedEntities.next;
@@ -907,11 +875,9 @@ Entity *Entity_Copy (Entity *e)
 	n->next->prev = n;
 	n->prev = &g_entCopiedEntities;
 
-	for (ep = e->epairs; ep; ep = ep->next)
+	for (ep = epairs; ep; ep = ep->next)
 	{
-		np = (epair_t*)qmalloc(sizeof(*np));
-		np->key = CopyString(ep->key);
-		np->value = CopyString(ep->value);
+		np = new EPair(*ep);
 		np->next = n->epairs;
 		n->epairs = np;
 	}

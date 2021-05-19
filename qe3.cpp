@@ -495,7 +495,7 @@ void QE_CheckAutoSave ()
 		Sys_Printf("CMD: Autosaving...\n");
 		Sys_Status("Autosaving...", 0);
 
-		Map_SaveFile(ValueForKey(g_qeglobals.d_entityProject, "autosave"), false);
+		Map_SaveFile(g_qeglobals.d_entityProject->GetKeyValue("autosave"), false);
 
 		Sys_Printf("MSG: Autosave successful.\n");
 		Sys_Status("Autosave successful.", 0);
@@ -519,23 +519,23 @@ bool QE_LoadProject (char *projectfile)
 	if (LoadFileNoCrash(projectfile, (void**)&data) == -1)
 		return false;
 	StartTokenParsing(data);
-	g_qeglobals.d_entityProject = Entity_Parse(true);
+	g_qeglobals.d_entityProject = Entity::Parse(true);
 	if (!g_qeglobals.d_entityProject)
 		Error("QE_LoadProject: Could not parse %s", projectfile);
 	free(data);
 
 	// usefull for the log file and debugging fucked up configurations from users:
 	// output the basic information of the .qe3 project file
-	Sys_Printf("MSG: basepath: %s\n",		ValueForKey(g_qeglobals.d_entityProject, "basepath"));
-	Sys_Printf("MSG: remotebasepath: %s\n",	ValueForKey(g_qeglobals.d_entityProject, "remotebasepath"));
-	Sys_Printf("MSG: mapspath: %s\n",		ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
-	Sys_Printf("MSG: autosavemap: %s\n",	ValueForKey(g_qeglobals.d_entityProject, "autosave"));
-	Sys_Printf("MSG: entitypath: %s\n",		ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
-	Sys_Printf("MSG: texturepath: %s\n",	ValueForKey(g_qeglobals.d_entityProject, "texturepath"));
-	Sys_Printf("MSG: defaultwads: %s\n",	ValueForKey(g_qeglobals.d_entityProject, "defaultwads"));
-	Sys_Printf("MSG: toolspath: %s\n",		ValueForKey(g_qeglobals.d_entityProject, "rshcmd"));
+	Sys_Printf("MSG: basepath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("basepath"));
+	Sys_Printf("MSG: remotebasepath: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("remotebasepath"));
+	Sys_Printf("MSG: mapspath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
+	Sys_Printf("MSG: autosavemap: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("autosave"));
+	Sys_Printf("MSG: entitypath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
+	Sys_Printf("MSG: texturepath: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
+	Sys_Printf("MSG: defaultwads: %s\n",	g_qeglobals.d_entityProject->GetKeyValue("defaultwads"));
+	Sys_Printf("MSG: toolspath: %s\n",		g_qeglobals.d_entityProject->GetKeyValue("rshcmd"));
 
-	EntClass::InitForSourceDirectory(ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
+	EntClass::InitForSourceDirectory(g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
 
 	EntWnd_FillClassList();	// list in entity window
 	FillTextureMenu();
@@ -600,13 +600,13 @@ void QE_ExpandBspString (char *bspaction, char *out, char *mapname)
 
 	ExtractFileName(mapname, base);
 // sikk - using "mapspath" instead.... What other use is "mapspath" for?
-//	sprintf(src, "%s/maps/%s", ValueForKey(g_qeglobals.d_entityProject, "remotebasepath"), base);
-	sprintf(src, "%s%s", ValueForKey(g_qeglobals.d_entityProject, "mapspath"), base);
+//	sprintf(src, "%s/maps/%s", g_qeglobals.d_entityProject->GetKeyValue("remotebasepath"), base);
+	sprintf(src, "%s%s", g_qeglobals.d_entityProject->GetKeyValue("mapspath"), base);
 
 	StripExtension(src);
-	strcpy(rsh, ValueForKey(g_qeglobals.d_entityProject, "rshcmd"));
+	strcpy(rsh, g_qeglobals.d_entityProject->GetKeyValue("rshcmd"));
 
-	in = ValueForKey(g_qeglobals.d_entityProject, bspaction);
+	in = g_qeglobals.d_entityProject->GetKeyValue(bspaction);
 	while (*in)
 	{
 		if (in[0] == '!')
@@ -649,7 +649,7 @@ char *QE_ExpandRelativePath (char *p)
 	if (p[0] == '/' || p[0] == '\\')
 		return p;
 
-	base = ValueForKey(g_qeglobals.d_entityProject, "basepath");
+	base = g_qeglobals.d_entityProject->GetKeyValue("basepath");
 	sprintf(temp, "%s/%s", base, p);
 	return temp;
 }

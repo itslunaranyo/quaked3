@@ -69,7 +69,7 @@ Brush::~Brush()
 
 	// unlink from entity list
 	if (onext)
-		Entity_UnlinkBrush(this);
+		Entity::UnlinkBrush(this);
 }
 
 /*
@@ -377,7 +377,7 @@ void Brush::Move(vec3_t move)
 	if (owner->eclass->IsFixedSize() && onext != this)
 	{
 		// lunaran: update everything
-		Entity_SetOriginFromBrush(owner);
+		owner->SetOriginFromBrush();
 	//	VectorAdd(owner->origin, move, owner->origin);
 
 		// lunaran TODO: update only once at the end of a drag or the window flickers too much
@@ -1330,7 +1330,7 @@ void Brush::MakeSided(int sides)
 	}
 
 	Select_SelectBrush(b);
-	Entity_LinkBrush(g_peWorldEntity, b);
+	g_peWorldEntity->LinkBrush(b);
 	b->Build();
 }
 
@@ -1431,7 +1431,7 @@ void Brush::MakeSidedCone(int sides)
 	}
 
 	Select_SelectBrush(b);
-	Entity_LinkBrush(g_peWorldEntity, b);
+	g_peWorldEntity->LinkBrush(b);
 	b->Build();
 }
 
@@ -1528,7 +1528,7 @@ void Brush::MakeSidedSphere(int sides)
 	}
 
 	Select_SelectBrush(b);
-	Entity_LinkBrush(g_peWorldEntity, b);
+	g_peWorldEntity->LinkBrush(b);
 	b->Build();
 }
 // <---sikk
@@ -1887,7 +1887,7 @@ void Brush::DrawEntityName ()
 		return;	// not key brush
 
 	// draw the angle pointer
-	a = FloatForKey(owner, "angle");
+	a = owner->GetKeyValueFloat("angle");
 	if (a)
 	{
 		s = sin(a / 180 * Q_PI);
@@ -1920,15 +1920,15 @@ void Brush::DrawEntityName ()
 
 	if (g_qeglobals.d_savedinfo.bShow_Names)
 	{
-		name = ValueForKey(owner, "classname");
+		name = owner->GetKeyValue("classname");
 // sikk---> Draw Light Styles
 		if (!strcmp(name, "light"))
 		{
 			char sz[24];
 			
-			if (*ValueForKey(owner, "style"))
+			if (*owner->GetKeyValue("style"))
 			{
-				sprintf(sz, "%s (style: %s)", ValueForKey(owner, "classname"), ValueForKey(owner, "style"));
+				sprintf(sz, "%s (style: %s)", owner->GetKeyValue("classname"), owner->GetKeyValue("style"));
 				glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
 				glCallLists(strlen(sz), GL_UNSIGNED_BYTE, sz);
 			}
@@ -1970,7 +1970,7 @@ void Brush::DrawLight()
 
 	bTriPaint = true;
 
-	strColor = ValueForKey(owner, "_color");
+	strColor = owner->GetKeyValue("_color");
 
 	if (strColor)
 	{
@@ -2193,7 +2193,7 @@ void FacingVectors(Brush *b, vec3_t forward, vec3_t right, vec3_t up)
 	int		angleVal;
 	vec3_t	angles;
 
-	angleVal = IntForKey(b->owner, "angle");
+	angleVal = b->owner->GetKeyValueInt("angle");
 
 	if (angleVal == -1)
 	{

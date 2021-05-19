@@ -954,35 +954,6 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 MakeEntity
 ============
 */
-Entity* MakeEntityConfirm(EntClass *pec)
-{
-	char		text[768];
-	int			result;
-	Entity* out;
-	bool		repbrushes;
-
-	if (pec->IsFixedSize() && Select_HasBrushes())
-	{
-		sprintf(text,
-			"You have chosen to create a %s\nwith brushes selected. Select 'Yes' to delete\nthe selected brushes and replace them with a\n%s at their midpoint, or 'No' to\ncreate a 'hacked' brush entity with the\nclassname %s.",
-			pec->name, pec->name, pec->name);
-
-		result = MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_YESNOCANCEL | MB_ICONQUESTION);
-		if (result == IDCANCEL)
-			return nullptr;
-		repbrushes = (result == IDYES);
-	}
-	else
-		repbrushes = true;
-
-	Undo_Start("Create Entity");
-	Undo_AddBrushList(&g_brSelectedBrushes);
-	out = Entity_Create(pec);
-	Undo_EndBrushList(&g_brSelectedBrushes);
-	Undo_End();
-
-	return out;
-}
 Entity* MakeEntity (HWND h)
 {
 	int			index;
@@ -994,13 +965,19 @@ Entity* MakeEntity (HWND h)
 
 	Undo_Start("Create Entity");
 	Undo_AddBrushList(&g_brSelectedBrushes);
-	out = Entity_Create(pec);
+	out = Entity::Create(pec);
 	Undo_EndBrushList(&g_brSelectedBrushes);
 	Undo_End();
 
 	return out;
+	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
+/*
+============
+ConfirmClassnameHack
+============
+*/
 bool ConfirmClassnameHack(EntClass *desired)
 {
 	char	text[768];
@@ -1012,8 +989,6 @@ bool ConfirmClassnameHack(EntClass *desired)
 
 	return (MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
 }
-
-
 
 /*
 ============
@@ -1287,7 +1262,7 @@ void OnSelectionChange (HWND hTree, HWND hList)
 	TVITEM			tvI;
 	LVITEM			lvItem;
 	Entity       *pEntity;
-	epair_t        *pEpair;
+	EPair        *pEpair;
 
 	// If root item is selected, clear List Control and return
 	if (TreeView_GetChild(hTree, hItem))
@@ -1312,12 +1287,12 @@ void OnSelectionChange (HWND hTree, HWND hList)
 		{
 			lvItem.iItem = 0;
 			lvItem.iSubItem = 0;
-			lvItem.pszText = pEpair->key;
+			lvItem.pszText = (char*)*pEpair->key;
 			ListView_InsertItem(hList, &lvItem);
 
 			lvItem.iItem = 0;
 			lvItem.iSubItem = 1;
-			lvItem.pszText = pEpair->value;
+			lvItem.pszText = (char*)*pEpair->value;
 			ListView_SetItem(hList, &lvItem);
 		}
 	}

@@ -106,7 +106,7 @@ void RunBsp (char *command)
 
 	Pointfile_Delete();
 
-	basepath = ValueForKey(g_qeglobals.d_entityProject, "basepath");
+	basepath = g_qeglobals.d_entityProject->GetKeyValue("basepath");
 	if(basepath && !(*basepath))
 		basepath = NULL;
 
@@ -305,7 +305,7 @@ void DoTestMap ()
 {
 	char	szWorkDir[MAX_PATH] = "";
 	char	szParam[256] = "";
-	char   *szMapName = &g_szCurrentMap[strlen(ValueForKey(g_qeglobals.d_entityProject, "mapspath"))];
+	char   *szMapName = &g_szCurrentMap[strlen(g_qeglobals.d_entityProject->GetKeyValue("mapspath"))];
 	char	szBSPName[MAX_PATH] = "";
 	int		handle;
 	struct _finddata_t fileinfo;
@@ -2273,7 +2273,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_MISC_SELECTENTITYCOLOR:
-			if ((g_qeglobals.d_nInspectorMode == W_ENTITY) && DoColor(COLOR_ENTITY) == TRUE)
+			if (/*(g_qeglobals.d_nInspectorMode == W_ENTITY) &&*/ DoColor(COLOR_ENTITY) == TRUE)
 			{
 				char buffer[64];
 				
@@ -2281,9 +2281,9 @@ LONG WINAPI CommandHandler (
 											g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][1],
 											g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY][2]);
 				
-				SetWindowText(g_hwndEnt[ENT_KEYFIELD], "_color");
-				SetWindowText(g_hwndEnt[ENT_VALUEFIELD], buffer);
-				EntWnd_AddKeyValue();
+			//	SetWindowText(g_hwndEnt[ENT_KEYFIELD], "_color");
+			//	SetWindowText(g_hwndEnt[ENT_VALUEFIELD], buffer);
+				EntWnd_AddKeyValue("_color", buffer);
 			}
 			Sys_UpdateWindows(W_ALL);
 			break;

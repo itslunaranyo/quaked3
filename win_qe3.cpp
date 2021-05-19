@@ -405,10 +405,10 @@ OpenDialog
 void OpenDialog ()
 {
 	// Obtain the system directory name and store it in szDirName. 
-	strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 		strcat(szDirName, "/maps");
 	}
 
@@ -448,10 +448,10 @@ SaveAsDialog
 */
 void SaveAsDialog ()
 { 
-	strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 		strcat(szDirName, "/maps");
 	}
 
@@ -495,10 +495,10 @@ ProjectDialog
 void ProjectDialog ()
 {
 	//Obtain the system directory name and store it in szDirName.
- 	strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
+ 	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 		strcat(szDirName, "/scripts");
 	}
 
@@ -542,10 +542,10 @@ NewProjectDialog
 void NewProjectDialog ()
 { 
 
- 	strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "entitypath"));
+ 	strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("entitypath"));
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 		strcat(szDirName, "/scripts");
 	}
 
@@ -626,10 +626,10 @@ void ImportDialog (bool bCheck)
 	if (bCheck)	// Importing a Map File
 	{
 		// Obtain the system directory name and store it in szDirName. 
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 		if (strlen(szDirName) == 0)
 		{
-			strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 			strcat(szDirName, "/maps");
 		}
 		// Filter string for Map files
@@ -641,7 +641,7 @@ void ImportDialog (bool bCheck)
 		strcpy(szDirName, g_qeglobals.d_savedinfo.szPrefabPath);
 		if (strlen(g_qeglobals.d_savedinfo.szPrefabPath) == 0)
 			// if Prefab Path is empty, use mapspath as default
-			strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 		// Filter string for Prefab files
 		ofn.lpstrFilter = szPrefabFilter; 
 
@@ -681,10 +681,10 @@ void ExportDialog (bool bCheck)
 	if (bCheck)	// Exporting a Map File
 	{
 		// Obtain the system directory name and store it in szDirName. 
-		strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+		strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 		if (strlen(szDirName) == 0)
 		{
-			strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 			strcat(szDirName, "/maps");
 		}
 		// Filter string for Map files
@@ -696,7 +696,7 @@ void ExportDialog (bool bCheck)
 		strcpy(szDirName, g_qeglobals.d_savedinfo.szPrefabPath);
 		// if Prefab Path is empty, use mapspath as default
 		if (strlen(g_qeglobals.d_savedinfo.szPrefabPath) == 0)
-			strcpy(szDirName, ValueForKey(g_qeglobals.d_entityProject, "mapspath"));
+			strcpy(szDirName, g_qeglobals.d_entityProject->GetKeyValue("mapspath"));
 		// Filter string for Prefab files
 		ofn.lpstrFilter = szPrefabFilter; 
 	}
@@ -746,7 +746,7 @@ FillBSPMenu
 void FillBSPMenu ()
 {
 	HMENU		hmenu;
-	epair_t	   *ep;
+	EPair		*ep;
 	int			i;
 	static int	count;
 
@@ -761,8 +761,8 @@ void FillBSPMenu ()
 	{
 		if (ep->key[0] == 'b' && ep->key[1] == 's' && ep->key[2] == 'p')
 		{
-			g_szBSP_Commands[i] = ep->key;
-			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_BSPCOMMAND + i, (LPCTSTR)ep->key);
+			g_szBSP_Commands[i] = (char*)*ep->key;
+			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_BSPCOMMAND + i, (LPCTSTR)*ep->key);
 			i++;
 		}
 	}
@@ -804,16 +804,16 @@ void CheckBspProcess (void)
 	Sys_Printf("%s", out);
 
 /*	Sys_Printf("\n\n======================================\nMSG: BSP Output\n");
-	sprintf(outputpath, "%sqbsp.log", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+	sprintf(outputpath, "%sqbsp.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 	LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
-	sprintf(outputpath, "%svis.log", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+	sprintf(outputpath, "%svis.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 	LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
-	sprintf(outputpath, "%slight.log", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+	sprintf(outputpath, "%slight.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 	LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
-	sprintf(outputpath, "%sremove_skip.log", ValueForKey(g_qeglobals.d_entityProject, "basepath"));
+	sprintf(outputpath, "%sremove_skip.log", g_qeglobals.d_entityProject->GetKeyValue("basepath"));
 	LoadFile(outputpath, (void **)&out);
 	Sys_Printf("\n%s\n", out);
 	Sys_Printf("\n======================================\nMSG: BSP Completed.\n");

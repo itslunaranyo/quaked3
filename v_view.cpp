@@ -52,7 +52,7 @@ void View::DrawPathLines()
 	num_entities = 0;
 	for (te = g_entEntities.next; te != &g_entEntities && num_entities != MAX_MAP_ENTITIES; te = te->next)
 	{
-		ent_target[num_entities] = ValueForKey(te, "target");
+		ent_target[num_entities] = te->GetKeyValue("target");
 		if (ent_target[num_entities][0])
 		{
 			ent_entity[num_entities] = te;
@@ -63,7 +63,7 @@ void View::DrawPathLines()
 	for (se = g_entEntities.next; se != &g_entEntities; se = se->next)
 	{
 
-		psz = ValueForKey(se, "targetname");
+		psz = se->GetKeyValue("targetname");
 
 		if (psz == NULL || psz[0] == '\0')
 			continue;

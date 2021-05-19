@@ -266,7 +266,7 @@ void XYZView::DragNewBrush (int x, int y)
 		return;
 
 	n->AddToList(&g_brSelectedBrushes);
-	Entity_LinkBrush(g_peWorldEntity, n);
+	g_peWorldEntity->LinkBrush(n);
 	n->Build();
 
 	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
@@ -1523,7 +1523,7 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 		return;
 
 	// get the value of the "light" key
-	fRadius = atof(ValueForKey(pBrush->owner, "light"));
+	fRadius = pBrush->owner->GetKeyValueFloat("light");
 	// if entity's "light" key is not found, default to 300
 	if (!fRadius)
 		fRadius = 300;

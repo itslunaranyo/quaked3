@@ -10,13 +10,13 @@ void Palette::LoadFromFile(const char* palfile)
 
 	// sikk - Palette now uses Texture Directory instead of hardcoded as basepath/gfx/
 	// lunaran - check both, old location was hardcoded because that's where quake.exe expects it to be
-	sprintf(pfname, "%s/gfx/%s", ValueForKey(g_qeglobals.d_entityProject, "basepath"), palfile);
+	sprintf(pfname, "%s/gfx/%s", g_qeglobals.d_entityProject->GetKeyValue("basepath"), palfile);
 	Sys_Printf("Loading palette from %s ...\n", pfname);
 	if (LoadFromFileImpl(pfname))
 		return;
 
 	Sys_Printf("Could not load %s, trying texturepath ...\n", palfile);
-	sprintf(pfname, "%s/%s", ValueForKey(g_qeglobals.d_entityProject, "texturepath"), palfile);
+	sprintf(pfname, "%s/%s", g_qeglobals.d_entityProject->GetKeyValue("texturepath"), palfile);
 	if (LoadFromFileImpl(pfname))
 		return;
 
