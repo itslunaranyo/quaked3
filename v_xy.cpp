@@ -452,13 +452,13 @@ void XYZView::MouseDown (int x, int y, int buttons)
 		{
 			if (GetKeyState(VK_SHIFT) < 0)
 			{
-				Undo_Start("Free Scale");
-				Undo_AddBrushList(&g_brSelectedBrushes);
+				Undo::Start("Free Scale");
+				Undo::AddBrushList(&g_brSelectedBrushes);
 			}	
 			if (GetKeyState(VK_MENU) < 0)
 			{
-				Undo_Start("Free Rotate");
-				Undo_AddBrushList(&g_brSelectedBrushes);
+				Undo::Start("Free Rotate");
+				Undo::AddBrushList(&g_brSelectedBrushes);
 			}
 		}
 // <---sikk
@@ -505,8 +505,8 @@ void XYZView::MouseUp (int x, int y, int buttons)
 		g_bScaleCheck = false;
 
 // sikk - Undo/Redo for Free Rotate & Free Scale
-		Undo_EndBrushList(&g_brSelectedBrushes);
-		Undo_End();
+		Undo::EndBrushList(&g_brSelectedBrushes);
+		Undo::End();
 // <---sikk
 
 		Sys_UpdateWindows(W_XY | W_Z);

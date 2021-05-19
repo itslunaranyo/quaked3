@@ -35,6 +35,8 @@
 #include "qedefs.h"
 #include "qfiles.h"
 
+#include "Command.h"
+
 #include "palette.h"
 #include "textures.h"
 #include "face.h"

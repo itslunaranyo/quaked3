@@ -173,8 +173,8 @@ void Clip_Clip ()
 	if (!g_qeglobals.d_bClipMode)
 		return;
 
-	Undo_Start("Clip Selected");
-	Undo_AddBrushList(&g_brSelectedBrushes);
+	Undo::Start("Clip Selected");
+	Undo::AddBrushList(&g_brSelectedBrushes);
 
 	hold_brushes.next = hold_brushes.prev = &hold_brushes;
 	Clip_ProduceSplitLists();
@@ -191,8 +191,8 @@ void Clip_Clip ()
 	}
 	Clip_ResetMode();
 
-	Undo_EndBrushList(&g_brSelectedBrushes);
-	Undo_End();
+	Undo::EndBrushList(&g_brSelectedBrushes);
+	Undo::End();
 
 	Sys_UpdateWindows(W_ALL);
 }
@@ -207,8 +207,8 @@ void Clip_Split ()
 	if (!g_qeglobals.d_bClipMode)
 		return;
 
-	Undo_Start("Split Selected");
-	Undo_AddBrushList(&g_brSelectedBrushes);
+	Undo::Start("Split Selected");
+	Undo::AddBrushList(&g_brSelectedBrushes);
 
 	Clip_ProduceSplitLists();
 	if ((g_qeglobals.d_brFrontSplits.next != &g_qeglobals.d_brFrontSplits) &&
@@ -222,8 +222,8 @@ void Clip_Split ()
 	}
 	Clip_ResetMode();
 
-	Undo_EndBrushList(&g_brSelectedBrushes);
-	Undo_End();
+	Undo::EndBrushList(&g_brSelectedBrushes);
+	Undo::End();
 	Sys_UpdateWindows(W_ALL);
 }
 

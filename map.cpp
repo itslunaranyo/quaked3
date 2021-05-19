@@ -1,5 +1,5 @@
 //==============================
-//	map.c
+//	map.cpp
 //============================== 
 
 #include "qe3.h"
@@ -7,36 +7,30 @@
 #include <sstream>
 #include <string>
 
-qeMap	g_map;
-
-// Cross map selection saving
-// this could fuck up if you have only part of a complex entity selected...
-Brush		g_brBetweenBrushes;
-Entity		g_entBetweenEntities;
+Map	g_map;
 
 Brush	   *g_pbrRegionSides[4];
 
-qeMap::qeMap() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
+Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
 {
 	regionMins[0] = regionMins[1] = regionMins[2] = -4096;
 	regionMaxs[0] = regionMaxs[1] = regionMaxs[2] = 4096;
+
 	g_brSelectedBrushes.CloseLinks();
+
 	/*
 	entities.CloseLinks();
 	brActive.CloseLinks();
 	brRegioned.CloseLinks();
-
-	copiedBrushes.CloseLinks();
-	copiedEntities.CloseLinks();
 	*/
 }
 
 /*
 ===========
-qeMap::New
+Map::New
 ===========
 */
-void qeMap::New()
+void Map::New()
 {
 	char buf[1024];
 	qeBuffer between(0);
@@ -85,12 +79,12 @@ void qeMap::New()
 
 /*
 ================
-qeMap::Free
+Map::Free
 
 trashes all map data, but does not restore a workable blank state (use New() for that)
 ================
 */
-void qeMap::Free()
+void Map::Free()
 {
 	Pointfile_Clear();
 	strcpy(name, "unnamed.map");
@@ -133,10 +127,10 @@ void qeMap::Free()
 
 /*
 ==================
-qeMap::BuildBrushData
+Map::BuildBrushData
 ==================
 */
-void qeMap::BuildBrushData(Brush &blist)
+void Map::BuildBrushData(Brush &blist)
 {
 	Brush	*b, *next;
 
@@ -157,10 +151,10 @@ void qeMap::BuildBrushData(Brush &blist)
 
 /*
 ==================
-qeMap::BuildBrushData
+Map::BuildBrushData
 ==================
 */
-void qeMap::BuildBrushData()
+void Map::BuildBrushData()
 {
 	double time;
 
@@ -183,12 +177,12 @@ void qeMap::BuildBrushData()
 
 /*
 ================
-qeMap::ParseBufferReplace
+Map::ParseBufferReplace
 
 parse all entities and brushes from the text buffer, assuming the scene is not empty
 ================
 */
-bool qeMap::ParseBufferMerge(const char *data)
+bool Map::ParseBufferMerge(const char *data)
 {
 	Entity elist;
 	Brush blist;
@@ -230,12 +224,12 @@ bool qeMap::ParseBufferMerge(const char *data)
 
 /*
 ================
-qeMap::ParseBufferReplace
+Map::ParseBufferReplace
 
 parse all entities and brushes from the text buffer, assuming the scene is empty
 ================
 */
-bool qeMap::ParseBufferReplace(const char *data)
+bool Map::ParseBufferReplace(const char *data)
 {
 	Entity elist;
 	Brush blist;
@@ -270,12 +264,12 @@ bool qeMap::ParseBufferReplace(const char *data)
 
 /*
 ================
-qeMap::LoadFromFile
+Map::LoadFromFile
 
 replace all current map data with the contents of a file
 ================
 */
-void qeMap::LoadFromFile(const char *filename)
+void Map::LoadFromFile(const char *filename)
 {
 	char	temp[1024];
 	char	*tempwad, wadkey[1024];
@@ -375,12 +369,12 @@ void qeMap::LoadFromFile(const char *filename)
 
 /*
 ================
-qeMap::ImportFromFile
+Map::ImportFromFile
 
 merge the contents of a file into the current map data
 ================
 */
-void qeMap::ImportFromFile(const char *filename)
+void Map::ImportFromFile(const char *filename)
 {
 	char	temp[1024];
 	bool	bSnapCheck = false;
@@ -420,12 +414,12 @@ void qeMap::ImportFromFile(const char *filename)
 
 /*
 ================
-qeMap::SaveToFile
+Map::SaveToFile
 
 write entire contents of the scene to a file
 ================
 */
-void qeMap::SaveToFile(const char *filename, bool use_region)
+void Map::SaveToFile(const char *filename, bool use_region)
 {
 //	Entity   *e, *next;
 	std::ofstream	   *f;
@@ -479,12 +473,12 @@ void qeMap::SaveToFile(const char *filename, bool use_region)
 
 /*
 ================
-qeMap::ExportToFile
+Map::ExportToFile
 
 write selected brushes and entities to a file
 ================
 */
-void qeMap::ExportToFile(const char *filename)
+void Map::ExportToFile(const char *filename)
 {
 //	Entity   *e, *next;
 	std::ofstream	   *f;
@@ -506,12 +500,12 @@ void qeMap::ExportToFile(const char *filename)
 
 /*
 ================
-qeMap::Cut
+Map::Cut
 
 write selected brushes and entities to the windows clipboard and delete them
 ================
 */
-void qeMap::Cut()
+void Map::Cut()
 {
 	Copy();
 	Select_Delete();
@@ -519,12 +513,12 @@ void qeMap::Cut()
 
 /*
 ================
-qeMap::Copy
+Map::Copy
 
 write selected brushes and entities to the windows clipboard
 ================
 */
-void qeMap::Copy()
+void Map::Copy()
 {
 	HGLOBAL hglbCopy;
 	int copylen;
@@ -555,12 +549,12 @@ void qeMap::Copy()
 
 /*
 ================
-qeMap::Paste
+Map::Paste
 
 merge the contents of the windows clipboard into the current map data
 ================
 */
-void qeMap::Paste()
+void Map::Paste()
 {
 	HGLOBAL hglb;
 	char*	cbdata;
@@ -609,12 +603,12 @@ void qeMap::Paste()
 
 /*
 ================
-qeMap::Read
+Map::Read
 
 parse the map data and link all brushes and entities to the provided lists
 ================
 */
-void qeMap::Read(const char *data, Brush &blist, Entity &elist)
+void Map::Read(const char *data, Brush &blist, Entity &elist)
 {
 	int numEntities;
 	Entity* ent;
@@ -664,12 +658,12 @@ void qeMap::Read(const char *data, Brush &blist, Entity &elist)
 
 /*
 ================
-qeMap::WriteSelected
+Map::WriteSelected
 
 map-print only selected brushes and entities to the buffer
 ================
 */
-void qeMap::WriteSelected(std::ostream &out)
+void Map::WriteSelected(std::ostream &out)
 {
 	int count;
 	Entity *e, *next;
@@ -696,12 +690,12 @@ void qeMap::WriteSelected(std::ostream &out)
 
 /*
 ================
-qeMap::WriteSelected
+Map::WriteSelected
 
 map-print all brushes and entities to the buffer
 ================
 */
-void qeMap::WriteAll(std::ostream &out, bool use_region)
+void Map::WriteAll(std::ostream &out, bool use_region)
 {
 	int count;
 	Entity *e, *next;
@@ -728,10 +722,10 @@ void qeMap::WriteAll(std::ostream &out, bool use_region)
 
 /*
 ==================
-qeMap::SaveBetween
+Map::SaveBetween
 ==================
 */
-void qeMap::SaveBetween(qeBuffer &buf)
+void Map::SaveBetween(qeBuffer &buf)
 {
 	int copylen;
 
@@ -754,10 +748,10 @@ void qeMap::SaveBetween(qeBuffer &buf)
 
 /*
 ==================
-qeMap::LoadBetween
+Map::LoadBetween
 ==================
 */
-void qeMap::LoadBetween(qeBuffer &buf)
+void Map::LoadBetween(qeBuffer &buf)
 {
 	if (!buf.size())
 		return;		// nothing saved in it
@@ -772,7 +766,7 @@ void qeMap::LoadBetween(qeBuffer &buf)
 
 //================================================================
 
-void qeMap::RegionOff()
+void Map::RegionOff()
 {
 	Brush	*b, *next;
 
@@ -796,7 +790,7 @@ void qeMap::RegionOff()
 	Sys_UpdateWindows(W_ALL);
 }
 
-void qeMap::RegionXY()
+void Map::RegionXY()
 {
 	RegionOff();
 
@@ -838,7 +832,7 @@ void qeMap::RegionXY()
 	RegionApply();
 }
 
-void qeMap::RegionXZ()
+void Map::RegionXZ()
 {
 	RegionOff();
 	regionMins[0] = g_qeglobals.d_xyz[2].origin[0] - 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
@@ -850,7 +844,7 @@ void qeMap::RegionXZ()
 	RegionApply();
 }
 
-void qeMap::RegionYZ()
+void Map::RegionYZ()
 {
 	RegionOff();
 	regionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
@@ -862,7 +856,7 @@ void qeMap::RegionYZ()
 	RegionApply();
 }
 
-void qeMap::RegionTallBrush()
+void Map::RegionTallBrush()
 {
 	Brush	*b;
 
@@ -882,7 +876,7 @@ void qeMap::RegionTallBrush()
 	RegionApply();
 }
 
-void qeMap::RegionBrush()
+void Map::RegionBrush()
 {
 	Brush	*b;
 
@@ -900,7 +894,7 @@ void qeMap::RegionBrush()
 	RegionApply();
 }
 
-void qeMap::RegionSelectedBrushes()
+void Map::RegionSelectedBrushes()
 {
 	RegionOff();
 
@@ -919,7 +913,7 @@ void qeMap::RegionSelectedBrushes()
 	Sys_UpdateWindows(W_ALL);
 }
 
-void qeMap::RegionApply()
+void Map::RegionApply()
 {
 	Brush	*b, *next;
 
@@ -936,7 +930,7 @@ void qeMap::RegionApply()
 	Sys_UpdateWindows(W_ALL);
 }
 
-void qeMap::RegionAdd()
+void Map::RegionAdd()
 {
 	vec3_t		mins, maxs;
 	int			i;
@@ -978,7 +972,7 @@ void qeMap::RegionAdd()
 	}
 }
 
-void qeMap::RegionRemove()
+void Map::RegionRemove()
 {
 	if (!regionActive)
 		return;
@@ -986,7 +980,7 @@ void qeMap::RegionRemove()
 		delete g_pbrRegionSides[i];
 }
 
-bool qeMap::IsBrushFiltered(Brush *b)
+bool Map::IsBrushFiltered(Brush *b)
 {
 	if (regionActive == false)
 		return false;

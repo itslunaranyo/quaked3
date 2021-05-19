@@ -461,21 +461,26 @@ Entity *Entity::Parse (bool onlypairs)
 	return ent;
 }
 
+/*
+================
+Entity::CheckOrigin
 
+if fixedsize, make sure origins are consistent with each other
+calculate a new origin based on the current brush position and warn if not
+================
+*/
 void Entity::CheckOrigin()
 {
-	// if fixedsize, calculate a new origin based on the current brush position
-	if (eclass->IsFixedSize())
+	if (!eclass->IsFixedSize()) return;
+
+	vec3_t testorg, org;
+	GetKeyValueVector("origin", testorg);
+
+	// be sure for now
+	if (!VectorCompare(origin, testorg))
 	{
-		// lunaran: origin keyvalue is forcibly kept up to date elsewhere
-		vec3_t testorg, org;
-		GetKeyValueVector("origin", testorg);
-		// but let's be sure for now
-		if (!VectorCompare(origin, testorg))
-		{
-			SetOriginFromBrush();
-			Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
-		}
+		SetOriginFromBrush();
+		Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
 	}
 }
 
@@ -891,8 +896,8 @@ void Entity::UnlinkBrush (Brush *b)
 		Error("Entity::UnlinkBrush: Not currently linked.");
 	b->onext->oprev = b->oprev;
 	b->oprev->onext = b->onext;
-	b->onext = b->oprev = NULL;
-	b->owner = NULL;
+	b->onext = b->oprev = nullptr;
+	b->owner = nullptr;
 }
 
 /*
@@ -937,11 +942,11 @@ Entity *Entity::Find (char *pszKey, char *pszValue)
 	
 	pe = g_map.entities.next;
 	
-	for ( ; pe != NULL && pe != &g_map.entities; pe = pe->next)
+	for ( ; pe != nullptr && pe != &g_map.entities; pe = pe->next)
 		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
 			return pe;
 
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -955,67 +960,9 @@ Entity *Entity::Find(char *pszKey, int iValue)
 	
 	pe = g_map.entities.next;
 	
-	for ( ; pe != NULL && pe != &g_map.entities; pe = pe->next)
+	for ( ; pe != nullptr && pe != &g_map.entities; pe = pe->next)
 		if (pe->GetKeyValueInt(pszKey) == iValue)
 			return pe;
 
-	return NULL;
+	return nullptr;
 }
-
-// sikk---> Cut/Copy/Paste
-/*
-===============
-Entity::CleanCopiedList
-===============
-*/
-void Entity::CleanCopiedList ()
-{
-	Entity	*pe, *next;
-	EPair		*ep, *enext;
-
-	pe = g_map.copiedEntities.next;
-
-	while (pe != NULL && pe != &g_map.copiedEntities)
-	{
-		next = pe->next;
-		enext = NULL;
-		for (ep = pe->epairs; ep; ep = enext)
-		{
-			enext = ep->next;
-			delete ep;
-		}
-		free (pe);
-		pe = next;
-	}
-	g_map.copiedEntities.CloseLinks();
-//	g_map.copiedEntities.next = g_map.copiedEntities.prev = &g_map.copiedEntities;
-}
-
-/*
-===============
-Entity::Copy
-===============
-*/
-Entity *Entity::Copy ()
-{
-	Entity	*n;
-	EPair		*ep, *np;
-
-	n = new Entity();
-	n->eclass = eclass;
-
-	// add the entity to the entity list
-	n->next = g_map.copiedEntities.next;
-	g_map.copiedEntities.next = n;
-	n->next->prev = n;
-	n->prev = &g_map.copiedEntities;
-
-	for (ep = epairs; ep; ep = ep->next)
-	{
-		np = new EPair(*ep);
-		np->next = n->epairs;
-		n->epairs = np;
-	}
-	return n;
-}
-// <---sikk

@@ -59,7 +59,7 @@ void QE_Init ()
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 
 	// set maximium undo levels
-	Undo_SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
+	Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
 
 	Sys_UpdateGridStatusBar();
 
@@ -741,11 +741,11 @@ void QE_UpdateCommandUI ()
 //	EnableMenuItem(hMenu, ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? MF_ENABLED : MF_GRAYED));
 //	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_PASTE, (g_map.copiedBrushes.next != NULL ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE));
 	// Undo
-	EnableMenuItem(hMenu, ID_EDIT_UNDO, Undo_UndoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo_UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	EnableMenuItem(hMenu, ID_EDIT_UNDO, Undo::UndoAvailable() ? MF_ENABLED : MF_GRAYED);
+	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_UNDO, Undo::UndoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 	// Redo
-	EnableMenuItem(hMenu, ID_EDIT_REDO, Undo_RedoAvailable() ? MF_ENABLED : MF_GRAYED);
-	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_REDO, Undo_RedoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
+	EnableMenuItem(hMenu, ID_EDIT_REDO, Undo::RedoAvailable() ? MF_ENABLED : MF_GRAYED);
+	SendMessage(g_qeglobals.d_hwndToolbar2, TB_SETSTATE, (WPARAM)ID_EDIT_REDO, Undo::RedoAvailable() ? (LPARAM)TBSTATE_ENABLED : (LPARAM)TBSTATE_INDETERMINATE);
 
 //===================================
 // View Menu

@@ -840,7 +840,7 @@ void CSG_Subtract ()
 			if (fragments == s)
 				continue;
 
-			Undo_AddBrush(s);	// sikk - Undo/Redo
+			Undo::AddBrush(s);	// sikk - Undo/Redo
 
 			// one extra brush chopped up
 			numbrushes++;
@@ -869,7 +869,7 @@ void CSG_Subtract ()
 		numfragments++;
 		frag->RemoveFromList();
 		frag->AddToList( &g_map.brActive);
-		Undo_EndBrush(frag);	// sikk - Undo/Redo
+		Undo::EndBrush(frag);	// sikk - Undo/Redo
 	}
 
 	if (numfragments == 0)

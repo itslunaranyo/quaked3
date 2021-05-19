@@ -302,32 +302,32 @@ void Surf_SetTexdef(texdef_t *texdef, int nSkipFlags)
 		}
 
 		// sikk - TODO: Set Face Texture Undo bug
-		Undo_Start("Set Face Textures");	// sikk - Undo/Redo
+		Undo::Start("Set Face Textures");	// sikk - Undo/Redo
 		for (i = 0; i < nBrushCount; i++)
-			Undo_AddBrush(pbrArray[i]);	// sikk - Undo/Redo
+			Undo::AddBrush(pbrArray[i]);	// sikk - Undo/Redo
 
 		for (i = 0; i < Select_FaceCount(); i++)
 			g_pfaceSelectedFaces[i]->SetTexture(texdef, nSkipFlags);
 
 		for (i = 0; i < nBrushCount; i++)
-			Undo_EndBrush(pbrArray[i]);	// sikk - Undo/Redo
+			Undo::EndBrush(pbrArray[i]);	// sikk - Undo/Redo
 	}
 	// <---sikk
 	else if (Select_HasBrushes())
 	{
-		Undo_Start("Set Brush Textures");	// sikk - Undo/Redo
+		Undo::Start("Set Brush Textures");	// sikk - Undo/Redo
 		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
 			if (!b->owner->eclass->IsFixedSize())
 			{
-				Undo_AddBrush(b);	// sikk - Undo/Redo
+				Undo::AddBrush(b);	// sikk - Undo/Redo
 				b->SetTexture(texdef, nSkipFlags);
-				Undo_EndBrush(b);	// sikk - Undo/Redo
+				Undo::EndBrush(b);	// sikk - Undo/Redo
 			}
 		}
 	}
 
-	Undo_End();	// sikk - Undo/Redo
+	Undo::End();	// sikk - Undo/Redo
 	SurfWnd_UpdateUI();
 	Sys_UpdateWindows(W_ALL);
 }

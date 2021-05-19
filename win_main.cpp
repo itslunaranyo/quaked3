@@ -1204,21 +1204,21 @@ LONG WINAPI CommandHandler (
 // Edit menu
 //===================================
 		case ID_EDIT_UNDO:	// sikk - Undo/Redo
-			Undo_Undo();
+			Undo::Undo();
 			break;
 		case ID_EDIT_REDO:	// sikk - Undo/Redo
-			Undo_Redo();
+			Undo::Redo();
 			break;
 
 		case ID_EDIT_CUT:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
 			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode != W_TEXTURE)
 				break;
-			Undo_Start("Cut");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Cut");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			g_map.Cut();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_EDIT_COPY:
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
@@ -1230,10 +1230,10 @@ LONG WINAPI CommandHandler (
 			// sikk - This check enables standard text editing shortcuts can be used in the Entity Window
 			if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndInspector && g_qeglobals.d_nInspectorMode == W_ENTITY)
 				break;
-			Undo_Start("Paste");
+			Undo::Start("Paste");
 			g_map.Paste();
 			//Select_Paste();
-			Undo_End();
+			Undo::End();
 			break;
 
 		case ID_EDIT_FINDBRUSH:
@@ -1682,11 +1682,11 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CLONE:
-			Undo_Start("Clone");
-//			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Clone");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_Clone();
-//			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_DESELECT:
 			if (g_qeglobals.d_bClipMode)
@@ -1701,66 +1701,66 @@ LONG WINAPI CommandHandler (
 			{	// sikk - TODO: Undo doesn't function properly with mixed selection  
 				Brush *brush;
 
-				Undo_Start("Delete");
-				Undo_AddBrushList(&g_brSelectedBrushes);
+				Undo::Start("Delete");
+				Undo::AddBrushList(&g_brSelectedBrushes);
 				// add all deleted entities to the undo
 				for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
-					Undo_AddEntity(brush->owner);
+					Undo::AddEntity(brush->owner);
 				Select_Delete();
-				Undo_EndBrushList(&g_brSelectedBrushes);
-				Undo_End();
+				Undo::EndBrushList(&g_brSelectedBrushes);
+				Undo::End();
 			}
 			break;
 
 		case ID_SELECTION_FLIPX:
-			Undo_Start("Flip X");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Flip X");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_FlipAxis(0);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_FLIPY:
-			Undo_Start("Flip Y");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Flip Y");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_FlipAxis(1);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_FLIPZ:
-			Undo_Start("Flip Z");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Flip Z");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_FlipAxis(2);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 
 		case ID_SELECTION_ROTATEX:
-			Undo_Start("Rotate X");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Rotate X");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_RotateAxis(0, RotateAngleForModifiers(), false);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEY:
-			Undo_Start("Rotate Y");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Rotate Y");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_RotateAxis(1, RotateAngleForModifiers(), false);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_ROTATEZ:
-			Undo_Start("Rotate Z");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Rotate Z");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Select_RotateAxis(2, RotateAngleForModifiers(), false);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_ARBITRARYROTATION:
-			Undo_Start("Arbitrary Rotation");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Arbitrary Rotation");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoRotate();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 
 		case ID_SELECTION_SCALELOCKX:	// sikk - Brush Scaling Axis Lock
@@ -1776,38 +1776,38 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
 			break;
 		case ID_SELECTION_SCALE:	// sikk - Brush Scaling Dialog
-			Undo_Start("Scale");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Scale");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoScale();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 
 		case ID_SELECTION_CSGHOLLOW:
-			Undo_Start("CSG Hollow");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("CSG Hollow");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			CSG_Hollow();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_CSGSUBTRACT:
-			Undo_Start("CSG Subtract");
+			Undo::Start("CSG Subtract");
 			CSG_Subtract();
-			Undo_End();
+			Undo::End();
 			break;
 		case ID_SELECTION_CSGMERGE:
-			Undo_Start("CSG Merge");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("CSG Merge");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			CSG_Merge();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_SELECTION_CSGCONVEXMERGE:
-			Undo_Start("CSG Convex Merge");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("CSG Convex Merge");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			CSG_ConvexMerge();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 
 		case ID_SELECTION_CLIPPER:
@@ -1820,18 +1820,18 @@ LONG WINAPI CommandHandler (
 			break;
 		// lunaran - moved undo into the actual clip & split actions
 		case ID_SELECTION_CLIPSELECTED:
-		//	Undo_Start("Clip Selected");
-		//	Undo_AddBrushList(&g_brSelectedBrushes);
+		//	Undo::Start("Clip Selected");
+		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Clip_Clip();
-		//	Undo_EndBrushList(&g_brSelectedBrushes);
-		//	Undo_End();
+		//	Undo::EndBrushList(&g_brSelectedBrushes);
+		//	Undo::End();
 			break;
 		case ID_SELECTION_SPLITSELECTED:
-		//	Undo_Start("Split Selected");
-		//	Undo_AddBrushList(&g_brSelectedBrushes);
+		//	Undo::Start("Split Selected");
+		//	Undo::AddBrushList(&g_brSelectedBrushes);
 			Clip_Split();
-		//	Undo_EndBrushList(&g_brSelectedBrushes);
-		//	Undo_End();
+		//	Undo::EndBrushList(&g_brSelectedBrushes);
+		//	Undo::End();
 			break;
 		case ID_SELECTION_FLIPCLIP:
 			Clip_Flip();
@@ -2324,84 +2324,84 @@ LONG WINAPI CommandHandler (
 //===================================
 			/*
 		case ID_BRUSH_3SIDED:
-			Undo_Start("3 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("3 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(3);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_4SIDED:
-			Undo_Start("4 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("4 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(4);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_5SIDED:
-			Undo_Start("5 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("5 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(5);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_6SIDED:
-			Undo_Start("6 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("6 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(6);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_7SIDED:
-			Undo_Start("7 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("7 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(7);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_8SIDED:
-			Undo_Start("8 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("8 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(8);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_9SIDED:
-			Undo_Start("9 Sided");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("9 Sided");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			Brush_MakeSided(9);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 			*/
 
 // sikk---> Brush Primitives
 		case ID_BRUSH_CYLINDER:
-			Undo_Start("Make Cylinder");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Make Cylinder");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(0);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_CONE:
-			Undo_Start("Make Cone");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Make Cone");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(1);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 		case ID_BRUSH_SPHERE:
-			Undo_Start("Make Sphere");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+			Undo::Start("Make Sphere");
+			Undo::AddBrushList(&g_brSelectedBrushes);
 			DoSides(2);
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+			Undo::EndBrushList(&g_brSelectedBrushes);
+			Undo::End();
 			break;
 //		case ID_BRUSH_TORUS:
-//			Undo_Start("Make Torus");
-//			Undo_AddBrushList(&g_brSelectedBrushes);
+//			Undo::Start("Make Torus");
+//			Undo::AddBrushList(&g_brSelectedBrushes);
 //			DoSides(3);
-//			Undo_EndBrushList(&g_brSelectedBrushes);
-//			Undo_End();
+//			Undo::EndBrushList(&g_brSelectedBrushes);
+//			Undo::End();
 //			break;
 // <---sikk
 

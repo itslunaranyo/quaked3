@@ -1167,12 +1167,12 @@ void Select_Clone ()
 	{
 		next = b->next;
 
-		Undo_EndEntity(b->owner);
-		Undo_EndBrush(b);
+		Undo::EndEntity(b->owner);
+		Undo::EndBrush(b);
 		// if the brush is a world brush, handle simply
 		if (b->owner == g_map.world)
 		{
-//		Undo_EndBrush(n);
+//		Undo::EndBrush(n);
 			n = b->Clone();
 			n->AddToList(&templist);
 			g_map.world->LinkBrush(n);
@@ -1204,7 +1204,7 @@ void Select_Clone ()
 
 		for (b2 = b; b2 != &g_brSelectedBrushes; b2 = next2)
 		{
-			Undo_EndBrush(b2);
+			Undo::EndBrush(b2);
 			next2 = b2->next;
 			if (b2->owner != b->owner)
 			{
@@ -1749,153 +1749,3 @@ void Select_ConnectEntities ()
 	Select_DeselectAll(true);
 	Select_HandleBrush(b, true);
 }
-
-
-// sikk---> Cut/Copy/Paste
-
-/*
-==================
-Select_Cut
-==================
-*/
-void Select_Cut ()
-{
-	int nCount = 0;
-	Brush		*b, *b2, *eb, *eb2;
-	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
-
-
-	Brush::FreeList(&g_map.copiedBrushes);
-	g_map.copiedBrushes.next = g_map.copiedBrushes.prev = &g_map.copiedBrushes;
-	Entity::CleanCopiedList();
-
-	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
-	{
-		if (b->owner == g_map.world)
-		{
-			b2 = b->Clone();
-			b2->owner = NULL;
-			b2->AddToList(&g_map.copiedBrushes);
-		}
-		else
-		{
-			// this check makes sure that brushents are only copied once 
-			// and not once per brush in entity
-			if (!OnEntityList(b->owner, pentArray, nCount))
-			{
-				e = b->owner;
-				pentArray[nCount] = e;
-				e2 = e->Copy();
-				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
-				{
-					eb2 = eb->Clone();
-//					Brush_AddToList(eb2, &g_map.copiedBrushes);
-					e2->LinkBrush(eb2);
-					eb2->Build();
-				}
-				nCount++;
-			}
-		}
-	}
-
-	Select_Delete();
-	
-	Sys_UpdateWindows(W_ALL);
-}
-
-/*
-==================
-Select_Copy
-==================
-*/
-void Select_Copy ()
-{
-	int nCount = 0;
-	Brush		*b, *b2, *eb, *eb2;
-	Entity	*e, *e2, *pentArray[MAX_MAP_ENTITIES];
-
-	Brush::FreeList(&g_map.copiedBrushes);
-	g_map.copiedBrushes.next = g_map.copiedBrushes.prev = &g_map.copiedBrushes;
-	Entity::CleanCopiedList();
-
-	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
-	{
-		if (b->owner == g_map.world)
-		{
-			b2 = b->Clone();
-			b2->owner = NULL;
-			b2->AddToList(&g_map.copiedBrushes);
-		}
-		else
-		{
-			// this check makes sure that brushents are only copied once 
-			// and not once per brush in entity
-			if (!OnEntityList(b->owner, pentArray, nCount))
-			{
-				e = b->owner;
-				pentArray[nCount] = e;
-				e2 = e->Copy();
-				for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
-				{
-					eb2 = eb->Clone();
-//					Brush_AddToList(eb2, &g_map.copiedBrushes);
-					e2->LinkBrush(eb2);
-					eb2->Build();
-				}
-				nCount++;
-			}
-		}
-	}
-}
-
-/*
-==================
-Select_Paste
-==================
-*/
-/*
-void Select_Paste ()
-{
-	Brush		*b, *b2, *eb, *eb2;
-	Entity	*e, *e2;
-
-//	if (g_map.copiedBrushes.next != &g_map.copiedBrushes || g_map.copiedEntities.next != &g_map.copiedEntities)
-	if (g_map.copiedBrushes.next != NULL)
-	{
-		Select_DeselectAll(true);
-
-		for (b = g_map.copiedBrushes.next; b != NULL && b != &g_map.copiedBrushes; b = b->next)
-		{
-			b2 = b->Clone();
-			Undo_EndBrush(b2);
-//			pClone->owner = pBrush->owner;
-			if (b2->owner == NULL)
-				g_map.world->LinkBrush(b2);
-			b2->AddToList(&g_brSelectedBrushes);
-			b2->Build();
-		}
-
-		for (e = g_map.copiedEntities.next; e != NULL && e != &g_map.copiedEntities; e = e->next)
-		{
-			e2 = e->Clone();
-			Undo_EndEntity(e2);
-			for (eb = e->brushes.onext; eb != &e->brushes; eb = eb->onext)
-			{
-				eb2 = eb->Clone();
-				Undo_EndBrush(eb2);
-				eb2->AddToList(&g_brSelectedBrushes);
-				e2->LinkBrush(eb2);
-				eb2->Build();
-				g_bSelectionChanged = true;
-			}
-		}
-
-		g_bSelectionChanged = true;
-		Sys_UpdateWindows(W_ALL);
-	}
-	else
-		Sys_Printf("MSG: Nothing to paste...\n");
-}
-// <---sikk
-*/
-

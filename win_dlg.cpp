@@ -963,11 +963,11 @@ Entity* MakeEntity (HWND h)
 	index = SendMessage(h, LB_GETCURSEL, 0, 0);
 	pec = (EntClass *)SendMessage(h, LB_GETITEMDATA, index, 0);
 
-	Undo_Start("Create Entity");
-	Undo_AddBrushList(&g_brSelectedBrushes);
+	Undo::Start("Create Entity");
+	Undo::AddBrushList(&g_brSelectedBrushes);
 	out = Entity::Create(pec);
-	Undo_EndBrushList(&g_brSelectedBrushes);
-	Undo_End();
+	Undo::EndBrushList(&g_brSelectedBrushes);
+	Undo::End();
 
 	return out;
 	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
@@ -1671,7 +1671,7 @@ BOOL CALLBACK PreferencesDlgProc (
 			g_qeglobals.d_savedinfo.nAutosave = atoi(sz);
 			GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 2);
 			g_qeglobals.d_savedinfo.nUndoLevels = atoi(sz);
-			Undo_SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
+			Undo::SetMaxSize(g_qeglobals.d_savedinfo.nUndoLevels);
 
 			GetDlgItemText(hwndDlg, IDC_COMBO_MAPSIZE, sz, 8);
 			g_qeglobals.d_savedinfo.nMapSize = atoi(sz);

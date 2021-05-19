@@ -6,11 +6,11 @@
 
 // the state of the current world that all views are displaying
 
-class qeMap
+class Map
 {
 public:
-	qeMap();
-	~qeMap() {};
+	Map();
+	~Map() {};
 
 	char		name[MAX_PATH];
 	BOOL		modified;		// for quit confirmations - FIXME: big-BOOL (not little-bool) because autosave sets it to 2 for some daffy logic
@@ -22,9 +22,6 @@ public:
 	Entity		entities;
 	Brush		brActive;		// brushes currently being displayed
 	Brush		brRegioned;		// brushes that are outside the region
-
-	Brush		copiedBrushes;		// sikk - For Cut/Copy/Paste
-	Entity		copiedEntities;		// sikk - For Cut/Copy/Paste
 
 	vec3_t		regionMins, regionMaxs;
 	bool		regionActive;
@@ -67,13 +64,7 @@ private:
 
 };
 
-extern qeMap	g_map;
-
-
-//========================================================================
-
-void Map_SaveBetween ();
-void Map_RestoreBetween ();
+extern Map	g_map;
 
 Entity *Map_FindClass (char *cname);
 
