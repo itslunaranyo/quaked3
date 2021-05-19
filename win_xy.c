@@ -143,11 +143,11 @@ void DoXYPopupMenu (int x, int y)
 	case ID_MENU_CREATEPOINTENTITY:
 		XY_ToGridPoint(x, y, g_v3Origin);
 		if (g_qeglobals.d_nViewType == XY)
-			g_v3Origin[2] = g_qeglobals.d_v3WorkMax[2];
+			g_v3Origin[2] = g_qeglobals.d_v3WorkMin[2];
 		else if (g_qeglobals.d_nViewType == YZ)
-			g_v3Origin[0] = g_qeglobals.d_v3WorkMax[0];
+			g_v3Origin[0] = g_qeglobals.d_v3WorkMin[0];
 		else
-			g_v3Origin[1] = g_qeglobals.d_v3WorkMax[1];
+			g_v3Origin[1] = g_qeglobals.d_v3WorkMin[1];
 
 		DoCreateEntity(true, false, false, g_v3Origin);
 		break;

@@ -659,34 +659,39 @@ void Map_RegionXY ()
 {
 	Map_RegionOff();
 
+	float w, h;
+
+	w = 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
+	h = 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
+
 // sikk---> Proper Regioning for XZ & YZ Views
 
 	if (g_qeglobals.d_nViewType == XY)
 	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
+		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - w;
+		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + w;
+		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - h;
+		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + h;
 		g_v3RegionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 	}
 	if (g_qeglobals.d_nViewType == XZ)
 	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
+		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - w;
+		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + w;
 		g_v3RegionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
+		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - h;
+		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + h;
 	}
 	if (g_qeglobals.d_nViewType == YZ)
 	{
 		g_v3RegionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
+		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - w;
+		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + w;
+		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - h;
+		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + h;
 	}
 // <---sikk
 	Map_ApplyRegion();

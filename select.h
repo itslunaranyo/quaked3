@@ -54,6 +54,7 @@ void Select_Ray (vec3_t origin, vec3_t dir, int flags);
 bool Select_HasBrushes();
 int Select_FaceCount();
 bool Select_IsEmpty();
+int Select_NumBrushFacesSelected(brush_t* b);
 
 void Select_GetBounds (vec3_t mins, vec3_t maxs);
 void Select_GetTrueMid (vec3_t mid);
@@ -63,6 +64,8 @@ void Select_HandleBrush (brush_t *b, bool bComplete);
 void Select_Delete ();
 void Select_DeselectFiltered();
 void Select_DeselectAll (bool bDeselectFaces);
+void Select_FacesToBrushes(bool partial);
+void Select_BrushesToFaces();
 // sikk---> Multiple Face Selection
 bool Select_IsFaceSelected (face_t *face);
 bool Select_DeselectAllFaces ();

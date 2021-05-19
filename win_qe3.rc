@@ -1,0 +1,1540 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENUEX
+BEGIN
+    POPUP "&File",                          65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Save &As...\tCtrl+Shift+S",   ID_FILE_SAVEAS,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Ne&w Project...\tCtrl+Shift+N", ID_FILE_NEWPROJECT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Load Project...\tCtrl+L",    ID_FILE_LOADPROJECT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Edit Project...\tF5",        ID_FILE_EDITPROJECT,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        POPUP "&Import",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Map...\tM",                  ID_FILE_IMPORTMAP,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Prefab...\tP",               ID_FILE_IMPORTPREFAB,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "E&xport Selection",              65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Map...\tCtrl+Shift+M",       ID_SELECTION_EXPORTMAP,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Prefab...\tCtrl+Shift+P",    ID_SELECTION_EXPORTPREFAB,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Pointfile",                  ID_FILE_POINTFILE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "P&rint XY View...\tCtrl+P",   ID_FILE_PRINTXY,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "E&xit",                       ID_FILE_EXIT,MFT_STRING,MFS_ENABLED
+    END
+    POPUP "&Edit",                          65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Cut\tCtrl+X",                ID_EDIT_CUT,MFT_STRING,MFS_ENABLED
+        MENUITEM "C&opy\tCtrl+C",               ID_EDIT_COPY,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Clone\tSpace",               ID_SELECTION_CLONE,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Delete\tBackspace",          ID_SELECTION_DELETE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FINDBRUSH,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Map Info...\tF2",            ID_EDIT_MAPINFO,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Entity Info...\tF3",         ID_EDIT_ENTITYINFO,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Prefere&nces...\tF4",         ID_EDIT_PREFERENCES,MFT_STRING,MFS_ENABLED
+    END
+    POPUP "&View",                          65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        POPUP "&Filter",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Show &Clip",                  ID_VIEW_SHOWCLIP,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Hint",                  40422,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Sky",                   ID_VIEW_SHOWSKY,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show Li&quid",                ID_VIEW_SHOWWATER,MFT_STRING,MFS_CHECKED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "Show &Detail",                40421,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Func Wall",             ID_VIEW_SHOWFUNCWALL,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Lights",                ID_VIEW_SHOWLIGHTS,MFT_STRING,MFS_CHECKED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "Show Wo&rld",                 ID_VIEW_SHOWWORLD,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Entities",              ID_VIEW_SHOWENT,MFT_STRING,MFS_CHECKED
+        END
+        POPUP "&Hide/Show",                     65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Hide Selected\tH",           ID_VIEW_HIDESHOW_HIDESELECTED,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Show Hidden\tCtrl+H",        ID_VIEW_HIDESHOW_SHOWHIDDEN,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "Toggle",                         65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "Show A&xis",                  ID_VIEW_SHOWAXIS,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Angles",                ID_VIEW_SHOWANGLES,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Blocks",                ID_VIEW_SHOWBLOCKS,MFT_STRING,MFS_ENABLED
+            MENUITEM "Show Camera &Grid",           ID_VIEW_SHOWCAMERAGRID,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show C&oordinates",           ID_VIEW_SHOWCOORDINATES,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show L&ight Radius",          ID_VIEW_SHOWLIGHTRADIUS,MFT_STRING,MFS_ENABLED
+            MENUITEM "Show &Map Boundry",           ID_VIEW_SHOWMAPBOUNDRY,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Names",                 ID_VIEW_SHOWNAMES,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &Path",                  ID_VIEW_SHOWPATH,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show Sizing Info",            ID_VIEW_SHOWSIZEINFO,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show &View Name",             ID_VIEW_SHOWVIEWNAME,MFT_STRING,MFS_CHECKED
+            MENUITEM "Show Work&zone",              ID_VIEW_SHOWWORKZONE,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Center\tEnd",                ID_VIEW_CENTER,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Up Floor\tPage Up",          ID_VIEW_UPFLOOR,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Down Floor\tPage Down",      ID_VIEW_DOWNFLOOR,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Ne&xt (XY->XZ->YZ)\tTab",     ID_VIEW_NEXTVIEW,MFT_STRING,MFS_ENABLED
+        MENUITEM "Swap Grid/Cam\tShift-Tab",    ID_VIEW_SWAPGRIDCAM,MFT_STRING,MFS_ENABLED
+        POPUP "&Layout",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&XY (Top)",                   ID_VIEW_XY,MFT_STRING,MFS_ENABLED
+            MENUITEM "X&Z (Front)",                 ID_VIEW_XZ,MFT_STRING,MFS_ENABLED
+            MENUITEM "&YZ (Side)",                  ID_VIEW_YZ,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "&Zoom",                          65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&XY 100%\tHome",              ID_VIEW_100,MFT_STRING,MFS_ENABLED
+            MENUITEM "XY Zoom &In\tInsert",         ID_VIEW_ZOOMIN,MFT_STRING,MFS_ENABLED
+            MENUITEM "XY Zoom &Out\tDelete",        ID_VIEW_ZOOMOUT,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Z 100%\tCtrl+Home",          ID_VIEW_Z100,MFT_STRING,MFS_ENABLED
+            MENUITEM "Z Zoom I&n\tCtrl+Insert",     ID_VIEW_ZZOOMIN,MFT_STRING,MFS_ENABLED
+            MENUITEM "Z Zoom O&ut\tCtrl+Delete",    ID_VIEW_ZZOOMOUT,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Center On &Selection\t\\",    ID_VIEW_CENTERONSELECTION,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Next Leak Spot\tCtrl+>",     ID_MISC_NEXTLEAKSPOT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Previous Leak Spot\tCtrl+<", ID_MISC_PREVIOUSLEAKSPOT,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        POPUP "Cu&bic Clipping",                65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Cubic Clip\tCtrl+\\",        ID_VIEW_CUBICCLIP,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "Cubic Clip Zoom &In\tCtrl+]", ID_VIEW_CUBICCLIPZOOMIN,MFT_STRING,MFS_ENABLED
+            MENUITEM "Cubic Clip Zoom &Out\tCtrl+[", ID_VIEW_CUBICCLIPZOOMOUT,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "Render &Mode",                   65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Wireframe",                  ID_TEXTURES_WIREFRAME,MFT_STRING | MFT_RIGHTJUSTIFY,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Flat Shade",                 ID_TEXTURES_FLATSHADE,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Nearest",                    ID_TEXTURES_NEAREST,MFT_STRING,MFS_ENABLED
+            MENUITEM "Nearest &Mipmap",             ID_TEXTURES_NEARESTMIPMAP,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Linear",                     ID_TEXTURES_LINEAR,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Bilinear",                   ID_TEXTURES_BILINEAR,MFT_STRING,MFS_ENABLED
+            MENUITEM "Bilinear Mi&pmap",            ID_TEXTURES_BILINEARMIPMAP,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Trilinear",                  ID_TEXTURES_TRILINEAR,MFT_STRING,MFS_ENABLED
+        END
+    END
+    POPUP "&Selection",                     65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Complete Tall\tAlt+C",       ID_SELECTION_SELECTCOMPLETETALL,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Touching\tAlt+T",            ID_SELECTION_SELECTTOUCHING,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Partial Tall\tAlt+P",        ID_SELECTION_SELECTPARTIALTALL,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Inside\tAlt+I",              ID_SELECTION_SELECTINSIDE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Select &All\tCtrl+A",         ID_SELECTION_SELECTALL,MFT_STRING,MFS_ENABLED
+        MENUITEM "Dese&lect\tEsc",              ID_SELECTION_DESELECT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Invert\tI",                  ID_SELECTION_INVERT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Next Brush In Group\tCtrl+Tab", ID_SELECTION_GROUPNEXTBRUSH,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Select All of T&ype\tCtrl+Shift+A", ID_SELECTION_SELECTALLTYPE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Select Matching Textures\tCtrl+T", ID_SELECTION_SELECTMATCHINGTEXTURES,MFT_STRING,MFS_ENABLED
+        MENUITEM "Select by Key/Value\tCtrl+E", ID_SELECTION_SELECTMATCHINGKEYVALUE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        POPUP "Convert",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Brushes to Faces",            ID_SELECTION_BRUSHESTOFACES,MFT_STRING,MFS_ENABLED
+            MENUITEM "Faces to Brushes (Complete)", ID_SELECTION_FACESTOBRUSHESCOMPLETE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Faces to Brushes (Partial)",  ID_SELECTION_FACESTOBRUSHESPARTIAL,MFT_STRING,MFS_ENABLED
+        END
+    END
+    POPUP "&Tools",                         65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "Drag &Edges\tE",              ID_SELECTION_DRAGEDGES,MFT_STRING,MFS_ENABLED
+        MENUITEM "Drag &Vertices\tV",           ID_SELECTION_DRAGVERTICES,MFT_STRING,MFS_ENABLED
+        POPUP "Cli&pper",                       65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Toggle Clipper\tX",          ID_SELECTION_CLIPPER,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Clip Selection\tEnter",      ID_SELECTION_CLIPSELECTED,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Split Selection\tShift+Enter", ID_SELECTION_SPLITSELECTED,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Flip Clip Orientation\tCtrl+Enter", ID_SELECTION_FLIPCLIP,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR,MFT_STRING,MFS_ENABLED
+        MENUITEM "C&onnect Entities\tCtrl+K",   ID_SELECTION_CONNECT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Ungroup Entity\tCtrl+U",     ID_SELECTION_UNGROUPENTITY,MFT_STRING,MFS_ENABLED
+        MENUITEM "Insert Brush\tCtrl+I",        ID_SELECTION_INSERTBRUSH,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        POPUP "&Flip",                          65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Flip &X",                     ID_SELECTION_FLIPX,MFT_STRING,MFS_ENABLED
+            MENUITEM "Flip &Y",                     ID_SELECTION_FLIPY,MFT_STRING,MFS_ENABLED
+            MENUITEM "Flip &Z",                     ID_SELECTION_FLIPZ,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "&Rotate",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Rotate &X",                   ID_SELECTION_ROTATEX,MFT_STRING,MFS_ENABLED
+            MENUITEM "Rotate &Y",                   ID_SELECTION_ROTATEY,MFT_STRING,MFS_ENABLED
+            MENUITEM "Rotate &Z",                   ID_SELECTION_ROTATEZ,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "Arbitrary &Rotation...\tR",   ID_SELECTION_ARBITRARYROTATION,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "Sc&ale",                         65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "Scale Lock &X",               ID_SELECTION_SCALELOCKX,MFT_STRING,MFS_ENABLED
+            MENUITEM "Scale Lock &Y",               ID_SELECTION_SCALELOCKY,MFT_STRING,MFS_ENABLED
+            MENUITEM "Scale Lock &Z",               ID_SELECTION_SCALELOCKZ,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Scale...",                   ID_SELECTION_SCALE,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        POPUP "CS&G",                           65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "CSG &Hollow\tAlt+H",          ID_SELECTION_CSGHOLLOW,MFT_STRING,MFS_ENABLED
+            MENUITEM "CSG &Subtract\tAlt+S",        ID_SELECTION_CSGSUBTRACT,MFT_STRING,MFS_ENABLED
+            MENUITEM "CSG &Merge\tAlt+M",           ID_SELECTION_CSGMERGE,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        POPUP "&Primitives",                    65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&Cylinder...\tB",             ID_BRUSH_CYLINDER,MFT_STRING,MFS_ENABLED
+            MENUITEM "C&one...\tCtrl+B",            ID_BRUSH_CONE,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Sphere...\tCtrl+Shift+B",    ID_BRUSH_SPHERE,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Torus...",                   ID_BRUSH_TORUS,MFT_STRING,MFS_GRAYED
+        END
+    END
+    POPUP "&Grid",                          65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "Grid 1\t&1",                  ID_GRID_1,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 2\t&2",                  ID_GRID_2,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 4\t&3",                  ID_GRID_4,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 8\t&4",                  ID_GRID_8,MFT_STRING,MFS_CHECKED
+        MENUITEM "Grid 16\t&5",                 ID_GRID_16,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 32\t&6",                 ID_GRID_32,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 64\t&7",                 ID_GRID_64,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 128\t&8",                ID_GRID_128,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 256\t&9",                ID_GRID_256,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Show Grid\t&0",               ID_GRID_TOGGLE,MFT_STRING,MFS_CHECKED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Snap To Grid",               ID_GRID_SNAPTOGRID,MFT_STRING,MFS_CHECKED
+    END
+    POPUP "Te&xtures",                      65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Surface Inspector...\tS",    ID_TEXTURES_INSPECTOR,MFT_STRING,MFS_ENABLED
+        MENUITEM "Texture &Lock\tL",            ID_TEXTURES_LOCK,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Find / Replace...\tCtrl+R",  ID_TEXTURES_REPLACEALL,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Default Texture Scale...",   ID_TEXTURES_DEFAULTSCALE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Flush &Unused\tF",            ID_TEXTURES_FLUSH_UNUSED,MFT_STRING,MFS_ENABLED
+        MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE,MFT_STRING,MFS_ENABLED
+        MENUITEM "Flush &All",                  ID_TEXTURES_FLUSH_ALL,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Reset Window Scale",         ID_TEXTURES_RESETSCALE,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Update &Texture Menu",        ID_TEXTURES_UPDATEMENU,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+    END
+    POPUP "&Region",                        65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Off\tAlt+O",                 ID_REGION_OFF,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Set &Selection",              ID_REGION_SETSELECTION,MFT_STRING,MFS_ENABLED
+        MENUITEM "Set &XY\tAlt+X",              ID_REGION_SETXY,MFT_STRING,MFS_ENABLED
+        MENUITEM "Set XZ\tAlt+Z",               ID_REGION_SETXZ,MFT_STRING,MFS_ENABLED
+        MENUITEM "Set YZ\tAlt+Y",               ID_REGION_SETYZ,MFT_STRING,MFS_ENABLED
+        MENUITEM "Set &Brush\tAlt+B",           ID_REGION_SETBRUSH,MFT_STRING,MFS_ENABLED
+        MENUITEM "Set Brush &Tall",             ID_REGION_SETTALLBRUSH,MFT_STRING,MFS_ENABLED
+    END
+    POPUP "&Bsp",                           65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Test Map...\tF12",           ID_MISC_TESTMAP,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+    END
+    POPUP "&Window",                        65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "Camera &View\tQ",             ID_VIEW_CAMERA,MFT_STRING,MFS_ENABLED
+        MENUITEM "C&onsole View\tO",            ID_VIEW_CONSOLE,MFT_STRING,MFS_ENABLED
+        MENUITEM "E&ntity View\tN",             ID_VIEW_ENTITY,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Texture View\tT",            ID_VIEW_TEXTURE,MFT_STRING,MFS_ENABLED
+        MENUITEM "XY View (Top)\tAlt+1",        ID_VIEW_TOGGLE_XY,MFT_STRING,MFS_ENABLED
+        MENUITEM "XZ View (Front)\tAlt+2",      ID_VIEW_TOGGLE_XZ,MFT_STRING,MFS_ENABLED
+        MENUITEM "&YZ View (Side)\tAlt+3",      ID_VIEW_TOGGLE_YZ,MFT_STRING,MFS_ENABLED
+        MENUITEM "Z View\tAlt+4",               ID_VIEW_TOGGLE_Z,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        POPUP "Tool B&ar",                      65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "&File Band",                  ID_VIEW_TOOLBAR_FILEBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Edit Band",                  ID_VIEW_TOOLBAR_EDITBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "E&dit2 Band",                 ID_VIEW_TOOLBAR_EDIT2BAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Select Band",                ID_VIEW_TOOLBAR_SELECTBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&CSG Band",                   ID_VIEW_TOOLBAR_CSGBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Mode Band",                  ID_VIEW_TOOLBAR_MODEBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Entity Band",                ID_VIEW_TOOLBAR_ENTITYBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Brush Band",                 ID_VIEW_TOOLBAR_BRUSHBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Texture Band",               ID_VIEW_TOOLBAR_TEXTUREBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&View Band",                  ID_VIEW_TOOLBAR_VIEWBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "M&isc Band",                  ID_VIEW_TOOLBAR_MISCBAND,MFT_STRING,MFS_CHECKED
+        END
+        MENUITEM "Status Ba&r",                 ID_VIEW_STATUSBAR,MFT_STRING,MFS_CHECKED
+        MENUITEM MFT_SEPARATOR
+        POPUP "Presets",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "QE3 &Default",                ID_WINDOW_QE3DEFAULT,MFT_STRING,MFS_ENABLED
+            MENUITEM "QE3 &Reverse",                ID_WINDOW_QE3REVERSE,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "4 Window w/ Z (Cam Left)",    ID_WINDOW_4WINDOWZCAMLEFT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window w/ Z (Cam Right)",   ID_WINDOW_4WINDOWZCAMRIGHT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window w/o Z (Cam Left)",   ID_WINDOW_4WINDOWNOZCAMLEFT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window w/o Z (Cam Right)",  ID_WINDOW_4WINDOWNOZCAMRIGHT,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "4 Window Full w/ Z (Cam Left)", ID_WINDOW_4WINDOWFULLZCAMLEFT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window Full w/ Z (Cam Right)", ID_WINDOW_4WINDOWFULLZCAMRIGHT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window Full w/o Z (Cam Left)", ID_WINDOW_4WINDOWFULLNOZCAMLEFT,MFT_STRING,MFS_ENABLED
+            MENUITEM "4 Window Full w/o Z (Cam Right)", ID_WINDOW_4WINDOWFULLNOZCAMRIGHT,MFT_STRING,MFS_ENABLED
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "2 Window (Cam Top)",          ID_WINDOW_2WINDOWCAMTOP,MFT_STRING,MFS_ENABLED
+            MENUITEM "2 Window (Cam Bottom)",       ID_WINDOW_2WINDOWCAMBOTTOM,MFT_STRING,MFS_ENABLED
+            MENUITEM "2 Window (Cam Left)",         ID_WINDOW_2WINDOWCAMLEFT,MFT_STRING,MFS_ENABLED
+            MENUITEM "2 Window (Cam Right)",        ID_WINDOW_2WINDOWCAMRIGHT,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "&Colors",                        65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            POPUP "T&hemes",                        65535,MFT_STRING,MFS_ENABLED
+            BEGIN
+                MENUITEM "&QE4 Original",               ID_THEMES_QE4,MFT_STRING,MFS_ENABLED
+                MENUITEM "Q3&Radiant Original",         ID_THEMES_Q3RADIANT,MFT_STRING,MFS_ENABLED
+                MENUITEM "Black && &Green",             ID_THEMES_BLACKGREEN,MFT_STRING,MFS_ENABLED
+                MENUITEM "B&lue && Gray",               ID_THEMES_BLUEGRAY,MFT_STRING,MFS_ENABLED
+                MENUITEM "&WorldCraft",                 ID_THEMES_WORLDCRAFT,MFT_STRING,MFS_ENABLED
+                MENUITEM "&UnrealEd",                   ID_THEMES_UNREALED,MFT_STRING,MFS_ENABLED
+                MENUITEM "&Blender",                    ID_THEMES_BLENDER,MFT_STRING,MFS_ENABLED
+                MENUITEM "&Maya",                       ID_THEMES_MAYA,MFT_STRING,MFS_ENABLED
+                MENUITEM "L&ightwave",                  ID_THEMES_LIGHTWAVE,MFT_STRING,MFS_ENABLED
+                MENUITEM "3&D Studio Max",              ID_THEMES_3DSMAX,MFT_STRING,MFS_ENABLED
+            END
+            MENUITEM MFT_SEPARATOR
+            MENUITEM "&Active View Name",           ID_COLORS_VIEWNAME,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Camera Background",          ID_COLORS_CAMERABACK,MFT_STRING,MFS_ENABLED
+            MENUITEM "Cam&era Grid",                ID_COLORS_CAMERAGRID,MFT_STRING,MFS_ENABLED
+            MENUITEM "Cli&pper",                    ID_COLORS_CLIPPER,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Default Brush",              ID_COLORS_BRUSHES,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Grid Background",            ID_COLORS_GRIDBACK,MFT_STRING,MFS_ENABLED
+            MENUITEM "G&rid Block",                 ID_COLORS_GRIDBLOCK,MFT_STRING,MFS_ENABLED
+            MENUITEM "Grid &Major",                 ID_COLORS_GRIDMAJOR,MFT_STRING,MFS_ENABLED
+            MENUITEM "Grid Min&or",                 ID_COLORS_GRIDMINOR,MFT_STRING,MFS_ENABLED
+            MENUITEM "Grid &Text",                  ID_COLORS_GRIDTEXT,MFT_STRING,MFS_ENABLED
+            MENUITEM "Map Boundr&y",                ID_COLORS_MAPBOUNDRY,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Selected Brush",             ID_COLORS_SELECTEDBRUSH,MFT_STRING,MFS_ENABLED
+            MENUITEM "Texture &Background",         ID_COLORS_TEXTUREBACK,MFT_STRING,MFS_ENABLED
+            MENUITEM "Te&xture Text",               ID_COLORS_TEXTURETEXT,MFT_STRING,MFS_ENABLED
+        END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Benchmark\tF10",             ID_MISC_BENCHMARK,MFT_STRING,MFS_ENABLED
+    END
+    POPUP "&Help",                          65535,MFT_STRING,MFS_ENABLED
+    BEGIN
+        MENUITEM "&Help Topics...\tF1",         ID_HELP_HELP,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&Command List...",            ID_HELP_KEYLIST,MFT_STRING,MFS_ENABLED
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "&About...",                   ID_HELP_ABOUT,MFT_STRING,MFS_ENABLED
+    END
+END
+
+IDR_POPUP_TEXTURE MENU
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "&Wireframe",                  ID_TEXTURES_WIREFRAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Flat Shade",                 ID_TEXTURES_FLATSHADE
+        MENUITEM SEPARATOR
+        MENUITEM "&Nearest",                    ID_TEXTURES_NEAREST
+        MENUITEM "Nearest &Mipmap",             ID_TEXTURES_NEARESTMIPMAP
+        MENUITEM "&Linear",                     ID_TEXTURES_LINEAR
+        MENUITEM "&Bilinear",                   ID_TEXTURES_BILINEAR
+        MENUITEM "Bilinear Mi&pmap",            ID_TEXTURES_BILINEARMIPMAP
+        MENUITEM "&Trilinear",                  ID_TEXTURES_TRILINEAR
+    END
+END
+
+IDR_CONTEXT MENU
+BEGIN
+    POPUP "Context"
+    BEGIN
+        MENUITEM "Cut",                         ID_EDIT_CUT
+        MENUITEM "Copy",                        ID_EDIT_COPY
+        MENUITEM "Paste",                       ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "Clone",                       ID_SELECTION_CLONE
+        MENUITEM "Deselect",                    ID_SELECTION_DESELECT
+        MENUITEM "Invert",                      ID_SELECTION_INVERT
+        MENUITEM "Delete",                      ID_SELECTION_DELETE
+        MENUITEM SEPARATOR
+        POPUP "CSG"
+        BEGIN
+            MENUITEM "CSG Hollow",                  ID_SELECTION_CSGHOLLOW
+            MENUITEM "CSG Subtract",                ID_SELECTION_CSGSUBTRACT
+            MENUITEM "CSG Merge",                   ID_SELECTION_CSGMERGE
+        END
+        MENUITEM SEPARATOR
+        POPUP "Select"
+        BEGIN
+            MENUITEM "Select Complete Tall",        ID_SELECTION_SELECTCOMPLETETALL
+            MENUITEM "Select Touching",             ID_SELECTION_SELECTTOUCHING
+            MENUITEM "Select Partial Tall",         ID_SELECTION_SELECTPARTIALTALL
+            MENUITEM "Select Inside",               ID_SELECTION_SELECTINSIDE
+            MENUITEM SEPARATOR
+            MENUITEM "Select All",                  ID_SELECTION_SELECTALL
+            MENUITEM "Select All Type",             ID_SELECTION_SELECTALLTYPE
+        END
+        MENUITEM SEPARATOR
+        POPUP "Region"
+        BEGIN
+            MENUITEM "Off",                         ID_REGION_OFF
+            MENUITEM SEPARATOR
+            MENUITEM "Set XY",                      ID_REGION_SETXY
+            MENUITEM "Set XZ",                      ID_REGION_SETXZ
+            MENUITEM "Set YZ",                      ID_REGION_SETYZ
+            MENUITEM "Set Brush",                   ID_REGION_SETBRUSH
+            MENUITEM "Set Brush Tall",              ID_REGION_SETTALLBRUSH
+            MENUITEM "Set Selected Brushes",        ID_REGION_SETSELECTION
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Create Entity",               ID_MENU_CREATEANYENTITY
+        MENUITEM "Create Brush Entity",         ID_MENU_CREATEBRUSHENTITY
+        MENUITEM "Create Point Entity",         ID_MENU_CREATEPOINTENTITY
+        MENUITEM SEPARATOR
+        MENUITEM "Connect Entities",            ID_SELECTION_CONNECT
+        MENUITEM "Ungroup Entity",              ID_SELECTION_UNGROUPENTITY
+        MENUITEM "Insert Brush",                ID_SELECTION_INSERTBRUSH
+        MENUITEM SEPARATOR
+        MENUITEM "Select Entity Color",         ID_MISC_SELECTENTITYCOLOR
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_FINDREPLACE DIALOGEX 0, 0, 222, 114
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Find/Replace Texture"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,170,5,45,15
+    PUSHBUTTON      "Apply",IDAPPLY,170,25,45,15
+    PUSHBUTTON      "Cancel",IDCANCEL,170,45,45,15
+    EDITTEXT        IDC_EDIT_FIND,15,20,135,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_REPLACE,15,50,135,12,ES_AUTOHSCROLL
+    CONTROL         "Replace within Selected Brushes Only",IDC_CHECK_SELECTED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,75,140,10
+    CONTROL         "Replace Everywhere (Force, w/o Find)",IDC_CHECK_FORCE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,90,135,10
+    GROUPBOX        "",IDC_STATIC,5,0,155,110
+    LTEXT           "Find:",IDC_STATIC,15,10,15,8,SS_CENTERIMAGE
+    LTEXT           "Replace:",IDC_STATIC,15,40,30,8,SS_CENTERIMAGE
+END
+
+IDD_ENTITY DIALOGEX 0, 0, 192, 345
+STYLE DS_SETFONT | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Entity"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    LISTBOX         IDC_E_LIST,5,5,180,100,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_E_COMMENT,5,105,180,50,ES_MULTILINE | ES_READONLY | WS_VSCROLL,WS_EX_CLIENTEDGE
+    CONTROL         "",IDC_E_FLAG1,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,5,160,55,8
+    CONTROL         "",IDC_E_FLAG2,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,5,170,55,8
+    CONTROL         "",IDC_E_FLAG3,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,5,180,55,8
+    CONTROL         "",IDC_E_FLAG4,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,5,190,55,8
+    CONTROL         "",IDC_E_FLAG5,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,65,160,55,8
+    CONTROL         "",IDC_E_FLAG6,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,65,170,55,8
+    CONTROL         "",IDC_E_FLAG7,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,65,180,55,8
+    CONTROL         "",IDC_E_FLAG8,"Button",BS_3STATE | WS_DISABLED | WS_TABSTOP,65,190,55,8
+    CONTROL         "!Easy",IDC_E_FLAG9,"Button",BS_3STATE | WS_TABSTOP,125,160,55,8
+    CONTROL         "!Medium",IDC_E_FLAG10,"Button",BS_3STATE | WS_TABSTOP,125,170,55,8
+    CONTROL         "!Hard",IDC_E_FLAG11,"Button",BS_3STATE | WS_TABSTOP,125,180,55,8
+    CONTROL         "!DeathMatch",IDC_E_FLAG12,"Button",BS_3STATE | WS_TABSTOP,125,190,55,8
+    LISTBOX         IDC_E_PROPS,5,205,180,50,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_E_KEY_FIELD,40,260,145,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_E_VALUE_FIELD,40,275,145,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "0",IDC_E_0,35,310,15,15
+    PUSHBUTTON      "45",IDC_E_45,35,295,15,15
+    PUSHBUTTON      "90",IDC_E_90,20,295,15,15
+    PUSHBUTTON      "135",IDC_E_135,5,295,15,15
+    PUSHBUTTON      "180",IDC_E_180,5,310,15,15
+    PUSHBUTTON      "225",IDC_E_225,5,325,15,15
+    PUSHBUTTON      "270",IDC_E_270,20,325,15,15
+    PUSHBUTTON      "315",IDC_E_315,35,325,15,15
+    PUSHBUTTON      "Up",IDC_E_UP,60,305,15,15
+    PUSHBUTTON      "Dn",IDC_E_DOWN,60,320,15,15
+    PUSHBUTTON      "Add Key",IDC_E_ADDPROP,90,295,35,15
+    PUSHBUTTON      "Del Key",IDC_E_DELPROP,90,310,35,15
+    PUSHBUTTON      "Sel Color",IDC_E_COLOR,90,325,35,15
+    PUSHBUTTON      "Create Entity",IDC_E_CREATE,135,305,50,20
+    CTEXT           "Key:",IDC_STATIC_KEY,5,260,30,12,SS_CENTERIMAGE
+    CTEXT           "Value:",IDC_STATIC_VALUE,5,275,30,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_E_STATUS,164,321,26,24,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+END
+
+IDD_FINDBRUSH DIALOGEX 0, 0, 172, 57
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Find Brush/Entity"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,125,5,40,15
+    PUSHBUTTON      "Cancel",IDCANCEL,125,25,40,15
+    EDITTEXT        IDC_EDIT_FINDBRUSH,65,10,40,12,ES_AUTOHSCROLL | ES_NUMBER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_EDIT_FINDENTITY,65,30,40,12,ES_AUTOHSCROLL | ES_NUMBER,WS_EX_CLIENTEDGE
+    GROUPBOX        "",IDC_STATIC,5,0,110,50
+    RTEXT           "Brush Number:",IDC_STATIC,10,10,50,12,SS_CENTERIMAGE
+    RTEXT           "Entity Number:",IDC_STATIC,10,30,50,12,SS_CENTERIMAGE
+END
+
+IDD_ROTATE DIALOGEX 0, 0, 147, 97
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Arbitrary Rotation"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,100,5,40,15
+    PUSHBUTTON      "Apply",IDAPPLY,100,25,40,15
+    PUSHBUTTON      "Cancel",IDCANCEL,100,45,40,15
+    EDITTEXT        IDC_EDIT_ROTX,30,10,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN_ROTX,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,10,8,14
+    EDITTEXT        IDC_EDIT_ROTY,30,30,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_SPIN_ROTY,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,30,8,14
+    EDITTEXT        IDC_EDIT_ROTZ,30,50,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_SPIN_ROTZ,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,50,8,14
+    GROUPBOX        "",IDC_STATIC,5,0,85,70
+    CTEXT           "X:",IDC_STATIC,10,10,20,12,SS_CENTERIMAGE
+    CTEXT           "Y:",IDC_STATIC,10,30,20,12,SS_CENTERIMAGE
+    CTEXT           "Z:",IDC_STATIC,10,50,20,12,SS_CENTERIMAGE
+    CTEXT           "Note: Use Ctrl/Shift to change increment amount ",IDC_STATIC,5,75,135,18,0,WS_EX_STATICEDGE
+END
+
+IDD_SIDES DIALOGEX 0, 0, 147, 47
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Arbitrary Sided Cylinder"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,100,5,40,15
+    PUSHBUTTON      "Cancel",IDCANCEL,100,25,40,15
+    EDITTEXT        IDC_EDIT_SIDES,35,15,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN_SIDES,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,75,15,8,14
+    GROUPBOX        "",IDC_STATIC,5,0,85,40
+    CTEXT           "Sides:",IDC_STATIC,10,15,25,12,SS_CENTERIMAGE
+END
+
+IDD_ABOUT DIALOGEX 0, 0, 297, 212
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "About QuakeEd"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,240,5,50,14
+    CONTROL         IDB_ABOUT,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN | WS_BORDER,7,7,83,58
+    CONTROL         "QuakeEd 3 Beta (build 105) \nCopyright (C) 1997-2008 id Software, Inc.\n\nOriginal QE4 Code by id Software\nModified by eerie && sikkpin\n\nReleased under the \nGNU General Public Liscense",IDC_STATIC,
+                    "Static",SS_LEFTNOWORDWRAP | WS_GROUP,100,7,130,65
+    GROUPBOX        "OpenGL Properties",IDC_STATIC,5,75,285,50
+    LTEXT           "Vendor:\t\tWHOEVER",IDC_ABOUT_GLVENDOR,15,90,270,10
+    LTEXT           "Version:\t\t1.1",IDC_ABOUT_GLVERSION,15,100,270,10
+    LTEXT           "Renderer:\tWHATEVER",IDC_ABOUT_GLRENDERER,15,110,270,10
+    GROUPBOX        "OpenGL Extensions",IDC_STATIC,5,130,285,75
+    EDITTEXT        IDC_ABOUT_GLEXTENSIONS,10,140,275,60,ES_MULTILINE | ES_READONLY | WS_VSCROLL
+END
+
+IDD_SURFACE DIALOGEX 0, 0, 147, 211
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE
+CAPTION "Surface Inspector"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT_TEXTURE,33,7,110,12,ES_AUTOHSCROLL | WS_GROUP
+    EDITTEXT        IDC_EDIT_HSHIFT,83,51,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN_HSHIFT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,122,51,11,14
+    EDITTEXT        IDC_EDIT_VSHIFT,83,66,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_SPIN_VSHIFT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,122,66,10,14
+    EDITTEXT        IDC_EDIT_HSCALE,83,86,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_SPIN_HSCALE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,122,86,10,14
+    EDITTEXT        IDC_EDIT_VSCALE,83,101,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin4",IDC_SPIN_VSCALE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,122,101,10,14
+    EDITTEXT        IDC_EDIT_ROTATE,83,121,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin5",IDC_SPIN_ROTATE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,122,121,10,14
+    EDITTEXT        IDC_EDIT_WFIT,9,167,35,12,ES_AUTOHSCROLL
+    CONTROL         "Spin6",IDC_SPIN_WFIT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,45,167,10,14
+    EDITTEXT        IDC_EDIT_HFIT,61,167,35,12,ES_AUTOHSCROLL
+    CONTROL         "Spin7",IDC_SPIN_HFIT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,97,167,8,14
+    PUSHBUTTON      "Fit",IDC_BUTTON_FIT,110,156,28,26
+    PUSHBUTTON      "Apply",IDAPPLY,54,192,41,15
+    PUSHBUTTON      "Close",IDCLOSE,103,192,40,15
+    LTEXT           "Texture:",IDC_STATIC,3,7,25,12,SS_CENTERIMAGE
+    GROUPBOX        "Texture Adjustments",IDC_STATIC,3,25,140,116
+    CTEXT           "Ctrl/Shift: minor/major increment",IDC_STATIC,10,38,130,10,0,WS_EX_TRANSPARENT
+    RTEXT           "Horizontal Shift:",IDC_STATIC,10,51,70,15,SS_CENTERIMAGE
+    RTEXT           "Vertical Shift:",IDC_STATIC,10,66,70,15,SS_CENTERIMAGE
+    RTEXT           "Horizontal Scale:",IDC_STATIC,10,86,70,15,SS_CENTERIMAGE
+    RTEXT           "Vertical Scale:",IDC_STATIC,10,101,70,15,SS_CENTERIMAGE
+    RTEXT           "Rotate:",IDC_STATIC,10,121,70,15,SS_CENTERIMAGE
+    GROUPBOX        "Texture Fit",IDC_STATIC,3,147,140,40
+    CTEXT           "Width",IDC_STATIC,12,156,35,10,SS_CENTERIMAGE,WS_EX_TRANSPARENT
+    CTEXT           "Height",IDC_STATIC,62,156,35,10,SS_CENTERIMAGE,WS_EX_TRANSPARENT
+END
+
+IDD_KEYLIST DIALOGEX 0, 0, 242, 297
+STYLE DS_ABSALIGN | DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Command List"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "&Close",IDOK,185,275,50,14
+    CONTROL         "",IDC_RICHEDIT_KEYLIST,"RICHEDIT",TCS_RAGGEDRIGHT | TCS_MULTISELECT | WS_VSCROLL | WS_TABSTOP,5,5,175,285,WS_EX_CLIENTEDGE
+END
+
+IDD_PROJECT DIALOGEX 0, 0, 292, 332
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Project Settings"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,240,291,45,15
+    PUSHBUTTON      "Cancel",IDCANCEL,240,310,45,15
+    EDITTEXT        IDC_EDIT_PROJECTDIRECTORY,75,20,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_PROJECTDIRECTORY,265,20,13,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_REMOTEBASEPATH,75,40,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_REMOTEBASEPATH,265,40,13,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_MAPSDIRECTORY,75,60,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_MAPSDIRECTORY,265,60,14,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_AUTOSAVEMAP,75,81,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_AUTOSAVEMAP,265,81,14,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_ENTITYFILES,75,100,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_ENTITYFILES,265,100,13,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_TEXTUREDIRECTORY,75,120,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_TEXTUREDIRECTORY,265,120,14,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_DEFAULTWADS,75,140,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_DEFAULTWADS,265,140,14,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_TOOLSDIRECTORY,75,161,185,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    PUSHBUTTON      "Find...",IDC_BUTTON_TOOLSDIRECTORY,265,161,13,12,BS_BITMAP
+    COMBOBOX        IDC_COMBO_BSPNAME,11,206,170,75,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT_BSPCOMMAND,11,235,170,40,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "New",IDC_BUTTON_BSPNEW,185,206,44,15
+    PUSHBUTTON      "Accept",IDC_BUTTON_BSPACCEPT,185,225,44,15
+    PUSHBUTTON      "Delete",IDC_BUTTON_BSPDELETE,185,246,44,15
+    GROUPBOX        "Project Settings",IDC_STATIC,5,5,280,175
+    RTEXT           "Project Directory:",IDC_STATIC,10,20,60,12,SS_CENTERIMAGE
+    RTEXT           "Remote Basepath:",IDC_STATIC,10,40,60,12,SS_CENTERIMAGE
+    RTEXT           "Maps Directory:",IDC_STATIC,10,60,60,12,SS_CENTERIMAGE
+    RTEXT           "Autosave Map:",IDC_STATIC,10,80,60,12,SS_CENTERIMAGE
+    RTEXT           "Entity File(s):",IDC_STATIC,10,100,60,12,SS_CENTERIMAGE
+    RTEXT           "Texture Directory:",IDC_STATIC,10,120,60,12,SS_CENTERIMAGE
+    RTEXT           "Default Wad(s):",IDC_STATIC,10,140,60,12,SS_CENTERIMAGE
+    RTEXT           "Tools Directory:",IDC_STATIC,10,160,60,12,SS_CENTERIMAGE
+    GROUPBOX        "BSP Menu",IDC_STATIC,5,185,230,140
+    LTEXT           "Name:",IDC_STATIC,11,195,24,10
+    LTEXT           "Commands:",IDC_STATIC,11,225,39,10
+    GROUPBOX        "Legend",IDC_STATIC,10,281,170,40
+    LTEXT           "       !\t=  <toolsdirectory>\n      $\t=  <remotebasepath>/maps/<currentmap>\n     @\t=  <""> (quotation mark)",IDC_STATIC,15,291,160,25,0,WS_EX_TRANSPARENT
+END
+
+IDD_CREATEENTITY DIALOGEX 0, 0, 187, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Entity List"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Create",IDOK,135,5,45,14
+    PUSHBUTTON      "Cancel",IDCANCEL,135,25,45,14
+    LISTBOX         IDC_LIST_CREATEENTITY,5,5,120,140,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_SPLASH DIALOGEX 0, 0, 341, 236
+STYLE DS_SYSMODAL | DS_SETFONT | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    CONTROL         IDB_SPLASH,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_RIGHTJUST | SS_REALSIZEIMAGE,0,0,341,236
+END
+
+IDD_MAPINFO DIALOGEX 0, 0, 352, 167
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Map Info"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Close",IDOK,295,10,50,15
+    EDITTEXT        IDC_EDIT_TOTALBRUSHES,70,15,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_TOTALBRUSHENTS,70,30,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_TOTALPOINTENTS,70,45,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_TOTALFACES,70,60,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_TOTALTEXTURES,70,75,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_SKYBRUSHES,70,110,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_WATERBRUSHES,70,125,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    EDITTEXT        IDC_EDIT_CLIPBRUSHES,70,140,40,12,ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER
+    LISTBOX         IDC_LIST_ENTITYBREAKDOWN,125,15,160,140,LBS_SORT | LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Totals",IDC_STATIC,5,5,110,90
+    RTEXT           "Brushes:",IDC_STATIC,10,15,55,12,SS_CENTERIMAGE
+    RTEXT           "Brush Entities:",IDC_STATIC,10,30,55,12,SS_CENTERIMAGE
+    RTEXT           "Point Entites:",IDC_STATIC,10,45,55,12,SS_CENTERIMAGE
+    RTEXT           "Faces:",IDC_STATIC,10,60,55,12,SS_CENTERIMAGE
+    RTEXT           "Textures:",IDC_STATIC,10,75,55,12,SS_CENTERIMAGE
+    GROUPBOX        "Special Brushes",IDC_STATIC,5,95,110,65
+    RTEXT           "Sky Brushes:",IDC_STATIC,10,110,55,12,SS_CENTERIMAGE
+    RTEXT           "Water Brushes:",IDC_STATIC,10,125,55,12,SS_CENTERIMAGE
+    RTEXT           "Clip Brushes:",IDC_STATIC,10,140,55,12,SS_CENTERIMAGE
+    GROUPBOX        "Entity Breakdown",IDC_STATIC,120,5,170,155
+END
+
+IDD_ENTITYINFO DIALOGEX 0, 0, 347, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Entity Info"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,295,5,45,14
+    PUSHBUTTON      "Select",IDC_BUTTON_SELECT,295,25,45,15
+    PUSHBUTTON      "Delete",IDC_BUTTON_DELETE,295,45,45,14
+    CONTROL         "Tree1",IDC_TREE_ENTITY,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_INFOTIP | WS_BORDER | WS_TABSTOP,5,5,140,175,WS_EX_CLIENTEDGE
+    CONTROL         "List1",IDC_LIST_ENTITY,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_EDITLABELS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,150,5,135,175,WS_EX_CLIENTEDGE
+END
+
+IDD_PREFERENCES DIALOGEX 0, 0, 287, 267
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Preferences"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,230,10,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,230,30,50,14
+    PUSHBUTTON      "Reset Registry",IDC_BUTTON_RESETREGISTRY,230,60,50,14
+    EDITTEXT        IDC_EDIT_GAMEPATH,15,25,180,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "",IDC_BUTTON_GAMEPATH,200,25,13,12,BS_BITMAP
+    EDITTEXT        IDC_EDIT_PREFABPATH,15,55,180,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "",IDC_BUTTON_PREFABPATH,200,55,13,12,BS_BITMAP
+    COMBOBOX        IDC_COMBO_MAPSIZE,51,95,60,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Autosave Every",IDC_CHECK_AUTOSAVE,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,15,125,65,12
+    EDITTEXT        IDC_EDIT_AUTOSAVE,80,125,25,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN_AUTOSAVE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,100,125,8,14
+    CONTROL         "Log Console to qe3.log",IDC_CHECK_LOGCONSOLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,139,130,10
+    CONTROL         "Solid Selection Boxes",IDC_CHECK_NOSTIPPLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,153,130,10
+    CONTROL         "Radiant-style Lights",IDC_CHECK_RADIANTLIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,166,130,10
+    CONTROL         "Vertex Editing Splits Face",IDC_CHECK_VERTEXSPLITSFACE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,179,130,10
+    CONTROL         "Test Map after BSP",IDC_CHECK_TESTAFTERBSP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,205,130,10
+    CONTROL         "Load Last Project on Start",IDC_CHECK_LOADLASTPROJECT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,218,130,10
+    CONTROL         "Load Last Map on Start",IDC_CHECK_LOADLASTMAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,232,130,10
+    CONTROL         "Slider1",IDC_SLIDER_GAMMA,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_TABSTOP,170,100,105,20
+    CONTROL         "-game",IDC_CHECK_PARAMGAME,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,175,140,35,12
+    EDITTEXT        IDC_EDIT_PARAMGAME,210,140,60,12,ES_AUTOHSCROLL
+    CONTROL         "-heapsize",IDC_CHECK_PARAMHEAPSIZE,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,175,160,45,12
+    COMBOBOX        IDC_COMBO_PARAMHEAPSIZE,221,160,50,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "+skill",IDC_CHECK_PARAMSKILL,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,175,180,30,12
+    COMBOBOX        IDC_COMBO_PARAMSKILL,205,180,25,50,CBS_DROPDOWNLIST | CBS_OEMCONVERT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "+deathmatch 1",IDC_CHECK_PARAMDEATHMATCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,200,95,10
+    CONTROL         "+developer 1",IDC_CHECK_PARAMDEVELOPER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,215,95,10
+    CONTROL         "+r_speeds 1",IDC_CHECK_PARAMRSPEEDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,230,95,10
+    CONTROL         "+pointfile 1",IDC_CHECK_PARAMPOINTFILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,245,95,10
+    GROUPBOX        "Paths",IDC_STATIC,5,5,215,70
+    LTEXT           "Game Path:",IDC_STATIC,15,15,38,8
+    LTEXT           "Prefab Path:",IDC_STATIC,15,45,40,8
+    GROUPBOX        "Settings",IDC_STATIC,5,80,150,180
+    LTEXT           "Map Size:",IDC_STATIC,15,95,35,12,SS_CENTERIMAGE
+    LTEXT           "Units",IDC_STATIC,115,95,17,13,SS_CENTERIMAGE
+    LTEXT           "Minutes",IDC_STATIC,110,125,26,12,SS_CENTERIMAGE
+    GROUPBOX        "Gamma",IDC_STATIC,165,80,115,40
+    CTEXT           "0.0",IDC_STATIC,170,90,14,8,SS_CENTERIMAGE
+    CTEXT           "<--Light  |  Dark-->",IDC_STATIC,190,90,65,8
+    CTEXT           "2.0",IDC_STATIC,260,90,15,8,SS_CENTERIMAGE
+    GROUPBOX        "Quake Parameters",IDC_STATIC,165,125,115,135
+    LTEXT           "Undo Levels:",IDC_STATIC,15,110,43,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDIT_UNDOLEVELS,60,110,25,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN_UNDOLEVELS,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,85,110,8,14
+    CONTROL         "Use Brush Float Precision",IDC_CHECK_BRUSHPRECISION,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,192,130,10
+    CONTROL         "Sort Texture Browser By Wad",IDC_CHECK_SORTTEXBYWAD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,246,130,10
+END
+
+IDD_SCALE DIALOGEX 0, 0, 147, 97
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Scale Brush"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,100,5,40,15
+    PUSHBUTTON      "Apply",IDAPPLY,100,25,40,15
+    PUSHBUTTON      "Cancel",IDCANCEL,100,45,40,15
+    EDITTEXT        IDC_EDIT_SCALEX,30,10,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin1",IDC_SPIN_SCALEX,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,10,8,14
+    EDITTEXT        IDC_EDIT_SCALEY,30,30,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin2",IDC_SPIN_SCALEY,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,30,8,14
+    EDITTEXT        IDC_EDIT_SCALEZ,30,50,40,12,ES_AUTOHSCROLL
+    CONTROL         "Spin3",IDC_SPIN_SCALEZ,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,70,50,8,14
+    GROUPBOX        "",IDC_STATIC,5,0,85,70
+    CTEXT           "X:",IDC_STATIC,10,10,20,12,SS_CENTERIMAGE
+    CTEXT           "Y:",IDC_STATIC,10,30,20,12,SS_CENTERIMAGE
+    CTEXT           "Z:",IDC_STATIC,10,50,20,12,SS_CENTERIMAGE
+    CTEXT           "Note: Use Ctrl/Shift to change increment amount ",IDC_STATIC,5,75,135,18,0,WS_EX_STATICEDGE
+END
+
+IDD_CAMSPEED DIALOG 0, 0, 25, 78
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,0,30,25,16,NOT WS_VISIBLE
+    CONTROL         "Slider1",IDC_SLIDER_CAMSPEED,"msctls_trackbar32",TBS_AUTOTICKS | TBS_VERT | TBS_BOTH | WS_TABSTOP,0,5,25,65
+    CTEXT           "Slow",IDC_STATIC,0,0,25,8
+    CTEXT           "Fast",IDC_STATIC,0,70,25,8
+END
+
+IDD_TEXTURESCALE DIALOGEX 0, 0, 167, 82
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Default Textue Scale"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,120,10,40,15
+    PUSHBUTTON      "Cancel",IDCANCEL,120,30,40,15
+    EDITTEXT        IDC_EDIT_TEXSCALE,60,20,35,12,ES_AUTOHSCROLL | ES_NUMBER,WS_EX_RIGHT
+    CONTROL         "Spin1",IDC_SPIN_TEXSCALE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,95,20,8,14
+    GROUPBOX        "",IDC_STATIC,5,5,105,40
+    CTEXT           "Texture Scale:",IDC_STATIC,10,20,50,12,SS_CENTERIMAGE
+    CTEXT           "This changes the default texture scale when creating new brushes or applying textures.",IDC_STATIC,5,55,155,20,SS_SUNKEN
+END
+
+IDD_FINDKEYVALUE DIALOG 0, 0, 207, 84
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Matching Key/Value Pairs"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,155,5,45,14
+    PUSHBUTTON      "Cancel",IDCANCEL,155,25,45,14
+    LTEXT           "Key:",IDC_STATIC,15,10,15,8
+    LTEXT           "Value:",IDC_STATIC,15,40,21,8
+    EDITTEXT        IDC_EDIT_FINDKEY,15,20,120,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_FINDVALUE,15,50,120,12,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,5,0,140,80
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 3,1,0,5
+ PRODUCTVERSION 3,1,0,5
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "Level Editing Software for id Software's Quake™"
+            VALUE "CompanyName", "id Software"
+            VALUE "FileDescription", "QuakeEd 3 Beta (build 105) "
+            VALUE "FileVersion", "3.1.0.5"
+            VALUE "InternalName", "QuakeEd 3 Beta (build 105)"
+            VALUE "LegalCopyright", "Copyright © 1997-2008"
+            VALUE "LegalTrademarks", "Quake™ 1996-2008"
+            VALUE "OriginalFilename", "qe3.exe"
+            VALUE "ProductName", "id Software QuakeEd 3"
+            VALUE "ProductVersion", "3.1.0.5"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR1 ACCELERATORS
+BEGIN
+    "1",            ID_VIEW_TOGGLE_XY,      VIRTKEY, ALT, NOINVERT
+    VK_OEM_COMMA,   ID_MISC_PREVIOUSLEAKSPOT, VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_PERIOD,  ID_MISC_NEXTLEAKSPOT,   VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_VIEW_TOGGLE_XZ,      VIRTKEY, ALT, NOINVERT
+    VK_OEM_4,       ID_VIEW_CUBICCLIPZOOMOUT, VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_5,       ID_VIEW_CUBICCLIP,      VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_6,       ID_VIEW_CUBICCLIPZOOMIN, VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_BRUSH_3SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_VIEW_TOGGLE_YZ,      VIRTKEY, ALT, NOINVERT
+    "4",            ID_BRUSH_4SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_VIEW_TOGGLE_Z,       VIRTKEY, ALT, NOINVERT
+    "5",            ID_BRUSH_5SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "6",            ID_BRUSH_6SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "7",            ID_BRUSH_7SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "8",            ID_BRUSH_8SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "9",            ID_BRUSH_9SIDED,        VIRTKEY, CONTROL, NOINVERT
+    "A",            ID_SELECTION_SELECTALL, VIRTKEY, CONTROL, NOINVERT
+    "A",            ID_SELECTION_SELECTALLTYPE, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "B",            ID_BRUSH_CONE,          VIRTKEY, CONTROL, NOINVERT
+    "B",            ID_REGION_SETBRUSH,     VIRTKEY, ALT, NOINVERT
+    "B",            ID_BRUSH_SPHERE,        VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_SELECTION_SELECTCOMPLETETALL, VIRTKEY, ALT, NOINVERT
+    "E",            ID_SELECTION_SELECTMATCHINGKEYVALUE, VIRTKEY, CONTROL, NOINVERT
+    "F",            ID_EDIT_FINDBRUSH,      VIRTKEY, CONTROL, NOINVERT
+    "H",            ID_VIEW_HIDESHOW_SHOWHIDDEN, VIRTKEY, CONTROL, NOINVERT
+    "H",            ID_SELECTION_CSGHOLLOW, VIRTKEY, ALT, NOINVERT
+    "I",            ID_SELECTION_SELECTINSIDE, VIRTKEY, ALT, NOINVERT
+    "K",            ID_SELECTION_CONNECT,   VIRTKEY, CONTROL, NOINVERT
+    "L",            ID_FILE_LOADPROJECT,    VIRTKEY, CONTROL, NOINVERT
+    "M",            ID_SELECTION_CSGMERGE,  VIRTKEY, ALT, NOINVERT
+    "M",            ID_SELECTION_EXPORTMAP, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEWPROJECT,     VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_REGION_OFF,          VIRTKEY, ALT, NOINVERT
+    "P",            ID_FILE_PRINTXY,        VIRTKEY, CONTROL, NOINVERT
+    "P",            ID_SELECTION_SELECTPARTIALTALL, VIRTKEY, ALT, NOINVERT
+    "P",            ID_SELECTION_EXPORTPREFAB, VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "R",            ID_TEXTURES_REPLACEALL, VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_SELECTION_CSGSUBTRACT, VIRTKEY, ALT, NOINVERT
+    "S",            ID_FILE_SAVEAS,         VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "T",            ID_SELECTION_SELECTMATCHINGTEXTURES, VIRTKEY, CONTROL, NOINVERT
+    "T",            ID_SELECTION_SELECTTOUCHING, VIRTKEY, ALT, NOINVERT
+    "U",            ID_SELECTION_UNGROUPENTITY, VIRTKEY, CONTROL, NOINVERT
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
+    VK_DELETE,      ID_VIEW_ZZOOMOUT,       VIRTKEY, CONTROL, NOINVERT
+    VK_HOME,        ID_VIEW_Z100,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_VIEW_ZZOOMIN,        VIRTKEY, CONTROL, NOINVERT
+    VK_RETURN,      ID_SELECTION_FLIPCLIP,  VIRTKEY, CONTROL, NOINVERT
+    VK_RETURN,      ID_SELECTION_SPLITSELECTED, VIRTKEY, SHIFT, NOINVERT
+    VK_TAB,         ID_SELECTION_GROUPNEXTBRUSH, VIRTKEY, CONTROL, NOINVERT
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL, NOINVERT
+    "X",            ID_REGION_SETXY,        VIRTKEY, ALT, NOINVERT
+    "Y",            ID_EDIT_REDO,           VIRTKEY, CONTROL, NOINVERT
+    "Y",            ID_REGION_SETYZ,        VIRTKEY, ALT, NOINVERT
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    "Z",            ID_REGION_SETXZ,        VIRTKEY, ALT, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_TOOLBAR1 TOOLBAR 16, 16
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    BUTTON      ID_FILE_PRINTXY
+    BUTTON      ID_HELP_ABOUT
+    SEPARATOR
+    BUTTON      ID_SELECTION_CLONE
+    BUTTON      ID_SELECTION_INVERT
+    BUTTON      ID_SELECTION_DELETE
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    SEPARATOR
+    BUTTON      ID_SELECTION_FLIPX
+    BUTTON      ID_SELECTION_ROTATEX
+    BUTTON      ID_SELECTION_FLIPY
+    BUTTON      ID_SELECTION_ROTATEY
+    BUTTON      ID_SELECTION_FLIPZ
+    BUTTON      ID_SELECTION_ROTATEZ
+    SEPARATOR
+    BUTTON      ID_SELECTION_SELECTCOMPLETETALL
+    BUTTON      ID_SELECTION_SELECTTOUCHING
+    BUTTON      ID_SELECTION_SELECTPARTIALTALL
+    BUTTON      ID_SELECTION_SELECTINSIDE
+    SEPARATOR
+    BUTTON      ID_SELECTION_CSGHOLLOW
+    BUTTON      ID_SELECTION_CSGSUBTRACT
+    BUTTON      ID_SELECTION_CSGMERGE
+    SEPARATOR
+    BUTTON      ID_SELECTION_CLIPPER
+    BUTTON      ID_SELECTION_DRAGEDGES
+    BUTTON      ID_SELECTION_DRAGVERTICES
+    BUTTON      ID_SELECTION_SCALELOCKX
+    BUTTON      ID_SELECTION_SCALELOCKY
+    BUTTON      ID_SELECTION_SCALELOCKZ
+    SEPARATOR
+    BUTTON      ID_VIEW_NEXTVIEW
+    BUTTON      ID_VIEW_CENTERONSELECTION
+    BUTTON      ID_TEXTURES_POPUP
+    BUTTON      ID_VIEW_CAMSPEED
+    BUTTON      ID_VIEW_CUBICCLIP
+    BUTTON      ID_VIEW_CUBICCLIPZOOMOUT
+    BUTTON      ID_VIEW_CUBICCLIPZOOMIN
+    SEPARATOR
+    BUTTON      ID_MISC_TESTMAP
+END
+
+IDR_TOOLBAR2 TOOLBAR 16, 16
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    BUTTON      ID_FILE_SAVEAS
+    BUTTON      ID_FILE_PRINTXY
+    BUTTON      ID_HELP_ABOUT
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    BUTTON      ID_SELECTION_CLONE
+    BUTTON      ID_SELECTION_INVERT
+    BUTTON      ID_SELECTION_DELETE
+    BUTTON      ID_EDIT_UNDO
+    BUTTON      ID_EDIT_REDO
+    BUTTON      ID_EDIT_FINDBRUSH
+    BUTTON      ID_EDIT_PREFERENCES
+    BUTTON      ID_EDIT_MAPINFO
+    BUTTON      ID_EDIT_ENTITYINFO
+    SEPARATOR
+    BUTTON      ID_SELECTION_FLIPX
+    BUTTON      ID_SELECTION_ROTATEX
+    BUTTON      ID_SELECTION_FLIPY
+    BUTTON      ID_SELECTION_ROTATEY
+    BUTTON      ID_SELECTION_FLIPZ
+    BUTTON      ID_SELECTION_ROTATEZ
+    SEPARATOR
+    BUTTON      ID_SELECTION_SELECTCOMPLETETALL
+    BUTTON      ID_SELECTION_SELECTTOUCHING
+    BUTTON      ID_SELECTION_SELECTPARTIALTALL
+    BUTTON      ID_SELECTION_SELECTINSIDE
+    SEPARATOR
+    BUTTON      ID_SELECTION_CSGHOLLOW
+    BUTTON      ID_SELECTION_CSGSUBTRACT
+    BUTTON      ID_SELECTION_CSGMERGE
+    SEPARATOR
+    BUTTON      ID_SELECTION_CLIPPER
+    BUTTON      ID_SELECTION_DRAGEDGES
+    BUTTON      ID_SELECTION_DRAGVERTICES
+    BUTTON      ID_SELECTION_SCALELOCKX
+    BUTTON      ID_SELECTION_SCALELOCKY
+    BUTTON      ID_SELECTION_SCALELOCKZ
+    SEPARATOR
+    BUTTON      ID_SELECTION_UNGROUPENTITY
+    BUTTON      ID_SELECTION_CONNECT
+    BUTTON      ID_SELECTION_GROUPNEXTBRUSH
+    SEPARATOR
+    BUTTON      ID_BRUSH_CYLINDER
+    BUTTON      ID_BRUSH_CONE
+    BUTTON      ID_BRUSH_SPHERE
+    SEPARATOR
+    BUTTON      ID_TEXTURES_REPLACEALL
+    BUTTON      ID_TEXTURES_INSPECTOR
+    SEPARATOR
+    BUTTON      ID_VIEW_CONSOLE
+    BUTTON      ID_VIEW_ENTITY
+    BUTTON      ID_VIEW_TEXTURE
+    BUTTON      ID_VIEW_NEXTVIEW
+    BUTTON      ID_VIEW_CENTERONSELECTION
+    BUTTON      ID_TEXTURES_POPUP
+    BUTTON      ID_VIEW_CAMSPEED
+    BUTTON      ID_VIEW_CUBICCLIP
+    BUTTON      ID_VIEW_CUBICCLIPZOOMOUT
+    BUTTON      ID_VIEW_CUBICCLIPZOOMIN
+    SEPARATOR
+    BUTTON      ID_MISC_TESTMAP
+    BUTTON      ID_HELP_HELP
+    SEPARATOR
+    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_SELECTION_SCALE
+    BUTTON      ID_CONTEXT_HELP
+    BUTTON      ID_SELECTION_UNGROUPENTITY
+    BUTTON      ID_SELECTION_CONNECT
+    BUTTON      ID_VIEW_CAMERA
+    BUTTON      ID_FILE_SAVE_AS
+    BUTTON      ID_EDIT_PREFERENCES
+    BUTTON      ID_FILE_NEW
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_TOOLBAR1            BITMAP                  "toolbar1.bmp"
+
+IDB_ABOUT               BITMAP                  "about.bmp"
+
+IDB_FIND                BITMAP                  "find.bmp"
+
+IDB_CAMSPEED            BITMAP                  "camspeed.bmp"
+
+IDB_CAMSPEEDMASK        BITMAP                  "camspeedmask.bmp"
+
+IDB_SPLASH              BITMAP                  "splash.bmp"
+
+IDR_TOOLBAR2            BITMAP                  "toolbar2.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_FINDREPLACE, DIALOG
+    BEGIN
+        RIGHTMARGIN, 109
+        BOTTOMMARGIN, 107
+        HORZGUIDE, 40
+    END
+
+    IDD_ENTITY, DIALOG
+    BEGIN
+        RIGHTMARGIN, 185
+        BOTTOMMARGIN, 343
+    END
+
+    IDD_FINDBRUSH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 165
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 49
+    END
+
+    IDD_ROTATE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 140
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 90
+    END
+
+    IDD_SIDES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 140
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 40
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 290
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 205
+    END
+
+    IDD_SURFACE, DIALOG
+    BEGIN
+        LEFTMARGIN, 3
+        RIGHTMARGIN, 143
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 207
+    END
+
+    IDD_KEYLIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 235
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 290
+    END
+
+    IDD_PROJECT, DIALOG
+    BEGIN
+        LEFTMARGIN, 5
+        RIGHTMARGIN, 285
+        VERTGUIDE, 10
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 325
+    END
+
+    IDD_CREATEENTITY, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 143
+    END
+
+    IDD_SPLASH, DIALOG
+    BEGIN
+    END
+
+    IDD_MAPINFO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 345
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 160
+    END
+
+    IDD_ENTITYINFO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 340
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    IDD_PREFERENCES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 280
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 260
+    END
+
+    IDD_SCALE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 140
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 90
+    END
+
+    IDD_CAMSPEED, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 18
+        TOPMARGIN, 7
+    END
+
+    IDD_TEXTURESCALE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 160
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 75
+    END
+
+    IDD_FINDKEYVALUE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 200
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 77
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_PREFERENCES DLGINIT
+BEGIN
+    IDC_COMBO_MAPSIZE, 0x403, 15, 0
+0x3138, 0x3239, 0x2820, 0x6564, 0x6166, 0x6c75, 0x2974, "\000" 
+    IDC_COMBO_MAPSIZE, 0x403, 6, 0
+0x3631, 0x3833, 0x0034, 
+    IDC_COMBO_MAPSIZE, 0x403, 6, 0
+0x3233, 0x3637, 0x0038, 
+    IDC_COMBO_MAPSIZE, 0x403, 6, 0
+0x3536, 0x3335, 0x0036, 
+    IDC_COMBO_PARAMHEAPSIZE, 0x403, 6, 0
+0x3631, 0x3833, 0x0034, 
+    IDC_COMBO_PARAMHEAPSIZE, 0x403, 6, 0
+0x3233, 0x3637, 0x0038, 
+    IDC_COMBO_PARAMHEAPSIZE, 0x403, 6, 0
+0x3536, 0x3335, 0x0036, 
+    IDC_COMBO_PARAMHEAPSIZE, 0x403, 7, 0
+0x3331, 0x3031, 0x3237, "\000" 
+    IDC_COMBO_PARAMHEAPSIZE, 0x403, 7, 0
+0x3632, 0x3132, 0x3434, "\000" 
+    IDC_COMBO_PARAMSKILL, 0x403, 2, 0
+0x0030, 
+    IDC_COMBO_PARAMSKILL, 0x403, 2, 0
+0x0031, 
+    IDC_COMBO_PARAMSKILL, 0x403, 2, 0
+0x0032, 
+    IDC_COMBO_PARAMSKILL, 0x403, 2, 0
+0x0033, 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "icon1.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ENTITY AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PROJECT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PREFERENCES AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SURFACE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SPLASH AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_INVERT     "Invert Selection (I)"
+    ID_SELECTION_CSGMERGE   "CSG Merge  (Alt+M)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_SELECTCOMPLETETALL "Select Complete Tall (Alt+C)"
+    ID_SELECTION_CSGSUBTRACT "CSG Subtract (Alt+S)"
+    ID_SELECTION_SELECTTOUCHING "Select Touching (Alt+T)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_SELECTPARTIALTALL "Select Partial Tall (Alt+P)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_SELECTINSIDE "Select Inside (Alt+I)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_CLONE      "Clone Selection (Space)"
+    ID_SELECTION_DELETE     "Delete Selection (Backspace)"
+    ID_SELECTION_DRAGVERTICES "Set Drag Vertex Mode (V)"
+    ID_SELECTION_DRAGEDGES  "Set Drag Edges Mode (E)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_NEXTVIEW        "Cycle 2D View (Tab)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "Begin a New Map  (Ctrl+N)"
+    ID_FILE_OPEN            "Open an Existing Map  (Ctrl+O)"
+    ID_FILE_SAVE            "Save the Active Map  (Ctrl+S)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TEXTURES_POPUP       "Set Camera Render Mode"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_UNGROUPENTITY "Ungroup Selected Entity (Ctrl+U)"
+    ID_HELP_ABOUT           "About QuakeEd 3..."
+    ID_TEXTURES_INSPECTOR   "Open Surface Inspector (S)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_COPY            "Copy (Ctrl+C)"
+    ID_EDIT_CUT             "Cut (Ctrl+X)"
+    ID_EDIT_PASTE           "Paste (Ctrl+V)"
+    ID_EDIT_UNDO            "Undo (Ctrl+Z)"
+    ID_EDIT_REDO            "Redo (Ctrl+Y)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_BRUSH_CONE           "Create N-Sided Cone (Ctrl+B)"
+    ID_BRUSH_SPHERE         "Create N-Sided Sphere (Ctrl+Shift+B)"
+    ID_VIEW_CUBICCLIP       "Cubic Clip the Camera Vew (Ctrl+\\)"
+    ID_VIEW_CUBICCLIPZOOMIN "Cubic Clip Zoom In (Ctrl+])"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CUBICCLIPZOOMOUT "Cubic Clip Zoom Out (Ctrl+[)"
+    ID_EDIT_MAPINFO         "Open Map Info Dialog (F2)"
+    ID_FILE_PRINTXY         "Print Current XY View (Ctrl+P)"
+    ID_EDIT_FINDBRUSH       "Find Brush or Entity (Ctrl+F)"
+    ID_SELECTION_CSGHOLLOW  "CSG Hollow Selection  (Alt+H)"
+    ID_SELECTION_FLIPX      "Flip Selection Along X-axis"
+    ID_SELECTION_FLIPY      "Flip Selection Along Y-axis"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_FLIPZ      "Flip Selection Along Z-axis"
+    ID_SELECTION_ROTATEX    "Rotate Selection 90° Along X-axis"
+    ID_SELECTION_ROTATEY    "Rotate Selection 90° Along Y-axis"
+    ID_SELECTION_ROTATEZ    "Rotate Selection 90° Along Z-axis"
+    ID_SELECTION_CLIPPER    "Set Clipper Mode (X)"
+    ID_TEXTURES_REPLACEALL  "Replace Textures (Ctrl+R)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CENTERONSELECTION "Center Views on Selection (\\)"
+    ID_HELP_HELP            "Open QuakeEd Manual (F1)"
+    ID_MISC_TESTMAP         "Test Current Map in Quake (F12)"
+    ID_EDIT_PREFERENCES     "Open Preferences Dialog (F4)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_SCALELOCKX "Scale Selection Along X Axis"
+    ID_SELECTION_SCALELOCKZ "Scale Selection Along Z Axis"
+    ID_SELECTION_SCALELOCKY "Scale Selection Along Y Axis"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CAMSPEED        "Adjust Camera Movement Speed"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_CONSOLE         "View Console Window (O)"
+    ID_VIEW_ENTITY          "View Entity Window (N)"
+    ID_VIEW_TEXTURE         "View Texture Window (T)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_CONNECT    "Connect Entities (Ctrl+K)"
+    ID_BRUSH_CYLINDER       "Create N-Sided Cylinder (B)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_ENTITYINFO      "Open Entity Info Dialog (F3)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_GROUPNEXTBRUSH "Select Next Brush in Group (Ctrl+Tab)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_SAVEAS          "Save Active Map with New Name (Ctrl+Shift+S)"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

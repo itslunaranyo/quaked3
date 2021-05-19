@@ -730,6 +730,20 @@ void Brush_MergeListIntoList(brush_t *src, brush_t *dest)
 }
 
 
+/*
+==================
+Brush_NumFaces
+==================
+*/
+int Brush_NumFaces(brush_t *b)
+{
+	int sum = 0;
+	face_t* f;
+	for (f = b->brush_faces; f; f = f->next)
+		if (f->face_winding)
+			sum++;
+	return sum;
+}
 
 /*
 ==================
@@ -778,11 +792,11 @@ void Brush_BuildWindings (brush_t *b)
 		face->owner = b;
 
 		w = face->face_winding = Brush_MakeFaceWinding(b, face);
-		face->d_texture = Texture_ForName(face->texdef.name);
 
 		if (!w)
 			continue;
 	
+		face->d_texture = Texture_ForName(face->texdef.name);
 	    for (i = 0; i < w->numpoints; i++)
 	    {
 			// add to bounding box

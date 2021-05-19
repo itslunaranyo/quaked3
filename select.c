@@ -53,7 +53,7 @@ void Select_HandleChange()
 	EntWnd_UpdateUI();
 	SurfWnd_UpdateUI();
 
-	Sys_UpdateWindows(W_ALL);
+	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	g_bSelectionChanged = false;
 }
 
@@ -247,6 +247,8 @@ Select_SelectFace
 void Select_SelectFace(face_t* f)
 {
 	assert(!Select_IsFaceSelected(f));
+	if (!f->face_winding)
+		return;
 	g_pfaceSelectedFaces[g_nSelFaceCount++] = f;
 	g_pfaceSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
 
@@ -428,6 +430,89 @@ void Select_Ray (vec3_t origin, vec3_t dir, int flags)
 
 /*
 ===============
+Select_NumBrushFacesSelected
+===============
+*/
+int Select_NumBrushFacesSelected(brush_t* b)
+{
+	int sum;
+	sum = 0;
+
+	for (int i = 0; i < g_nSelFaceCount; i++)
+	{
+		if (g_pfaceSelectedFaces[i]->owner == b)
+			sum++;
+	}
+	return sum;
+}
+
+/*
+===============
+Select_FacesToBrushes
+===============
+*/
+void Select_FacesToBrushes(bool partial)
+{
+	brush_t *b;
+	face_t *f;
+
+	int what, who, why, wtf;
+
+	if (!Select_FaceCount())
+		return;
+
+	what = Select_FaceCount();
+	b = NULL;
+	for (int i = 0; i < what; i++)
+	{
+		if (b == g_pfaceSelectedFaces[i]->owner)
+			continue;
+
+		b = g_pfaceSelectedFaces[i]->owner;
+		who = Select_NumBrushFacesSelected(b);
+		why = Brush_NumFaces(b);
+		if (partial || who == why)
+		{
+			Select_SelectBrushSorted(b);
+		}
+/*
+		for (f = b->brush_faces; f; f = f->next)
+		{
+			Select_DeselectFace(f);
+		}*/
+	}
+	Select_DeselectAllFaces();
+	//assert(Select_FaceCount() == 0);
+	g_bSelectionChanged = true;
+	g_qeglobals.d_selSelectMode = sel_brush;
+}
+
+/*
+===============
+Select_BrushesToFaces
+===============
+*/
+void Select_BrushesToFaces()
+{
+	brush_t *b;
+	face_t *f;
+
+	if (!Select_HasBrushes())
+		return;
+
+	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		for (f = b->brush_faces; f; f = f->next)
+		{
+			Select_SelectFace(f);
+		}
+	}
+	Brush_MergeListIntoList(&g_brSelectedBrushes, &g_brActiveBrushes);
+	g_bSelectionChanged = true;
+}
+
+/*
+===============
 Select_All
 ===============
 */
@@ -592,9 +677,15 @@ void Select_GetMid(vec3_t mid)
 	}
 
 	Select_GetBounds(mins, maxs);
-	// lunaran TODO: don't snap the midpoint to the grid, snap the bounds first
+	// lunaran: don't snap the midpoint to the grid, snap the bounds first so selections don't wander when rotated
 	for (i = 0; i < 3; i++)
-		mid[i] = g_qeglobals.d_nGridSize * floor(((mins[i] + maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
+	{
+		mins[i] = g_qeglobals.d_nGridSize * floor(mins[i] / g_qeglobals.d_nGridSize);
+		maxs[i] = g_qeglobals.d_nGridSize * ceil(maxs[i] / g_qeglobals.d_nGridSize);
+		mid[i] = roundf((mins[i] + maxs[i]) * 0.5f);
+	}
+	//for (i = 0; i < 3; i++)
+	//	mid[i] = g_qeglobals.d_nGridSize * floor(((mins[i] + maxs[i]) * 0.5) / g_qeglobals.d_nGridSize);
 }
 
 
@@ -654,6 +745,7 @@ void Select_MatchingKeyValue(char *szKey, char *szValue)
 			}
 		}
 	}
+	g_bSelectionChanged = true;
 }
 // <---sikk
 

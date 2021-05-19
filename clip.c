@@ -10,6 +10,8 @@ clippoint_t		g_cpClip2;
 clippoint_t		g_cpClip3;
 clippoint_t	   *g_pcpMovingClip;
 
+// lunaran - let clip tool store the 2-point axis projection rather than derive it in various places
+int				g_nClipAxis;
 
 
 /*
@@ -177,6 +179,7 @@ void Clip_ProduceSplitLists ()
 }
 
 
+
 /*
 ==================
 Clip_Clip
@@ -187,24 +190,31 @@ void Clip_Clip ()
 	brush_t	   *pList;
 	brush_t		hold_brushes;
 
-	if (g_qeglobals.d_bClipMode)
-	{
-		hold_brushes.next = &hold_brushes;
-		Clip_ProduceSplitLists();
+	if (!g_qeglobals.d_bClipMode)
+		return;
 
-		pList = ((g_qeglobals.d_nViewType == XZ) ? !g_qeglobals.d_bClipSwitch : g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
+	Undo_Start("Clip Selected");
+	Undo_AddBrushList(&g_brSelectedBrushes);
+
+	hold_brushes.next = &hold_brushes;
+	Clip_ProduceSplitLists();
+
+	pList = ((g_qeglobals.d_nViewType == XZ) ? !g_qeglobals.d_bClipSwitch : g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
     
-		if (pList->next != pList)
-		{
-			Brush_CopyList(pList, &hold_brushes);
-			Brush_CleanList(&g_qeglobals.d_brFrontSplits);
-			Brush_CleanList(&g_qeglobals.d_brBackSplits);
-			Select_Delete();
-			Brush_CopyList(&hold_brushes, &g_brSelectedBrushes);
-		}
-		Clip_ResetMode();
-		Sys_UpdateWindows(W_ALL);
+	if (pList->next != pList)
+	{
+		Brush_CopyList(pList, &hold_brushes);
+		Brush_CleanList(&g_qeglobals.d_brFrontSplits);
+		Brush_CleanList(&g_qeglobals.d_brBackSplits);
+		Select_Delete();
+		Brush_CopyList(&hold_brushes, &g_brSelectedBrushes);
 	}
+	Clip_ResetMode();
+
+	Undo_EndBrushList(&g_brSelectedBrushes);
+	Undo_End();
+
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -214,21 +224,27 @@ Clip_Split
 */
 void Clip_Split ()
 {
-	if (g_qeglobals.d_bClipMode)
+	if (!g_qeglobals.d_bClipMode)
+		return;
+
+	Undo_Start("Split Selected");
+	Undo_AddBrushList(&g_brSelectedBrushes);
+
+	Clip_ProduceSplitLists();
+	if ((g_qeglobals.d_brFrontSplits.next != &g_qeglobals.d_brFrontSplits) &&
+		(g_qeglobals.d_brBackSplits.next != &g_qeglobals.d_brBackSplits))
 	{
-		Clip_ProduceSplitLists();
-		if ((g_qeglobals.d_brFrontSplits.next != &g_qeglobals.d_brFrontSplits) &&
-			(g_qeglobals.d_brBackSplits.next != &g_qeglobals.d_brBackSplits))
-		{
-			Select_Delete();
-			Brush_CopyList(&g_qeglobals.d_brFrontSplits, &g_brSelectedBrushes);
-			Brush_CopyList(&g_qeglobals.d_brBackSplits, &g_brSelectedBrushes);
-			Brush_CleanList(&g_qeglobals.d_brFrontSplits);
-			Brush_CleanList(&g_qeglobals.d_brBackSplits);
-		}
-		Clip_ResetMode();
-		Sys_UpdateWindows(W_ALL);
+		Select_Delete();
+		Brush_CopyList(&g_qeglobals.d_brFrontSplits, &g_brSelectedBrushes);
+		Brush_CopyList(&g_qeglobals.d_brBackSplits, &g_brSelectedBrushes);
+		Brush_CleanList(&g_qeglobals.d_brFrontSplits);
+		Brush_CleanList(&g_qeglobals.d_brBackSplits);
 	}
+	Clip_ResetMode();
+
+	Undo_EndBrushList(&g_brSelectedBrushes);
+	Undo_End();
+	Sys_UpdateWindows(W_ALL);
 }
 
 /*
@@ -255,6 +271,37 @@ void Clip_Flip ()
 
 /*
 ==============
+Clip_StartQuickClip
+
+lunaran: puts point 1 and 2 in the same place and immediately begins dragging point 2
+==============
+*/
+void Clip_StartQuickClip(int x, int y)
+{
+	Clip_ResetMode();
+
+	Clip_DropPoint(x, y);
+	Clip_DropPoint(x, y);
+	g_pcpMovingClip = &g_cpClip2;
+
+}
+
+/*
+==============
+Clip_EndQuickClip
+
+lunaran: stop dragging the current point and immediately clip with it
+==============
+*/
+void Clip_EndQuickClip()
+{
+	Clip_EndPoint();
+	Clip_Clip();
+}
+
+
+/*
+==============
 Clip_DropPoint
 ==============
 */
@@ -264,7 +311,7 @@ void Clip_DropPoint (int x, int y)
 	int				nViewType;
 	int				nDim;
 
-	if (g_pcpMovingClip)
+	if (g_pcpMovingClip)  // <-- when a new click is issued on an existing point
 	{
 // sikk---> Multiple Orthographic Views
 		if (GetCapture() == g_qeglobals.d_hwndXY)
@@ -275,7 +322,7 @@ void Clip_DropPoint (int x, int y)
 			YZ_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
 // <---sikk
 	}
-	else
+	else // <-- if a new point is dropped in space
 	{
 		pPt = NULL;
 
@@ -320,95 +367,128 @@ void Clip_DropPoint (int x, int y)
 			YZ_SnapToPoint(x, y, pPt->ptClip);
 			nDim = 0;
 		}
-// <---sikk				
-		(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
+// <---sikk
+		if (g_cpClip3.bSet)
+			(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMin[nDim];
+		else
+			(pPt->ptClip)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
 	}
 	Sys_UpdateWindows(W_XY| W_Z);
+}
+
+void Clip_GetCoordXY(int x, int y, vec3_t pt)
+{
+	int nDim;
+	// sikk---> Multiple Orthographic Views
+	if (GetCapture() == g_qeglobals.d_hwndXY)
+	{
+		XY_SnapToPoint(x, y, pt);
+		// third coordinates for clip point: use d_v3WorkMax
+		// cf VIEWTYPE defintion: enum VIEWTYPE {YZ, XZ, XY};
+		nDim = (g_qeglobals.d_nViewType == YZ) ? 0 : ((g_qeglobals.d_nViewType == XZ) ? 1 : 2);
+	}
+	if (GetCapture() == g_qeglobals.d_hwndXZ)
+	{
+		XZ_SnapToPoint(x, y, pt);
+		nDim = 1;
+	}
+	if (GetCapture() == g_qeglobals.d_hwndYZ)
+	{
+		YZ_SnapToPoint(x, y, pt);
+		nDim = 0;
+	}
+	// <---sikk				
+	pt[nDim] = g_qeglobals.d_v3WorkMax[nDim];
+}
+
+clippoint_t* Clip_GetNearestClipPointXY(int x, int y, int nView)
+{
+	int nDim1, nDim2;
+	vec3_t	tdp;
+
+	tdp[0] = tdp[1] = tdp[2] = 256;
+
+	if (nView == XY)
+	{
+		XY_SnapToPoint(x, y, tdp);
+		nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
+		nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
+	}
+	if (nView == XZ)
+	{
+		XZ_SnapToPoint(x, y, tdp);
+		nDim1 = 0;
+		nDim2 = 2;
+	}
+	if (nView == YZ)
+	{
+		YZ_SnapToPoint(x, y, tdp);
+		nDim1 = 1;
+		nDim2 = 2;
+	}
+
+	// lunaran: based on screen distance and not world distance
+	float margin = 10.0f / g_qeglobals.d_xyz.scale;
+	if (g_cpClip1.bSet)
+	{
+		if (fabs(g_cpClip1.ptClip[nDim1] - tdp[nDim1]) < margin &&
+			fabs(g_cpClip1.ptClip[nDim2] - tdp[nDim2]) < margin)
+		{
+			return &g_cpClip1;
+		}
+	}
+	if (g_cpClip2.bSet)
+	{
+		if (fabs(g_cpClip2.ptClip[nDim1] - tdp[nDim1]) < margin &&
+			fabs(g_cpClip2.ptClip[nDim2] - tdp[nDim2]) < margin)
+		{
+			return &g_cpClip2;
+		}
+	}
+	if (g_cpClip3.bSet)
+	{
+		if (fabs(g_cpClip3.ptClip[nDim1] - tdp[nDim1]) < margin &&
+			fabs(g_cpClip3.ptClip[nDim2] - tdp[nDim2]) < margin)
+		{
+			return &g_cpClip3;
+		}
+	}
+	return NULL;
 }
 
 /*
 ==============
 Clip_MovePoint
+should be named Clip_MoveMouse
 ==============
 */
 void Clip_MovePoint (int x, int y, int nView)
 {
 	int		nDim1, nDim2;
 	bool	bCrossHair = false;
-	vec3_t	tdp;
 
-	tdp[0] = tdp[1] = tdp[2] = 256;
-
-// sikk---> Multiple Orthographic Views
-	if (nView == XY)
-		XY_SnapToPoint(x, y, tdp);
-	if (nView == XZ)
-		XZ_SnapToPoint(x, y, tdp);
-	if (nView == YZ)
-		YZ_SnapToPoint(x, y, tdp);
-
-	if (g_pcpMovingClip && (GetCapture() == g_qeglobals.d_hwndXY))
+	// lunaran TODO: don't use windows mouse capture status for control flow
+	if (g_pcpMovingClip && GetCapture())
 	{
+		if (GetCapture() == g_qeglobals.d_hwndXY)
+		{
+			XY_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
+		}
+		else if (GetCapture() == g_qeglobals.d_hwndXZ)
+		{
+			XZ_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
+		}
+		else if (GetCapture() == g_qeglobals.d_hwndYZ)
+		{
+			YZ_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
+		}
 		bCrossHair = true;
-		XY_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
-	}
-	else if (g_pcpMovingClip && (GetCapture() == g_qeglobals.d_hwndXZ))
-	{
-		bCrossHair = true;
-		XZ_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
-	}
-	else if ((g_pcpMovingClip) && (GetCapture() == g_qeglobals.d_hwndYZ))
-	{
-		bCrossHair = true;
-		YZ_SnapToPoint(x, y, g_pcpMovingClip->ptClip);
 	}
 	else
 	{
-		g_pcpMovingClip = NULL;
-
-		if (nView == XY)
-		{
-			nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
-			nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
-		}
-		if (nView == XZ)
-		{
-			nDim1 = 0;
-			nDim2 = 2;
-		}
-		if (nView == YZ)
-		{
-			nDim1 = 1;
-			nDim2 = 2;
-		}
-// <---sikk
-		if (g_cpClip1.bSet)
-		{
-			if (fDiff(g_cpClip1.ptClip[nDim1], tdp[nDim1]) < 8 &&	// sikk - changed from "3" for more cushion  
-				fDiff(g_cpClip1.ptClip[nDim2], tdp[nDim2]) < 8)
-			{
-				bCrossHair = true;
-				g_pcpMovingClip = &g_cpClip1;
-			}
-		}
-		if (g_cpClip2.bSet)
-		{
-			if (fDiff(g_cpClip2.ptClip[nDim1], tdp[nDim1]) < 8 &&
-				fDiff(g_cpClip2.ptClip[nDim2], tdp[nDim2]) < 8)
-			{
-				bCrossHair = true;
-				g_pcpMovingClip = &g_cpClip2;
-			}
-		}
-		if (g_cpClip3.bSet)
-		{
-			if (fDiff(g_cpClip3.ptClip[nDim1], tdp[nDim1]) < 8 &&
-				fDiff(g_cpClip3.ptClip[nDim2], tdp[nDim2]) < 8)
-			{
-				bCrossHair = true;
-				g_pcpMovingClip = &g_cpClip3;
-			}
-		}
+		g_pcpMovingClip = Clip_GetNearestClipPointXY(x, y, nView);
+		if (g_pcpMovingClip)
+			bCrossHair = true;
 	}
 
 	if (bCrossHair)
@@ -524,6 +604,13 @@ void Clip_EndPoint ()
 {
 	if (g_pcpMovingClip)
 	{
+		if (GetCapture() == g_qeglobals.d_hwndXY)
+			g_nClipAxis = XY;
+		else if (GetCapture() == g_qeglobals.d_hwndXZ)
+			g_nClipAxis = XZ;
+		else if (GetCapture() == g_qeglobals.d_hwndYZ)
+			g_nClipAxis = YZ;
+
 		g_pcpMovingClip = NULL;
 		ReleaseCapture();
 	}

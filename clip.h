@@ -26,6 +26,8 @@ void Clip_ResetMode ();
 void Clip_Clip();
 void Clip_Split ();
 void Clip_Flip ();
+void Clip_StartQuickClip(int x, int y);
+void Clip_EndQuickClip();
 void Clip_DropPoint (int x, int y);
 void Clip_MovePoint (int x, int y, int nView);
 void Clip_DrawPoint (int nView);

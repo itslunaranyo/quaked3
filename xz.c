@@ -225,7 +225,11 @@ void XZ_MouseDown (int x, int y, int buttons)
 	// clipper
 	if ((buttonstate & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
-		Clip_DropPoint(x, y);
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_StartQuickClip(x, y);
+		else
+			Clip_DropPoint(x, y);
 		Sys_UpdateWindows(W_ALL);
 	}
 	else
@@ -362,7 +366,14 @@ void XZ_MouseUp (int x, int y, int buttons)
 {
 	// clipper
 	if (g_qeglobals.d_bClipMode)
-		Clip_EndPoint();
+	{
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_EndQuickClip();
+		else
+			Clip_EndPoint();
+		Sys_UpdateWindows(W_ALL);
+	}
 	else
 	{
 		Drag_MouseUp();
@@ -1430,8 +1441,7 @@ void XZ_Draw ()
 	// clipper
 	if (g_qeglobals.d_bClipMode)
 		Clip_DrawPoint(XZ);
-
-	if (GetKeyState(VK_MENU) < 0)
+	else if (GetKeyState(VK_MENU) < 0)
 		XZ_DrawRotateIcon();
 	// now draw camera point
 	XZ_DrawCameraIcon();

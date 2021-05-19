@@ -120,7 +120,7 @@ void DoYZPopupMenu (int x, int y)
 		break;
 	case ID_MENU_CREATEPOINTENTITY:
 		YZ_ToGridPoint(x, y, g_v3Origin);
-		g_v3Origin[0] = g_qeglobals.d_v3WorkMax[0];
+		g_v3Origin[0] = g_qeglobals.d_v3WorkMin[0];
 		DoCreateEntity(true, false, false, g_v3Origin);
 		break;
 	default:

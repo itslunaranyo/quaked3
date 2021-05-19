@@ -264,9 +264,11 @@ bool QE_KeyDown (int key)
 	case 'F':	// sikk - added shortcut key
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_TEXTURES_FLUSH_UNUSED, 0);
 		break;
+		/*
 	case 'G':	// sikk - added shortcut key
+		// lunaran - removed it again because turning off snap to grid should require two submarine commanders to turn their keys simultaneously
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_GRID_SNAPTOGRID, 0);
-		break;
+		break;*/
 	case 'H':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDESELECTED, 0);
 		break;

@@ -61,11 +61,14 @@ Betwixt
 */
 float Betwixt (float f1, float f2)
 {
+	return (f1 + f2) * 0.5;	// wtf
+	/*
 	if (f1 > f2)
 		return f2 + ((f1 - f2) / 2);
 	else
-		return f1 + ((f2 - f1) / 2);
+		return f1 + ((f2 - f1) / 2);*/
 }
+
 
 /*
 ==================
@@ -74,10 +77,12 @@ fDiff
 */
 float fDiff (float f1, float f2)
 {
+	return fabs(f1 - f2); // wtfff
+	/*
 	if (f1 > f2)
 		return f1 - f2;
 	else
-		return f2 - f1;
+		return f2 - f1;*/
 }
 
 /*
@@ -298,7 +303,11 @@ void XY_MouseDown (int x, int y, int buttons)
 	// clipper
 	if ((buttonstate & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
-		Clip_DropPoint(x, y);
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_StartQuickClip(x, y);
+		else
+			Clip_DropPoint(x, y);
 		Sys_UpdateWindows(W_ALL);
 	}
 	else
@@ -504,7 +513,14 @@ void XY_MouseUp (int x, int y, int buttons)
 {
 	// clipper
 	if (g_qeglobals.d_bClipMode)
-		Clip_EndPoint();
+	{
+		// lunaran - alt quick clip
+		if (GetKeyState(VK_MENU) < 0)
+			Clip_EndQuickClip();
+		else
+			Clip_EndPoint();
+		Sys_UpdateWindows(W_ALL);
+	}
 	else
 	{
 		Drag_MouseUp();
@@ -1885,9 +1901,10 @@ void XY_Draw ()
 	if (g_qeglobals.d_nPointfileDisplayList)
 		glCallList(g_qeglobals.d_nPointfileDisplayList);
 
+	// lunaran - why do this?
+	/*
 	if (!(g_qeglobals.d_nViewType == XY))
 		glPopMatrix();
-
 
 	// now draw selected brushes
 	if (g_qeglobals.d_nViewType != XY)
@@ -1897,6 +1914,7 @@ void XY_Draw ()
 			glRotatef(-90, 0, 1, 0);	    // put Z going up
 		glRotatef(-90, 1, 0, 0);	    // put Z going up
 	}
+	*/
 
 	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
 				 g_qeglobals.d_v3SelectTranslate[1], 
@@ -1996,9 +2014,9 @@ void XY_Draw ()
 	// clipper
 	if (g_qeglobals.d_bClipMode)
 		Clip_DrawPoint(XY);
-
-	if (GetKeyState(VK_MENU) < 0)
+	else if (GetKeyState(VK_MENU) < 0)
 		XY_DrawRotateIcon();
+
 	// now draw camera point
 	XY_DrawCameraIcon();
 	if (g_qeglobals.d_savedinfo.bShow_Z)	// sikk - Don't draw Z Icon if Z window is hidden

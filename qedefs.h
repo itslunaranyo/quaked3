@@ -81,8 +81,8 @@
 
 // menu indexes for modifying menus
 #define	MENU_VIEW		2
-#define	MENU_BSP		4
 #define	MENU_TEXTURE	6
+#define	MENU_BSP		8
 
 // odd key ID's not in windows header...
 #define	VK_PLUS			187

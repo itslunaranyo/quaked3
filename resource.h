@@ -179,7 +179,6 @@
 #define IDC_SPIN_TEXSCALE               1280
 #define IDC_EDIT_FINDKEY                1281
 #define IDC_EDIT_FINDVALUE              1282
-#define IDC_RESET                       1284
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -389,13 +388,21 @@
 #define ID_VIEW_SHOWHINT                40422
 #define ID_VIEW_SWAPGRIDCAM             40423
 #define ID_THEMES_BLUEGRAY              40425
+#define ID_SELECTION_CONVERT            40426
+#define ID_CONVERT_FACESTOBRUSHESCOMPLETE 40427
+#define ID_CONVERT_FACESTOBRUSHESPARTIAL 40428
+#define ID_CONVERT_BRUSHESTOFACES       40429
+#define ID_SELECTION_BRUSHESTOFACES     40430
+#define ID_SELECTION_FACESTOBRUSHESCOMPLETE 40431
+#define ID_SELECTION_FACESTOBRUSHESPARTIAL 40432
+#define ID_WINDOW_PRESETS               40433
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
-#define _APS_NEXT_COMMAND_VALUE         40426
+#define _APS_NEXT_COMMAND_VALUE         40434
 #define _APS_NEXT_CONTROL_VALUE         1285
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

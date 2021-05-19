@@ -1674,6 +1674,7 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
+				Clip_UnsetMode();
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_edge;
@@ -1687,6 +1688,7 @@ LONG WINAPI CommandHandler (
 			}
 			else
 			{
+				Clip_UnsetMode();
 				SetupVertexSelection();
 				if (g_qeglobals.d_nNumPoints)
 					g_qeglobals.d_selSelectMode = sel_vertex;
@@ -1816,24 +1818,41 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CLIPPER:
+			if (g_qeglobals.d_selSelectMode != sel_brush)
+			{
+				g_qeglobals.d_selSelectMode = sel_brush;
+				Sys_UpdateWindows(W_ALL);
+			}
 			Clip_SetMode();
 			break;
+		// lunaran - moved undo into the actual clip & split actions
 		case ID_SELECTION_CLIPSELECTED:
-			Undo_Start("Clip Selected");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+		//	Undo_Start("Clip Selected");
+		//	Undo_AddBrushList(&g_brSelectedBrushes);
 			Clip_Clip();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+		//	Undo_EndBrushList(&g_brSelectedBrushes);
+		//	Undo_End();
 			break;
 		case ID_SELECTION_SPLITSELECTED:
-			Undo_Start("Split Selected");
-			Undo_AddBrushList(&g_brSelectedBrushes);
+		//	Undo_Start("Split Selected");
+		//	Undo_AddBrushList(&g_brSelectedBrushes);
 			Clip_Split();
-			Undo_EndBrushList(&g_brSelectedBrushes);
-			Undo_End();
+		//	Undo_EndBrushList(&g_brSelectedBrushes);
+		//	Undo_End();
 			break;
 		case ID_SELECTION_FLIPCLIP:
 			Clip_Flip();
+			break;
+
+		// lunaran - back and forth face<->brush conversion
+		case ID_SELECTION_FACESTOBRUSHESPARTIAL:
+			Select_FacesToBrushes(true);
+			break;
+		case ID_SELECTION_FACESTOBRUSHESCOMPLETE:
+			Select_FacesToBrushes(false);
+			break;
+		case ID_SELECTION_BRUSHESTOFACES:
+			Select_BrushesToFaces();
 			break;
 
 		case ID_SELECTION_SELECTCOMPLETETALL:

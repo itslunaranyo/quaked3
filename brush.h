@@ -79,6 +79,7 @@ void		Brush_CleanList (brush_t *pList);
 void		Brush_CopyList (brush_t *pFrom, brush_t *pTo);
 
 brush_t	   *Brush_Alloc ();
+int			Brush_NumFaces(brush_t *b);
 void		Brush_Build (brush_t *b);
 void		Brush_BuildWindings (brush_t *b);
 void		Brush_CheckTexdef (brush_t *b, face_t *f, char *pszName);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
