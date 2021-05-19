@@ -939,9 +939,9 @@ int WINAPI WinMain (
 	Sys_LogFile();
 
 	WCam_Create(hInstance);
-	WXY_Create(hInstance);
-	WXZ_Create(hInstance);	// sikk - Multiple Orthographic Views
-	WYZ_Create(hInstance);	// sikk - Multiple Orthographic Views
+	WXYZ_Create(hInstance, 0);
+	WXYZ_Create(hInstance, 1);
+	WXYZ_Create(hInstance, 2);
 	WZ_Create(hInstance);
 	InspWnd_Create(hInstance);
 
@@ -1045,18 +1045,18 @@ int WINAPI WinMain (
 		}
 		if (g_nUpdateBits & (W_XY))
 		{
-			InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
-			UpdateWindow(g_qeglobals.d_hwndXY);
+			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
+			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 // sikk---> Multiple Orthographic Views
 			if (g_qeglobals.d_savedinfo.bShow_XZ)
 			{
-				InvalidateRect(g_qeglobals.d_hwndXZ, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndXZ);
+				InvalidateRect(g_qeglobals.d_hwndXYZ[2], NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndXYZ[2]);
 			}
 			if (g_qeglobals.d_savedinfo.bShow_YZ)
 			{
-				InvalidateRect(g_qeglobals.d_hwndYZ, NULL, FALSE);
-				UpdateWindow(g_qeglobals.d_hwndYZ);
+				InvalidateRect(g_qeglobals.d_hwndXYZ[1], NULL, FALSE);
+				UpdateWindow(g_qeglobals.d_hwndXYZ[1]);
 			}
 // <---sikk
 		}

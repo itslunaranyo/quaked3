@@ -82,7 +82,6 @@ InspWnd_SetMode
 */
 void InspWnd_SetMode(int nType)
 {
-	RECT	rc;
 	HMENU	hMenu = GetMenu(g_qeglobals.d_hwndMain);
 
 	// Is the caller asking us to cycle to the next window?
@@ -204,6 +203,7 @@ BOOL CALLBACK InspWndProc(
 	return 0;
 
 	case WM_WINDOWPOSCHANGING:
+	case WM_WINDOWPOSCHANGED:
 		InspWnd_Resize();
 		return 0;
 

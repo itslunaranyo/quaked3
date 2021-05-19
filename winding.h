@@ -1,6 +1,8 @@
 //==============================
 //	winding.h
 //==============================
+#ifndef __WINDING_H__
+#define __WINDING_H__
 
 #define WCONVEX_EPSILON		0.2
 #define	DIST_EPSILON		0.02
@@ -32,3 +34,5 @@ void Winding_Free (winding_t *w);
 void Winding_RemovePoint (winding_t *w, int point);
 // returns true if the planes are concave
 bool Winding_PlanesConcave (winding_t *w1, winding_t *w2, vec3_t normal1, vec3_t normal2, float dist1, float dist2);
+
+#endif

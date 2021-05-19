@@ -646,7 +646,7 @@ void Cam_DrawClipSplits ()
 
 	if (g_qeglobals.d_bClipMode)
 		if (g_cpClip1.bSet && g_cpClip2.bSet)
-			g_qeglobals.d_pbrSplitList = ((g_qeglobals.d_nViewType == XZ) ? !g_qeglobals.d_bClipSwitch : g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
+			g_qeglobals.d_pbrSplitList = (g_qeglobals.d_bClipSwitch) ? &g_qeglobals.d_brFrontSplits : &g_qeglobals.d_brBackSplits;
 }
 
 // sikk---> Camera Grid

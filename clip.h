@@ -1,8 +1,12 @@
+#ifndef __CLIP_H__
+#define __CLIP_H__
 //==============================
 //	clip.h
 //==============================
 
 // 3-Point Clipping Tool
+
+#include "xy.h"
 
 typedef struct
 {
@@ -26,9 +30,11 @@ void Clip_ResetMode ();
 void Clip_Clip();
 void Clip_Split ();
 void Clip_Flip ();
-void Clip_StartQuickClip(int x, int y);
+void Clip_StartQuickClip(xyz_t* xyz, int x, int y);
 void Clip_EndQuickClip();
-void Clip_DropPoint (int x, int y);
-void Clip_MovePoint (int x, int y, int nView);
-void Clip_DrawPoint (int nView);
+void Clip_DropPoint (xyz_t* xyz, int x, int y);
+void Clip_MovePoint (xyz_t* xyz, int x, int y);
+void Clip_DrawPoint (xyz_t* xyz);
 void Clip_EndPoint ();
+
+#endif

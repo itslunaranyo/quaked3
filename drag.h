@@ -1,3 +1,5 @@
+#ifndef __DRAG_H__
+#define __DRAG_H__
 //==============================
 //	drag.h
 //==============================
@@ -10,3 +12,5 @@ void Drag_MouseUp ();
 void AxializeVector (vec3_t v);
 void MoveSelection (vec3_t move);
 void UpdateTarget (vec3_t origin, vec3_t dir);
+
+#endif

@@ -2,6 +2,8 @@
 //	qfiles.h
 //==============================
 
+#ifndef __QFILES_H__
+#define __QFILES_H__
 // Quake file formats
 // This file must be identical in the quake and utils directories
 
@@ -77,3 +79,5 @@ typedef struct
 	char	pad1, pad2;
 	char	name[16];			// must be null terminated
 } lumpinfo_t;
+
+#endif

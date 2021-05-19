@@ -1,3 +1,5 @@
+#ifndef __MAP_H__
+#define __MAP_H__
 //==============================
 //	map.h
 //==============================
@@ -50,3 +52,5 @@ bool Map_IsBrushFiltered (brush_t *b);
 entity_t *Map_FindClass (char *cname);
 
 
+
+#endif

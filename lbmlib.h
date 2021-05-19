@@ -1,3 +1,5 @@
+#ifndef __LBMLIB_H__
+#define __LBMLIB_H__
 //==============================
 //	lbmlib.h
 //==============================
@@ -19,3 +21,5 @@ byte *LBMRLEDecompress (byte *source, byte *unpacked, int bpwidth);
 int fgetLittleShort (FILE *f);
 int fgetLittleLong (FILE *f);
 
+
+#endif

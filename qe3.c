@@ -55,7 +55,7 @@ void QE_Init ()
 	*/
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
-	g_qeglobals.d_nViewType = XY;
+	g_qeglobals.d_xyz[0].dViewType = XY;
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 
 	// set maximium undo levels
@@ -92,9 +92,8 @@ void QE_Init ()
 	*/
 	Texture_Init();
 	Cam_Init();
-	XY_Init();
-	XZ_Init();	// sikk - Multiple Orthographic Views
-	YZ_Init();	// sikk - Multiple Orthographic Views
+	for (int i = 0; i < 4;i++)
+		XYZ_Init(&g_qeglobals.d_xyz[i]);
 	Z_Init();
 
 	// sikk - Update User Interface
@@ -767,7 +766,7 @@ void QE_UpdateCommandUI ()
 	CheckMenuItem(hMenu, ID_VIEW_STATUSBAR, (IsWindowVisible(g_qeglobals.d_hwndStatus) ? MF_CHECKED : MF_UNCHECKED));
 	// XY Windows
 	CheckMenuItem(hMenu, ID_VIEW_CAMERA,	(IsWindowVisible(g_qeglobals.d_hwndCamera) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (IsWindowVisible(g_qeglobals.d_hwndXY) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]) ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(g_qeglobals.d_savedinfo.bShow_XZ ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(g_qeglobals.d_savedinfo.bShow_YZ ? MF_CHECKED : MF_UNCHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(g_qeglobals.d_savedinfo.bShow_Z ? MF_CHECKED : MF_UNCHECKED));

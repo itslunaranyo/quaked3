@@ -345,8 +345,8 @@ void Drag_Begin (int x, int y, int buttons,
 		t = Test_Ray(origin, dir, false);
 		if (t.face)
 		{
-			nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
-			nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
+			nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
+			nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
 
 			g_qeglobals.d_v3WorkMin[nDim1] = t.brush->mins[nDim1];
 			g_qeglobals.d_v3WorkMax[nDim1] = t.brush->maxs[nDim1];
@@ -500,4 +500,3 @@ void Drag_MouseUp ()
 	Undo_EndBrushList(&g_brSelectedBrushes);	// sikk - Undo/Redo
 	Undo_End();	// sikk - Undo/Redo
 }
-

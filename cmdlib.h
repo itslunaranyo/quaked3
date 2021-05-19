@@ -2,8 +2,8 @@
 //	cmdlib.h
 //==============================
 
-#ifndef __CMDLIB__
-#define __CMDLIB__
+#ifndef __CMDLIB_H__
+#define __CMDLIB_H__
 
 #include <stdio.h>
 #include <string.h>

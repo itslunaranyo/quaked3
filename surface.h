@@ -1,6 +1,8 @@
 //==============================
 //	surface.h
 //==============================
+#ifndef __SURFACE_H__
+#define __SURFACE_H__
 
 #define SF_MIXEDNAME	0x01
 #define SF_MIXEDSHIFTX	0x02
@@ -27,3 +29,5 @@ void Surf_ShiftTexture(int x, int y);
 void Surf_ScaleTexture(int x, int y);
 void Surf_RotateTexture(int deg);
 
+
+#endif

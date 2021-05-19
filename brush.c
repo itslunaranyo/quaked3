@@ -1513,14 +1513,12 @@ void Brush_MakeSided (int sides)
 
 	Brush_Free(b);
 
-// sikk---> Multiple Orthographic Views
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXZ)
-		nViewType = XZ;
-	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndYZ)
-		nViewType = YZ;
+	// lunaran - grid view reunification
+	xyz_t* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
+	if (xyz)
+		nViewType = xyz->dViewType;
 	else
-		nViewType = g_qeglobals.d_nViewType;
-// <---sikk
+		nViewType = XY;
 
 	switch (nViewType)
 	{

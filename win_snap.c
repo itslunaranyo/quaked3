@@ -37,26 +37,16 @@ bool FindClosestBottom (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
 			best = temprect.top;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
-			best = temprect.top;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
+				best = temprect.top;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
-			best = temprect.top;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - best))
-			best = temprect.top;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);
@@ -99,26 +89,16 @@ bool FindClosestTop (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
 			best = temprect.bottom;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
-			best = temprect.bottom;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
+				best = temprect.bottom;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
-			best = temprect.bottom;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - best))
-			best = temprect.bottom;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);
@@ -161,26 +141,16 @@ bool FindClosestLeft (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit)
 		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
 			best = temprect.right;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
-			best = temprect.right;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
+				best = temprect.right;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
-			best = temprect.right;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - best) && rect->right - temprect.right >= widthlimit)
-			best = temprect.right;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);
@@ -223,26 +193,16 @@ bool FindClosestRight (HWND h, LPRECT rect, LPRECT parentrect, int widthlimit)
 		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
 			best = temprect.left;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
-			best = temprect.left;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
+				best = temprect.left;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
-			best = temprect.left;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->right - temprect.left) < abs(rect->right - best) && temprect.left - rect->left >= widthlimit)
-			best = temprect.left;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);
@@ -295,32 +255,18 @@ bool FindClosestHorizontal (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
 			bestright = temprect.left;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - bestleft))
-			bestleft = temprect.right;
-		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
-			bestright = temprect.left;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->left - temprect.right) < abs(rect->left - bestleft))
+				bestleft = temprect.right;
+			if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
+				bestright = temprect.left;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - bestleft))
-			bestleft = temprect.right;
-		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
-			bestright = temprect.left;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->left - temprect.right) < abs(rect->left - bestleft))
-			bestleft = temprect.right;
-		if (abs(rect->right - temprect.left) < abs(rect->right - bestright))
-			bestright = temprect.left;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);
@@ -385,32 +331,18 @@ bool FindClosestVertical (HWND h, LPRECT rect, LPRECT parentrect)
 		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
 			bestbottom = temprect.top;
 	}
-	if (h != g_qeglobals.d_hwndXY)
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
 	{
-		GetWindowRect(g_qeglobals.d_hwndXY, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - besttop))
-			besttop = temprect.bottom;
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
-			bestbottom = temprect.top;
+		if (g_qeglobals.d_hwndXYZ[i] && h != g_qeglobals.d_hwndXYZ[i])
+		{
+			GetWindowRect(g_qeglobals.d_hwndXYZ[i], &temprect);
+			if (abs(rect->top - temprect.bottom) < abs(rect->top - besttop))
+				besttop = temprect.bottom;
+			if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
+				bestbottom = temprect.top;
+		}
 	}
-// sikk---> Multiple Orthographic Views
-	if (h != g_qeglobals.d_hwndXZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndXZ, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - besttop))
-			besttop = temprect.bottom;
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
-			bestbottom = temprect.top;
-	}
-	if (h != g_qeglobals.d_hwndYZ)
-	{
-		GetWindowRect(g_qeglobals.d_hwndYZ, &temprect);
-		if (abs(rect->top - temprect.bottom) < abs(rect->top - besttop))
-			besttop = temprect.bottom;
-		if (abs(rect->bottom - temprect.top) < abs(rect->bottom - bestbottom))
-			bestbottom = temprect.top;
-	}
-// <---sikk
 	if (h != g_qeglobals.d_hwndZ)
 	{
 		GetWindowRect(g_qeglobals.d_hwndZ, &temprect);

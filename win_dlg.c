@@ -139,7 +139,7 @@ void FindBrush (int entitynum, int brushnum)
 	Select_SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
-		g_qeglobals.d_xyz.origin[i] = (b->mins[i] + b->maxs[i]) / 2;
+		g_qeglobals.d_xyz[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
 
 	Sys_Printf("MSG: Selected.\n");
 }
@@ -323,10 +323,10 @@ BOOL CALLBACK RotateDlgProc (
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			
 			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
+			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndCamera);
-			UpdateWindow(g_qeglobals.d_hwndXY);
+			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 			UpdateWindow(g_qeglobals.d_hwndZ);
 			return TRUE;
 // <---sikk
@@ -1314,10 +1314,10 @@ void OnSelect (HWND hTree)
 	// Center on selected entity and update the windows
 	XY_PositionView();
 	Cam_PositionView();
-	InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
+	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-	UpdateWindow(g_qeglobals.d_hwndXY);
+	UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 	UpdateWindow(g_qeglobals.d_hwndZ);
 	UpdateWindow(g_qeglobals.d_hwndCamera);
 }
@@ -1352,10 +1352,10 @@ void OnDelete (HWND hTree, HWND hList)
 		TreeView_DeleteItem(hTree, hItem);
 		ListView_DeleteAllItems(hList);
 	}
-	InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
+	InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 	InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-	UpdateWindow(g_qeglobals.d_hwndXY);
+	UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 	UpdateWindow(g_qeglobals.d_hwndZ);
 	UpdateWindow(g_qeglobals.d_hwndCamera);
 }
@@ -1850,10 +1850,10 @@ BOOL CALLBACK ScaleDlgProc (
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			
 			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, FALSE);
-			InvalidateRect(g_qeglobals.d_hwndXY, NULL, FALSE);
+			InvalidateRect(g_qeglobals.d_hwndXYZ[0], NULL, FALSE);
 			InvalidateRect(g_qeglobals.d_hwndZ, NULL, FALSE);
 			UpdateWindow(g_qeglobals.d_hwndCamera);
-			UpdateWindow(g_qeglobals.d_hwndXY);
+			UpdateWindow(g_qeglobals.d_hwndXYZ[0]);
 			UpdateWindow(g_qeglobals.d_hwndZ);
 			return TRUE;
 

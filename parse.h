@@ -1,3 +1,5 @@
+#ifndef __PARSE_H__
+#define __PARSE_H__
 //==============================
 //	parse.h
 //==============================
@@ -17,3 +19,5 @@ void StartTokenParsing (char *data);
 bool GetToken (bool crossline);
 void UngetToken ();
 bool TokenAvailable ();
+
+#endif

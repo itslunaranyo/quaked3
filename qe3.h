@@ -49,8 +49,8 @@
 
 #include "camera.h"
 #include "xy.h"
-#include "xz.h"	// sikk - Multiple Orthographic Views
-#include "yz.h"	// sikk - Multiple Orthographic Views
+//#include "xz.h"	// sikk - Multiple Orthographic Views
+//#include "yz.h"	// sikk - Multiple Orthographic Views
 #include "z.h"
 #include "mru.h"
 #include "undo.h"
@@ -143,9 +143,10 @@ typedef struct
 					d_hwndEntity,
 					d_hwndConsole,
 					d_hwndTexture,
-				d_hwndXY,
-				d_hwndXZ,				// sikk - Multiple Orthographic Views
-				d_hwndYZ,				// sikk - Multiple Orthographic Views
+				d_hwndXYZ[4],			// lunaran - grid view reunification
+			//	d_hwndXY,
+			//	d_hwndXZ,				// sikk - Multiple Orthographic Views
+			//	d_hwndYZ,				// sikk - Multiple Orthographic Views
 				d_hwndZ,
 				d_hwndStatus,
 				d_hwndToolbar1,
@@ -179,9 +180,10 @@ typedef struct
 	int			d_nPointfileDisplayList;
 
 	camera_t	d_camera;				// sikk - moved camera object here
-	xy_t        d_xyz;					// it's now for all view
-	xz_t		d_xz;					// sikk - Multiple Orthographic Views
-	yz_t		d_yz;					// sikk - Multiple Orthographic Views
+	xyz_t		d_xyz[4];				// lunaran - grid view reunification
+//	xyz_t		d_xyz;					// it's now for all view
+//	xz_t		d_xz;					// sikk - Multiple Orthographic Views
+//	yz_t		d_yz;					// sikk - Multiple Orthographic Views
 	z_t         d_z;
 
 	int			d_nLastActiveXY;		// sikk - holds last active XY window for clipping
@@ -330,14 +332,18 @@ void	WCam_Create (HINSTANCE hInstance);
 LONG	WINAPI WCam_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // win_xy.c
-void	WXY_Create (HINSTANCE hInstance);
-LONG	WINAPI WXY_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void	WXYZ_Create (HINSTANCE hInstance, int slot);
+LONG	WINAPI XYZWnd_Proc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
 void	WXY_Print ();
 int		GetSelectionInfo ();	// sikk - Contex Menu
-void	DoXYPopupMenu (int x, int y);	// sikk - Contex Menu
+void	XYZWnd_DoPopupMenu(xyz_t* xyz, int x, int y);	// sikk - Contex Menu
+xyz_t*	XYZWnd_WinFromHandle(HWND xyzwin);
+void	XYZWnd_CycleViewAxis(HWND xyzwin);
+void	XYZWnd_SetViewAxis(HWND xyzwin, int viewAxis);
 
 // sikk---> Multiple Orthographic Views
+/*
 // win_xz.c
 void	WXZ_Create (HINSTANCE hInstance);
 LONG WINAPI WXZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -345,13 +351,14 @@ LONG WINAPI WXZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void	WXZ_Print ();
 void	DoXZPopupMenu (int x, int y);	// sikk - Contex Menu
 
-									// win_yz.c
+// win_yz.c
 void	WYZ_Create (HINSTANCE hInstance);
 LONG WINAPI WYZ_WndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 //static void WXY_InitPixelFormat (PIXELFORMATDESCRIPTOR *pPFD);	// sikk - unused
 void	WYZ_Print ();
 void	DoYZPopupMenu (int x, int y);	// sikk - Contex Menu
 // <---sikk
+*/
 
 // win_z.c
 void WZ_Create (HINSTANCE hInstance);

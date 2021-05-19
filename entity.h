@@ -1,3 +1,5 @@
+#ifndef __ENTITY_H__
+#define __ENTITY_H__
 //==============================
 //	entity.h
 //==============================
@@ -91,3 +93,5 @@ void		FillEntityListbox (HWND hwnd, int pointbased, int brushbased);	// sikk - C
 
 bool		IsBrushSelected (brush_t* bSel);	// sikk - Export Selection (Map/Prefab)
 
+
+#endif

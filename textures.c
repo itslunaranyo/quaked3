@@ -740,9 +740,6 @@ Texture_ShowWad
 */
 void Texture_ShowWad (int menunum)
 {
-	char	name[1024];
-	//char	wadname[1024];
-
 	g_qeglobals.d_texturewin.originy = 0;
 	Sys_Printf("CMD: Loading all textures...\n");
 
@@ -1002,7 +999,6 @@ By mouse click
 */
 void TexWnd_SelectTexture (int mx, int my)
 {
-	texWndPlacement_t* twp;
 	texdef_t	texdef;
 
 	qtexture_t*	tw;

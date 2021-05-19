@@ -1,3 +1,5 @@
+#ifndef __POINTS_H__
+#define __POINTS_H__
 //==============================
 //	points.h
 //==============================
@@ -11,3 +13,5 @@ bool Pointfile_Check ();	// sikk - return value used for Test Map after BSP
 void Pointfile_Draw ();
 void Pointfile_Clear ();
 //void Pointfile_Load ();	// unused
+
+#endif

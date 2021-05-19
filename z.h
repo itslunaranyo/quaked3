@@ -1,6 +1,8 @@
 //==============================
 //	z.h
 //==============================
+#ifndef __Z_H__
+#define __Z_H__
 
 // window system independent z view code
 
@@ -26,3 +28,5 @@ void Z_Draw ();
 void Z_DrawGrid ();
 void Z_DrawCameraIcon ();
 void Z_DrawCoords ();
+
+#endif

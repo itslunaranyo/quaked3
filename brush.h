@@ -1,3 +1,6 @@
+#ifndef __BRUSH_H__
+#define __BRUSH_H__
+
 //==============================
 //	brush.h
 //==============================
@@ -141,3 +144,4 @@ void		EmitTextureCoordinates (float *xyzst, qtexture_t *q, face_t *f);
 void		DrawBrushEntityName (brush_t *b);
 void		DrawLight (brush_t *b);
 
+#endif

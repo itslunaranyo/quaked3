@@ -2,8 +2,8 @@
 //	mathlib.h
 //==============================
 
-#ifndef __MATHLIB__
-#define __MATHLIB__
+#ifndef __MATHLIB_H__
+#define __MATHLIB_H__
 
 #include <math.h>
 

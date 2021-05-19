@@ -1,3 +1,5 @@
+#ifndef __CSG_H__
+#define __CSG_H__
 //==============================
 //	csg.h
 //==============================
@@ -11,3 +13,5 @@ brush_t *Brush_Merge (brush_t *brush1, brush_t *brush2, int onlyshape);
 brush_t *Brush_MergeListPairs (brush_t *brushlist, int onlyshape);
 brush_t *Brush_MergeList (brush_t *brushlist, int onlyshape);
 brush_t *Brush_Subtract (brush_t *a, brush_t *b);
+
+#endif

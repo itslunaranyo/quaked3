@@ -298,14 +298,14 @@ void Map_LoadFile (char *filename)
 	if (ent)
 	{
 		GetVectorForKey(ent, "origin", g_qeglobals.d_camera.origin);
-		GetVectorForKey(ent, "origin", g_qeglobals.d_xyz.origin);
+		GetVectorForKey(ent, "origin", g_qeglobals.d_xyz[0].origin);
 		g_qeglobals.d_camera.angles[YAW] = FloatForKey(ent, "angle");
 	}
 	else
 	{
 		g_qeglobals.d_camera.angles[YAW] = 0;
 		VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
-		VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz.origin);
+		VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
 	}
 
 	Sys_UpdateWindows(W_ALL);
@@ -459,7 +459,7 @@ void Map_New ()
 	g_qeglobals.d_camera.angles[YAW] = 0;
 	VectorCopy(g_v3VecOrigin, g_qeglobals.d_camera.origin);
 	g_qeglobals.d_camera.origin[2] = 48;
-	VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz.origin);
+	VectorCopy(g_v3VecOrigin, g_qeglobals.d_xyz[0].origin);
 
 	Map_RestoreBetween();
 
@@ -661,37 +661,37 @@ void Map_RegionXY ()
 
 	float w, h;
 
-	w = 0.5 * g_qeglobals.d_xyz.width / g_qeglobals.d_xyz.scale;
-	h = 0.5 * g_qeglobals.d_xyz.height / g_qeglobals.d_xyz.scale;
+	w = 0.5 * g_qeglobals.d_xyz[0].width / g_qeglobals.d_xyz[0].scale;
+	h = 0.5 * g_qeglobals.d_xyz[0].height / g_qeglobals.d_xyz[0].scale;
 
 // sikk---> Proper Regioning for XZ & YZ Views
 
-	if (g_qeglobals.d_nViewType == XY)
+	if (g_qeglobals.d_xyz[0].dViewType == XY)
 	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - w;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + w;
-		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - h;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + h;
+		g_v3RegionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
+		g_v3RegionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
+		g_v3RegionMins[1] = g_qeglobals.d_xyz[0].origin[1] - h;
+		g_v3RegionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + h;
 		g_v3RegionMins[2] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[2] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
 	}
-	if (g_qeglobals.d_nViewType == XZ)
+	if (g_qeglobals.d_xyz[0].dViewType == XZ)
 	{
-		g_v3RegionMins[0] = g_qeglobals.d_xyz.origin[0] - w;
-		g_v3RegionMaxs[0] = g_qeglobals.d_xyz.origin[0] + w;
+		g_v3RegionMins[0] = g_qeglobals.d_xyz[0].origin[0] - w;
+		g_v3RegionMaxs[0] = g_qeglobals.d_xyz[0].origin[0] + w;
 		g_v3RegionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - h;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + h;
+		g_v3RegionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
+		g_v3RegionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
 	}
-	if (g_qeglobals.d_nViewType == YZ)
+	if (g_qeglobals.d_xyz[0].dViewType == YZ)
 	{
 		g_v3RegionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 		g_v3RegionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-		g_v3RegionMins[1] = g_qeglobals.d_xyz.origin[1] - w;
-		g_v3RegionMaxs[1] = g_qeglobals.d_xyz.origin[1] + w;
-		g_v3RegionMins[2] = g_qeglobals.d_xyz.origin[2] - h;
-		g_v3RegionMaxs[2] = g_qeglobals.d_xyz.origin[2] + h;
+		g_v3RegionMins[1] = g_qeglobals.d_xyz[0].origin[1] - w;
+		g_v3RegionMaxs[1] = g_qeglobals.d_xyz[0].origin[1] + w;
+		g_v3RegionMins[2] = g_qeglobals.d_xyz[0].origin[2] - h;
+		g_v3RegionMaxs[2] = g_qeglobals.d_xyz[0].origin[2] + h;
 	}
 // <---sikk
 	Map_ApplyRegion();
@@ -705,12 +705,12 @@ Map_RegionXZ
 void Map_RegionXZ ()
 {
 	Map_RegionOff();
-	g_v3RegionMins[0] = g_qeglobals.d_xz.origin[0] - 0.5 * g_qeglobals.d_xz.width / g_qeglobals.d_xz.scale;
-	g_v3RegionMaxs[0] = g_qeglobals.d_xz.origin[0] + 0.5 * g_qeglobals.d_xz.width / g_qeglobals.d_xz.scale;
+	g_v3RegionMins[0] = g_qeglobals.d_xyz[2].origin[0] - 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
+	g_v3RegionMaxs[0] = g_qeglobals.d_xyz[2].origin[0] + 0.5 * g_qeglobals.d_xyz[2].width / g_qeglobals.d_xyz[2].scale;
 	g_v3RegionMins[1] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	g_v3RegionMaxs[1] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	g_v3RegionMins[2] = g_qeglobals.d_xz.origin[2] - 0.5 * g_qeglobals.d_xz.height / g_qeglobals.d_xz.scale;
-	g_v3RegionMaxs[2] = g_qeglobals.d_xz.origin[2] + 0.5 * g_qeglobals.d_xz.height / g_qeglobals.d_xz.scale;
+	g_v3RegionMins[2] = g_qeglobals.d_xyz[2].origin[2] - 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
+	g_v3RegionMaxs[2] = g_qeglobals.d_xyz[2].origin[2] + 0.5 * g_qeglobals.d_xyz[2].height / g_qeglobals.d_xyz[2].scale;
 	Map_ApplyRegion();
 }
 
@@ -724,10 +724,10 @@ void Map_RegionYZ ()
 	Map_RegionOff();
 	g_v3RegionMins[0] = -g_qeglobals.d_savedinfo.nMapSize * 0.5;//-4096;	// sikk - Map Size
 	g_v3RegionMaxs[0] = g_qeglobals.d_savedinfo.nMapSize * 0.5;//4096;	// sikk - Map Size
-	g_v3RegionMins[1] = g_qeglobals.d_yz.origin[1] - 0.5 * g_qeglobals.d_yz.width / g_qeglobals.d_yz.scale;
-	g_v3RegionMaxs[1] = g_qeglobals.d_yz.origin[1] + 0.5 * g_qeglobals.d_yz.width / g_qeglobals.d_yz.scale;
-	g_v3RegionMins[2] = g_qeglobals.d_yz.origin[2] - 0.5 * g_qeglobals.d_yz.height / g_qeglobals.d_yz.scale;
-	g_v3RegionMaxs[2] = g_qeglobals.d_yz.origin[2] + 0.5 * g_qeglobals.d_yz.height / g_qeglobals.d_yz.scale;
+	g_v3RegionMins[1] = g_qeglobals.d_xyz[1].origin[1] - 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
+	g_v3RegionMaxs[1] = g_qeglobals.d_xyz[1].origin[1] + 0.5 * g_qeglobals.d_xyz[1].width / g_qeglobals.d_xyz[1].scale;
+	g_v3RegionMins[2] = g_qeglobals.d_xyz[1].origin[2] - 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
+	g_v3RegionMaxs[2] = g_qeglobals.d_xyz[1].origin[2] + 0.5 * g_qeglobals.d_xyz[1].height / g_qeglobals.d_xyz[1].scale;
 	Map_ApplyRegion();
 }
 

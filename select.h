@@ -1,6 +1,8 @@
 //==============================
 //	select.h
 //==============================
+#ifndef __SELECT_H__
+#define __SELECT_H__
 
 #define	DIST_START	999999
 
@@ -105,5 +107,7 @@ bool OnBrushList (brush_t *pFind, brush_t *pList[MAX_MAP_BRUSHES], int nSize);
 // updating workzone to a given brush (depends on current view)
 void UpdateWorkzone (brush_t *b);
 
+
+#endif
 
 

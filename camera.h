@@ -1,3 +1,5 @@
+#ifndef __CAMERA_H__
+#define __CAMERA_H__
 //==============================
 //	camera.h
 //==============================
@@ -53,3 +55,5 @@ void Cam_Rotate (int x, int y, vec3_t origin);
 
 void Cam_InitCull ();
 bool Cam_CullBrush (brush_t *b);
+
+#endif

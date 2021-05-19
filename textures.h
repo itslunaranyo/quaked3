@@ -1,6 +1,8 @@
 //==============================
 //	textures.h
 //==============================
+#ifndef __TEXTURES_H__
+#define __TEXTURES_H__
 
 typedef struct qtexture_s
 {
@@ -80,3 +82,5 @@ qtexture_t* TexWnd_TexAtPos (int wx, int wy);
 void SetTexParameters ();
 void TexWnd_SelectTexture (int mx, int my);
 void SortTextures ();
+
+#endif

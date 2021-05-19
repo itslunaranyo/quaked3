@@ -24,6 +24,7 @@
 
 #define	MAIN_WINDOW_CLASS		"QMAIN"
 #define	CAMERA_WINDOW_CLASS		"QCAM"
+#define	XYZ_WINDOW_CLASS		"QXYZ%d"
 #define	XY_WINDOW_CLASS			"QXY"
 #define	XZ_WINDOW_CLASS			"QXZ"	// sikk - Multiple Orthographic Views
 #define	YZ_WINDOW_CLASS			"QYZ"	// sikk - Multiple Orthographic Views

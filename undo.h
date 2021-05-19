@@ -1,6 +1,8 @@
 //==============================
 //	undo.h
 //==============================
+#ifndef __UNDO_H__
+#define __UNDO_H__
 
 // QERadiant Multilevel Undo/Redo
 
@@ -63,3 +65,5 @@ int  Undo_GetMaxMemorySize ();
 void Undo_SetMaxMemorySize (int size);
 // returns the amount of memory used by undo
 int  Undo_MemorySize ();
+
+#endif

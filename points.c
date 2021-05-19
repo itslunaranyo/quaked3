@@ -42,11 +42,11 @@ void Pointfile_Next ()
 	}
 	s_check_point++;
 	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_camera.origin);
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz.origin);
-// sikk - Multiple Orthographic Views
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xz.origin);
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_yz.origin);
-// <---sikk
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
+	{
+		VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz[i].origin);
+	}
 	VectorSubtract(s_pointvecs[s_check_point + 1], g_qeglobals.d_camera.origin, dir);
 	VectorNormalize(dir);
 	g_qeglobals.d_camera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
@@ -73,11 +73,11 @@ void Pointfile_Prev ()
 	}
 	s_check_point--;
 	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_camera.origin);
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz.origin);
-// sikk - Multiple Orthographic Views
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xz.origin);
-	VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_yz.origin);
-// <---sikk
+	// lunaran - grid view reunification
+	for (int i = 0; i < 4; i++)
+	{
+		VectorCopy(s_pointvecs[s_check_point], g_qeglobals.d_xyz[i].origin);
+	}
 	VectorSubtract(s_pointvecs[s_check_point + 1], g_qeglobals.d_camera.origin, dir);
 	VectorNormalize(dir);
 	g_qeglobals.d_camera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;

@@ -454,35 +454,23 @@ Select_FacesToBrushes
 void Select_FacesToBrushes(bool partial)
 {
 	brush_t *b;
-	face_t *f;
-
-	int what, who, why, wtf;
 
 	if (!Select_FaceCount())
 		return;
 
-	what = Select_FaceCount();
 	b = NULL;
-	for (int i = 0; i < what; i++)
+	for (int i = 0; i < Select_FaceCount(); i++)
 	{
 		if (b == g_pfaceSelectedFaces[i]->owner)
 			continue;
 
 		b = g_pfaceSelectedFaces[i]->owner;
-		who = Select_NumBrushFacesSelected(b);
-		why = Brush_NumFaces(b);
-		if (partial || who == why)
+		if (partial || Select_NumBrushFacesSelected(b) == Brush_NumFaces(b))
 		{
 			Select_SelectBrushSorted(b);
 		}
-/*
-		for (f = b->brush_faces; f; f = f->next)
-		{
-			Select_DeselectFace(f);
-		}*/
 	}
 	Select_DeselectAllFaces();
-	//assert(Select_FaceCount() == 0);
 	g_bSelectionChanged = true;
 	g_qeglobals.d_selSelectMode = sel_brush;
 }
@@ -876,23 +864,17 @@ void Select_CompleteTall()
 	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
 	Select_Delete();
 
-	// sikk---> Multiple Orthographic Views
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXZ)
+	// lunaran - grid view reunification
 	{
-		nDim1 = 0;
-		nDim2 = 2;
+		int nViewType;
+		xyz_t* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
+		if (xyz)
+			nViewType = xyz->dViewType;
+		else
+			nViewType = XY;
+		nDim1 = (nViewType == YZ) ? 1 : 0;
+		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
-	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndYZ)
-	{
-		nDim1 = 1;
-		nDim2 = 2;
-	}
-	else
-	{
-		nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
-		nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
-	}
-	// <---sikk
 
 	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
 	{
@@ -930,23 +912,17 @@ void Select_PartialTall()
 	VectorCopy(g_brSelectedBrushes.next->maxs, maxs);
 	Select_Delete();
 
-	// sikk---> Multiple Orthographic Views
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXZ)
+	// lunaran - grid view reunification
 	{
-		nDim1 = 0;
-		nDim2 = 2;
+		int nViewType;
+		xyz_t* xyz = XYZWnd_WinFromHandle(GetTopWindow(g_qeglobals.d_hwndMain));
+		if (xyz)
+			nViewType = xyz->dViewType;
+		else
+			nViewType = XY;
+		nDim1 = (nViewType == YZ) ? 1 : 0;
+		nDim2 = (nViewType == XY) ? 1 : 2;
 	}
-	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndYZ)
-	{
-		nDim1 = 1;
-		nDim2 = 2;
-	}
-	else
-	{
-		nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
-		nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
-	}
-	// <---sikk
 
 	for (b = g_brActiveBrushes.next; b != &g_brActiveBrushes; b = next)
 	{
@@ -1118,8 +1094,8 @@ void UpdateWorkzone (brush_t* b)
 	VectorCopy(b->maxs, g_qeglobals.d_v3WorkMax);
 
 	// will update the workzone to the given brush
-	nDim1 = (g_qeglobals.d_nViewType == YZ) ? 1 : 0;
-	nDim2 = (g_qeglobals.d_nViewType == XY) ? 1 : 2;
+	nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
+	nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
 
 	g_qeglobals.d_v3WorkMin[nDim1] = b->mins[nDim1];
 	g_qeglobals.d_v3WorkMax[nDim1] = b->maxs[nDim1];
@@ -1149,13 +1125,13 @@ void Select_Clone ()
 		return;
 
 // sikk---> Move cloned brush based on active XY view. 
-	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXZ)
+	if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[2])
 	{
 		delta[0] = g_qeglobals.d_nGridSize;
 		delta[1] = 0;
 		delta[2] = g_qeglobals.d_nGridSize;
 	}
-	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndYZ)
+	else if (GetTopWindow(g_qeglobals.d_hwndMain) == g_qeglobals.d_hwndXYZ[1])
 	{
 		delta[0] = 0;
 		delta[1] = g_qeglobals.d_nGridSize;
@@ -1163,13 +1139,13 @@ void Select_Clone ()
 	}
 	else
 	{
-		if (g_qeglobals.d_nViewType == XY)
+		if (g_qeglobals.d_xyz[0].dViewType == XY)
 		{
 			delta[0] = g_qeglobals.d_nGridSize;
 			delta[1] = g_qeglobals.d_nGridSize;
 			delta[2] = 0;
 		}
-		else if (g_qeglobals.d_nViewType == XZ)
+		else if (g_qeglobals.d_xyz[0].dViewType == XZ)
 		{
 			delta[0] = g_qeglobals.d_nGridSize;
 			delta[1] = 0;
