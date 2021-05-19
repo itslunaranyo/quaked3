@@ -89,6 +89,8 @@ void WndEntity::SelectEntityColor()
 	vec3 color;
 	if (!g_eEditEntity.GetKeyValueVector("_color", color))
 		color = g_qeglobals.d_lastColor;
+	if (color == vec3(0))
+		color = vec3(1);
 	if (DoColorSelect(color, color))
 	{
 		char buffer[64];

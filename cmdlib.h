@@ -65,6 +65,7 @@ int		IO_LoadFile(const char *filename, qeBuffer &fileBuf);
 int		IO_LoadFileNoCrash (char *filename, void **bufferptr);
 void	IO_SaveFile (char *filename, void *buffer, int count);
 
+bool	IsPathAbsolute(const char* path);
 void 	DefaultExtension (char *path, char *extension);
 void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);

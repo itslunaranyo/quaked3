@@ -348,7 +348,7 @@ void DoTestMap ()
 		return;
 	}
 
-
+	/*
 	if (g_qeglobals.d_savedinfo.bModName)
 	{
 		strcat(szParam, " -game ");
@@ -384,6 +384,7 @@ void DoTestMap ()
 	Sys_Printf("======================================\nCMD: Testing map: %s...\n", szMapName);
 	Sys_Printf("Parameters: %s\n", szParam);
 	ShellExecute(NULL, "open", g_qeglobals.d_savedinfo.szGamePath, szParam, szWorkDir, SW_SHOW);
+	*/
 }
 // <---sikk
 
@@ -665,6 +666,7 @@ BOOL SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize)
 	DWORD	dwDisp;
 	HKEY	hKeyId;
 
+	/*
 // sikk---> Preferences: Reset Registry
 	if (g_qeglobals.d_bResetRegistry)
 	{
@@ -673,6 +675,7 @@ BOOL SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize)
 		return FALSE;
 	}
 // <---sikk
+	*/
 
 	lres = RegCreateKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, NULL,
 			REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKeyId, &dwDisp);
@@ -1133,107 +1136,6 @@ MAIN WINDOW
 
 bool	g_bHaveQuit;
 
-bool CommandHandlerFilters(int cmd)
-{
-	switch (cmd)
-	{
-	case ID_VIEW_SHOWAXIS:	// sikk - Show Axis
-		g_cfgUI.ShowAxis ^= true;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWBLOCKS:
-		g_cfgUI.ShowBlocks ^= true;
-		Sys_UpdateWindows(W_XY);
-		return true;
-	case ID_VIEW_SHOWCAMERAGRID:	// sikk - Camera Grid
-		g_cfgUI.ShowCameraGrid ^= true;
-		Sys_UpdateWindows(W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWCOORDINATES:
-		g_cfgUI.ShowCoordinates ^= true;
-		Sys_UpdateWindows(W_XY | W_Z);
-		return true;
-	case ID_VIEW_SHOWLIGHTRADIUS:	// sikk - Show Light Radius
-		g_cfgUI.ShowLightRadius ^= true;
-		Sys_UpdateWindows(W_XY);
-		return true;
-	case ID_VIEW_SHOWMAPBOUNDARY:	// sikk - Show Map Boundary Box
-		g_cfgUI.ShowMapBoundary ^= true;
-		Sys_UpdateWindows(W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWNAMES:
-		g_cfgUI.ShowNames ^= true;
-		Sys_UpdateWindows(W_XY);
-		return true;
-	case ID_VIEW_SHOWSIZEINFO:
-		g_cfgUI.ShowSizeInfo ^= true;
-		Sys_UpdateWindows(W_XY);
-		return true;
-	case ID_VIEW_SHOWWORKZONE:
-		g_cfgUI.ShowWorkzone ^= true;
-		Sys_UpdateWindows(W_XY);
-		return true;
-	case ID_VIEW_SHOWANGLES:
-		g_cfgUI.ShowAngles ^= true;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWPATH:
-		g_cfgUI.ShowPaths ^= true;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-
-	case ID_VIEW_SHOWCLIP:
-		g_cfgUI.ViewFilter ^= BFL_CLIP;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWPOINTENTS:
-		g_cfgUI.ViewFilter ^= EFL_POINTENTITY;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWBRUSHENTS:
-		g_cfgUI.ViewFilter ^= EFL_BRUSHENTITY;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWFUNCWALL:
-		g_cfgUI.ViewFilter ^= EFL_FUNCWALL;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWLIGHTS:
-		g_cfgUI.ViewFilter ^= EFL_LIGHT;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWSKY:
-		g_cfgUI.ViewFilter ^= BFL_SKY;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWWATER:
-		g_cfgUI.ViewFilter ^= BFL_LIQUID;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWWORLD:
-		g_cfgUI.ViewFilter ^= EFL_WORLDSPAWN;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWHINT:
-		g_cfgUI.ViewFilter ^= BFL_HINT;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWDETAIL:
-		g_cfgUI.ViewFilter ^= EFL_DETAIL;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWMONSTERS:
-		g_cfgUI.ViewFilter ^= EFL_MONSTER;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	case ID_VIEW_SHOWTRIGGERS:
-		g_cfgUI.ViewFilter ^= EFL_TRIGGER;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
-		return true;
-	}
-	return false;
-}
-
 /*
 ==============
 CommandHandler
@@ -1249,9 +1151,6 @@ LONG WINAPI CommandHandler (
 {
 	HMENU hMenu = GetMenu(hWnd);
 	int	nBandIndex;
-
-	if (CommandHandlerFilters(LOWORD(wParam)))
-		return TRUE;
 
 	switch (LOWORD(wParam))
 	{
@@ -1279,19 +1178,6 @@ LONG WINAPI CommandHandler (
 		case ID_FILE_SAVEAS:
 			SaveAsDialog();
 			break;
-			/*
-		case ID_FILE_NEWPROJECT:	// sikk - New Project Dialog
-			NewProjectDialog();
-			break;
-		case ID_FILE_LOADPROJECT:
-			if (!ConfirmModified())
-				return TRUE;
-			ProjectDialog();
-			break;
-		case ID_FILE_EDITPROJECT:	// sikk - Project Settings Dialog
-			DoProject(false);
-			break;
-			*/
 		case ID_FILE_IMPORTMAP:	// sikk - Import Map Dialog
 			ImportDialog();
 			break;
@@ -1455,6 +1341,100 @@ LONG WINAPI CommandHandler (
 			}
 			break;
 // <---sikk
+
+		case ID_VIEW_SHOWAXIS:	// sikk - Show Axis
+			g_cfgUI.ShowAxis ^= true;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWBLOCKS:
+			g_cfgUI.ShowBlocks ^= true;
+			Sys_UpdateWindows(W_XY);
+			break;
+		case ID_VIEW_SHOWCAMERAGRID:	// sikk - Camera Grid
+			g_cfgUI.ShowCameraGrid ^= true;
+			Sys_UpdateWindows(W_CAMERA);
+			break;
+		case ID_VIEW_SHOWCOORDINATES:
+			g_cfgUI.ShowCoordinates ^= true;
+			Sys_UpdateWindows(W_XY | W_Z);
+			break;
+		case ID_VIEW_SHOWLIGHTRADIUS:	// sikk - Show Light Radius
+			g_cfgUI.ShowLightRadius ^= true;
+			Sys_UpdateWindows(W_XY);
+			break;
+		case ID_VIEW_SHOWMAPBOUNDARY:	// sikk - Show Map Boundary Box
+			g_cfgUI.ShowMapBoundary ^= true;
+			Sys_UpdateWindows(W_CAMERA);
+			break;
+		case ID_VIEW_SHOWNAMES:
+			g_cfgUI.ShowNames ^= true;
+			Sys_UpdateWindows(W_XY);
+			break;
+		case ID_VIEW_SHOWSIZEINFO:
+			g_cfgUI.ShowSizeInfo ^= true;
+			Sys_UpdateWindows(W_XY);
+			break;
+		case ID_VIEW_SHOWWORKZONE:
+			g_cfgUI.ShowWorkzone ^= true;
+			Sys_UpdateWindows(W_XY);
+			break;
+		case ID_VIEW_SHOWANGLES:
+			g_cfgUI.ShowAngles ^= true;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWPATH:
+			g_cfgUI.ShowPaths ^= true;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+
+		case ID_VIEW_SHOWCLIP:
+			g_cfgUI.ViewFilter ^= BFL_CLIP;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWPOINTENTS:
+			g_cfgUI.ViewFilter ^= EFL_POINTENTITY;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWBRUSHENTS:
+			g_cfgUI.ViewFilter ^= EFL_BRUSHENTITY;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWFUNCWALL:
+			g_cfgUI.ViewFilter ^= EFL_FUNCWALL;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWLIGHTS:
+			g_cfgUI.ViewFilter ^= EFL_LIGHT;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWSKY:
+			g_cfgUI.ViewFilter ^= BFL_SKY;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWWATER:
+			g_cfgUI.ViewFilter ^= BFL_LIQUID;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWWORLD:
+			g_cfgUI.ViewFilter ^= EFL_WORLDSPAWN;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWHINT:
+			g_cfgUI.ViewFilter ^= BFL_HINT;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWDETAIL:
+			g_cfgUI.ViewFilter ^= EFL_DETAIL;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWMONSTERS:
+			g_cfgUI.ViewFilter ^= EFL_MONSTER;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+		case ID_VIEW_SHOWTRIGGERS:
+			g_cfgUI.ViewFilter ^= EFL_TRIGGER;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
 
 		case ID_VIEW_CAMERA:	// sikk - Toggle Camera View
 			g_qeglobals.d_wndCamera->Toggle();
@@ -1837,7 +1817,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_TEXTURES_INSPECTOR:
-			SurfWnd_Create();
+			WndSurf_Create();
 			break;
 
 		case ID_TEXTURES_POPUP:	// sikk - Toolbar Button
@@ -1940,139 +1920,6 @@ LONG WINAPI CommandHandler (
 			QE_SetInspectorMode(W_CONSOLE);
 			break;
 
-			/*
-// sikk---> Color Themes
-// I will continue to add themes as I am able to get the colors used by other popular 3D apps
-		case ID_THEMES_QE4:
-			{
-				vec3 v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-								{0.5f, 0.5f, 0.5f}, {0.75f, 0.75f, 0.75f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.75f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_Q3RADIANT:
-			{
-				vec3 v[] = {	{0.0f, 0.0f, 0.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-								{0.5f, 0.5f, 0.5f}, {1.0f,  1.0f,  1.0f},  {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.75f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_BLACKGREEN:
-			{
-				vec3 v[] = {	{1.0f, 1.0f, 1.0f}, {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
-								{0.3f, 0.5f, 0.5f}, {0.0f,  0.0f,  0.0f},  {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}, {0.7f, 0.7f, 0.0f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_WORLDCRAFT:
-			{
-				vec3 v[] = {	{1.0f,  1.0f,  1.0f},  {0.0f, 0.0f, 0.0f}, {0.2f, 0.2f, 0.2f}, {0.0f,  0.0f,  0.0f},  {0.0f, 0.5f, 0.5f},
-								{0.35f, 0.35f, 0.35f}, {0.2f, 0.2f, 0.2f}, {1.0f, 1.0f, 1.0f}, {0.25f, 0.25f, 0.25f}, {0.7f, 0.7f, 0.0f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_UNREALED:
-			{
-				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.0f,  0.0f,  0.0f},  {0.0f, 0.0f, 0.5f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
-								{0.47f, 0.47f, 0.47f}, {0.58f, 0.58f, 0.58f}, {0.0f, 0.0f, 0.0f}, {0.0f,  0.0f,  0.5f},  {0.5f,  0.0f,  0.75f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_BLENDER:
-			{
-				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.25f, 0.25f, 0.25f}, {0.2f, 0.2f, 0.2f}, {0.45f, 0.45f, 0.45f}, {0.25f, 0.25f, 0.25f},
-								{0.36f, 0.36f, 0.36f}, {0.4f,  0.4f,  0.4f},  {1.0f, 1.0f, 1.0f}, {0.2f,  0.2f,  0.2f},  {0.5f,  0.0f,  0.0f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_MAYA:
-			{
-				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.57f, 0.57f, 0.57f}, {0.47f, 0.47f, 0.47f}, {0.64f, 0.64f, 0.64f}, {0.25f, 0.25f, 0.25f},
-								{0.47f, 0.47f, 0.47f}, {0.58f, 0.58f, 0.58f}, {0.0f,  0.0f,  0.0f},  {0.2f,  0.2f,  0.2f},  {0.0f,  0.45f, 0.0f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_LIGHTWAVE:
-			{
-				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.42f, 0.42f, 0.42f}, {0.56f, 0.56f, 0.56f}, {0.42f, 0.42f, 0.42f}, {0.25f, 0.25f, 0.25f},
-								{0.56f, 0.56f, 0.56f}, {0.48f, 0.48f, 0.48f}, {0.75f, 0.75f, 0.75f}, {0.32f, 0.32f, 0.32f}, {0.0f,  0.75f, 0.75f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_THEMES_3DSMAX:
-			{
-				vec3 v[] = {	{0.0f,  0.0f,  0.0f},  {0.48f, 0.48f, 0.48f}, {0.36f, 0.36f, 0.36f}, {0.48f, 0.48f, 0.48f}, {0.25f, 0.25f, 0.25f},
-								{0.36f, 0.36f, 0.36f}, {0.42f, 0.42f, 0.42f}, {0.0f,  0.0f, 0.0f},  {0.2f,  0.2f,  0.2f},  {0.75f,  0.75f, 0.75f}	};
-				DoTheme(v);
-			}
-			break;
-// <---sikk
-//								{COLOR_BRUSHES},	{COLOR_CAMERABACK},	   {COLOR_CAMERAGRID}, {COLOR_GRIDBACK},   {COLOR_GRIDBLOCK},
-//								{COLOR_GRIDMAJOR},	{COLOR_GRIDMINOR},	   {COLOR_GRIDTEXT},   {COLOR_MAPBOUNDARY}, {COLOR_VIEWNAME}
-		case ID_THEMES_BLUEGRAY:
-			{
-				vec3 v[] = {	{0.75f,0.75f,0.75f},  {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}, {0.25f, 0.25f, 0.25f}, {0.4f, 0.4f, 0.4f},
-								{0.35f, 0.35f, 0.35f}, {0.3f, 0.3f, 0.3f}, {0.8f, 0.8f, 0.8f},  {0.2f,  0.4f,  0.4f},  {1.0f, 1.0f,  1.0f}	};
-				DoTheme(v);
-			}
-			break;
-		case ID_COLORS_VIEWNAME:
-			DoColor(COLOR_VIEWNAME);
-			Sys_UpdateWindows(W_XY);
-			break;
-		case ID_COLORS_CAMERABACK:
-			DoColor(COLOR_CAMERABACK);
-			Sys_UpdateWindows(W_CAMERA);
-			break;
-		case ID_COLORS_CAMERAGRID:
-			DoColor(COLOR_CAMERAGRID);
-			Sys_UpdateWindows(W_CAMERA);
-			break;
-		case ID_COLORS_CLIPPER:
-			DoColor(COLOR_CLIPPER);
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-		case ID_COLORS_BRUSHES:
-			DoColor(COLOR_BRUSHES);
-			Sys_UpdateWindows(W_XY|W_Z);
-			break;
-		case ID_COLORS_GRIDBACK:
-			DoColor(COLOR_GRIDBACK);
-			Sys_UpdateWindows(W_XY|W_Z);
-			break;
-		case ID_COLORS_GRIDBLOCK:
-			DoColor(COLOR_GRIDBLOCK);
-			Sys_UpdateWindows(W_XY|W_Z);
-			break;
-		case ID_COLORS_GRIDMAJOR:
-			DoColor(COLOR_GRIDMAJOR);
-			Sys_UpdateWindows(W_XY|W_Z);
-			break;
-		case ID_COLORS_GRIDMINOR:
-			DoColor(COLOR_GRIDMINOR);
-			Sys_UpdateWindows(W_XY | W_Z);
-			break;
-		case ID_COLORS_GRIDTEXT:
-			DoColor(COLOR_GRIDTEXT);
-			Sys_UpdateWindows(W_XY | W_Z);
-			break;
-		case ID_COLORS_MAPBOUNDARY:
-			DoColor(COLOR_MAPBOUNDARY);
-			Sys_UpdateWindows(W_CAMERA);
-			break;
-		case ID_COLORS_SELECTEDBRUSH:
-			DoColor(COLOR_SELBRUSHES);
-			Sys_UpdateWindows(W_SCENE);
-			break;
-		case ID_COLORS_TEXTUREBACK:
-			DoColor(COLOR_TEXTUREBACK);
-			Sys_UpdateWindows(W_TEXTURE);
-			break;
-		case ID_COLORS_TEXTURETEXT:
-			DoColor(COLOR_TEXTURETEXT);
-			Sys_UpdateWindows(W_TEXTURE);
-			break;
-			*/
 		case ID_MISC_NEXTLEAKSPOT:
 			Pointfile_Next();
 			break;
@@ -2082,13 +1929,6 @@ LONG WINAPI CommandHandler (
 
 		case ID_MISC_SELECTENTITYCOLOR:
 			g_qeglobals.d_wndEntity->SelectEntityColor();
-			/*
-			if (DoColor(COLOR_ENTITY) == TRUE)
-			{
-				Modify_SetColor(g_qeglobals.d_savedinfo.v3Colors[COLOR_ENTITY]);
-				Sys_UpdateWindows(W_CAMERA|W_ENTITY);
-			}
-			*/
 			break;
 
 		case ID_MISC_TESTMAP:
@@ -2372,7 +2212,7 @@ WMain_Create
 void WMain_Create ()
 {
 	WNDCLASS	wc;
-	int			i;
+	//int			i;
 	HMENU		hMenu;
 	HINSTANCE hInstance = g_qeglobals.d_hInstance;
 
@@ -2435,6 +2275,7 @@ void WMain_Create ()
 	g_qeglobals.d_hwndStatus	= CreateStatusBar(g_qeglobals.d_hwndMain);
 
 	// load misc info from registry
+	/*
 	long l = sizeof(g_qeglobals.d_savedinfo);
 	LoadRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, &l);
 	
@@ -2480,6 +2321,7 @@ void WMain_Create ()
 		strcpy(g_qeglobals.d_savedinfo.szHeapsize, "16384");
 		strcpy(g_qeglobals.d_savedinfo.szSkill, "1");
 // <---sikk
+
 		for (i = 0; i < 3; i++)
 		{
 			g_colors.brush[i]		= 0.0f;
@@ -2513,54 +2355,12 @@ void WMain_Create ()
 		// sikk - Set window positions to QE3 Default
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_WINDOW_QE3DEFAULT, 0);
 	}
+	*/
 
 	if ((hMenu = GetMenu(g_qeglobals.d_hwndMain)) != 0)
 	{
 		QE_UpdateCommandUIFilters(hMenu);
 		// by default all of these are checked because that's how they're defined in the menu editor
-		/*
-		if (!g_cfgUI.ShowAxis)	// sikk - Show Axis
-			CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS, MF_UNCHECKED);
-		if (g_cfgUI.ShowBlocks)	// sikk - Show Blocks moved to savedinfo_t
-			CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS, MF_CHECKED);
-		if (!g_cfgUI.ShowCameraGrid)	// sikk - Show Camera Grid
-			CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID, MF_UNCHECKED);
-		if (!g_cfgUI.ShowCoordinates)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, MF_UNCHECKED);
-		if (g_cfgUI.ShowLightRadius)	// sikk - Show Light Radius
-			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, MF_CHECKED);
-		if (!g_cfgUI.ShowMapBoundary)	// sikk - Show Map Boundary
-			CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, MF_UNCHECKED);
-		if (!g_cfgUI.ShowNames)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, MF_UNCHECKED);
-		if (!g_cfgUI.ShowSizeInfo)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO, MF_UNCHECKED);
-		if (!g_qeglobals.d_savedinfo.bShow_Viewname)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWVIEWNAME, MF_UNCHECKED);
-		if (g_cfgUI.ShowWorkzone)	// sikk - Show Workzone moved to savedinfo_t
-			CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, MF_CHECKED);
-		if (!g_cfgUI.ShowAngles)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, MF_UNCHECKED);
-		if (!g_cfgUI.ShowPaths)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWPATH, MF_UNCHECKED);
-
-		if (g_cfgUI.ViewFilter & EFL_LIGHT)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & EFL_POINTENTITY)
-			CheckMenuItem(hMenu, ID_VIEW_ENTITY, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & BFL_LIQUID)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & EFL_WORLDSPAWN)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & BFL_CLIP)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & BFL_HINT)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, MF_UNCHECKED);
-		if (g_cfgUI.ViewFilter & EFL_DETAIL)
-			CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, MF_UNCHECKED);
-		if (!g_qeglobals.bGridSnap)
-			CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, MF_UNCHECKED);
-		*/
 
 		if (g_qeglobals.d_savedinfo.bScaleLockX)
 		{
@@ -2700,18 +2500,9 @@ int WINAPI WinMain (
 
 	QE_Init();
 
-	//g_unMouseWheel = GetMouseWheelMsg();	// sikk - Mousewheel Handling
-
-	Sys_Printf("Entering message loop...\n");
-
-//	oldtime = Sys_DoubleTime();
 	Sys_DeltaTime();
 
-	{
-		char szLastMap[_MAX_PATH];
-		if (g_cfgEditor.LoadLastMap && GetMenuItem(g_qeglobals.d_lpMruMenu, 0, false, szLastMap, _MAX_PATH))
-			g_map.LoadFromFile(szLastMap);
-	}
+	Sys_Printf("Entering message loop...\n");
 
 #ifndef _DEBUG
 	}

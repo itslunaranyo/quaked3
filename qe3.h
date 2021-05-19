@@ -87,6 +87,11 @@
 typedef struct
 {
 	int		nSize;				// structure size
+	bool	bScaleLockX,	//obsolete
+			bScaleLockY, 	//obsolete
+			bScaleLockZ;	//obsolete
+	REBARBANDINFO rbiSettings[11];	// sikk - Save Rebar Band Info
+	/*
 	int		nRenderMode;			// nearest, linear, etc
 //	int		nVTexMenu;			// sikk - unused
 	int		nViewFilter;
@@ -104,17 +109,14 @@ typedef struct
 			bShow_Workzone,
 			bShow_Angles,		// lunaran - no longer an entity flag
 			bShow_Paths,		// lunaran - no longer an entity flag
-			bNoClamp,	//obsolete
-			bScaleLockX,	//obsolete
-			bScaleLockY, 	//obsolete
-			bScaleLockZ,	//obsolete
-			bCubicClip;			// sikk - Cubic Clipping
+			bNoClamp;	//obsolete
+	*/
+	/*
+	bool	bCubicClip;			// sikk - Cubic Clipping
 	int		nCubicScale;		// sikk - Cubic Clipping
 	int		nCameraSpeed;		// sikk - Camera Speed Trackbar 
 	vec3	v3Colors[COLOR_LAST];
-	REBARBANDINFO rbiSettings[11];	// sikk - Save Rebar Band Info
 //	int		nRebarSavedIndex[11];
-
 // sikk---> Preferences Dialog
 	char	szGamePath[_MAX_PATH],
 			szGameName[_MAX_FNAME],
@@ -146,6 +148,7 @@ typedef struct
 			bRSpeeds,
 			bPointfile,
 			bTestAfterBSP;
+	*/
 // <---sikk
 } savedinfo_t;
 
@@ -211,7 +214,7 @@ typedef struct
 	// we use low level I/O to get rid of buffering and have everything on file if we crash
 	int         d_nLogFile;
 
-	bool		d_bResetRegistry;		// sikk - this is used for Preferences 'Reset Registry' command
+	//bool		d_bResetRegistry;		// sikk - this is used for Preferences 'Reset Registry' command
 } qeglobals_t;
 
 //========================================================================
@@ -247,7 +250,7 @@ void	QE_Init();
 bool	QE_KeyDown (int key);
 void	QE_SaveMap();
 void	QE_UpdateTitle();
-bool	QE_LoadProject();
+bool	QE_InitProject();
 int		QE_BestViewAxis();
 bool	QE_SingleBrush();
 void	QE_UpdateCommandUI();
@@ -260,32 +263,32 @@ vec3	AxisForVector(const vec3 &v);		// TODO: mathlib
 vec3	AxializeVector(const vec3 &v);
 
 // system functions
-void    Sys_UpdateBrushStatusBar ();
-void	Sys_UpdateGridStatusBar ();
-void    Sys_UpdateWindows (int bits);
+void    Sys_UpdateBrushStatusBar();
+void	Sys_UpdateGridStatusBar();
+void    Sys_UpdateWindows(int bits);
 void	Sys_ForceUpdateWindows(int bits);
-void    Sys_Beep ();
-void    Sys_ClearPrintf ();
-void    Sys_Printf (char *text, ...);
-double	Sys_DoubleTime ();
-void    Sys_GetCursorPos (int *x, int *y);
-void    Sys_SetCursorPos (int x, int y);
-void    Sys_SetTitle (char *text);
-void    Sys_BeginWait ();
-void    Sys_EndWait ();
-void    Sys_Status (const char *psz, int part);
-void	Sys_LogFile ();
+void    Sys_Beep();
+void    Sys_ClearPrintf();
+void    Sys_Printf(char *text, ...);
+double	Sys_DoubleTime();
+void    Sys_GetCursorPos(int *x, int *y);
+void    Sys_SetCursorPos(int x, int y);
+void    Sys_SetTitle(char *text);
+void    Sys_BeginWait();
+void    Sys_EndWait();
+void    Sys_Status(const char *psz, int part);
+void	Sys_LogFile();
 void	Sys_CheckBspProcess(void);
 void	Sys_DeltaTime();
 
 // win_qe3.c
-void	FillBSPMenu ();
-char   *TranslateString (char *buf);
-void	ProjectDialog ();
-void	NewProjectDialog ();	// sikk - New Project Dialog
-void	OpenDialog ();
-void	SaveAsDialog ();
-bool	ConfirmModified ();
+void	FillBSPMenu();
+char   *TranslateString(char *buf);
+//void	ProjectDialog ();
+//void	NewProjectDialog ();	// sikk - New Project Dialog
+void	OpenDialog();
+void	SaveAsDialog();
+bool	ConfirmModified();
 void	ImportDialog();
 void	ExportDialog();
 
@@ -317,29 +320,30 @@ void DoSides (int nType);	// sikk - Brush Primitives (previously took no argumen
 void DoKeylist ();
 void DoAbout ();
 void DoFindTexture ();
-void DoNewProject();	// sikk - New Project Dialog
-void DoProject (bool bFirst);	// sikk - Project Settings Dialog
+//void DoNewProject();	// sikk - New Project Dialog
+//void DoProject (bool bFirst);	// sikk - Project Settings Dialog
 void FillEntityListbox(HWND hwnd, bool bPointbased, bool bBrushbased);	// sikk - Create Entity Dialog
 bool ConfirmClassnameHack(EntClass *desired);
-void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 origin);	// sikk - Create Entity Dialog
-void DoMapInfo ();	// sikk - Map Info Dialog
-void DoEntityInfo ();	// sikk - Entity Info Dialog
-void DoPreferences ();	// sikk - Preferences Dialog
-void DoScale ();	// sikk - Brush Scaling Dialog
-void DoCamSpeed ();	// sikk - Camera Speed Dialog
-void DoDefaultTexScale ();	// sikk - Default Texture Scale Dialog
-void DoFindKeyValue ();	// sikk - Find Key/Value Dialog
+void DoCreateEntity(bool bPointbased, bool bBrushbased, bool bSel, const vec3 origin);	// sikk - Create Entity Dialog
+void DoMapInfo();	// sikk - Map Info Dialog
+void DoEntityInfo();	// sikk - Entity Info Dialog
+//void DoPreferences();	// sikk - Preferences Dialog
+void DoScale();	// sikk - Brush Scaling Dialog
+void DoCamSpeed();	// sikk - Camera Speed Dialog
+void DoDefaultTexScale();	// sikk - Default Texture Scale Dialog
+void DoFindKeyValue();	// sikk - Find Key/Value Dialog
 
 // win_surf.c
-void	SurfWnd_UpdateUI();
-void	SurfWnd_Close();
-void	SurfWnd_Create();
+void WndSurf_UpdateUI();
+void WndSurf_Close();
+void WndSurf_Create();
 
 // WndConfig.c
 void DoConfigWindow();
 void DoConfigWindowProject();
 
 // win_proj.c
+/*
 BOOL CALLBACK ProjectSettingsDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 BOOL CALLBACK SelectDirDlgProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -359,6 +363,7 @@ void AcceptBspCommand (HWND hwndDlg);
 void DeleteBspCommand (HWND hwndDlg);
 
 void SaveSettings (HWND hwndDlg);
+*/
 bool SelectDir (HWND h, bool format, char* title);
 
 

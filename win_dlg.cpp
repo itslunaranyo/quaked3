@@ -1480,18 +1480,17 @@ void DoEntityInfo ()
 
 =====================================================================
 */
-
+/*
 static OPENFILENAME ofn;			// common dialog box structure
 static char szDirName[_MAX_PATH];   // directory string
 static char szFile[_MAX_PATH];		// filename string
 static char szFileTitle[_MAX_FNAME];// file title string
 static char szFilter[64] = "Quake Executables (*.exe)\0*.exe\0\0";	// filter string
-
+*/
 /*
 ==================
 OnGamePath
 ==================
-*/
 void OnGamePath (HWND h)
 {
 	szFile[0] = 0;
@@ -1516,23 +1515,23 @@ void OnGamePath (HWND h)
 			sprintf(g_qeglobals.d_savedinfo.szGameName, "%s", szFileTitle);
 	}
 }
+*/
 
 /*
 ==================
 OnPrefabPath
 ==================
-*/
 void OnPrefabPath (HWND h)
 {
 	//HWND hwndEdit = GetDlgItem(h, IDC_EDIT_PREFABPATH);
 	//SelectDir(hwndEdit, false);
 }
+*/
 
 /*
 ============
 PreferencesDlgProc
 ============
-*/
 BOOL CALLBACK PreferencesDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
@@ -1756,17 +1755,18 @@ BOOL CALLBACK PreferencesDlgProc (
 	}
 	return FALSE;
 }
+*/
 
 /*
 ============
 DoPreferences
 ============
-*/
 void DoPreferences ()
 {
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_PREFERENCES), g_qeglobals.d_hwndMain, PreferencesDlgProc);
 }
 // <---sikk
+*/
 
 
 // sikk---> Brush Scaling Dialog

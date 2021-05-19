@@ -1195,7 +1195,8 @@ Brush *Brush::Parse ()
 		GetToken(false);
 		f->texdef.shift[1] = atoi(g_szToken);
 		GetToken(false);
-		f->texdef.rotate = atoi(g_szToken);	
+		f->texdef.rotate = atof(g_szToken);	// lunaran: moving to float rotations
+		//f->texdef.rotate = atoi(g_szToken);	
 		GetToken(false);
 		f->texdef.scale[0] = atof(g_szToken);
 		GetToken(false);
@@ -1215,6 +1216,7 @@ void Brush::Write(std::ostream& out)
 {
 	int		i;
 	char	*pname;
+	char	frot[16];
 	Face	*fa;
 
 	out << "{\n";
@@ -1232,7 +1234,10 @@ void Brush::Write(std::ostream& out)
 
 		//CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 
-		out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << (int)fa->texdef.rotate << " ";
+		// lunaran: moving to float rotations
+		FloatToString(fa->texdef.rotate, frot);
+		out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << frot << " ";
+		//out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << (int)fa->texdef.rotate << " ";
 
 		if (fa->texdef.scale[0] == (int)fa->texdef.scale[0])
 			out << (int)fa->texdef.scale[0] << " ";

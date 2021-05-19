@@ -334,7 +334,7 @@ void WndCfg_CheckProjectAlteration()
 		szMapTemp[0] = 0;
 		if (g_map.hasFilename)
 			strncpy(szMapTemp, g_map.name, _MAX_FNAME);
-		QE_LoadProject();
+		QE_InitProject();
 		if (*szMapTemp)
 			g_map.LoadFromFile(szMapTemp);
 	}

@@ -199,17 +199,25 @@ void ParseCommandLine (char *lpCmdLine)
 
 	while (*lpCmdLine && (g_nArgC < MAX_NUM_ARGVS))
 	{
-		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
+		while (*lpCmdLine && ((*lpCmdLine <= ' ') || (*lpCmdLine > '~')))
 			lpCmdLine++;
 
 		if (*lpCmdLine)
 		{
-			g_pszArgV[g_nArgC] = lpCmdLine;
-			g_nArgC++;
+			// lunaran: get quoted parm
+			if (*lpCmdLine == '"')
+			{
+				g_pszArgV[g_nArgC++] = ++lpCmdLine;
+				while (*lpCmdLine && *lpCmdLine != '"')
+					lpCmdLine++;
+			}
+			else
+			{
+				g_pszArgV[g_nArgC++] = lpCmdLine;
 
-			while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
-				lpCmdLine++;
-
+				while (*lpCmdLine && ((*lpCmdLine > ' ') && (*lpCmdLine <= '~')))
+					lpCmdLine++;
+			}
 			if (*lpCmdLine)
 			{
 				*lpCmdLine = 0;
@@ -219,11 +227,13 @@ void ParseCommandLine (char *lpCmdLine)
 	}
 
 	// lunaran: 0-init other parms
+	int nargs = g_nArgC;
 	while (g_nArgC < MAX_NUM_ARGVS)
 	{
 		g_pszArgV[g_nArgC] = 0;
 		g_nArgC++;
 	}
+	g_nArgC = nargs;
 }
 
 /*
@@ -408,6 +418,20 @@ void IO_SaveFile (char *filename, void *buffer, int count)
 	f = IO_SafeOpenWrite(filename);
 	IO_SafeWrite(f, buffer, count);
 	fclose(f);
+}
+
+/*
+==============
+IsPathAbsolute
+
+this needs to be made portable one day
+==============
+*/
+bool IsPathAbsolute(const char* path)
+{
+	if (path[1] == ':' && (path[2] == '/' || path[2] == '\\')) return true;
+	if (!strncmp(path, "//", 2) || !strncmp(path, "\\\\", 2)) return true;
+	return false;
 }
 
 /*
@@ -676,6 +700,8 @@ void FloatToString(const float f, char *string)
 	char *szVal;
 	char *pos;
 
+	// trunc safety
+	float fp = f + ((f < 0) ? -0.000001f : 0.000001f);
 	szVal = string;
 	sprintf(szVal, "%0.5f", f);
 	pos = &szVal[strlen(szVal) - 1];

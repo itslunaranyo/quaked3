@@ -46,7 +46,7 @@ void Selection::HandleChange()
 		(*tIt)->SelectionChanged();
 	}
 
-	//SurfWnd_UpdateUI();
+	//WndSurf_UpdateUI();
 	Sys_UpdateWindows(W_SCENE|W_ENTITY|W_SURF);
 	g_bSelectionChanged = false;
 }

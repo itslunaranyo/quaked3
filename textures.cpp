@@ -707,7 +707,10 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 {
 	char	filepath[MAX_PATH];
 
-	sprintf(filepath, "%s/%s", g_project.wadPath, filename);
+	if (IsPathAbsolute(filename))
+		strcpy(filepath, filename);
+	else	// relative, append wad path
+		sprintf(filepath, "%s/%s", g_project.wadPath, filename);
 
 	if (IO_LoadFile(filepath, wadFileBuf) <= 0)
 	{

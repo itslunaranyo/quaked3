@@ -4,6 +4,7 @@
 
 #include "qe3.h"
 #include <fstream>
+#include <algorithm>
 
 qeConfig::qeConfig() { /*Defaults();*/ }
 qeConfig::~qeConfig() {}
@@ -58,7 +59,11 @@ ConfigVar* const cfgUIVars[] = {
 
 // editor/env vars:
 ConfigVarString	cfgv_QuakePath(g_cfgEditor.QuakePath, "QuakePath", "c:/quake/");
+#ifdef _DEBUG
 ConfigVarInt	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 1);
+#else
+ConfigVarInt	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 0);
+#endif
 ConfigVarInt	cfgv_LoadLastMap(g_cfgEditor.LoadLastMap, "LoadLastMap", 0);
 ConfigVarInt	cfgv_AutosaveTime(g_cfgEditor.AutosaveTime, "AutosaveTime", 5);
 ConfigVarInt	cfgv_Autosave(g_cfgEditor.Autosave, "Autosave", 1);
@@ -179,16 +184,16 @@ void qeConfig::ExpandProjectPaths()
 {
 	auto prj = projectPresets.begin();
 	strncpy(g_project.name, prj->name, MAX_PROJNAME);
-	ExpandProjectPath(prj->basePath, g_project.basePath);
-	ExpandProjectPath(prj->mapPath, g_project.mapPath);
+	ExpandProjectPath(prj->basePath, g_project.basePath, true);
+	ExpandProjectPath(prj->mapPath, g_project.mapPath, true);
 	ExpandProjectPath(prj->autosaveFile, g_project.autosaveFile);
 	ExpandProjectPath(prj->entityFiles, g_project.entityFiles);
-	ExpandProjectPath(prj->wadPath, g_project.wadPath);
+	ExpandProjectPath(prj->wadPath, g_project.wadPath, true);
 	ExpandProjectPath(prj->defaultWads, g_project.defaultWads);
 	ExpandProjectPath(prj->paletteFile, g_project.paletteFile);
 }
 
-void qeConfig::ExpandProjectPath(char *src, char *dest)
+void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
 {
 	char *s, *d, *ds;
 	s = src;
@@ -229,6 +234,10 @@ void qeConfig::ExpandProjectPath(char *src, char *dest)
 		else
 			*d++ = *s++;
 		ds = d - 1;
+	}
+	if (dir && (*(d - 1) != '/'))
+	{
+		*d++ = '/';
 	}
 	*d = 0;
 }
@@ -484,8 +493,11 @@ bool qeConfig::Load()
 {
 	qeBuffer cfgbuf;
 	bool haveProject, haveColors, haveColorPresets;
-
+#ifdef _DEBUG
+	if (IO_LoadFile("qe3d.cfg", cfgbuf) < 1)
+#else
 	if (IO_LoadFile("qe3.cfg", cfgbuf) < 1)
+#endif
 	{
 		// cfg doesn't exist, do first run dialog song and dance
 		projectPresets.emplace_back();	// add one default project
@@ -547,13 +559,33 @@ bool qeConfig::Load()
 		DoConfigWindowProject();	// pop up the window
 		return false;
 	}
+
+	// check for a project name on the command line
+	if (g_nArgC > 1)
+	{
+		for (auto projIt = projectPresets.begin(); projIt != projectPresets.end(); ++projIt)
+		{
+			for (int i = 1; i < g_nArgC; i++)
+			{
+				if (!_stricmp(g_pszArgV[i], projIt->name))
+				{
+					std::rotate(projectPresets.begin(), projIt, projIt + 1);
+					break;
+				}
+			}
+		}
+	}
 	ExpandProjectPaths();
 	return true;
 }
 
 void qeConfig::Save()
 {
+#ifdef _DEBUG
+	std::ofstream fs("qe3d.cfg");
+#else
 	std::ofstream fs("qe3.cfg");
+#endif
 	fs << "[editor]\n";
 	for (int i = 0; i < 12; i++)
 		cfgEditorVars[i]->Write(fs);

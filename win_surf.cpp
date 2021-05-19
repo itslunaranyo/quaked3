@@ -18,10 +18,10 @@ unsigned	g_nEditSurfMixed;
 
 /*
 ==============
-SurfWnd_ClearEditTexdef
+WndSurf_ClearEditTexdef
 ===============
 */
-void SurfWnd_ClearEditTexdef()
+void WndSurf_ClearEditTexdef()
 {
 	memset(&g_texdefEdit, 0, sizeof(g_texdefEdit));
 	g_nEditSurfMixed = 0;
@@ -29,10 +29,10 @@ void SurfWnd_ClearEditTexdef()
 
 /*
 ==============
-SurfWnd_AddToEditTexdef
+WndSurf_AddToEditTexdef
 ===============
 */
-void SurfWnd_AddToEditTexdef(Face* f)
+void WndSurf_AddToEditTexdef(Face* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
 	if (!(g_nEditSurfMixed & SFI_NAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
@@ -54,17 +54,17 @@ void SurfWnd_AddToEditTexdef(Face* f)
 
 /*
 ==============
-SurfWnd_RefreshEditTexdef
+WndSurf_RefreshEditTexdef
 
 Union the texdefs of every face in the selection
 ===============
 */
-void SurfWnd_RefreshEditTexdef()
+void WndSurf_RefreshEditTexdef()
 {
 	if (!g_qeglobals.d_hwndSurfaceDlg)
 		return;
 
-	SurfWnd_ClearEditTexdef();
+	WndSurf_ClearEditTexdef();
 
 	if (Selection::NumFaces())
 	{
@@ -73,7 +73,7 @@ void SurfWnd_RefreshEditTexdef()
 			if (fIt == Selection::faces.begin())
 				g_texdefEdit = (*fIt)->texdef;
 			else
-				SurfWnd_AddToEditTexdef((*fIt));
+				WndSurf_AddToEditTexdef((*fIt));
 		}
 		return;
 	}
@@ -91,7 +91,7 @@ void SurfWnd_RefreshEditTexdef()
 					first = false;
 					continue;
 				}
-				SurfWnd_AddToEditTexdef(f);
+				WndSurf_AddToEditTexdef(f);
 			}
 		}
 		return;
@@ -120,16 +120,16 @@ void prettyftoa(char* sz, float f)
 
 /*
 ==============
-SurfWnd_FromEditTexdef
+WndSurf_FromEditTexdef
 
 Set the window fields to mirror the edit texdef
 ===============
 */
-void SurfWnd_FromEditTexdef()
+void WndSurf_FromEditTexdef()
 {
 	char	sz[MAX_TEXNAME];
 	TexDef  *texdef;
-	float	shiftxp, shiftyp, rotp;
+	float	shiftxp, shiftyp;// , rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
@@ -145,7 +145,7 @@ void SurfWnd_FromEditTexdef()
 	// lunaran: trunc safety
 	shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
 	shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
-	rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
+	//rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
 	if (g_nEditSurfMixed & SFI_SHIFTX)
 		sz[0] = 0;
@@ -162,19 +162,20 @@ void SurfWnd_FromEditTexdef()
 	if (g_nEditSurfMixed & SFI_SCALEX)
 		sz[0] = 0;
 	else
-		prettyftoa(sz, texdef->scale[0]);
+		FloatToString(texdef->scale[0], sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_SCALEY)
 		sz[0] = 0;
 	else
-		prettyftoa(sz, texdef->scale[1]);
+		FloatToString(texdef->scale[1], sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_ROTATE)
 		sz[0] = 0;
 	else
-		sprintf(sz, "%d", (int)rotp);
+		FloatToString(texdef->rotate, sz);	// lunaran: moving to float rotations
+		//sprintf(sz, "%d", (int)rotp);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
 
 	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 1, 0);
@@ -184,12 +185,12 @@ void SurfWnd_FromEditTexdef()
 
 /*
 ==============
-SurfWnd_Apply
+WndSurf_Apply
 
 Reads the window fields and changes relevant texdef members on selection
 ===============
 */
-void SurfWnd_Apply()
+void WndSurf_Apply()
 {
 	char		sz[MAX_TEXNAME];
 	TexDef		texdef;
@@ -244,24 +245,24 @@ void SurfWnd_Apply()
 
 /*
 ==============
-SurfWnd_UpdateUI
+WndSurf_UpdateUI
 ===============
 */
-void SurfWnd_UpdateUI()
+void WndSurf_UpdateUI()
 {
 	if (!g_qeglobals.d_hwndSurfaceDlg)
 		return;
 
-	SurfWnd_RefreshEditTexdef();
-	SurfWnd_FromEditTexdef();
+	WndSurf_RefreshEditTexdef();
+	WndSurf_FromEditTexdef();
 }
 
 /*
 =================
-SurfWnd_UpdateFit
+WndSurf_UpdateFit
 =================
 */
-void SurfWnd_UpdateFit(int idc, float dif)
+void WndSurf_UpdateFit(int idc, float dif)
 {
 	char sz[8];
 	float num;
@@ -274,10 +275,10 @@ void SurfWnd_UpdateFit(int idc, float dif)
 
 /*
 =================
-SurfWnd_UpdateSpinners
+WndSurf_UpdateSpinners
 =================
 */
-void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
+void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 {
 	int i;
 	float f;
@@ -368,7 +369,7 @@ void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
 				f *= -1;
 
-			SurfWnd_UpdateFit(IDC_EDIT_HFIT, f);
+			WndSurf_UpdateFit(IDC_EDIT_HFIT, f);
 			break;
 
 		case IDC_SPIN_WFIT:
@@ -381,7 +382,7 @@ void SurfWnd_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 			if (((LPNMUPDOWN)lParam)->iDelta > 0)
 				f *= -1;
 
-			SurfWnd_UpdateFit(IDC_EDIT_WFIT, f);
+			WndSurf_UpdateFit(IDC_EDIT_WFIT, f);
 			break;
 		}
 	}
@@ -405,24 +406,24 @@ BOOL CALLBACK SurfaceDlgProc(
 		g_qeglobals.d_hwndSurfaceDlg = hwndDlg;
 		SetDlgItemText(hwndDlg, IDC_EDIT_HFIT, "1.0");
 		SetDlgItemText(hwndDlg, IDC_EDIT_WFIT, "1.0");
-		SurfWnd_UpdateUI();
+		WndSurf_UpdateUI();
 		return TRUE;
 
 	case WM_CLOSE:
-		SurfWnd_Close();
+		WndSurf_Close();
 		return TRUE;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDAPPLY:
-			SurfWnd_Apply();
+			WndSurf_Apply();
 			Sys_UpdateWindows(W_CAMERA);
 			return TRUE;
 
 		case IDCLOSE:
 		case IDCANCEL:
-			SurfWnd_Close();
+			WndSurf_Close();
 			return TRUE;
 
 		case IDC_BUTTON_FIT:
@@ -436,7 +437,7 @@ BOOL CALLBACK SurfaceDlgProc(
 				nWidth = atof(sz);
 
 				g_qeglobals.d_texTool->FitTexture(nHeight, nWidth);
-				//SurfWnd_UpdateUI();
+				//WndSurf_UpdateUI();
 				Sys_UpdateWindows(W_CAMERA|W_SURF);
 			}
 			break;
@@ -444,8 +445,8 @@ BOOL CALLBACK SurfaceDlgProc(
 		return 0;
 
 	case WM_NOTIFY:
-		SurfWnd_UpdateSpinners(wParam, lParam);
-		//SurfWnd_UpdateUI();
+		WndSurf_UpdateSpinners(wParam, lParam);
+		//WndSurf_UpdateUI();
 		Sys_UpdateWindows(W_CAMERA | W_SURF);
 		return 0;
 	}
@@ -454,10 +455,10 @@ BOOL CALLBACK SurfaceDlgProc(
 
 /*
 ============
-SurfWnd_Create
+WndSurf_Create
 ============
 */
-void SurfWnd_Close()
+void WndSurf_Close()
 {
 	EndDialog(g_qeglobals.d_hwndSurfaceDlg, 0);
 	g_qeglobals.d_hwndSurfaceDlg = NULL;
@@ -465,10 +466,10 @@ void SurfWnd_Close()
 
 /*
 ============
-SurfWnd_Create
+WndSurf_Create
 ============
 */
-void SurfWnd_Create()
+void WndSurf_Create()
 {
 	if (g_qeglobals.d_hwndSurfaceDlg)
 	{

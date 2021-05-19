@@ -32,7 +32,6 @@ Map::New
 */
 void Map::New()
 {
-	char buf[1024];
 	qeBuffer between(0);
 
 	Sys_Printf("Map::New\n");
@@ -45,13 +44,14 @@ void Map::New()
 	world->CloseLinks();
 
 	// sikk---> Wad Loading
+	/*
+	char buf[1024];
 	strcpy(buf, g_project.defaultWads);
 	if (strlen(buf))
 	{
 		int i = 0;
 		char *temp, tempwads[1024] = "";
 		char *texpath = g_project.wadPath;
-
 		for (temp = strtok(buf, ";"); temp; temp = strtok(0, ";"), i++)
 		{
 			if (i)
@@ -61,6 +61,8 @@ void Map::New()
 		}
 		world->SetKeyValue("wad", tempwads);
 	}
+	*/
+	world->SetKeyValue("wad", g_project.defaultWads);
 	// <---sikk
 
 	world->eclass = EntClass::ForName("worldspawn", true, true);
@@ -314,7 +316,8 @@ void Map::LoadFromFile(const char *filename)
 	Free();
 
 	qeBuffer buf;
-	IO_LoadFile(filename, buf);
+	if (IO_LoadFile(filename, buf) < 1)
+		Error("Couldn't load %s!", filename);
 
 	if (ParseBufferReplace((char*)*buf))
 	{

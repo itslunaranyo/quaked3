@@ -171,6 +171,8 @@ int Tool::HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 Tool* Tool::ModalTool()
 {
+	if (g_qeglobals.d_tools.empty())
+		return nullptr;
 	if (g_qeglobals.d_tools.back()->modal)
 		return g_qeglobals.d_tools.back();
 	return nullptr;

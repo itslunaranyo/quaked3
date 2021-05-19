@@ -186,7 +186,9 @@ void AbsoluteToLocal(Plane normal2, Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 	// lunaran fix: snap texture shifts back to whole numbers so they don't creep with successive translations
 	f->texdef.shift[0] = roundf(f->texdef.shift[0]);
 	f->texdef.shift[1] = roundf(f->texdef.shift[1]);
-	f->texdef.rotate = roundf(f->texdef.rotate);
+
+	// lunaran: moving to float rotations
+	//f->texdef.rotate = roundf(f->texdef.rotate);
 }
 
 
@@ -367,7 +369,7 @@ void Surf_SetTexdef(TexDef &texdef, unsigned flags)
 			}
 		}
 	}
-	//SurfWnd_UpdateUI();
+	//WndSurf_UpdateUI();
 	Sys_UpdateWindows(W_SCENE|W_TEXTURE|W_SURF);
 	*/
 }

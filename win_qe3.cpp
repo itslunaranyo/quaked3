@@ -131,7 +131,7 @@ void Sys_ForceUpdateWindows(int bits)
 	if (g_nUpdateBits & W_TITLE)
 		QE_UpdateTitle();
 	if (g_nUpdateBits & W_SURF)
-		SurfWnd_UpdateUI();
+		WndSurf_UpdateUI();
 
 	g_nUpdateBits = 0;
 }
@@ -636,8 +636,8 @@ void Sys_CheckBspProcess (void)
 	free(out);
 	Sys_Beep();
 
-	if (!Pointfile_Check() && g_qeglobals.d_savedinfo.bTestAfterBSP)
-		DoTestMap();
+//	if (!Pointfile_Check() && g_qeglobals.d_savedinfo.bTestAfterBSP)
+//		DoTestMap();
 }
 
 // sikk---> Mousewheel Handling

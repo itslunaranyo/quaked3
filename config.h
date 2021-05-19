@@ -216,7 +216,7 @@ private:
 	void Defaults();
 	void WriteColor(std::ofstream &f, qecfgColors_t &col);
 	bool WriteProject(std::ofstream &f, qecfgProject_t &proj);
-	void ExpandProjectPath(char* src, char* dest);
+	void ExpandProjectPath(char* src, char* dest, bool dir = false);
 
 	bool ParseUI();
 	bool ParseEditor();

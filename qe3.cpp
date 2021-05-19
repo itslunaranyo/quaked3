@@ -79,62 +79,20 @@ vec3 AxisForVector(const vec3 &v)
 
 /*
 ==================
-QE_InitProject
-==================
-*/
-void QE_InitProject()
-{
-	char	szProject[_MAX_PATH];	// sikk - Load Last Project
-	szProject[0] = 0;
-	Sys_Printf("Initializing project settings ...\n");
-	/*
-	if (g_pszArgV[1])
-	{
-		// the project file can be specified on the command line (must be first parameter)
-		strcpy(szProject, g_pszArgV[1]);
-		Sys_Printf("Loading project from command line: %s\n", szProject);
-	}
-	else if (g_qeglobals.d_savedinfo.bLoadLastProject)
-	{
-		// if 'Load Last Project' is checked, load that file
-		if (strlen(g_qeglobals.d_savedinfo.szLastProject) > 0)
-		{
-			strcpy(szProject, g_qeglobals.d_savedinfo.szLastProject);
-			Sys_Printf("Loading last project: %s\n", szProject);
-		}
-		else
-		{
-			Sys_Printf("'Load Last Project' specified, but no last project found!\n");
-			strcpy(szProject, "scripts/quake.qe3");
-			strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
-			Sys_Printf("Loading default project: %s\n", szProject);
-		}
-	}
-	else
-	{
-		// default
-		strcpy(szProject, "scripts/quake.qe3");
-		strcpy(g_qeglobals.d_savedinfo.szLastProject, szProject);
-		Sys_Printf("Loading default project: %s\n", szProject);
-	}
-	*/
-	if (!QE_LoadProject())
-	{
-		//DoProject(true);	// sikk - Manually create project file if none is found
-		ProjectDialog();	// lunaran - i know it's down there somewhere just let me have a look
-		//if (!QE_LoadProject("scripts/quake.qe3"))
-		//	Error("Could not load scripts/quake.qe3 project file.");
-	}
-}
-
-/*
-==================
 QE_Init
 ==================
 */
 void QE_Init ()
 {
 	Sys_Printf("Initializing QuakeEd\n");
+
+	// check if registry key exists and do default windows if not
+	HKEY hKey;
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+	{
+		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_WINDOW_QE3DEFAULT, 0);
+		RegCloseKey(hKey);
+	}
 
 	g_qeconfig.Load();
 
@@ -148,7 +106,6 @@ void QE_Init ()
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 	g_qeglobals.d_v3WorkMin = vec3(0);
 	g_qeglobals.d_v3WorkMax = vec3(8);
-	//g_qeglobals.d_savedinfo.nViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
 	g_cfgUI.ViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
 
 	// create tools - creation order determines which tools get first chance to handle inputs
@@ -189,6 +146,26 @@ void QE_Init ()
 
 	// sikk - Update User Interface
 	QE_UpdateCommandUI();
+
+	// check command line for a map to load at startup
+	char szMap[_MAX_PATH];
+	for (int i = 0; i < g_nArgC; i++)
+	{
+		int l = strlen(g_pszArgV[i]);
+		if (l <= 4)
+			continue;
+		if (!strcmp(g_pszArgV[i] + (l - 4), ".map"))
+		{
+			if (IsPathAbsolute(g_pszArgV[i]))
+				strcpy(szMap, g_pszArgV[i]);
+			else	// path is relative, look in project maps dir
+				sprintf(szMap, "%s%s", g_project.mapPath, g_pszArgV[i]);	// config guarantees map path ends with /
+			g_map.LoadFromFile(szMap);
+			return;
+		}
+	}
+	if (g_cfgEditor.LoadLastMap && GetMenuItem(g_qeglobals.d_lpMruMenu, 0, false, szMap, _MAX_PATH))
+		g_map.LoadFromFile(szMap);
 }
 
 /*
@@ -617,12 +594,12 @@ void QE_CheckAutoSave ()
 
 /*
 ===========
-QE_LoadProject
+QE_InitProject
 ===========
 */
-bool QE_LoadProject()
+bool QE_InitProject()
 {
-	Sys_Printf("QE_LoadProject (%s)\n", g_project.name);
+	Sys_Printf("Initializing project '%s'\n", g_project.name);
 
 	Sys_Printf("basePath: %s\n", g_project.basePath);
 	Sys_Printf("mapPath: %s\n", g_project.mapPath);

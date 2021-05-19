@@ -451,14 +451,6 @@ texcmp
 */
 int texcmp(Texture* a, Texture* b)
 {
-	/*
-	if (g_qeglobals.d_savedinfo.bSortTexByWad && a->wad && b->wad)
-	{
-		int cmp;
-		cmp = strcmp(a->wad, b->wad);
-		if (cmp != 0)
-			return cmp;
-	}*/
 	return strcmp(a->name, b->name);
 }
 
