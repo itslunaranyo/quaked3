@@ -20,7 +20,7 @@ typedef struct qtexture_s
 
 typedef struct
 {
-	char	name[16];		// lunaran: changed to 16 to match the .WAD2 spec
+	char	name[32];		// longer than the WAD2 spec to make room for the (rgb) single color texture hack names
 //	qtexture_t* tex;		// some day
 	float	shift[2];
 	float	scale[2];

@@ -22,38 +22,41 @@ entity_t	   *g_peLink;
 /*
 ==============
 AxializeVector
+lunaran: matches function of TextureAxisFromPlane now, used to fail on diagonal cases
 ==============
 */
 void AxializeVector (vec3_t v)
 {
-	int		i;
-	float	f;
-	vec3_t	a;
+	vec3_t axes[6] =
+	{
+		{ 0, 0, 1 },
+		{ 0, 0,-1 },
+		{ 1, 0, 0 },
+		{ -1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0,-1, 0 },
+	};
 
-	if (!v[0] && !v[1])
-		return;
-	if (!v[1] && !v[2])
-		return;
-	if (!v[0] && !v[2])
-		return;
+	int		i, bestaxis;
+	float	dot, best;
+
+	best = 0;
+	bestaxis = 0;
+
+	for (i = 0; i < 6; i++)
+	{
+		dot = DotProduct(v, axes[i]);
+		if (dot > best)
+		{
+			best = dot;
+			bestaxis = i;
+		}
+	}
 
 	for (i = 0; i < 3; i++)
-		a[i] = fabs(v[i]);
-
-	if (a[0] > a[1] && a[0] > a[2])
-		i = 0;
-	else if (a[1] > a[0] && a[1] > a[2])
-		i = 1;
-	else
-		i = 2;
-
-	f = v[i];
-	VectorCopy(g_v3VecOrigin, v);
-
-	if (f < 0)
-		v[i] = -1;
-	else
-		v[i] = 1;
+	{
+		v[i] = fabs(v[i]) * axes[bestaxis][i];
+	}
 }
 
 /*
@@ -295,6 +298,37 @@ void Drag_Setup(int x, int y, int buttons,
 
 /*
 ===========
+Drag_TrySelect
+===========
+*/
+bool Drag_TrySelect(int buttons, vec3_t origin, vec3_t dir)
+{
+	int		nFlag;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+
+	// Shift+LBUTTON = select entire brush
+	if (buttons == (MK_LBUTTON | MK_SHIFT))
+	{
+		nFlag = GetAsyncKeyState(VK_MENU) ? SF_CYCLE : 0;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+		if (!dir[0] && !dir[1])
+			Select_Ray(origin, dir, nFlag | SF_ENTITIES_FIRST);	// hack for XY	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+		else
+			Select_Ray(origin, dir, nFlag);	// sikk - Single Selection Cycle (Shift+Alt+LMB)
+		return true;
+	}
+
+	// Ctrl+Shift+LBUTTON = select single face
+	if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
+	{
+		// if Alt = pressed, don't deselect selected faces
+		Select_DeselectAll(!(bool)GetAsyncKeyState(VK_MENU));	// sikk - Multiple Face Selection
+		Select_Ray(origin, dir, SF_SINGLEFACE);
+		return true;
+	}
+	return false;
+}
+
+/*
+===========
 Drag_Begin
 ===========
 */
@@ -312,128 +346,114 @@ void Drag_Begin (int x, int y, int buttons,
 	g_bDragFirst = true;
 	g_peLink = NULL;
 
-	// Shift+LBUTTON = select entire brush
-	if (buttons == (MK_LBUTTON | MK_SHIFT))
-	{
-		nFlag = GetAsyncKeyState(VK_MENU) ? SF_CYCLE : 0;	// sikk - Single Selection Cycle (Shift+Alt+LMB)
-		if (!dir[0] && !dir[1])
-			Select_Ray(origin, dir, nFlag | SF_ENTITIES_FIRST);	// hack for XY	// sikk - Single Selection Cycle (Shift+Alt+LMB)
-		else
-			Select_Ray(origin, dir, nFlag);	// sikk - Single Selection Cycle (Shift+Alt+LMB)
-		return;
-	}
-
-	// Ctrl+Shift+LBUTTON = select single face
-	if (buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT))
-	{
-		// if Alt = pressed, don't deselect selected faces
-		Select_DeselectAll(!(bool)GetAsyncKeyState(VK_MENU));	// sikk - Multiple Face Selection
-		Select_Ray(origin, dir, SF_SINGLEFACE);
-		return;
-	}
-
-	// LBUTTON + all other modifiers = manipulate selection
+	// LBUTTON = manipulate selection
 	if (buttons & MK_LBUTTON)
 	{
+		if (Drag_TrySelect(buttons, origin, dir))
+			return;
+
 		Drag_Setup(x, y, buttons, xaxis, yaxis, origin, dir);
 		return;
 	}
 
 	// MBUTTON = grab texture
-	if (buttons == MK_MBUTTON)
+	if (buttons & MK_MBUTTON)
 	{
-		t = Test_Ray(origin, dir, false);
-		if (t.face)
+		if (buttons == MK_MBUTTON)
 		{
-			nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
-			nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
-
-			g_qeglobals.d_v3WorkMin[nDim1] = t.brush->mins[nDim1];
-			g_qeglobals.d_v3WorkMax[nDim1] = t.brush->maxs[nDim1];
-			g_qeglobals.d_v3WorkMin[nDim2] = t.brush->mins[nDim2];
-			g_qeglobals.d_v3WorkMax[nDim2] = t.brush->maxs[nDim2];
-
-			UpdateWorkzone(t.brush);
-
-			Texture_ChooseTexture(&t.face->texdef, true);
-			SurfWnd_UpdateUI();
-		}
-		else
-			Sys_Printf("MSG: Did not select a texture.\n");
-		return;
-	}
-
-	// Ctrl+MBUTTON = set entire brush to texture
-	if (buttons == (MK_MBUTTON | MK_CONTROL))
-	{
-		t = Test_Ray(origin, dir, false);
-		if (t.brush)
-		{
-			if (t.brush->brush_faces->texdef.name[0] == '(')
-				Sys_Printf("WARNING: Cannot change an entity texture.\n");
-			else
+			t = Test_Ray(origin, dir, false);
+			if (t.face)
 			{
-				Undo_Start("Set Brush Texture");
-				Undo_AddBrush(t.brush);
-				Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef);
-				Undo_EndBrush(t.brush);
-				Undo_End();
-				Sys_UpdateWindows(W_ALL);
-			}
-		}
-		else
-			Sys_Printf("MSG: Did not hit a brush.\n");
-		return;
-	}
+				nDim1 = (g_qeglobals.d_xyz[0].dViewType == YZ) ? 1 : 0;
+				nDim2 = (g_qeglobals.d_xyz[0].dViewType == XY) ? 1 : 2;
 
-// sikk---> Set Face Texture (face attributes remain)
-	// Shift+MBUTTON = set single face to texture (face attributes remain)
-	if (buttons == (MK_MBUTTON | MK_SHIFT))
-	{
-		t = Test_Ray(origin, dir, false);
-		if (t.brush)
-		{
-			if (t.brush->brush_faces->texdef.name[0] == '(')
-				Sys_Printf("WARNING: Cannot change an entity texture.\n");
-			else
-			{
-				Undo_Start("Set Face Texture");
-				Undo_AddBrush(t.brush);
-				strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
-				Brush_Build(t.brush);
-				Undo_EndBrush(t.brush);
-				Undo_End();
-				Sys_UpdateWindows(W_ALL);
-			}
-		}
-		else
-			Sys_Printf("MSG: Did not hit a brush.\n");
-		return;
-	}
-// <---sikk
+				g_qeglobals.d_v3WorkMin[nDim1] = t.brush->mins[nDim1];
+				g_qeglobals.d_v3WorkMax[nDim1] = t.brush->maxs[nDim1];
+				g_qeglobals.d_v3WorkMin[nDim2] = t.brush->mins[nDim2];
+				g_qeglobals.d_v3WorkMax[nDim2] = t.brush->maxs[nDim2];
 
-	// Ctrl+Shift+MBUTTON = set single face to texture
-	if (buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT))
-	{
-		t = Test_Ray(origin, dir, false);
-		if (t.brush)
-		{
-			if (t.brush->brush_faces->texdef.name[0] == '(')
-				Sys_Printf("WARNING: Cannot change an entity texture.\n");
-			else
-			{
-				Undo_Start("Set Face Texture");
-				Undo_AddBrush(t.brush);
-				t.face->texdef = g_qeglobals.d_workTexDef;
-				Brush_Build(t.brush);
-				Undo_EndBrush(t.brush);
-				Undo_End();
-				Sys_UpdateWindows(W_ALL);
+				UpdateWorkzone(t.brush);
+
+				Texture_ChooseTexture(&t.face->texdef, true);
+				SurfWnd_UpdateUI();
 			}
+			else
+				Sys_Printf("MSG: Did not select a texture.\n");
+			return;
 		}
-		else
-			Sys_Printf("MSG: Did not hit a brush.\n");
-		return;
+
+		// Ctrl+MBUTTON = set entire brush to texture
+		if (buttons == (MK_MBUTTON | MK_CONTROL))
+		{
+			t = Test_Ray(origin, dir, false);
+			if (t.brush)
+			{
+				if (t.brush->brush_faces->texdef.name[0] == '(')
+					Sys_Printf("WARNING: Cannot change an entity texture.\n");
+				else
+				{
+					Undo_Start("Set Brush Texture");
+					Undo_AddBrush(t.brush);
+					Brush_SetTexture(t.brush, &g_qeglobals.d_workTexDef);
+					Undo_EndBrush(t.brush);
+					Undo_End();
+					Sys_UpdateWindows(W_ALL);
+				}
+			}
+			else
+				Sys_Printf("MSG: Did not hit a brush.\n");
+			return;
+		}
+
+	// sikk---> Set Face Texture (face attributes remain)
+		// Shift+MBUTTON = set single face to texture (face attributes remain)
+		if (buttons == (MK_MBUTTON | MK_SHIFT))
+		{
+			t = Test_Ray(origin, dir, false);
+			if (t.brush)
+			{
+				if (t.brush->brush_faces->texdef.name[0] == '(')
+					Sys_Printf("WARNING: Cannot change an entity texture.\n");
+				else
+				{
+					Undo_Start("Set Face Texture");
+					Undo_AddBrush(t.brush);
+					strcpy(t.face->texdef.name, g_qeglobals.d_workTexDef.name);
+					Brush_Build(t.brush);
+					Undo_EndBrush(t.brush);
+					Undo_End();
+					Sys_UpdateWindows(W_ALL);
+				}
+			}
+			else
+				Sys_Printf("MSG: Did not hit a brush.\n");
+			return;
+		}
+	// <---sikk
+
+		// Ctrl+Shift+MBUTTON = set single face to texture
+		if (buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT))
+		{
+			t = Test_Ray(origin, dir, false);
+			if (t.brush)
+			{
+				if (t.brush->brush_faces->texdef.name[0] == '(')
+					Sys_Printf("WARNING: Cannot change an entity texture.\n");
+				else
+				{
+					Undo_Start("Set Face Texture");
+					Undo_AddBrush(t.brush);
+					t.face->texdef = g_qeglobals.d_workTexDef;
+					Brush_Build(t.brush);
+					Undo_EndBrush(t.brush);
+					Undo_End();
+					Sys_UpdateWindows(W_ALL);
+				}
+			}
+			else
+				Sys_Printf("MSG: Did not hit a brush.\n");
+			return;
+		}
 	}
 }
 

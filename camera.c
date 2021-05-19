@@ -294,7 +294,7 @@ Cam_BoundAngles
 */
 void Cam_BoundAngles()
 {
-	g_qeglobals.d_camera.angles[YAW] = fmod(g_qeglobals.d_camera.angles[YAW], 360.0f);
+//	g_qeglobals.d_camera.angles[YAW] = fmod(g_qeglobals.d_camera.angles[YAW], 360.0f);
 
 	g_qeglobals.d_camera.angles[PITCH] = fmin(g_qeglobals.d_camera.angles[PITCH], 90);
 	g_qeglobals.d_camera.angles[PITCH] = fmax(g_qeglobals.d_camera.angles[PITCH], -90);
@@ -417,6 +417,9 @@ void Cam_MouseDown (int x, int y, int buttons)
 	// clipper
 	if ((buttons & MK_LBUTTON) && g_qeglobals.d_bClipMode)
 	{
+		if (Drag_TrySelect(buttons, g_qeglobals.d_camera.origin, dir))
+			return;
+
 		// lunaran - alt quick clip
 		if (GetKeyState(VK_MENU) < 0)
 			Clip_CamStartQuickClip(x, y);

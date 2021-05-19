@@ -755,8 +755,7 @@ Builds a brush rendering data and also sets the min/max bounds
 */
 void Brush_Build (brush_t *b)
 {
-	// lunaran - moved to undo_start
-	//g_bModified = true;	// mark the map as changed
+	g_bModified = true;	// mark the map as changed
 
 	// build the windings and generate the bounding box
 	Brush_BuildWindings(b);
@@ -1828,8 +1827,9 @@ void Brush_Move (brush_t *b, vec3_t move)
 
 	for (f = b->brush_faces; f; f = f->next)
 	{
-		if (g_qeglobals.d_bTextureLock)
-			Face_MoveTexture(f, move);
+		if (!b->owner->eclass->fixedsize)
+			if (g_qeglobals.d_bTextureLock)
+				Face_MoveTexture(f, move);
 
 		for (i = 0; i < 3; i++)
 			VectorAdd(f->planepts[i], move, f->planepts[i]);

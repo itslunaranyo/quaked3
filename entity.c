@@ -378,6 +378,8 @@ void SetKeyValue (entity_t *ent, char *key, char *value)
 	strcpy(ep->key, key);
 	ep->value = qmalloc(strlen(value) + 1);
 	strcpy(ep->value, value);
+
+	g_bModified = true;
 }
 
 /*

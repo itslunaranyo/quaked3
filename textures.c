@@ -1004,7 +1004,7 @@ void TexWnd_SelectTexture (int mx, int my)
 	qtexture_t*	tw;
 
 	tw = TexWnd_TexAtPos(mx, my);
-	if (tw);
+	if (tw)
 	{
 		memset(&texdef, 0, sizeof(texdef));
 		texdef.scale[0] = g_qeglobals.d_fDefaultTexScale;	// sikk - Default Texture Scale Dialog

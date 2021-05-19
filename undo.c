@@ -94,8 +94,6 @@ void Undo_GeneralStart (char *operation)
 	g_undoMemorySize += sizeof(undo_t);
 	g_undoSize++;
 
-	g_bModified = true;
-
 	// undo buffer is bound to a max
 	if (g_undoSize > g_undoMaxSize)
 		Undo_FreeFirstUndo();
@@ -923,5 +921,3 @@ int Undo_MemorySize ()
 */
 	return g_undoMemorySize;
 }
-
-
