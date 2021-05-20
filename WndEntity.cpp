@@ -5,6 +5,7 @@
 #include "pre.h"
 #include "qe3.h"
 #include "WndEntity.h"
+#include "EntityView.h"
 #include "WndCamera.h"
 #include "win_dlg.h"
 #include "CmdSetSpawnflag.h"
@@ -13,55 +14,9 @@
 #include "modify.h"
 
 HWND g_hwndEntity;
-vec3 g_lastColor;
 
 #define DLGBORDER_X		2
 #define DLGBORDER_Y		2
-#define KVMIXED			"__QE3MIXEDVALUES_"
-#define KVMIXEDLABEL	"[multiple values]"
-
-int g_nEntDialogIDs[ENT_LAST] =
-{
-	IDC_E_LIST,
-	IDC_E_COMMENT,
-	IDC_E_FLAG1,
-	IDC_E_FLAG2,
-	IDC_E_FLAG3,
-	IDC_E_FLAG4,
-	IDC_E_FLAG5,
-	IDC_E_FLAG6,
-	IDC_E_FLAG7,
-	IDC_E_FLAG8,
-	IDC_E_FLAG9,
-	IDC_E_FLAG10,
-	IDC_E_FLAG11,
-	IDC_E_FLAG12,
-	IDC_E_FLAG13,
-	IDC_E_FLAG14,
-	IDC_E_FLAG15,
-	IDC_E_FLAG16,
-	IDC_E_PROPS,
-	IDC_E_0,
-	IDC_E_45,
-	IDC_E_90,
-	IDC_E_135,
-	IDC_E_180,
-	IDC_E_225,
-	IDC_E_270,
-	IDC_E_315,
-	IDC_E_UP,
-	IDC_E_DOWN,
-	IDC_E_ADDPROP,	// sikk - Entity Window Addition
-	IDC_E_DELPROP,
-	IDC_E_CREATE,	// sikk - Entity Window Addition
-
-	IDC_STATIC_KEY,
-	IDC_E_KEY_FIELD,
-	IDC_STATIC_VALUE,
-	IDC_E_VALUE_FIELD,
-
-	IDC_E_COLOR
-};
 
 
 
@@ -79,9 +34,11 @@ WndEntity::~WndEntity()
 
 void WndEntity::Initialize()
 {
-	CreateWnd();
+	Create();
 	SetTitle("Entity Editor");
-	g_hwndEntity = w_hwnd;
+	g_hwndEntity = wHwnd;
+
+	ev = new EntityView();
 	CreateControls();
 	RestorePosition();	// something in ResizeControls forces the window to visible
 }
@@ -101,21 +58,30 @@ void WndEntity::SelectEntityColor()
 	WndMain_SetInspectorMode(W_ENTITY);
 
 	vec3 color;
-	if (!g_eEditEntity.GetKeyValueVector("_color", color))
-		color = g_lastColor;
-	if (color == vec3(0))
-		color = vec3(1);
-	if (DoColorSelect(color, color))
+	bool prevColor;
+	EntityView::entEpair_t* colorep;
+
+	colorep = ev->FindKV("_color");
+	prevColor = (colorep && !colorep->mixed);
+	if (prevColor)
 	{
+		sscanf(colorep->kv.value.c_str(), "%f %f %f", &color[0], &color[1], &color[2]);
+	}
+
+	if ( (prevColor && DoColorSelect(color, color)) || DoColorSelect(color))
+	{
+		if (color == vec3(0))
+			color = vec3(1);
 		char buffer[64];
 		VecToString(color, buffer);
 
 		SetWindowText(w_hwndCtrls[ENT_KEYFIELD], "_color");
 		SetWindowText(w_hwndCtrls[ENT_VALUEFIELD], buffer);
 		SetKeyValue();
+
+		WndMain_UpdateWindows(W_CAMERA | W_ENTITY);
 	}
-	g_lastColor = color;
-	WndMain_UpdateWindows(W_SCENE | W_ENTITY);
+
 }
 
 /*
@@ -178,7 +144,7 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_LBUTTONDOWN:
 		g_wndEntity->BringToTop();
-		SetFocus(w_hwnd);
+		SetFocus(wHwnd);
 		break;
 	}
 	return CallWindowProc(DefaultFieldProc, hWnd, uMsg, wParam, lParam);
@@ -223,7 +189,6 @@ EntityWndProc
 
 BOOL CALLBACK WndEntityProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	//assert(hwndDlg == g_wndEntity->w_hwndEntDialog);
 	if (!g_wndEntity->w_hwndEntDialog)
 		g_wndEntity->w_hwndEntDialog = hWnd;
 	return g_wndEntity->EntityDlgProc(uMsg, wParam, lParam);
@@ -370,14 +335,14 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HWND	wnd;
 		point.x = (short)LOWORD(lParam);
 		point.y = (short)HIWORD(lParam);
-		wnd = WindowFromPoint(point);	// why doesn't ChildWindowFromPoint return anything?
+		wnd = ChildWindowFromPoint(w_hwndEntDialog,point);
 		SendMessage(wnd, uMsg, wParam, lParam);
 		return 0;
 
 	case WM_SIZE:
-		GetClientRect(w_hwnd, &clientRect);
-		ResizeControls();
-		// resize texbrowser and console here
+		GetClientRect(wHwnd, &clientRect);
+		OnResized();
+		InvalidateRect(wHwnd, NULL, FALSE);
 		return 0;
 
 	case WM_SIZING:
@@ -402,10 +367,10 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// it being darkened again when they're unfocused for another window, because no message goes through
 	// this hwnd in that case
 	case WM_KILLFOCUS:
-	//	SendMessage(w_hwnd, WM_NCACTIVATE, (GetParent((HWND)wParam) == w_hwndEntDialog), 0);
+	//	SendMessage(wHwnd, WM_NCACTIVATE, (GetParent((HWND)wParam) == w_hwndEntDialog), 0);
 	//	return 0;
 	case WM_SETFOCUS:
-		SendMessage(w_hwnd, WM_NCACTIVATE, (uMsg == WM_SETFOCUS), 0);
+		SendMessage(wHwnd, WM_NCACTIVATE, (uMsg == WM_SETFOCUS), 0);
 		return 0;
 
 	case WM_NCLBUTTONDOWN:
@@ -417,7 +382,7 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (!OnMessage(uMsg, wParam, lParam))
 		return 0;
 
-	return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
+	return DefWindowProc(wHwnd, uMsg, wParam, lParam);
 }
 
 int WndEntity::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -430,7 +395,11 @@ int WndEntity::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
-
+int WndEntity::OnResized()
+{
+	ResizeControls();
+	return 0;
+}
 
 
 /*
@@ -467,18 +436,31 @@ WndEntity::CreateControls
 void WndEntity::CreateControls()
 {
 	w_hwndEntDialog = nullptr;
-	w_hwndEntDialog = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ENTITY), w_hwnd, (DLGPROC)WndEntityProc);
+	w_hwndEntDialog = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ENTITY), wHwnd, (DLGPROC)WndEntityProc);
 	if (!w_hwndEntDialog)
 		Error("CreateDialog failed building entity editor");
 
-	GetClientRect(w_hwnd, &clientRect);
+	GetClientRect(wHwnd, &clientRect);
 	MoveRect(w_hwndEntDialog, clientRect);
 	ShowWindow(w_hwndEntDialog, SW_SHOWNORMAL);
 	UpdateWindow(w_hwndEntDialog);
 
+	const int entDialogIDs[ENT_LAST] =
+	{
+		IDC_E_LIST,
+		IDC_E_COMMENT,
+		IDC_E_FLAG1, IDC_E_FLAG2, IDC_E_FLAG3, IDC_E_FLAG4, IDC_E_FLAG5, IDC_E_FLAG6, IDC_E_FLAG7, IDC_E_FLAG8,
+		IDC_E_FLAG9, IDC_E_FLAG10, IDC_E_FLAG11, IDC_E_FLAG12, IDC_E_FLAG13, IDC_E_FLAG14, IDC_E_FLAG15, IDC_E_FLAG16,
+		IDC_E_0, IDC_E_45, IDC_E_90, IDC_E_135, IDC_E_180, IDC_E_225, IDC_E_270, IDC_E_315, IDC_E_UP, IDC_E_DOWN,
+		IDC_E_PROPS, IDC_E_ADDPROP, IDC_E_DELPROP,
+		IDC_E_CREATE,
+		IDC_STATIC_KEY, IDC_E_KEY_FIELD, IDC_STATIC_VALUE, IDC_E_VALUE_FIELD,
+		IDC_E_COLOR
+	};
+
 	for (int i = 0; i < ENT_LAST; i++)
 	{
-		w_hwndCtrls[i] = GetDlgItem(w_hwndEntDialog, g_nEntDialogIDs[i]);
+		w_hwndCtrls[i] = GetDlgItem(w_hwndEntDialog, entDialogIDs[i]);
 		if (w_hwndCtrls[i])
 		{
 			SendMessage(w_hwndCtrls[i], WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
@@ -528,7 +510,7 @@ void WndEntity::UpdateUI()
 	int i;
 
 	SendMessage(g_hwndEntity, WM_SETREDRAW, 0, 0);
-	RefreshEditEntity();
+	ev->Refresh();
 
 	if (!Selection::HasBrushes())
 	{
@@ -552,14 +534,15 @@ void WndEntity::UpdateUI()
 		// Set up the description
 		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)Sys_TranslateString((char*)*pec->comments));
 
+		// if a spawnflag has no name it doesn't exist
 		for (i = 0; i < MAX_FLAGS; i++)
 		{
 			HWND hwnd = w_hwndCtrls[ENT_CHECK1 + i];
-
-			if (*g_szEditFlagNames[i])
+			const char* name = ev->GetFlagName(i);
+			if (*name)
 			{
 				EnableWindow(hwnd, TRUE);
-				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)g_szEditFlagNames[i]);
+				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)name);
 			}
 			else
 			{
@@ -849,35 +832,22 @@ WndEntity::EditKeyValue
 void WndEntity::EditKeyValue ()
 {
 	int		i;
-	HWND	hwnd;
-	char	sz[4096];
-	char   *val;
+	EntityView::entEpair_t* evep;
 
-	hwnd = w_hwndCtrls[ENT_PROPS];
-
-	// Get current selection text
-	i = SendMessage(hwnd, LB_GETCURSEL, 0, 0);	
+	// Get current selection
+	i = SendMessage(w_hwndCtrls[ENT_PROPS], LB_GETCURSEL, 0, 0);
 
 	if (i < 0)
 		return;
 
-	SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);	
-
-	// strip it down to the key name
-	for (i = 0; sz[i] != '\t'; i++)
-		;
-
-	sz[i] = '\0';
-
-	val = sz + i + 1;
-	if (*val == '\t')
-		val++;
-
-	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)sz);
-	if (_strcmpi(val, KVMIXEDLABEL))
-		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)val);
-	else
+	// lunaran - get kv from view instead of redigesting it out of the field text
+	evep = (EntityView::entEpair_t*)SendMessage(w_hwndCtrls[ENT_PROPS], LB_GETITEMDATA, i, 0);
+	assert(evep);
+	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.key.c_str());
+	if (evep->mixed)
 		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)"");
+	else
+		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.value.c_str());
 }
 
 /*
@@ -890,10 +860,8 @@ Creates a new entity based on the currently selected brush and entity type.
 void WndEntity::CreateEntity()
 {
 	EntClass	*ec;
-	//	Entity		*e;
 	int			i;
 	HWND		hwnd;
-	//char		sz[1024];
 
 	// find out what type of entity we are trying to create
 	hwnd = w_hwndCtrls[ENT_CLASSLIST];
@@ -905,8 +873,10 @@ void WndEntity::CreateEntity()
 		return;
 	}
 
-	//SendMessage(hwnd, LB_GETTEXT, i, (LPARAM)sz);
 	ec = (EntClass *)SendMessage(hwnd, LB_GETITEMDATA, i, 0);
+
+	if (ec == EntClass::worldspawn)
+		return;	// just refuse silently here, they know what they did
 
 	if (!Selection::HasBrushes())
 	{
@@ -931,26 +901,30 @@ Reset the key/value listbox and fill it with the kv pairs from the entity being 
 */
 void WndEntity::RefreshKeyValues()
 {
-	EPair	   *pep;
-	RECT		rc;
-	char		sz[4096];
-	int			nTabs[] = { 64 };	// sikk - Tab fix
+	RECT rc;
+	char sz[4096];
+	int nTabs[] = { 64 };	// sikk - Tab fix
+	int ep;
+
+	SendMessage(w_hwndCtrls[ENT_PROPS], LB_RESETCONTENT, 0, 0);
 
 	// set key/value pair list
 	GetWindowRect(w_hwndCtrls[ENT_PROPS], &rc);
 	SendMessage(w_hwndCtrls[ENT_PROPS], LB_SETCOLUMNWIDTH, (rc.right - rc.left) / 2, 0);
-	SendMessage(w_hwndCtrls[ENT_PROPS], LB_RESETCONTENT, 0, 0);
 	SendMessage(w_hwndCtrls[ENT_PROPS], LB_SETTABSTOPS, (WPARAM)1, (LPARAM)(LPINT)nTabs);	// sikk - Tab fix
 
 	// Walk through list and add pairs
-	for (pep = g_eEditEntity.epairs; pep; pep = pep->next)
+	ep = 0;
+	for (auto pepIt = ev->ePairsFirst(); pepIt != ev->ePairsLast(); ++pepIt)
 	{
-		if (pep->value == KVMIXED)
-			sprintf(sz, "%s\t%s", (char*)*pep->key, KVMIXEDLABEL);
+		if (pepIt->mixed)
+			sprintf(sz, "%s\t%s", pepIt->kv.key.c_str(), mixedKVLabel);
 		else
-			sprintf(sz, "%s\t%s", (char*)*pep->key, (char*)*pep->value);
+			sprintf(sz, "%s\t%s", pepIt->kv.key.c_str(), pepIt->kv.value.c_str());
 
-		SendMessage(w_hwndCtrls[ENT_PROPS], LB_ADDSTRING, 0, (LPARAM)sz);
+		ep = SendMessage(w_hwndCtrls[ENT_PROPS], LB_ADDSTRING, 0, (LPARAM)sz);
+		SendMessage(w_hwndCtrls[ENT_PROPS], LB_SETITEMDATA, ep, (LPARAM)&(*pepIt));	// lunaran - save the epair location too
+		ep++;
 	}
 }
 
@@ -965,7 +939,7 @@ void WndEntity::FlagsFromEnt()
 {
 	for (int i = 0; i < MAX_FLAGS; i++)
 	{
-		SendMessage(w_hwndCtrls[ENT_CHECK1 + i], BM_SETCHECK, g_nEditEntFlags[i], 0);
+		SendMessage(w_hwndCtrls[ENT_CHECK1 + i], BM_SETCHECK, ev->GetFlagState(i), 0);
 	}
 }
 
@@ -974,6 +948,7 @@ void WndEntity::FlagsFromEnt()
 WndEntity::RefreshEditEntityFlags
 ==============
 */
+/*
 void WndEntity::RefreshEditEntityFlags(int inFlags, bool first)
 {
 	int f;
@@ -994,12 +969,14 @@ void WndEntity::RefreshEditEntityFlags(int inFlags, bool first)
 		}
 	}
 }
+*/
 
 /*
 ==============
 WndEntity::RefreshEditEntity
 ==============
 */
+/*
 void WndEntity::RefreshEditEntity()
 {
 	Entity *eo;
@@ -1059,4 +1036,4 @@ void WndEntity::RefreshEditEntity()
 	}
 }
 
-
+*/

@@ -9,7 +9,8 @@
 // 3-Point Clipping Tool
 
 class CmdBrushClip;
-class WndView;
+class CameraRenderer;
+class GridViewRenderer;
 
 class ClipTool : public Tool
 {
@@ -17,12 +18,12 @@ public:
 	ClipTool();
 	~ClipTool();
 
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	bool Draw3D(CameraView &v);
-	bool Draw2D(XYZView &v);
+	bool Draw3D(CameraRenderer &rc);
+	bool Draw2D(GridViewRenderer &v);
 
 	void SelectionChanged();
 
@@ -56,7 +57,7 @@ private:
 
 	void CamStartQuickClip(int x, int y);
 	void CamEndQuickClip();
-	void StartQuickClip(XYZView* xyz, int x, int y);
+	void StartQuickClip(GridView* xyz, int x, int y);
 	void EndQuickClip();
 
 	bool CamPointOnSelection(int x, int y, vec3 & out, int * outAxis);
@@ -65,10 +66,10 @@ private:
 	void CamMovePoint(int x, int y);
 	void CamEndPoint();
 
-	void DropPoint(XYZView* xyz, int x, int y);
+	void DropPoint(GridView* xyz, int x, int y);
 	void GetCoordXY(int x, int y, vec3 & pt);
-	clippoint_t* XYGetNearestClipPoint(XYZView * xyz, int x, int y);
-	void MovePoint(XYZView* xyz, int x, int y);
+	clippoint_t* XYGetNearestClipPoint(GridView * xyz, int x, int y);
+	void MovePoint(GridView* xyz, int x, int y);
 	void EndPoint();
 
 	void Draw();

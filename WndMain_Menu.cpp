@@ -8,14 +8,13 @@
 #include "WndFiles.h"
 #include "win_dlg.h"
 
-#include "io.h"
 #include "points.h"
 #include "csg.h"
 #include "mru.h"
 
 #include "CameraView.h"
 #include "TextureView.h"
-#include "XYZView.h"
+#include "GridView.h"
 #include "ZView.h"
 #include "WndCamera.h"
 #include "WndGrid.h"
@@ -175,6 +174,7 @@ LONG WINAPI WndMain_Command(
 	//===================================
 	case ID_VIEW_TOOLBAR_FILEBAND:
 	case ID_VIEW_TOOLBAR_EDITBAND:
+	case ID_VIEW_TOOLBAR_WINDOWBAND:
 	case ID_VIEW_TOOLBAR_EDIT2BAND:
 	case ID_VIEW_TOOLBAR_SELECTBAND:
 	case ID_VIEW_TOOLBAR_CSGBAND:
@@ -367,17 +367,20 @@ LONG WINAPI WndMain_Command(
 
 	case ID_VIEW_CENTER:
 		g_vCamera.LevelView();
+		WndMain_UpdateWindows(W_XY|W_CAMERA);
 		break;
 	case ID_VIEW_UPFLOOR:
 		g_vCamera.ChangeFloor(true);
+		WndMain_UpdateWindows(W_SCENE);
 		break;
 	case ID_VIEW_DOWNFLOOR:
 		g_vCamera.ChangeFloor(false);
+		WndMain_UpdateWindows(W_SCENE);
 		break;
 
 	case ID_VIEW_CENTERONSELECTION:	// sikk - Center Views on Selection
 		for (int i = 0; i < 4; i++)
-			g_vXYZ[i].PositionView();
+			g_vGrid[i].PositionView();
 		g_vCamera.PositionCenter();
 		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		break;
@@ -386,50 +389,43 @@ LONG WINAPI WndMain_Command(
 		g_wndGrid[0]->CycleAxis();
 		break;
 	case ID_VIEW_XY:
-		g_wndGrid[0]->SetAxis(XY);
+		g_wndGrid[0]->SetAxis(GRID_XY);
 		break;
 	case ID_VIEW_XZ:
-		g_wndGrid[0]->SetAxis(XZ);
+		g_wndGrid[0]->SetAxis(GRID_XZ);
 		break;
 	case ID_VIEW_YZ:
-		g_wndGrid[0]->SetAxis(YZ);
+		g_wndGrid[0]->SetAxis(GRID_YZ);
 		break;
 	case ID_VIEW_SWAPGRIDCAM:
 		WndMain_SwapGridCam();
 		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		break;
 
+	// lunaran TODO: 3-grid mode should keep all views synchronized
 	case ID_VIEW_100:
-		g_vXYZ[0].scale = 1;
+		g_vGrid[0].ResetZoom();
 		WndMain_UpdateWindows(W_XY);
 		break;
 	case ID_VIEW_ZOOMIN:
-		g_vXYZ[0].scale *= 5.0 / 4;
-		if (g_vXYZ[0].scale > 32)
-			g_vXYZ[0].scale = 32;
+		g_vGrid[0].ZoomIn();
 		WndMain_UpdateWindows(W_XY);
 		break;
 	case ID_VIEW_ZOOMOUT:
-		g_vXYZ[0].scale *= 4.0f / 5;
-		if (g_vXYZ[0].scale < 0.05)
-			g_vXYZ[0].scale = 0.05f;
+		g_vGrid[0].ZoomOut();
 		WndMain_UpdateWindows(W_XY);
 		break;
 
 	case ID_VIEW_Z100:
-		g_vZ.scale = 1;
+		g_vZ.ResetScale();
 		WndMain_UpdateWindows(W_Z);
 		break;
 	case ID_VIEW_ZZOOMIN:
-		g_vZ.scale *= 5.0 / 4;
-		if (g_vZ.scale > 16)
-			g_vZ.scale = 16;
+		g_vZ.ScaleUp();
 		WndMain_UpdateWindows(W_Z);
 		break;
 	case ID_VIEW_ZZOOMOUT:
-		g_vZ.scale *= 4.0f / 5;
-		if (g_vZ.scale < 0.1)
-			g_vZ.scale = 0.1f;
+		g_vZ.ScaleDown();
 		WndMain_UpdateWindows(W_Z);
 		break;
 
@@ -440,15 +436,16 @@ LONG WINAPI WndMain_Command(
 		// sikk---> Cubic Clipping
 	case ID_VIEW_CUBICCLIP:
 		g_cfgEditor.CubicClip ^= true;
-		WndMain_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateGridStatusBar();
+		WndMain_UpdateWindows(W_CAMERA);
 		break;
-	case ID_VIEW_CUBICCLIPZOOMIN:
+	case ID_VIEW_CUBICCLIPNEARER:
 		g_cfgEditor.CubicScale = max((int)g_cfgEditor.CubicScale - 1, 1);
 		WndMain_UpdateGridStatusBar();
 		WndMain_UpdateWindows(W_CAMERA);
 		break;
 
-	case ID_VIEW_CUBICCLIPZOOMOUT:
+	case ID_VIEW_CUBICCLIPFARTHER:
 		g_cfgEditor.CubicScale = min((int)g_cfgEditor.CubicScale + 1, 64);
 		WndMain_UpdateGridStatusBar();
 		WndMain_UpdateWindows(W_CAMERA);
@@ -481,10 +478,10 @@ LONG WINAPI WndMain_Command(
 		// translateAccelerator helpfully destroys both the message and record of the message's intended window
 		// so NUDGEs directed at a certain window systemically cannot get there :(
 		HWND dstHwnd = GetFocus();
-		if (dstHwnd != g_hwndXYZ[0] &&
-			dstHwnd != g_hwndXYZ[1] &&
-			dstHwnd != g_hwndXYZ[2] &&
-			dstHwnd != g_hwndXYZ[3] &&
+		if (dstHwnd != g_hwndGrid[0] &&
+			dstHwnd != g_hwndGrid[1] &&
+			dstHwnd != g_hwndGrid[2] &&
+			dstHwnd != g_hwndGrid[3] &&
 			dstHwnd != g_hwndZ)
 			dstHwnd = g_hwndCamera;
 		SendMessage(dstHwnd, WM_COMMAND, wParam, lParam);
@@ -693,7 +690,7 @@ LONG WINAPI WndMain_Command(
 
 	case ID_GRID_TOGGLE:	// sikk - Gridd Toggle
 		g_qeglobals.d_bShowGrid ^= true;
-		//PostMessage(g_hwndXYZ[0], WM_PAINT, 0, 0);
+		//PostMessage(g_hwndGrid[0], WM_PAINT, 0, 0);
 		WndMain_UpdateWindows(W_Z | W_XY);
 		break;
 
@@ -718,20 +715,20 @@ LONG WINAPI WndMain_Command(
 		break;
 
 	case ID_DRAWMODE_WIREFRAME:
-		g_cfgUI.DrawMode = cd_wire;
-		Textures::SetDrawMode(cd_wire);
+		g_cfgUI.DrawMode = CD_WIRE;
+		Textures::SetDrawMode(CD_WIRE);
 		g_map.BuildBrushData();
 		WndMain_UpdateWindows(W_CAMERA);
 		break;
 	case ID_DRAWMODE_FLATSHADE:
-		g_cfgUI.DrawMode = cd_solid;
-		Textures::SetDrawMode(cd_solid);
+		g_cfgUI.DrawMode = CD_FLAT;
+		Textures::SetDrawMode(CD_FLAT);
 		g_map.BuildBrushData();
 		WndMain_UpdateWindows(W_CAMERA);
 		break;
 	case ID_DRAWMODE_TEXTURED:
-		g_cfgUI.DrawMode = cd_texture;
-		Textures::SetDrawMode(cd_texture);
+		g_cfgUI.DrawMode = CD_TEXTURED;
+		Textures::SetDrawMode(CD_TEXTURED);
 		g_map.BuildBrushData();
 		WndMain_UpdateWindows(W_CAMERA);
 		break;
@@ -933,28 +930,29 @@ void WndMain_UpdateMenu ()
 	// Toolbar Bands
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_FILEBAND,		IsWindowVisible(g_hwndToolbar[0]));
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDITBAND,		IsWindowVisible(g_hwndToolbar[1]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		IsWindowVisible(g_hwndToolbar[2]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,	IsWindowVisible(g_hwndToolbar[3]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		IsWindowVisible(g_hwndToolbar[4]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		IsWindowVisible(g_hwndToolbar[5]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,	IsWindowVisible(g_hwndToolbar[6]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		IsWindowVisible(g_hwndToolbar[7]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	IsWindowVisible(g_hwndToolbar[8]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		IsWindowVisible(g_hwndToolbar[9]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		IsWindowVisible(g_hwndToolbar[10]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_WINDOWBAND,	IsWindowVisible(g_hwndToolbar[2]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		IsWindowVisible(g_hwndToolbar[3]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,	IsWindowVisible(g_hwndToolbar[4]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		IsWindowVisible(g_hwndToolbar[5]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		IsWindowVisible(g_hwndToolbar[6]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,	IsWindowVisible(g_hwndToolbar[7]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		IsWindowVisible(g_hwndToolbar[8]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	IsWindowVisible(g_hwndToolbar[9]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		IsWindowVisible(g_hwndToolbar[10]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		IsWindowVisible(g_hwndToolbar[11]));
 
 	// Status Bar
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_STATUSBAR,	IsWindowVisible(g_hwndStatus));
 	// XY Windows
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_CAMERA,	IsWindowVisible(g_hwndCamera));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY,	IsWindowVisible(g_hwndXYZ[0]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	IsWindowVisible(g_hwndXYZ[2]));
-	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	IsWindowVisible(g_hwndXYZ[1]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY,	IsWindowVisible(g_hwndGrid[0]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	IsWindowVisible(g_hwndGrid[2]));
+	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	IsWindowVisible(g_hwndGrid[1]));
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	IsWindowVisible(g_hwndZ));
 
 	// Cubic Clipping
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, g_cfgEditor.CubicClip);
-	SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
+	SendMessage(g_hwndToolbar[10], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Filter Commands
 
 	WndMain_UpdateMenuFilters(hMenu);
@@ -968,28 +966,28 @@ void WndMain_UpdateMenu ()
 		// Clipper Mode
 		modeCheck = (dynamic_cast<ClipTool*>(Tool::ModalTool()) != nullptr);
 		WndMain_CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, modeCheck);
-		SendMessage(g_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+		SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Edge Mode 
 		GeoTool* gt;
 		gt = dynamic_cast<GeoTool*>(Tool::ModalTool());
 		modeCheck = (gt && (gt->mode & GeoTool::GT_EDGE));
 		WndMain_CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, modeCheck);
-		SendMessage(g_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+		SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Vertex Mode 
 		modeCheck = (gt && (gt->mode & GeoTool::GT_VERTEX));
 		WndMain_CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, modeCheck);
-		SendMessage(g_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+		SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Face Mode 
 		modeCheck = (gt && (gt->mode & GeoTool::GT_FACE));
 		WndMain_CheckMenuItem(hMenu, ID_SELECTION_DRAGFACES, modeCheck);
-		SendMessage(g_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGFACES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+		SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGFACES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		modeCheck = (dynamic_cast<PolyTool*>(Tool::ModalTool()) != nullptr);
 		WndMain_CheckMenuItem(hMenu, ID_TOOLS_DRAWBRUSHESTOOL, modeCheck);
-		SendMessage(g_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+		SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 	}
 
 //===================================
@@ -1006,8 +1004,8 @@ void WndMain_UpdateMenu ()
 //===================================
 // Region Menu
 //===================================
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_wndGrid[2]->Open() ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_wndGrid[1]->Open() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_wndGrid[2]->IsOpen() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_wndGrid[1]->IsOpen() ? MF_ENABLED : MF_GRAYED));
 }
 
 /*
@@ -1075,6 +1073,28 @@ WndMain_UpdateTextureMenu
 void WndMain_UpdateTextureMenu()
 {
 	HMENU	hmenu;
+	auto wadlist = Textures::ListWadsInDirectory(g_project.wadPath);
+	hmenu = GetSubMenu(GetMenu(g_hwndMain), MENU_TEXTURE);
+
+	// delete everything
+	for (int i = 0; i < g_nTextureNumMenus; i++)
+		DeleteMenu(hmenu, CMD_TEXTUREWAD + i, MF_BYCOMMAND);
+
+	g_nTextureNumMenus = 0;
+
+	for (auto wadIt = wadlist.begin(); wadIt != wadlist.end(); ++wadIt)
+	{
+		const char* wadname = wadIt->name;
+		AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)wadname);
+		strcpy(g_szTextureMenuNames[g_nTextureNumMenus], wadname);
+
+		if (++g_nTextureNumMenus == MAX_TEXTUREDIRS)
+			break;
+	};
+
+
+	/*
+	HMENU	hmenu;
 	int		i;
 	struct _finddata_t fileinfo;
 	int		handle;
@@ -1118,7 +1138,7 @@ void WndMain_UpdateTextureMenu()
 		} while (_findnext(handle, &fileinfo) != -1);
 
 		_findclose(handle);
-	}
+	}*/
 }
 
 /*

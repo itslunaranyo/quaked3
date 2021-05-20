@@ -36,18 +36,8 @@
 
 //========================================================================
 
-// persistent preferences saved into the registry
-typedef struct
-{
-	int		nSize;				// structure size
-	REBARBANDINFO rbiSettings[11];	// sikk - Save Rebar Band Info
-} savedinfo_t;
-
-
-
-/*
-** most of the QE globals are stored in this structure
-*/
+// most of the QE globals are stored in this structure
+// lunaran: shrank this drastically
 typedef struct
 {
 	bool		d_bShowGrid;
@@ -58,14 +48,9 @@ typedef struct
 				d_v3WorkMax;			// brushes and drop points third coordinate when creating from 2D view
 	TexDef		d_workTexDef;			// lunaran: moved out of texturewin_t
 
-	//HGLRC		d_hglrcBase;
-	//HDC		d_hdcBase;
 	HINSTANCE	d_hInstance;
 
 	int			d_nPointfileDisplayList;
-
-	savedinfo_t d_savedinfo;
-	int		    d_nFontList;
 
 	bool		d_bTextureLock;
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
@@ -110,14 +95,6 @@ char   *QE_ExpandProjectPath (char *p);
 vec3	pointOnGrid(const vec3 point);
 vec3	AxisForVector(const vec3 &v);		// TODO: mathlib
 vec3	AxializeVector(const vec3 &v);
-
-
-// win_main.c
-
-bool SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize);
-bool LoadRegistryInfo (const char *pszName, void *pvBuf, long *plSize);
-
-// win_dlg.c
 
 // WndConfig.c
 void DoConfigWindow();

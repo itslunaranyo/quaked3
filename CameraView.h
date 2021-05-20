@@ -1,65 +1,60 @@
 #ifndef __CAMERAVIEW_H__
 #define __CAMERAVIEW_H__
 //==============================
-//	camera.h
+//	cameraview.h
 //==============================
 
-// window system independent camera view code
-#include "View.h"
+#include "DisplayView.h"
 
-class CameraView : public View
+class CameraView : public DisplayView
 {
 public:
-	vec3	focus;
-	vec3	angles;
-	vec3	forward, right, up;	// move matrix
-	vec3	vup, vpn, vright;	// view matrix
-	vec3	mpUp, mpRight;		// mouse manipulation plane
-	glm::mat4 matProj;
-	int		nCamButtonState;
-
-	void MouseDown (const int x, const int y, const int buttons);
-	void MouseUp (const int x, const int y, const int buttons);
-	void MouseMoved(const int x, const int y, const int buttons);
-	void MouseWheel(const int x, const int y, bool up, const int buttons);
-	void RealtimeControl (float dtime);
-
-	void GetAimPoint(vec3 &pt);
-	void PointToRay(int x, int y, vec3 &rayOut);
-	bool GetBasis(vec3 &right, vec3 &up, vec3 &forward);
-	mouseContext_t	const GetMouseContext(const int x, const int y);
-
+	void Init();
 	void ChangeFloor(bool up);
 	void PointAt(vec3 pt);
 	void LevelView();
-	void FreeLook();
-	void Strafe();
-	void PositionCenter();	// sikk - Center Camera on Selection
-	void Orbit();
-	void Orbit(float pitch, float yaw);
+	void FreeLook(int dX, int dY);
+	void Strafe(int dX, int dY);
+	void PositionCenter();
+	void Orbit(float yaw, float pitch);
 	void SetOrbit(vec3 dir);
 	void SetOrbit(int x, int y);
+	void SetOrbit();
 	void BoundAngles();
 
-	void Draw ();
+	void Reset();
+	void SetOrigin(vec3 newOrg);
+	void Step(float fwd, float rt, float up);
+	void Move(float fwd, float rt, float up);
+	void Turn(float ang, bool absolute = false);
+	void Pitch(float ang, bool absolute = false);
+
+	void GetAimPoint(vec3 &pt);
+	void PointToRay(int x, int y, vec3 &rayOut);
+	bool const GetBasis(vec3 &right, vec3 &up, vec3 &forward);
 	bool CullBrush(Brush *b);
 
-	void DrawSelected(Brush	*pList, vec3 selColor);
+	mouseContext_t	const GetMouseContext(const int x, const int y);
+	inline vec3 GetOrigin() { return origin; }
+	inline vec3 GetAngles() { return angles; }
+	inline vec3 GetViewDir() { return vpn; }
+	inline vec3 GetViewUp() { return vup; }
+	inline vec3 GetViewRight() { return vright; }
+	inline vec3 GetPlanarUp() { return mpUp; }
+	inline vec3 GetPlanarRight() { return mpRight; }
+	inline glm::mat4 GetProjection() { return matProj; }
 
 private:
-
-	int		buttonX, buttonY;
+	void InitCull();
+	void BuildMatrix();
 	int		nCullv1[3], nCullv2[3];
 	vec3	v3Cull1, v3Cull2;
 
-	void Init ();
-	void InitCull();
-	glm::mat4 RotateMatrix(glm::mat4 mat);
-	void BuildMatrix ();
-	void DrawGrid();	// sikk - Camera Grid
-	void DrawAxis();
-	void DrawActive();
-	bool DrawTools();
+	vec3	origin, focus, angles;
+	vec3	mvForward, mvRight;	// move matrix
+	vec3	vup, vpn, vright;	// view matrix
+	vec3	mpUp, mpRight;		// mouse manipulation plane
+	glm::mat4 matProj;
 };
 
 //========================================================================

@@ -5,11 +5,14 @@
 #ifndef __TOOL_H__
 #define __TOOL_H__
 
-class WndView;
 class CameraView;
-class XYZView;
+class GridView;
 class ZView;
 class TextureView;
+class Window;
+class CameraRenderer;
+class GridViewRenderer;
+class ZViewRenderer;
 
 // 600ms debounce time for adding a modification to the prior command vs creating a new one
 // ie combining little texture shifts or selection nudges
@@ -29,20 +32,20 @@ public:
 	const bool modal;	// modal tools are mutually exclusive, and delete each other from the stack
 
 	virtual void SelectionChanged() {}
-	virtual bool Draw3D(CameraView &v) { return false; }
-	virtual bool Draw2D(XYZView &v) { return false; }
-	virtual bool Draw1D(ZView &v) { return false; }
+	virtual bool Draw3D(CameraRenderer &rc) { return false; }
+	virtual bool Draw2D(GridViewRenderer &gv) { return false; }
+	virtual bool Draw1D(ZViewRenderer &zv) { return false; }
 
-	virtual bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	virtual bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	virtual bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
-	virtual bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
+	virtual bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	virtual bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
+	virtual bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd);
+	virtual bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd);
 	virtual bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	static int HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	static int HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	static int HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
-	static int HandleInputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
+	static int HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	static int HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
+	static int HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd);
+	static int HandleInputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd);
 	static int HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	static Tool* HotTool();
@@ -51,7 +54,7 @@ public:
 
 protected:
 	void Crosshair(bool bCrossHair);
-	void MsgToXY(const LPARAM lParam, const WndView &vWnd, int &xPos, int &yPos);
+	void MsgToXY(const LPARAM lParam, const Window &wnd, int &xPos, int &yPos);
 
 	bool ShiftDown() { return (GetKeyState(VK_SHIFT) < 0); }
 	bool CtrlDown() { return (GetKeyState(VK_CONTROL) < 0); }

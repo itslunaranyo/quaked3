@@ -5,7 +5,9 @@
 #include "pre.h"
 #include "qe3.h"
 #include "WndZChecker.h"
+#include "CameraView.h"
 #include "ZView.h"
+#include "ZViewRenderer.h"
 #include "Tool.h"
 
 HWND g_hwndZ;
@@ -26,9 +28,13 @@ void WndZChecker::Initialize()
 	zv = &g_vZ;
 	v = zv;
 
-	CreateWnd();
+	Create();
 	SetTitle("Z Checker");
-	g_hwndZ = w_hwnd;
+	g_hwndZ = wHwnd;
+
+	zr = new ZViewRenderer(*zv);
+	r = zr;
+
 }
 
 int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -40,71 +46,118 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Focus();
 		return 1;
 	}
-	/*
-	int		fwKeys, xPos, yPos;
-	switch (uMsg)
-	{
-	case WM_KEYDOWN:
-		return QE_KeyDown(wParam);
-	//case WM_KEYUP:
-	//	return QE_KeyUp(wParam);
-
-	case WM_MOUSEWHEEL:
-		Focus();
-		fwKeys = wParam;
-		if (fwKeys & MK_CONTROL)
-		{
-			if ((short)HIWORD(wParam) < 0)
-			{
-				v->scale = max(0.05f, v->scale * 0.8f);
-			}
-			else
-			{
-				v->scale = min(32.0f, v->scale * 1.25f);
-			}
-		}
-		else
-		{
-			float fwd = 64;
-			if ((short)HIWORD(wParam) < 0) fwd *= -1;
-			if (fwKeys & MK_SHIFT) fwd *= 4;
-			v->origin.z += fwd / v->scale;
-		}
-		WndMain_UpdateWindows(W_Z);
-		return 0;
-
-	case WM_MBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-	case WM_LBUTTONDOWN:
-		Focus();
-		SetCapture(g_hwndZ);
-		fwKeys = wParam;				// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		zv->MouseDown(xPos, yPos, fwKeys);
-		return 0;
-
-	case WM_MBUTTONUP:
-	case WM_RBUTTONUP:
-	case WM_LBUTTONUP:
-		fwKeys = wParam;				// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		zv->MouseUp(xPos, yPos, fwKeys);
-		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
-			ReleaseCapture();
-		return 0;
-
-	case WM_MOUSEMOVE:
-		fwKeys = wParam;				// key flags 
-		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);	// vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		zv->MouseMoved(xPos, yPos, fwKeys);
-		return 0;
-	}
-	*/
 	return 1;
+}
+
+
+int WndZChecker::OnResized()
+{
+	zv->Resize(clientRect.right, clientRect.bottom);
+	return 0;
+}
+
+void WndZChecker::Render()
+{
+	zr->Draw();
+}
+
+
+/*
+==============
+WndZChecker::MouseDown
+==============
+*/
+void WndZChecker::MouseDown(const int x, const int y, const int btndown, const int buttons)
+{
+	Sys_GetCursorPos(&cursorX, &cursorY);
+
+	// control mbutton = move camera
+	if (buttons == (MK_CONTROL | MK_MBUTTON))
+	{
+		vec3 corg = g_vCamera.GetOrigin();
+		corg.z = zv->GetOrigin().z;
+		g_vCamera.SetOrigin(corg);
+		WndMain_UpdateWindows(W_SCENE);
+	}
+}
+
+/*
+==============
+WndZChecker::MouseUp
+==============
+*/
+void WndZChecker::MouseUp(const int x, const int y, const int btnup, const int buttons)
+{
+	//Drag_MouseUp();
+}
+
+/*
+==============
+WndZChecker::MouseMoved
+==============
+*/
+void WndZChecker::MouseMoved(const int x, const int y, const int buttons)
+{
+	char	zstring[256];
+	int		cx, cy;
+	vec3	o;
+
+	if (!buttons)
+	{
+		zv->ScreenToWorldSnapped(x, y, o);
+		sprintf(zstring, "z Coordinate: (%d)", (int)o.z);
+		WndMain_Status(zstring, 0);
+		return;
+	}
+
+	// rbutton = drag z origin
+	if (buttons == MK_RBUTTON)
+	{
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&cx, &cy);
+		if (cy != cursorY)
+		{
+			zv->Scroll(cy - cursorY);
+			Sys_SetCursorPos(cursorX, cursorY);
+			WndMain_UpdateWindows(W_Z);
+
+			sprintf(zstring, "z Origin: (%d)", (int)zv->GetOrigin().z);
+			WndMain_Status(zstring, 0);
+		}
+		return;
+	}
+
+	// control mbutton = move camera
+	if (buttons == (MK_CONTROL | MK_MBUTTON))
+	{
+		Sys_GetCursorPos(&cx, &cy);
+		if (cy != cursorY)
+		{
+			zv->Scroll(cy - cursorY);
+			Sys_SetCursorPos(cursorX, cursorY);
+			WndMain_UpdateWindows(W_Z);
+
+			sprintf(zstring, "z Origin: (%d)", (int)zv->GetOrigin().z);
+			WndMain_Status(zstring, 0);
+		}
+		return;
+
+		g_vCamera.Move(0, 0, (y - cursorY) / zv->GetScale());
+		WndMain_UpdateWindows(W_SCENE);
+	}
+
+	// control rbutton = zoom z view
+	if (buttons == (MK_CONTROL | MK_RBUTTON))
+	{
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&cx, &cy);
+
+		if (cy != cursorY)
+		{
+			zv->Scale(powf((cy > cursorY) ? 1.01f : 0.99f, fabs(cy - cursorY)));
+			Sys_SetCursorPos(cursorX, cursorY);
+			WndMain_UpdateWindows(W_Z);
+		}
+		return;
+	}
 }

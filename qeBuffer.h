@@ -29,6 +29,7 @@ public:
 	byte& operator[](unsigned i) const { assert(i < len); return buf[i]; }
 
 	bool operator==(const char* other) const { return ( strncmp((char*)buf, other, len) == 0 ); }
+	bool operator!=(const char* other) const { return (strncmp((char*)buf, other, len) != 0); }
 	qeBuffer& operator=(const char* other) {
 		resize(strlen(other) + 1);
 		std::memcpy(buf, other, len);
@@ -36,6 +37,7 @@ public:
 	}
 
 	bool operator==(const qeBuffer& other) const { return ( len == other.len && ((char*)buf, (char*)*other, len) == 0 ); }
+	bool operator!=(const qeBuffer& other) const { return !( *this == other ); }
 	qeBuffer& operator=(const qeBuffer& other) {
 		resize(other.len);
 		std::memcpy(buf, other.buf, len);

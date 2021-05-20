@@ -23,16 +23,16 @@ WndConsole::~WndConsole()
 
 void WndConsole::Initialize()
 {
-	CreateWnd();
+	Create();
 	SetTitle("Console");
-	GetClientRect(w_hwnd, &clientRect);
+	GetClientRect(wHwnd, &clientRect);
 
 	w_hwndCons = CreateWindowEx(WS_EX_CLIENTEDGE,
 		"EDIT",
 		NULL,
 		ES_MULTILINE | ES_READONLY | WS_CHILD | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL,
 		clientRect.left, clientRect.top, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top,
-		w_hwnd,
+		wHwnd,
 		(HMENU)IDC_E_STATUS,
 		g_qeglobals.d_hInstance,
 		NULL);
@@ -114,7 +114,7 @@ int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_SIZE:
-		GetClientRect(w_hwnd, &clientRect);
+		GetClientRect(wHwnd, &clientRect);
 		MoveWindow(w_hwndCons, clientRect.left, clientRect.top, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, false);
 		return 0;
 
@@ -144,7 +144,7 @@ int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	//		SendMessage(w_hwnd, WM_NCACTIVATE, FALSE, 0);
 	//	return 0;
 	case WM_SETFOCUS:
-		SendMessage(w_hwnd, WM_NCACTIVATE, (uMsg==WM_SETFOCUS), 0);
+		SendMessage(wHwnd, WM_NCACTIVATE, (uMsg==WM_SETFOCUS), 0);
 		break;
 
 	case WM_NCLBUTTONDOWN:
@@ -156,7 +156,7 @@ int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (!OnMessage(uMsg, wParam, lParam))
 		return 0;
 
-	return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
+	return DefWindowProc(wHwnd, uMsg, wParam, lParam);
 }
 
 int WndConsole::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)

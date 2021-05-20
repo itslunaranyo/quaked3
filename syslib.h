@@ -23,4 +23,7 @@ void    Sys_Beep();
 void	Sys_ConvertDOSToUnixName(char *dst, const char *src);
 char   *Sys_TranslateString(char *buf);
 
+bool	Sys_RegistrySaveInfo(const char *pszName, void *pvBuf, long lSize);
+bool	Sys_RegistryLoadInfo(const char *pszName, void *pvBuf, long *plSize);
+
 #endif	// __SYSLIB_H__

@@ -7,8 +7,8 @@
 #include "PolyTool.h"
 #include "select.h"
 #include "CmdPolyBrushConcave.h"
-#include "XYZView.h"
-#include "WndView.h"
+#include "GridView.h"
+#include "WndGrid.h"
 
 
 PolyTool::PolyTool() : 
@@ -55,7 +55,7 @@ void PolyTool::Reset()
 PolyTool::Input3D
 ==================
 */
-bool PolyTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView & v, WndView & vWnd)
+bool PolyTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView & v, WndCamera &vWnd)
 {
 	return false;
 }
@@ -65,7 +65,7 @@ bool PolyTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView & v, 
 PolyTool::Input2D
 ==================
 */
-bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndView & vWnd)
+bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView & v, WndGrid & vWnd)
 {
 	int keys = wParam;
 	int x, y;
@@ -79,7 +79,7 @@ bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, Wnd
 		if (wParam & MK_CONTROL)
 			return false;
 		vWnd.GetMsgXY(lParam, x, y);
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		AddPoint(&v, x, y, (wParam & MK_SHIFT) != 0);
@@ -180,24 +180,21 @@ bool PolyTool::InputCommand(WPARAM w)
 PolyTool::XYGetNearestPoint
 ==============
 */
-PolyTool::pointIt PolyTool::XYGetNearestPoint(XYZView* xyz, int x, int y)
+PolyTool::pointIt PolyTool::XYGetNearestPoint(GridView* xyz, int x, int y)
 {
-	int		nDim1, nDim2;
 	vec3	tdp;
 
 	tdp = g_qeglobals.d_v3WorkMin;
 
-	xyz->ToPoint(x, y, tdp);
-	nDim1 = (xyz->GetAxis() == YZ) ? 1 : 0;
-	nDim2 = (xyz->GetAxis() == XY) ? 1 : 2;
+	xyz->ScreenToWorld(x, y, tdp);
 
 	// based on screen distance and not world distance
-	float margin = 10.0f / xyz->scale;
+	float margin = 10.0f / xyz->GetScale();
 
 	for (pointIt pIt = pointList.begin(); pIt != pointList.end(); ++pIt)
 	{
-		if (fabs((*pIt)[nDim1] - tdp[nDim1]) < margin &&
-			fabs((*pIt)[nDim2] - tdp[nDim2]) < margin)
+		if (fabs((*pIt)[xyz->DimU()] - tdp[xyz->DimU()]) < margin &&
+			fabs((*pIt)[xyz->DimV()] - tdp[xyz->DimV()]) < margin)
 		{
 			return pIt;
 		}
@@ -210,21 +207,21 @@ PolyTool::pointIt PolyTool::XYGetNearestPoint(XYZView* xyz, int x, int y)
 PolyTool::AddPoint
 ==============
 */
-void PolyTool::AddPoint(XYZView* xyz, int x, int y, bool back)
+void PolyTool::AddPoint(GridView* xyz, int x, int y, bool back)
 {
 	if (PointMoving())  // new click issued on an existing point
 	{
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, *ptMoving);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, *ptMoving);
 	}
 	else // new point added
 	{
 		if (pointList.empty())
-			axis = XYZWnd_WinFromHandle(GetCapture())->GetAxis();
+			axis = GridView::FromHwnd(GetCapture())->GetAxis();
 
 		vec3 newpt = g_qeglobals.d_v3WorkMin;
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, newpt);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, newpt);
 
 		// be helpful and don't place coincident points if they're illegal anyway
 		int vaxis = xyz->GetAxis();
@@ -256,15 +253,15 @@ void PolyTool::AddPoint(XYZView* xyz, int x, int y, bool back)
 PolyTool::MovePoint
 ==============
 */
-void PolyTool::MovePoint(XYZView* xyz, int x, int y)
+void PolyTool::MovePoint(GridView* xyz, int x, int y)
 {
 	bool	bCrossHair = false;
 
 	// lunaran TODO: don't use windows mouse capture status for control flow maybe
 	if (PointMoving() && GetCapture())
 	{
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, *ptMoving);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, *ptMoving);
 		bCrossHair = true;
 
 		PointsUpdated();
@@ -365,8 +362,8 @@ void PolyTool::DrawSetColor()
 
 void PolyTool::DrawLoop(int plane)
 {
-	int nDim1 = (axis == YZ) ? 1 : 0;
-	int nDim2 = (axis == XY) ? 1 : 2;
+	int nDim1 = (axis == GRID_YZ) ? 1 : 0;
+	int nDim2 = (axis == GRID_XY) ? 1 : 2;
 	vec3 pt(plane);
 	pointIt pIt;
 
@@ -401,8 +398,8 @@ void PolyTool::DrawLoop(int plane)
 
 void PolyTool::DrawPegs()
 {
-	int nDim1 = (axis == YZ) ? 1 : 0;
-	int nDim2 = (axis == XY) ? 1 : 2;
+	int nDim1 = (axis == GRID_YZ) ? 1 : 0;
+	int nDim2 = (axis == GRID_XY) ? 1 : 2;
 	vec3 pt1(g_qeglobals.d_v3WorkMin);
 	vec3 pt2(g_qeglobals.d_v3WorkMax);
 
@@ -454,7 +451,7 @@ void PolyTool::DrawPoints()
 PolyTool::Draw3D
 ==================
 */
-bool PolyTool::Draw3D(CameraView & v)
+bool PolyTool::Draw3D(CameraRenderer & v)
 {
 	if (pointList.empty())
 		return false;
@@ -471,7 +468,7 @@ bool PolyTool::Draw3D(CameraView & v)
 PolyTool::Draw2D
 ==================
 */
-bool PolyTool::Draw2D(XYZView & v)
+bool PolyTool::Draw2D(GridViewRenderer & v)
 {
 	if (pointList.empty())
 		return false;

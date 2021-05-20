@@ -4,7 +4,6 @@
 
 #include "pre.h"
 #include "qe3.h"
-#include "io.h"
 #include "map.h"
 #include "win_dlg.h"
 #include "Command.h"
@@ -337,7 +336,7 @@ void WndCfg_CheckProjectAlteration()
 	if (p != 0)		// put the selected project first in the list
 		std::rotate(g_qeconfig.projectPresets.begin(), g_qeconfig.projectPresets.begin() + p, g_qeconfig.projectPresets.begin() + p + 1);
 
-	g_qeconfig.ExpandProjectPaths();
+	g_qeconfig.ExpandProjectPaths(*(g_qeconfig.projectPresets.begin()), g_project);
 
 	// if the config has changed in a significant way, force a save and reload to 
 	// get any new entity definitions/palette/etc
@@ -834,11 +833,14 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	char	szErrors[2048];
 	char*	errCur;
 
+	qecfgProject_t projTest;
+	g_qeconfig.ExpandProjectPaths(cfgCtx.cfgProj, projTest);
+
 	errCur = szErrors;
 	*errCur = 0;
 	
 	strcpy(errCur, "Unable to apply config for the following reasons:\n\n");
-	errCur += 38;
+	errCur += 51;
 
 	cfgOK = true;
 
@@ -847,6 +849,13 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	{
 		strcpy(errCur, "No Quake directory specified.\n");
 		errCur += 30;
+		cfgOK = false;
+	}
+	else if ( !(IO_FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && 
+				IO_FileExists(cfgCtx.cfgEd.QuakePath, "quake.exe")) )
+	{
+		strcpy(errCur, "Couldn't find 'quake.exe' or '/id1/pak0.pak' in specified Quake directory. Is it correct?\n");
+		errCur += 90;
 		cfgOK = false;
 	}
 
@@ -867,17 +876,23 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 		cfgOK = false;
 	}
 
-	if (!strlen(cfgCtx.cfgProj.autosaveFile))
+	if (!strlen(cfgCtx.cfgProj.autosaveFile) || IsPathDirectory(projTest.autosaveFile))
 	{
 		strcpy(errCur, "No autosave map specified.\n");
 		errCur += 27;
 		cfgOK = false;
 	}
 
-	if (!strlen(cfgCtx.cfgProj.entityFiles))
+	if (!strlen(cfgCtx.cfgProj.entityFiles) || IsPathDirectory(projTest.entityFiles))
 	{
 		strcpy(errCur, "No entity definitions specified.\n");
 		errCur += 33;
+		cfgOK = false;
+	}
+	else if (!IO_FileExists(projTest.entityFiles))
+	{
+		strcpy(errCur, "Specified entity definitions not found. Is the path correct?\n");
+		errCur += 61;
 		cfgOK = false;
 	}
 
@@ -887,8 +902,12 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 		errCur += 27;
 		cfgOK = false;
 	}
-
-	// TODO: verify these paths more deeply by checking their destinations for quake.exe/wads/etc
+	else if (!IO_FileWithExtensionExists(projTest.wadPath, "wad"))
+	{
+		strcpy(errCur, "No .wad files found at specified texture path. Is it correct?\n");
+		errCur += 62;
+		cfgOK = false;
+	}
 
 	if (!cfgOK)
 		MessageBox(g_hwndMain, szErrors, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);

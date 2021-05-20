@@ -4,7 +4,6 @@
 
 #include "pre.h"
 #include "qe3.h"
-#include "io.h"
 #include "palette.h"
 #include "map.h"
 #include "select.h"
@@ -690,16 +689,16 @@ void Textures::SetDrawMode(const int mode)
 	switch (mode)
 	{
 	case 0:	// wireframe
-		g_cfgUI.DrawMode = cd_wire;
+		g_cfgUI.DrawMode = CD_WIRE;
 		CheckMenuItem(hMenu, ID_DRAWMODE_WIREFRAME, MF_CHECKED);
 		break;
 	case 1:	// flatshade
-		g_cfgUI.DrawMode = cd_solid;
+		g_cfgUI.DrawMode = CD_FLAT;
 		CheckMenuItem(hMenu, ID_DRAWMODE_FLATSHADE, MF_CHECKED);
 		break;
 	case 2:	// textured
 	default:
-		g_cfgUI.DrawMode = cd_texture;
+		g_cfgUI.DrawMode = CD_TEXTURED;
 		CheckMenuItem(hMenu, ID_DRAWMODE_TEXTURED, MF_CHECKED);
 		break;
 	}
@@ -1100,3 +1099,31 @@ int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
 //=====================================================
 
 
+/*
+==================
+Textures::ListWadsInDirectory
+==================
+*/
+std::vector<_finddata_t> Textures::ListWadsInDirectory(const char* wadpath)
+{
+	_finddata_t fileinfo;
+	std::vector<_finddata_t> wadlist;
+	int		handle;
+	char	path[1024];
+	char    dirstring[1024];
+
+	sprintf(path, "%s*.wad", wadpath);
+	Sys_ConvertDOSToUnixName(dirstring, wadpath);
+	Sys_Printf("ListWadsInDirectory: %s\n", dirstring);
+
+	handle = _findfirst(path, &fileinfo);
+	if (handle != -1)
+	{
+		do {
+			Sys_Printf("Found wad file: %s%s\n", dirstring, fileinfo.name);
+			wadlist.push_back(fileinfo);
+		} while (_findnext(handle, &fileinfo) != -1);
+		_findclose(handle);
+	}
+	return wadlist;
+}

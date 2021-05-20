@@ -59,12 +59,16 @@ FILE   *IO_SafeOpenRead (char *filename);
 void	IO_SafeRead (FILE *f, void *buffer, int count);
 void	IO_SafeWrite (FILE *f, void *buffer, int count);
 
+bool	IO_FileExists(const char *filename);
+bool	IO_FileExists(const char *dir, const char *filename);
+bool	IO_FileWithExtensionExists(const char* dir, const char* ext);
 int		IO_LoadFile(const char *filename, void **bufferptr);
 int		IO_LoadFile(const char *filename, qeBuffer &fileBuf);
 int		IO_LoadFileNoCrash (char *filename, void **bufferptr);
 void	IO_SaveFile (char *filename, void *buffer, int count);
 
 bool	IsPathAbsolute(const char* path);
+bool	IsPathDirectory(char* path);
 void 	DefaultExtension (char *path, char *extension);
 void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);

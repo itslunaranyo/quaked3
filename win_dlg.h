@@ -6,6 +6,7 @@
 
 extern HWND g_hwndSetKeyvalsDlg;
 
+bool DoColorSelect(vec3 &rgbOut);
 bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut);
 void DoFindBrush();
 void DoRotate();

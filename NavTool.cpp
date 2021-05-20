@@ -5,16 +5,17 @@
 #include "pre.h"
 #include "qe3.h"
 #include "NavTool.h"
+#include "WndCamera.h"
 #include "WndGrid.h"
 #include "WndZChecker.h"
 #include "WndTexture.h"
+#include "WndGrid.h"
 #include "CameraView.h"
-#include "XYZView.h"
+#include "GridView.h"
 #include "ZView.h"
 #include "TextureView.h"
 
-NavTool::NavTool() :
-	Tool("Navigation", false)	// always on (not modal)
+NavTool::NavTool() : hotMButton(0), Tool("Navigation", false)	// always on (not modal)
 {
 }
 
@@ -23,9 +24,10 @@ NavTool::~NavTool()
 {
 }
 
-bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd)
 {
 	int		xPos, yPos;
+	int mbtn = MouseButtonForMessage(uMsg);
 
 	switch (uMsg)
 	{
@@ -36,7 +38,7 @@ bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 				return false;
 			MsgToXY(lParam, vWnd, xPos, yPos);
 			if (wParam == VK_SHIFT)
-				v.SetOrbit(v.vpn);
+				v.SetOrbit();	// TODO: what
 			return true;
 		}
 		if (QE_KeyDown(wParam))
@@ -49,47 +51,57 @@ bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		else
 			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);*/
 
+	case WM_REALTIME:
+		vWnd.RealtimeControl(g_deltaTime);
+		return false;
+
 	case WM_MOUSEWHEEL:
 		//Focus();
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseWheel(xPos, yPos, (short)HIWORD(wParam) > 0, wParam);
+		//if (hotMButton) return false;	// allow mwheel forward/backward/etc while rmb-aiming
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		vWnd.MouseWheel(xPos, yPos, (short)HIWORD(wParam) > 0, wParam);
 		WndMain_UpdateWindows(W_SCENE);
 		return true;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
+		if (hotMButton) return false;
+		hotMButton = mbtn;
 		hot = true;
-		SetCapture(vWnd.w_hwnd);
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseDown(xPos, yPos, wParam);
+		SetCapture(vWnd.wHwnd);
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		vWnd.MouseDown(xPos, yPos, mbtn, wParam);
 		return true;
 
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 	case WM_LBUTTONUP:
-		hot = false;
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseUp(xPos, yPos, wParam);
-		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (mbtn != hotMButton) return false;
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		vWnd.MouseUp(xPos, yPos, mbtn, wParam);
+		//if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (!(wParam & hotMButton))
 			ReleaseCapture();
+		hotMButton = 0;
+		hot = false;
 		return false;
 
 	case WM_MOUSEMOVE:
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseMoved(xPos, yPos, wParam);
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		WPARAM mBtnFilter = wParam & ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) - hotMButton);
+		vWnd.MouseMoved(xPos, yPos, wParam - mBtnFilter); // filter buttons we aren't responding to
 		return hot;
-
-	case WM_REALTIME:
-		v.RealtimeControl(g_deltaTime);
-		return false;
 	}
 	return hot;
 }
 
-bool NavTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+bool NavTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd)
 {
 	int		xPos, yPos;
+	vec3	coord;
+	int mbtn = MouseButtonForMessage(uMsg);
+
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
@@ -98,56 +110,53 @@ bool NavTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndVi
 	//	return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
+		if (hotMButton) return false;
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		v.ScreenToWorld(xPos, yPos, coord);
 		if ((short)HIWORD(wParam) < 0)
-			v.ScaleDown();
+			v.ZoomOut(coord);
 		else
-			v.ScaleUp();
+			v.ZoomIn(coord);
+		WndMain_UpdateWindows(W_XY);
 		return true;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
-		SetCapture(vWnd.w_hwnd);
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseDown(xPos, yPos, wParam);
-		// sikk---> Context Menu
-		if (uMsg == WM_RBUTTONDOWN)
-		{
-			g_bMoved = false;
-			g_nMouseX = xPos;
-			g_nMouseY = yPos;
-		}
-		// <---sikk
+		if (hotMButton) return false;
+		hotMButton = mbtn;
+		hot = true;
+		SetCapture(vWnd.wHwnd);
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		vWnd.MouseDown(xPos, yPos, mbtn, wParam);
 		return true;
 
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 	case WM_LBUTTONUP:
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseUp(xPos, yPos, wParam);
-		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (mbtn != hotMButton) return false;
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		vWnd.MouseUp(xPos, yPos, mbtn, wParam);
+		//if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (!(wParam & hotMButton))
 			ReleaseCapture();
-		// sikk---> Context Menu
-		if (uMsg == WM_RBUTTONUP && !g_bMoved)
-			dynamic_cast<WndGrid&>(vWnd).DoPopupMenu(xPos, yPos);
-		// <---sikk
+		hotMButton = 0;
+		hot = false;
 		return false;
 
 	case WM_MOUSEMOVE:
-		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseMoved(xPos, yPos, wParam);
-		// sikk---> Context Menu
-		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
-			g_bMoved = true;
-		// <---sikk
+		vWnd.GetMsgXY(lParam, xPos, yPos);
+		WPARAM mBtnFilter = wParam & ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) - hotMButton);
+		vWnd.MouseMoved(xPos, yPos, wParam - mBtnFilter); // filter buttons we aren't responding to
 		return false;
 	}
 	return false;
 }
 
-bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd)
+bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd)
 {
 	int		xPos, yPos;
+	int mbtn = MouseButtonForMessage(uMsg);
 
 	switch (uMsg)
 	{
@@ -157,6 +166,7 @@ bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView
 		return QE_KeyUp(wParam);*/
 
 	case WM_MOUSEWHEEL:
+		if (hotMButton) return false;
 		if (wParam & MK_CONTROL)
 		{
 			if ((short)HIWORD(wParam) < 0)
@@ -171,36 +181,48 @@ bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView
 			if (wParam & MK_SHIFT) fwd *= 4;
 			v.Scroll(fwd);
 		}
+		WndMain_UpdateWindows(W_Z);
 		return true;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
+		if (hotMButton) return false;
+		hotMButton = mbtn;
 		SetCapture(g_hwndZ);
 		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseDown(xPos, yPos, wParam);
+		vWnd.MouseDown(xPos, yPos, mbtn, wParam);
+		WndMain_UpdateWindows(W_Z);
 		return true;
 
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 	case WM_LBUTTONUP:
+		if (mbtn != hotMButton) return false;
 		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseUp(xPos, yPos, wParam);
-		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		vWnd.MouseUp(xPos, yPos, mbtn, wParam);
+		WndMain_UpdateWindows(W_Z);
+		//if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (!(wParam & hotMButton))
 			ReleaseCapture();
+		hotMButton = 0;
 		return false;
 
 	case WM_MOUSEMOVE:
 		MsgToXY(lParam, vWnd, xPos, yPos);
-		v.MouseMoved(xPos, yPos, wParam);
+		WPARAM mBtnFilter = wParam & ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) - hotMButton);
+		vWnd.MouseMoved(xPos, yPos, wParam - mBtnFilter); // filter buttons we aren't responding to
+		WndMain_UpdateWindows(W_Z);
 		return false;
 	}
 	return hot;
 }
 
-bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd)
+bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd)
 {
 	int xPos, yPos;
+	int mbtn = MouseButtonForMessage(uMsg);
+
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
@@ -209,6 +231,7 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 	//	return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
+		if (hotMButton) return false;
 		if (wParam & MK_CONTROL)
 		{
 			if ((short)HIWORD(wParam) < 0)
@@ -226,44 +249,37 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
-		SetCapture(vWnd.w_hwnd);
+		if (hotMButton) return false;
+		hotMButton = mbtn;
+		SetCapture(vWnd.wHwnd);
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 
-		v.MouseDown(xPos, yPos, wParam);
-		// Context Menu
-		if (uMsg == WM_RBUTTONDOWN)
-		{
-			g_bMoved = false;
-			g_nMouseX = xPos;
-			g_nMouseY = yPos;
-		}
+		vWnd.MouseDown(xPos, yPos, mbtn, wParam);
 		return true;
 
 	case WM_MBUTTONUP:
 	case WM_RBUTTONUP:
 	case WM_LBUTTONUP:
+		if (mbtn != hotMButton) return false;
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 
-		v.MouseUp(xPos, yPos, wParam);
-		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		vWnd.MouseUp(xPos, yPos, mbtn, wParam);
+		//if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
+		if (!(wParam & hotMButton))
 			ReleaseCapture();
+		hotMButton = 0;
 
-		// Context Menu
-		if (uMsg == WM_RBUTTONUP && !g_bMoved)
-			dynamic_cast<WndTexture&>(vWnd).DoPopupMenu(xPos, yPos);
 		return false;
 
 	case WM_MOUSEMOVE:
 		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 
-		v.MouseMoved(xPos, yPos, wParam);
+		WPARAM mBtnFilter = wParam & ((MK_LBUTTON | MK_RBUTTON | MK_MBUTTON) - hotMButton);
+		vWnd.MouseMoved(xPos, yPos, wParam - mBtnFilter); // filter buttons we aren't responding to
 
-		// Context Menu
-		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
-			g_bMoved = true;
 		return false;
 	}
 	return false;
@@ -272,4 +288,28 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 bool NavTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	return false;
+}
+
+int NavTool::MouseButtonForMessage(UINT msg)
+{
+	switch (msg) {
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDOWN:
+		return MK_MBUTTON;
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDOWN:
+		return MK_LBUTTON;
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDOWN:
+		return MK_RBUTTON;
+	default:
+		return 0;
+	}
+	return 0;
+}
+
+WPARAM NavTool::FilterWParam(const WPARAM wpIn, const int mbtn)
+{
+	int filt = (VK_LBUTTON | VK_MBUTTON | VK_RBUTTON) - mbtn;
+	return wpIn - (wpIn & filt);
 }

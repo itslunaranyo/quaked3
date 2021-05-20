@@ -14,7 +14,7 @@
 #include "ManipTool.h"
 
 #include "CameraView.h"
-#include "XYZView.h"
+#include "GridView.h"
 #include "WndMain.h"
 #include "WndEntity.h"
 #include "WndGrid.h"
@@ -94,13 +94,53 @@ void QE_FindKTs()
 	}
 }
 
+void QE_RebarSpew()
+{
+	for (int i = 0; i < REBARBANDCOUNT; i++)
+	{
+		int nBandIndex = SendMessage(g_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
+		REBARBANDINFO barf;
+		barf.cbSize = sizeof(REBARBANDINFO);
+		barf.fMask = RBBIM_SIZE;
+		//barf.fMask = RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_IDEALSIZE | RBBIM_ID | RBBIM_SIZE | RBBIM_STYLE;
+		
+		SendMessage(g_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&barf);
+
+		InvalidateRect(g_hwndRebar, NULL, FALSE);
+	}
+
+	/*
+	WINDOWPLACEMENT bleh;
+	for (int i = 0; i < REBARBANDCOUNT; i++)
+	{
+		GetWindowPlacement(g_hwndToolbar[i], &bleh);
+		Sys_Printf("%i:\nvis: %i\nltrb: %i %i %i %i\n", i,
+			IsWindowVisible(g_hwndToolbar[i]),
+			bleh.rcNormalPosition.left,
+			bleh.rcNormalPosition.top,
+			bleh.rcNormalPosition.right,
+			bleh.rcNormalPosition.bottom
+		);
+		RECT rectum;
+		GetWindowRect(g_hwndToolbar[i], &rectum);
+		MapWindowPoints(NULL, g_hwndRebar, (POINT *)&rectum, 2);
+		Sys_Printf("BUT:\nltrb: %i %i %i %i\n", 
+			rectum.left,
+			rectum.top,
+			rectum.right,
+			rectum.bottom
+		);
+	}*/
+}
+
 // it can test aaanything you want just press PEE
 #pragma optimize("", off)
 void QE_TestSomething()
 {
 #ifdef _DEBUG
-	QE_FindKTs();
-	WndMain_UpdateWindows(W_ALL);
+	QE_RebarSpew();
+	//QE_FindKTs();
+	//WndMain_UpdateWindows(W_ALL);
 #endif
 }
 
@@ -169,68 +209,6 @@ vec3 AxisForVector(const vec3 &v)
 
 
 
-/*
-=============================================================
-
-	REGISTRY INFO
-
-=============================================================
-*/
-
-/*
-==============
-SaveRegistryInfo
-==============
-*/
-bool SaveRegistryInfo(const char *pszName, void *pvBuf, long lSize)
-{
-	LONG	lres;
-	DWORD	dwDisp;
-	HKEY	hKeyId;
-
-	lres = RegCreateKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, NULL,
-		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKeyId, &dwDisp);
-
-	if (lres != ERROR_SUCCESS)
-		return false;
-
-	lres = RegSetValueEx(hKeyId, pszName, 0, REG_BINARY, (BYTE*)pvBuf, lSize);
-
-	RegCloseKey(hKeyId);
-
-	if (lres != ERROR_SUCCESS)
-		return false;
-
-	return true;
-}
-
-/*
-==============
-LoadRegistryInfo
-==============
-*/
-bool LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize)
-{
-	HKEY	hKey;
-	long	lres, lType, lSize;
-
-	if (plSize == NULL)
-		plSize = &lSize;
-
-	lres = RegOpenKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, KEY_READ, &hKey);
-
-	if (lres != ERROR_SUCCESS)
-		return false;
-
-	lres = RegQueryValueEx(hKey, pszName, NULL, (LPDWORD)&lType, (LPBYTE)pvBuf, (LPDWORD)plSize);
-
-	RegCloseKey(hKey);
-
-	if (lres != ERROR_SUCCESS)
-		return false;
-
-	return true;
-}
 
 
 /*
@@ -258,7 +236,7 @@ void QE_Init ()
 	g_qeglobals.d_nGridSize = 8;
 	g_qeglobals.d_bShowGrid = true;
 	g_qeglobals.bGridSnap = true;
-	g_vXYZ[0].SetAxis(XY);
+	g_vGrid[0].SetAxis(GRID_XY);
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 	g_qeglobals.d_v3WorkMin = vec3(0);
 	g_qeglobals.d_v3WorkMax = vec3(8);
@@ -276,26 +254,6 @@ void QE_Init ()
 	new ManipTool();
 
 	WndMain_UpdateGridStatusBar();
-
-// sikk---> Save Rebar Band Info
-	for (int i = 0; i < 11; i++)
-	{
-		g_qeglobals.d_savedinfo.rbiSettings[i].cbSize	= sizeof(REBARBANDINFO);
-		SendMessage(g_hwndRebar, RB_SETBANDINFO, (WPARAM)i, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);
-	}
-/*	Code below Sets the saved Band order but doesn't function correctly
-	as it doesn't update until a band is moved. ???
-	j = 0;
-	while (j < 11)
-	{
-		for (i = 0; i < 11; i++)
-			if (ID_TOOLBAR + i == g_qeglobals.d_savedinfo.nRebarSavedIndex[j])
-				SendMessage(g_hwndRebar, RB_MOVEBAND, (WPARAM)i, (LPARAM)j);
-
-		j++;
-	}
-*/
-// <---sikk
 
 	// other stuff
 	Textures::Init();
@@ -355,7 +313,7 @@ bool QE_KeyDown (int key)
 			WndMain_UpdateWindows(W_SURF);
 		}
 		else
-			g_vCamera.origin = g_vCamera.origin + SPEED_MOVE * g_vCamera.forward;
+			g_vCamera.Step(SPEED_MOVE, 0, 0);
 
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -371,7 +329,7 @@ bool QE_KeyDown (int key)
 			WndMain_UpdateWindows(W_SURF);
 		}
 		else
-			g_vCamera.origin = g_vCamera.origin + -SPEED_MOVE * g_vCamera.forward;
+			g_vCamera.Step(-SPEED_MOVE, 0, 0);
 
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -387,7 +345,7 @@ bool QE_KeyDown (int key)
 			WndMain_UpdateWindows(W_SURF);
 		}
 		else
-			g_vCamera.angles[1] += SPEED_TURN;
+			g_vCamera.Turn(SPEED_TURN);
 
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
@@ -403,35 +361,35 @@ bool QE_KeyDown (int key)
 			WndMain_UpdateWindows(W_SURF);
 		}
 		else
-			g_vCamera.angles[1] -= SPEED_TURN;
+			g_vCamera.Turn(-SPEED_TURN);
 
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
 
 	case 'D':
-		g_vCamera.origin[2] += SPEED_MOVE;
+		g_vCamera.Step(0, 0, SPEED_MOVE);
 		WndMain_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'C':
-		g_vCamera.origin[2] -= SPEED_MOVE;
+		g_vCamera.Step(0, 0, -SPEED_MOVE);
 		WndMain_UpdateWindows(W_CAMERA | W_XY | W_Z);
 		break;
 	case 'A':
-		g_vCamera.angles[0] += SPEED_TURN;
+		g_vCamera.Pitch(SPEED_TURN);
 		g_vCamera.BoundAngles();
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case 'Z':
-		g_vCamera.angles[0] -= SPEED_TURN;
+		g_vCamera.Pitch(-SPEED_TURN);
 		g_vCamera.BoundAngles();
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_COMMA:
-		g_vCamera.origin = g_vCamera.origin + -SPEED_MOVE * g_vCamera.right;
+		g_vCamera.Step(0, -SPEED_MOVE, 0);
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case VK_PERIOD:
-		g_vCamera.origin = g_vCamera.origin + SPEED_MOVE * g_vCamera.right;
+		g_vCamera.Step(0, SPEED_MOVE, 0);
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
 	case '0':	// sikk - fixed and added shortcut key
@@ -557,7 +515,7 @@ bool QE_KeyDown (int key)
 	case VK_HOME:	// sikk - added shortcut key
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_100, 0);
 		break;
-	case VK_INSERT:
+	case VK_INSERT:	// lunaran FIXME: ins/del with mouse over a grid view zooms to point
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ZOOMIN, 0);
 		break;
 	case VK_DELETE:
@@ -640,25 +598,25 @@ bool QE_KeyDown (int key)
 			}
 		}
 		break;
-	case VK_F1: // sikk - open QE3 manual
+	case VK_F1:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_HELP_HELP, 0);
 		break;
-	case VK_F2: // sikk - Map Info Dialog
+	case VK_F2:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_EDIT_MAPINFO, 0);
 		break;
-	case VK_F3: // sikk - Entity Info Dialog
+	case VK_F3:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_EDIT_ENTITYINFO, 0);
 		break;
-	case VK_F4: // sikk - Preferences Dialog
+	case VK_F4:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_EDIT_PREFERENCES, 0);
 		break;
-	//case VK_F5: // sikk - Project Dialog
+	//case VK_F5:
 	//	PostMessage(g_hwndMain, WM_COMMAND, ID_FILE_EDITPROJECT, 0);
 	//	break;
-	case VK_F10: // sikk - added shortcut key
+	case VK_F10:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_BENCHMARK, 0);
 		break;
-	case VK_F12:	// sikk - Test Map
+	case VK_F12:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_TESTMAP, 0);
 		break;
 	default:
@@ -834,9 +792,9 @@ int QE_BestViewAxis()
 	for (int i = 0; i < 3; i++)
 	{
 		if (g_wndGrid[i]->IsOnTop())
-			return g_wndGrid[i]->xyzv->GetAxis();
+			return g_wndGrid[i]->gv->GetAxis();
 	}
-	return XY;
+	return GRID_XY;
 }
 
 /*

@@ -6,13 +6,13 @@
 #define __GEO_TOOL_H__
 
 #include "Tool.h"
-#include "View.h"
+#include "DisplayView.h"
 
 // Geometry Modification Tool
 // vertex/edge/face editing
 
 class CmdGeoMod;
-class WndView;
+class DisplayView;
 
 class GeoTool :	public Tool
 {
@@ -35,12 +35,12 @@ public:
 	static void ToggleMode(gt_mode_t gtm);
 
 	void SelectionChanged();
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	bool Draw3D(CameraView &v);
-	bool Draw2D(XYZView &v);
+	bool Draw3D(CameraRenderer &rc);
+	bool Draw2D(GridViewRenderer &v);
 
 private:
 	void _toggleMode(gt_mode_t gtm);
@@ -49,7 +49,7 @@ private:
 	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
 	vec3 ptDownWorld, trans, snapTrans;
 	mouseContext_t mcDown, mcCurrent;
-	View *hotView;
+	DisplayView *hotView;
 
 	enum {
 		GT_NONE,
@@ -72,13 +72,13 @@ private:
 	std::vector<handle*> handlesHit;
 	vec3 *pointBuf;
 
-	void DragStart(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up);
+	void DragStart(const mouseContext_t &mca, const mouseContext_t &mcb);
 	void DragMove(const mouseContext_t &mc);
 	void DragFinish(const mouseContext_t &mc);
-	void Hover(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up);
+	void Hover(const mouseContext_t &mca, const mouseContext_t &mcb, const vec3 up, const vec3 right);
 
 	void DoSelect(std::vector<handle*> &hlist);
-	bool BoxTestHandles(const vec3 org1, const vec3 dir1, const vec3 org2, const vec3 dir2, const vec3 up, std::vector<handle*>& hlist);
+	bool BoxTestHandles(const vec3 org1, const vec3 dir1, const vec3 org2, const vec3 dir2, const vec3 up, const vec3 right, std::vector<handle*>& hlist);
 	void SelectHandles(std::vector<handle*> &hlist);
 	void DeselectHandles(std::vector<handle*> &hlist);
 	bool AllSelected(std::vector<handle*> &hlist);

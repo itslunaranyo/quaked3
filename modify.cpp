@@ -8,7 +8,7 @@
 #include "select.h"
 #include "modify.h"
 #include "WndGrid.h"
-#include "XYZView.h"
+#include "GridView.h"
 
 #include "CmdDelete.h"
 #include "CmdReparentBrush.h"
@@ -57,7 +57,7 @@ void Modify::Clone()
 	if (!Selection::HasBrushes()) return;
 
 	// move cloned brushes based on active XY view
-	delta[g_wndGrid[0]->xyzv->GetAxis()] = 0;
+	delta[g_vGrid[0].GetAxis()] = 0;
 
 	CmdClone *cmd;
 	if (g_cfgEditor.CloneStyle == CLONE_OFFSET)

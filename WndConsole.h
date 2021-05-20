@@ -5,12 +5,12 @@
 #ifndef __WND_CONSOLE_H__
 #define __WND_CONSOLE_H__
 
-#include "WndView.h"
+#include "Window.h"
 
 extern HWND g_hwndConsole;
 extern WndConsole	*g_wndConsole;
 
-class WndConsole : public WndView
+class WndConsole : public Window
 {
 public:
 	WndConsole();
@@ -24,7 +24,6 @@ public:
 private:
 	HWND w_hwndCons;
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 };
 
 #endif

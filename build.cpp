@@ -3,7 +3,6 @@
 #include "build.h"
 #include "map.h"
 #include "points.h"
-#include "io.h"
 #include "WndMain.h"
 #include "WndCamera.h"
 #include <process.h>
@@ -79,7 +78,7 @@ void FillBSPMenu()
 	static int	count;
 
 	hmenu = GetSubMenu(GetMenu(g_hwndMain), MENU_BSP);
-
+	ep = 0;
 	for (i = 0; i < count; i++)
 		DeleteMenu(hmenu, CMD_BSPCOMMAND + i, MF_BYCOMMAND);
 	count = 0;
@@ -120,6 +119,7 @@ void QE_ExpandBspString(char *bspaction, char *out, char *mapname)
 	strcpy(rsh, g_project.basePath);
 
 	//in = g_qeglobals.d_entityProject->GetKeyValue(bspaction);
+	in = 0;
 	while (*in)
 	{
 		if (in[0] == '!')

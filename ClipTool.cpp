@@ -4,12 +4,17 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "ClipTool.h"
+
+#include "CameraView.h"
+#include "CameraRenderer.h"
+#include "WndCamera.h"
+#include "GridView.h"
+#include "GridViewRenderer.h"
+#include "WndGrid.h"
+
 #include "CmdBrushClip.h"
 #include "select.h"
-#include "CameraView.h"
-#include "XYZView.h"
-#include "WndCamera.h"
-#include "ClipTool.h"
 
 #define CLIP_CAMDOT 0.9997f
 
@@ -33,7 +38,7 @@ ClipTool::~ClipTool()
 ClipTool::Input3D
 ==================
 */
-bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd)
 {
 	int keys = wParam;
 	int x, y;
@@ -51,7 +56,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 			return !!(wParam & MK_CONTROL);	// prevent face selection
 			//return false;
 		vWnd.GetMsgXY(lParam, x, y);
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		// lunaran - alt quick clip
@@ -97,7 +102,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 ClipTool::Input2D
 ==================
 */
-bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd)
 {
 	int keys = wParam;
 	int x, y;
@@ -111,7 +116,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
 			return false;
 		vWnd.GetMsgXY(lParam, x, y);
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		// lunaran - alt quick clip
@@ -137,6 +142,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 		return true;
 
 	case WM_MOUSEMOVE:
+		ptHover.set = false;
 		if ((!keys || keys & MK_LBUTTON))
 		{
 			vWnd.GetMsgXY(lParam, x, y);
@@ -232,6 +238,7 @@ void ClipTool::Reset ()
 {
 	for (int i = 0; i < 3; i++)
 		points[i].Reset();
+	ptHover.Reset();
 
 	if (ptMoving)
 	{
@@ -409,24 +416,24 @@ void ClipTool::CamEndQuickClip()
 ClipTool::CamPointOnSelection
 ==================
 */
-bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
+bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)	// lunaran TODO: int*?
 {
 	vec3		dir, pn, pt;
 	trace_t		t;
 	g_vCamera.PointToRay(x, y, dir);
-	t = Selection::TestRay(g_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
+	t = Selection::TestRay(g_vCamera.GetOrigin(), dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
 		pn = AxisForVector(t.face->plane.normal);
 
 		if (pn[0])
-			*outAxis = YZ;
+			*outAxis = GRID_YZ;
 		else if (pn[1])
-			*outAxis = XZ;
+			*outAxis = GRID_XZ;
 		else
-			*outAxis = XY;
+			*outAxis = GRID_XY;
 
-		pt = g_vCamera.origin + t.dist * dir;
+		pt = g_vCamera.GetOrigin() + t.dist * dir;
 		//ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pointOnGrid(pt));
 		pt = t.face->plane.ProjectPointAxial(pointOnGrid(pt), pn);
 
@@ -480,7 +487,7 @@ ClipTool::clippoint_t *ClipTool::CamGetNearestClipPoint(int x, int y)
 	{
 		if (points[i].set)
 		{
-			cPt = points[i].point - g_vCamera.origin;
+			cPt = points[i].point - g_vCamera.GetOrigin();
 			VectorNormalize(cPt);
 
 			if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -571,7 +578,7 @@ ClipTool::StartQuickClip
 lunaran: puts point 1 and 2 in the same place and immediately begins dragging point 2
 ==============
 */
-void ClipTool::StartQuickClip(XYZView* xyz, int x, int y)
+void ClipTool::StartQuickClip(GridView* xyz, int x, int y)
 {
 	Reset();
 
@@ -599,17 +606,15 @@ void ClipTool::EndQuickClip()
 ClipTool::DropPoint
 ==============
 */
-void ClipTool::DropPoint (XYZView* xyz, int x, int y)
+void ClipTool::DropPoint (GridView* xyz, int x, int y)
 {
-	int nDim;
-
 	axis = xyz->GetAxis();
 
 	if (ptMoving)  // <-- when a new click is issued on an existing point
 	{
 		// lunaran - grid view reunification
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, ptMoving->point);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, ptMoving->point);
 	}
 	else // <-- if a new point is dropped in space
 	{
@@ -617,17 +622,15 @@ void ClipTool::DropPoint (XYZView* xyz, int x, int y)
 		pPt = StartNextPoint();
 
 		// lunaran - grid view reunification
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, pPt->point);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, pPt->point);
 
 		// third coordinates for clip point: use d_v3WorkMax
-		nDim = (axis == YZ ) ? 0 : ((axis == XZ) ? 1 : 2);
-
 		// lunaran: put third clip at work min instead of work max so they aren't all coplanar to the view
 		if (points[2].set)
-			(pPt->point)[nDim] = g_qeglobals.d_v3WorkMin[nDim];
+			(pPt->point)[axis] = g_qeglobals.d_v3WorkMin[axis];
 		else
-			(pPt->point)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
+			(pPt->point)[axis] = g_qeglobals.d_v3WorkMax[axis];
 	}
 	PointsUpdated();
 	WndMain_UpdateWindows(W_XY| W_CAMERA);
@@ -640,14 +643,12 @@ ClipTool::GetCoordXY
 */
 void ClipTool::GetCoordXY(int x, int y, vec3 &pt)
 {
-	int nDim;
 	// lunaran - grid view reunification
-	XYZView* xyz = XYZWnd_WinFromHandle(GetCapture());
+	GridView* xyz = GridView::FromHwnd(GetCapture());
 	if (xyz)
-		xyz->SnapToPoint(x, y, pt);
-	nDim = (xyz->GetAxis() == YZ) ? 0 : ((xyz->GetAxis() == XZ) ? 1 : 2);
+		xyz->ScreenToWorldGrid(x, y, pt);
 
-	pt[nDim] = g_qeglobals.d_v3WorkMax[nDim];
+	pt[xyz->GetAxis()] = g_qeglobals.d_v3WorkMax[xyz->GetAxis()];
 }
 
 /*
@@ -655,19 +656,19 @@ void ClipTool::GetCoordXY(int x, int y, vec3 &pt)
 ClipTool::XYGetNearestClipPoint
 ==============
 */
-ClipTool::clippoint_t* ClipTool::XYGetNearestClipPoint(XYZView* xyz, int x, int y)
+ClipTool::clippoint_t* ClipTool::XYGetNearestClipPoint(GridView* gv, int x, int y)
 {
 	int nDim1, nDim2;
 	vec3	tdp;
 
 	tdp[0] = tdp[1] = tdp[2] = 256;
 
-	xyz->ToPoint(x, y, tdp);
-	nDim1 = (xyz->GetAxis() == YZ) ? 1 : 0;
-	nDim2 = (xyz->GetAxis() == XY) ? 1 : 2;
+	gv->ScreenToWorld(x, y, tdp);
+	nDim1 = gv->DimU();
+	nDim2 = gv->DimV();
 
 	// lunaran: based on screen distance and not world distance
-	float margin = 10.0f / xyz->scale;
+	float margin = 10.0f / gv->GetScale();
 	if (points[0].set)
 	{
 		if (fabs(points[0].point[nDim1] - tdp[nDim1]) < margin &&
@@ -701,7 +702,7 @@ ClipTool::MovePoint
 should be named ClipTool::MoveMouse
 ==============
 */
-void ClipTool::MovePoint (XYZView* xyz, int x, int y)
+void ClipTool::MovePoint (GridView* xyz, int x, int y)
 {
 	bool	bCrossHair = false;
 
@@ -709,8 +710,8 @@ void ClipTool::MovePoint (XYZView* xyz, int x, int y)
 	if (ptMoving && GetCapture())
 	{
 		// lunaran - grid view reunification
-		if (xyz == XYZWnd_WinFromHandle(GetCapture()))
-			xyz->SnapToPoint(x, y, ptMoving->point);
+		if (xyz == GridView::FromHwnd(GetCapture()))
+			xyz->ScreenToWorldGrid(x, y, ptMoving->point);
 		bCrossHair = true;
 		PointsUpdated();
 		WndMain_UpdateWindows(W_XY | W_CAMERA);
@@ -749,7 +750,7 @@ void ClipTool::EndPoint ()
 
 
 
-bool ClipTool::Draw3D(CameraView &v)
+bool ClipTool::Draw3D(CameraRenderer &rc)
 {
 	//if (!g_pcmdBC)
 	//	return false;
@@ -759,18 +760,18 @@ bool ClipTool::Draw3D(CameraView &v)
 	if (points[1].set)
 		Draw();
 	else
-		v.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
+		rc.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 
 	DrawPoints();
 	glEnable(GL_DEPTH_TEST);
 	return true;
 }
 
-bool ClipTool::Draw2D(XYZView &v)
+bool ClipTool::Draw2D(GridViewRenderer &gr)
 {
 	if (!points[0].set && !ptHover.set)
 		return false;
-	v.DrawSelection(g_colors.selection);
+	gr.DrawSelection(g_colors.selection);
 	
 	if (g_pcmdBC)
 		DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);

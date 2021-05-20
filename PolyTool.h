@@ -9,7 +9,6 @@
 // Draw Polygonal Brushes Tool
 
 class CmdPolyBrushConcave;
-class WndView;
 
 class PolyTool : public Tool
 {
@@ -17,12 +16,12 @@ public:
 	PolyTool();
 	~PolyTool();
 
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	bool Draw3D(CameraView &v);
-	bool Draw2D(XYZView &v);
+	bool Draw3D(CameraRenderer &v);
+	bool Draw2D(GridViewRenderer &v);
 
 private:
 	CmdPolyBrushConcave* pcmdPBC;
@@ -38,10 +37,10 @@ private:
 	bool Commit();
 	bool InputCommand(WPARAM w);
 
-	PolyTool::pointIt XYGetNearestPoint(XYZView * xyz, int x, int y);
+	PolyTool::pointIt XYGetNearestPoint(GridView * xyz, int x, int y);
 
-	void AddPoint(XYZView * xyz, int x, int y, bool back = false);
-	void MovePoint(XYZView * xyz, int x, int y);
+	void AddPoint(GridView * xyz, int x, int y, bool back = false);
+	void MovePoint(GridView * xyz, int x, int y);
 	void EndPoint();
 	void DeletePoint(bool first = false);
 	bool PointsUpdated();

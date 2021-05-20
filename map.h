@@ -50,6 +50,7 @@ public:
 	void	Paste();
 
 	void	RegionOff();
+	void	RegionXYZ(int gwin);
 	void	RegionXY();
 	void	RegionXZ();	// sikk - Multiple Orthographic Views
 	void	RegionYZ();	// sikk - Multiple Orthographic Views

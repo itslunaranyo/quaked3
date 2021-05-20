@@ -8,7 +8,7 @@
 #include "select.h"
 #include "map.h"
 #include "CameraView.h"
-#include "XYZView.h"
+#include "GridView.h"
 #include "CmdImportMap.h"
 #include "WndEntity.h"
 #include "modify.h"
@@ -27,11 +27,18 @@ HWND g_hwndSetKeyvalsDlg;
 =====================================================================
 */
 
+vec3 g_lastColor;
+
 /*
 ============
 DoColorSelect
 ============
 */
+bool DoColorSelect(vec3 &rgbOut)
+{
+	return DoColorSelect(g_lastColor, rgbOut);
+}
+
 bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut)
 {
 	CHOOSECOLOR		cc;
@@ -53,6 +60,7 @@ bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut)
 	rgbOut.g = ((cc.rgbResult >> 8) & 255);
 	rgbOut.b = ((cc.rgbResult >> 16) & 255);
 	rgbOut /= 255.0f;
+	g_lastColor = rgbOut;
 	return true;
 }
 
@@ -154,7 +162,6 @@ FindBrush
 */
 void FindBrush (int entitynum, int brushnum)
 {
-	int			i;
 	Brush	   *b;
 	Entity   *e;
 
@@ -193,8 +200,7 @@ void FindBrush (int entitynum, int brushnum)
 
 	Selection::SelectBrush(b);
 
-	for (i = 0; i < 3; i++)
-		g_vXYZ[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
+	g_vGrid[0].Center((b->mins + b->maxs) * 0.5f);
 
 	Sys_Printf("Selected.\n");
 }
@@ -1382,7 +1388,8 @@ void OnSelect (HWND hTree)
 	}
 
 	// Center on selected entity and update the windows
-	XYZView::PositionAllViews();
+	for (int i = 0; i < 4; i++)
+		g_vGrid[i].PositionView();
 	g_vCamera.PositionCenter();
 	WndMain_ForceUpdateWindows(W_SCENE);
 }

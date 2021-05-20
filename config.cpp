@@ -194,17 +194,22 @@ bool qeConfig::ParseEditor()
 
 void qeConfig::ExpandProjectPaths()
 {
-	auto prj = projectPresets.begin();
-	strncpy(g_project.name, prj->name, MAX_PROJNAME);
-	ExpandProjectPath(prj->basePath, g_project.basePath, true);
-	ExpandProjectPath(prj->mapPath, g_project.mapPath, true);
-	ExpandProjectPath(prj->autosaveFile, g_project.autosaveFile);
-	ExpandProjectPath(prj->entityFiles, g_project.entityFiles);
-	ExpandProjectPath(prj->wadPath, g_project.wadPath, true);
-	ExpandProjectPath(prj->defaultWads, g_project.defaultWads);
-	ExpandProjectPath(prj->paletteFile, g_project.paletteFile);
+	ExpandProjectPaths(*projectPresets.begin(), g_project);
+}
 
-	g_project.extTargets = prj->extTargets;
+void qeConfig::ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest)
+{
+	//auto prj = projectPresets.begin();
+	strncpy(dest.name, src.name, MAX_PROJNAME);
+	ExpandProjectPath(src.basePath, dest.basePath, true);
+	ExpandProjectPath(src.mapPath, dest.mapPath, true);
+	ExpandProjectPath(src.autosaveFile, dest.autosaveFile);
+	ExpandProjectPath(src.entityFiles, dest.entityFiles);
+	ExpandProjectPath(src.wadPath, dest.wadPath, true);
+	ExpandProjectPath(src.defaultWads, dest.defaultWads);
+	ExpandProjectPath(src.paletteFile, dest.paletteFile);
+
+	dest.extTargets = src.extTargets;
 }
 
 void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)

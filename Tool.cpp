@@ -5,7 +5,7 @@
 #include "pre.h"
 #include "qe3.h"
 #include "Tool.h"
-#include "WndView.h"
+#include "Window.h"
 
 /*
 ================================================================
@@ -68,14 +68,14 @@ Tool::~Tool()
 	WndMain_UpdateGridStatusBar();
 }
 
-bool Tool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd) { return hot; }
-bool Tool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd) { return hot; }
-bool Tool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd) { return hot; }
-bool Tool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd) { return hot; }
+bool Tool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd) { return hot; }
+bool Tool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd) { return hot; }
+bool Tool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd) { return hot; }
+bool Tool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd) { return hot; }
 bool Tool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam) { return hot; }
 
 
-int Tool::HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+int Tool::HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd)
 {
 	if (!FilterInput(uMsg)) return 0;
 	int out;
@@ -102,7 +102,7 @@ int Tool::HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	return 0;
 }
 
-int Tool::HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+int Tool::HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd)
 {
 	if (!FilterInput(uMsg)) return 0;
 
@@ -120,7 +120,7 @@ int Tool::HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	return 0;
 }
 
-int Tool::HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd)
+int Tool::HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd)
 {
 	if (!FilterInput(uMsg)) return 0;
 
@@ -138,7 +138,7 @@ int Tool::HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 	return 0;
 }
 
-int Tool::HandleInputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd)
+int Tool::HandleInputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd)
 {
 	if (!FilterInput(uMsg)) return 0;
 
@@ -210,10 +210,10 @@ void Tool::Crosshair(bool bCrossHair)
 }
 
 // FIXME: https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-getmessagepos
-void Tool::MsgToXY(const LPARAM lParam, const WndView &vWnd, int &xPos, int &yPos)
+void Tool::MsgToXY(const LPARAM lParam, const Window &wnd, int &xPos, int &yPos)
 {
-	xPos =  (short)LOWORD(lParam);  // horizontal position of cursor 
+	xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
 	yPos = (short)HIWORD(lParam);  // vertical position of cursor 
-	yPos = (int)vWnd.clientRect.bottom - 1 - yPos;
+	yPos = (int)wnd.clientRect.bottom - 1 - yPos;
 }
 

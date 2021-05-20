@@ -63,7 +63,8 @@ void WndMain_UpdateGridStatusBar()
 		g_qeglobals.bGridSnap ? "On" : "OFF",
 		Tool::stack.back()->modal ? Tool::stack.back()->name : "None",
 		g_qeglobals.d_bTextureLock ? "On" : "Off",
-		(int)g_cfgEditor.CubicScale);	// sikk - Cubic Clipping
+		g_cfgEditor.CubicClip ? (int)g_cfgEditor.CubicScale * 64 : 0
+		);
 	WndMain_Status(gridstatus, 1);
 }
 

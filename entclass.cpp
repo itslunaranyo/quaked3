@@ -4,7 +4,6 @@
 
 #include "pre.h"
 #include "qe3.h"
-#include "io.h"
 #include <algorithm>
 
 /*

@@ -7,12 +7,12 @@
 #include "TextureView.h"
 #include "Tool.h"
 
-#define	FONT_HEIGHT	10
-#define MARGIN_X 8
 
 TextureView g_vTexture;
 
-TextureView::TextureView() : stale(true)
+TextureView::TextureView() : 
+	stale(true), scale(1.0f), 
+	scroll(0), layoutLength(0)
 {
 }
 
@@ -20,121 +20,20 @@ TextureView::~TextureView()
 {
 }
 
-
-/*
-============================================================================
-
-MOUSE ACTIONS
-
-============================================================================
-*/
-
-/*
-==============
-TextureView::MouseDown
-==============
-*/
-void TextureView::MouseDown(const int x, const int y, const int buttons)
-{
-	// necessary for scrolling
-	Sys_GetCursorPos(&cursorX, &cursorY);
-	if (buttons == (MK_LBUTTON))
-		FoldTextureGroup(x, y);
-}
-
-/*
-==============
-TextureView::MouseUp
-==============
-*/
-void TextureView::MouseUp(int x, int y, int buttons)
-{
-}
-
-/*
-==============
-TextureView::MouseMoved
-==============
-*/
-void TextureView::MouseMoved(int x, int y, int buttons)
-{
-	Arrange();
-
-	// sikk--->	Mouse Zoom Texture Window
-	// rbutton+control = zoom texture view
-	if (buttons == (MK_CONTROL | MK_RBUTTON))
-	{
-		SetCursor(NULL); // sikk - Remove Cursor
-		Sys_GetCursorPos(&x, &y);
-		if (y != cursorY)
-		{
-			if (y > cursorY)
-				scale *= powf(1.01f, fabs(y - cursorY));
-			else
-				scale *= powf(0.99f, fabs(y - cursorY));
-
-			cursorX = x;
-			cursorY = y;
-			SetScale(scale);
-
-			WndMain_UpdateWindows(W_TEXTURE);
-		}
-		return;
-	}
-	// <---sikk
-
-	// rbutton = drag texture origin
-	if (buttons & MK_RBUTTON)
-	{
-		SetCursor(NULL); // sikk - Remove Cursor
-		Sys_GetCursorPos(&x, &y);
-		if (y != cursorY)
-		{
-			Scroll(y - cursorY, (buttons & MK_SHIFT) > 0);
-			Sys_SetCursorPos(cursorX, cursorY);
-
-			WndMain_UpdateWindows(W_TEXTURE);
-		}
-	}
-	else
-		MouseOver(x, y);
-}
-
-/*
-============
-TextureView::MouseOver
-============
-*/
-void TextureView::MouseOver(int x, int y)
-{
-	char		texstring[256];
-	Texture*	tex;
-
-	tex = TexAtCursorPos(x, y);
-	if (tex)
-	{
-		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
-		WndMain_Status(texstring, 0);
-		return;
-	}
-	sprintf(texstring, "");
-	WndMain_Status(texstring, 0);
-}
-
 void TextureView::ResetScroll()
 {
-	origin[1] = 0;
+	scroll = 0;
 }
 
 void TextureView::Scroll(int dist, bool fast)
 {
 	float lscale = fast ? 4 : 1;
 
-	origin[1] += dist * lscale;
-	if (origin[1] < -layoutLength + height)
-		origin[1] = -layoutLength + height;
-	if (origin[1] > 0)
-		origin[1] = 0;
+	scroll += dist * lscale;
+	if (scroll < -layoutLength + height)
+		scroll = -layoutLength + height;
+	if (scroll > 0)
+		scroll = 0;
 }
 
 
@@ -281,10 +180,10 @@ void TextureView::Refresh()
 
 /*
 ============
-TextureView::ResizeControls
+TextureView::Resize
 ============
 */
-void TextureView::Resize(int w, int h)
+void TextureView::Resize(const int w, const int h)
 {
 	width = w;
 	height = h;
@@ -323,7 +222,7 @@ void TextureView::SetScale(float inscale)
 
 			if (scale < inscale)
 			{
-				if ((twpIt->y - twpIt->h < origin[1]) && (twpIt->y > origin[1] - 64))
+				if ((twpIt->y - twpIt->h < scroll) && (twpIt->y > scroll - 64))
 				{
 					twg = &(*twgIt);
 					break;
@@ -331,7 +230,7 @@ void TextureView::SetScale(float inscale)
 			}
 			else
 			{
-				if ((twpIt->y - twpIt->h - FONT_HEIGHT < origin[1]) && (twpIt->y > origin[1] - 64))
+				if ((twpIt->y - twpIt->h - FONT_HEIGHT < scroll) && (twpIt->y > scroll - 64))
 				{
 					twg = &(*twgIt);
 					break;
@@ -352,7 +251,7 @@ void TextureView::SetScale(float inscale)
 		{
 			if (twpIt->tex == firsttexture)
 			{
-				origin[1] = twg->top + twpIt->y;
+				scroll = twg->top + twpIt->y;
 				break;
 			}
 		}
@@ -375,7 +274,7 @@ gets the texture under the x y window position
 Texture* TextureView::TexAtPos(int x, int y)
 {
 	Arrange();
-	y += origin[1];
+	y += scroll;
 	int cy;
 
 	for (auto twgIt = layoutGroups.begin(); twgIt != layoutGroups.end(); ++twgIt)
@@ -416,7 +315,7 @@ bool TextureView::FoldTextureGroup(texWndGroup_t* grp)
 bool TextureView::FoldTextureGroup(const int cx, const int cy)
 {
 	Arrange();
-	texWndGroup_t* grp = TexGroupAtCursorPos(cx, cy);
+	texWndGroup_t* grp = LayoutGroupAtCursorPos(cx, cy);
 	if (!grp) return false;
 
 	return FoldTextureGroup(grp);
@@ -425,15 +324,15 @@ bool TextureView::FoldTextureGroup(const int cx, const int cy)
 
 /*
 ==============
-TextureView::TexGroupAtPos
+TextureView::LayoutGroupAtPos
 
 gets the wad header under the x y window position
 ==============
 */
-TextureView::texWndGroup_t* TextureView::TexGroupAtPos(int x, int y)
+TextureView::texWndGroup_t* TextureView::LayoutGroupAtPos(int x, int y)
 {
 	Arrange();
-	y += origin[1];
+	y += scroll;
 
 	for (auto twgIt = layoutGroups.begin(); twgIt != layoutGroups.end(); ++twgIt)
 	{
@@ -456,16 +355,23 @@ Texture* TextureView::TexAtCursorPos(const int cx, const int cy)
 	return TexAtPos(cx, -1 - cy);
 }
 
+TextureGroup * TextureView::TexGroupAtCursorPos(const int cx, const int cy)
+{
+	texWndGroup_t* lgap = LayoutGroupAtPos(cx, -1 - cy);
+	if (!lgap) return nullptr;
+	return lgap->tg;
+}
+
 /*
 ==============
-TextureView::TexGroupAtCursorPos
+TextureView::LayoutGroupAtCursorPos
 
 gets the texture currently under the cursor
 ==============
 */
-TextureView::texWndGroup_t* TextureView::TexGroupAtCursorPos(const int cx, const int cy)
+TextureView::texWndGroup_t* TextureView::LayoutGroupAtCursorPos(const int cx, const int cy)
 {
-	return TexGroupAtPos(cx, -1 - cy);
+	return LayoutGroupAtPos(cx, -1 - cy);
 }
 
 /*
@@ -549,14 +455,14 @@ void TextureView::ChooseTexture(TexDef *texdef)
 				// unfurl it if it's folded up
 				if (twgIt->folded) FoldTextureGroup(&(*twgIt));
 
-				if (twi->y + twgIt->top > origin[1])
+				if (twi->y + twgIt->top > scroll)
 				{
-					origin[1] = twi->y + twgIt->top;
+					scroll = twi->y + twgIt->top;
 					WndMain_UpdateWindows(W_TEXTURE);
 				}
-				else if (twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT < origin[1] - height)
+				else if (twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT < scroll - height)
 				{
-					origin[1] = twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT + height;
+					scroll = twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT + height;
 					WndMain_UpdateWindows(W_TEXTURE);
 				}
 				UpdateStatus(texdef);
@@ -578,152 +484,3 @@ int texcmp(Texture* a, Texture* b)
 	return strcmp(a->name, b->name);
 }
 
-
-
-
-/*
-============================================================================
-
-DRAWING
-
-============================================================================
-*/
-
-
-/*
-============
-TextureView::Draw
-============
-*/
-void TextureView::Draw()
-{
-	char	*name;
-	vec3	txavg;
-	int		yTop;
-
-	txavg = 0.5f * (g_colors.texBackground + g_colors.texText);
-
-	Arrange();
-	
-	glClearColor(g_colors.texBackground[0],
-		g_colors.texBackground[1],
-		g_colors.texBackground[2],
-		0);
-
-	glViewport(0, 0, width, height);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, width, origin[1] - height, origin[1], -100, 100);
-	glEnable(GL_TEXTURE_2D);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	for (auto twgIt = layoutGroups.begin(); twgIt != layoutGroups.end(); ++twgIt)
-	{
-		// is this wad visible?
-		if (twgIt->top < origin[1] - height)
-			break;
-
-		glLineWidth(1);
-
-		// draw the wad header
-		glColor3fv(&g_colors.texText.r);
-		glDisable(GL_TEXTURE_2D);
-
-		glRasterPos2f(MARGIN_X + 4, twgIt->top - FONT_HEIGHT);
-		glCallLists(1, GL_UNSIGNED_BYTE, twgIt->folded ? "+" : "-" );
-		glRasterPos2f(MARGIN_X + FONT_HEIGHT + 4, twgIt->top - FONT_HEIGHT);
-		glCallLists(strlen(twgIt->tg->name), GL_UNSIGNED_BYTE, twgIt->tg->name);
-
-		glColor3fv(&txavg.r);
-		glBegin(GL_LINE_LOOP);
-		glVertex2f(MARGIN_X, twgIt->top - FONT_HEIGHT - 4);
-		glVertex2f(width - MARGIN_X, twgIt->top - FONT_HEIGHT - 4);
-		glEnd();
-		glEnable(GL_TEXTURE_2D);
-
-		if (twgIt->folded) continue;
-
-		for (auto twp = twgIt->layout.begin(); twp != twgIt->layout.end(); ++twp)
-		{
-			// Is this texture visible?
-			if (twgIt->top + twp->y < origin[1] - height)
-				break;
-			if (twgIt->top + twp->y - twp->h - FONT_HEIGHT > origin[1])
-				continue;
-
-			yTop = twgIt->top + twp->y;
-
-			// if in use, draw a background
-			if (twp->tex->used)
-			{
-				glColor3fv(&txavg.r);
-				glDisable(GL_TEXTURE_2D);
-
-				glBegin(GL_LINE_LOOP);
-				glVertex2f(twp->x - 1, yTop + 1 - FONT_HEIGHT);
-				glVertex2f(twp->x - 1, yTop - twp->h - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(twp->x + 1 + twp->w, yTop - twp->h - 1 - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(twp->x + 1 + twp->w, yTop + 1 - FONT_HEIGHT);		// sikk - Mouse Zoom Texture Window
-				glEnd();
-
-				glEnable(GL_TEXTURE_2D);
-			}
-
-			// Draw the texture
-			glColor3f(1, 1, 1);
-			glBindTexture(GL_TEXTURE_2D, twp->tex->texture_number);
-			glBegin(GL_QUADS);
-			glTexCoord2f(0, 0);
-			glVertex2f(twp->x, yTop - FONT_HEIGHT);
-			glTexCoord2f(1, 0);
-			glVertex2f(twp->x + twp->w, yTop - FONT_HEIGHT);	// sikk - Mouse Zoom Texture Window
-			glTexCoord2f(1, 1);
-			glVertex2f(twp->x + twp->w, yTop - FONT_HEIGHT - twp->h);	// sikk - Mouse Zoom Texture Window
-			glTexCoord2f(0, 1);
-			glVertex2f(twp->x, yTop - FONT_HEIGHT - twp->h);
-			glEnd();
-
-			// draw the selection border
-			//if (!_strcmpi(g_qeglobals.d_workTexDef.name, twp->tex->name))
-			if (g_qeglobals.d_workTexDef.tex == twp->tex)
-			{
-				glLineWidth(3);
-				glColor3fv(&g_colors.selection.r);
-				glDisable(GL_TEXTURE_2D);
-
-				glBegin(GL_LINE_LOOP);
-				glVertex2f(twp->x - 4, yTop - FONT_HEIGHT + 4);
-				glVertex2f(twp->x - 4, yTop - FONT_HEIGHT - twp->h - 4);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(twp->x + 4 + twp->w, yTop - FONT_HEIGHT - twp->h - 4);	// sikk - Mouse Zoom Texture Window
-				glVertex2f(twp->x + 4 + twp->w, yTop - FONT_HEIGHT + 4);		// sikk - Mouse Zoom Texture Window
-				glEnd();
-
-				glEnable(GL_TEXTURE_2D);
-				glLineWidth(1);
-			}
-
-			// draw the texture name
-			glColor3fv(&g_colors.texText.r);
-			glDisable(GL_TEXTURE_2D);
-
-			// don't draw the directory name
-			for (name = twp->tex->name; *name && *name != '/' && *name != '\\'; name++)
-				;
-			if (!*name)
-				name = twp->tex->name;
-			else
-				name++;
-
-			glRasterPos2f(twp->x, yTop - FONT_HEIGHT + 2);
-			glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
-			glEnable(GL_TEXTURE_2D);
-		}
-	}
-
-	// reset the current texture
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glFinish();
-}

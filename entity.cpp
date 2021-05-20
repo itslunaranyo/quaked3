@@ -9,7 +9,6 @@
 #include "CameraView.h"
 #include "CmdCreateBrushEntity.h"
 #include "CmdCreatePointEntity.h"
-#include "io.h"
 #include "parse.h"
 #include "win_dlg.h"
 
@@ -456,21 +455,14 @@ int Entity::MemorySize ()
 EPair::ParseEpair
 =================
 */
-EPair *EPair::ParseEpair ()
+EPair *EPair::ParseEpair()
 {
 	EPair	*e;
 	
 	e = new EPair();
-	
-	//e->key.resize(strlen(g_szToken) + 8);
-	//strcpy((char*)*e->key, g_szToken);
 	e->SetKey(g_szToken);
-
 	GetToken(false);
-//	e->value.resize(strlen(g_szToken) + 8);
-//	strcpy((char*)*e->value, g_szToken);
 	e->SetValue(g_szToken);
-
 	return e;
 }
 
@@ -681,12 +673,13 @@ void Entity::Write(std::ostream &out, bool use_region)
 		// in region mode, save the camera position as playerstart
 		if (!strcmp(GetKeyValue("classname"), "info_player_start"))
 		{
+			vec3 cOrg = g_vCamera.GetOrigin();
 			out << "{\n";
 			out << "\"classname\" \"info_player_start\"\n";
-			out << "\"origin\" \"" << (int)g_vCamera.origin[0] << " " << 
-									(int)g_vCamera.origin[1] << " " << 
-									(int)g_vCamera.origin[2] << "\"\n";
-			out << "\"angle\" \"" << (int)g_vCamera.angles[YAW] << "\"\n";
+			out << "\"origin\" \"" << (int)cOrg.x << " " <<
+									(int)cOrg.y << " " <<
+									(int)cOrg.z << "\"\n";
+			out << "\"angle\" \"" << (int)g_vCamera.GetAngles()[YAW] << "\"\n";
 			out << "}\n";
 			return;
 		}

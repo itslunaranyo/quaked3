@@ -6,6 +6,7 @@
 #include "qe3.h"
 #include "WndTexture.h"
 #include "TextureView.h"
+#include "TexBrowserRenderer.h"
 #include "Tool.h"
 
 HWND g_hwndTexture;
@@ -24,9 +25,13 @@ void WndTexture::Initialize()
 {
 	texv = &g_vTexture;
 	v = texv;
-	CreateWnd();
+	Create();
+
 	SetTitle("Textures");
-	g_hwndTexture = w_hwnd;
+	g_hwndTexture = wHwnd;
+
+	tbr = new TexBrowserRenderer(*texv);
+	r = tbr;
 }
 
 
@@ -36,8 +41,8 @@ void WndTexture::DoPopupMenu(int x, int y)
 	POINT	point;
 	int		retval;
 
-	TextureView::texWndGroup_t* twg = texv->TexGroupAtCursorPos(x, y);
-	if (!twg) return;
+	TextureGroup* tg = texv->TexGroupAtCursorPos(x, y);
+	if (!tg) return;
 	GetCursorPos(&point);
 	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), 0);
 
@@ -45,18 +50,18 @@ void WndTexture::DoPopupMenu(int x, int y)
 	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
 	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_LOADCOMPLETELY, !flushed);
 
-	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, w_hwnd, NULL);
+	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, wHwnd, NULL);
 
 	switch (retval)
 	{
 	case ID_CONTEXT_RELOAD:
-		Textures::MenuReloadGroup(twg->tg);
+		Textures::MenuReloadGroup(tg);
 		break;
 	case ID_CONTEXT_FLUSHUNUSED:
-		Textures::FlushUnused(twg->tg);
+		Textures::FlushUnused(tg);
 		break;
 	case ID_CONTEXT_LOADCOMPLETELY:
-		Textures::MenuLoadWad(twg->tg->name);
+		Textures::MenuLoadWad(tg->name);
 		break;
 	default:
 		PostMessage(g_hwndMain, WM_COMMAND, retval, 0);
@@ -68,7 +73,6 @@ void WndTexture::DoPopupMenu(int x, int y)
 
 int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
 	if (Tool::HandleInputTex(uMsg, wParam, lParam, *texv, *this))
 	{
 		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
@@ -133,3 +137,119 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	*/
 	return 1;
 }
+
+int WndTexture::OnResized()
+{
+	texv->Resize(clientRect.right, clientRect.bottom);
+	return 0;
+}
+
+void WndTexture::Render()
+{
+	tbr->Draw();
+}
+
+/*
+==============
+WndTexture::MouseDown
+==============
+*/
+void WndTexture::MouseDown(const int x, const int y, const int btndown, const int buttons)
+{
+	Sys_GetCursorPos(&cursorX, &cursorY);	// necessary for scrolling
+	
+	// Context Menu
+	if (buttons == MK_RBUTTON)
+	{
+		rMoved = false;
+		mDownX = x;
+		mDownY = y;
+	}
+
+	if (btndown == MK_LBUTTON)
+		texv->FoldTextureGroup(x, y);
+}
+
+/*
+==============
+WndTexture::MouseMoved
+==============
+*/
+void WndTexture::MouseMoved(const int x, const int y, const int buttons)
+{
+	int cx, cy;
+	float scale;
+	texv->Arrange();
+
+	// sikk--->	Mouse Zoom Texture Window
+	// rbutton+control = zoom texture view
+	if (buttons == (MK_CONTROL | MK_RBUTTON))
+	{
+		SetCursor(NULL); // sikk - Remove Cursor
+		Sys_GetCursorPos(&cx, &cy);
+		if (cy != cursorY)
+		{
+			if (cy > cursorY)
+				scale = powf(1.01f, fabs(cy - cursorY));
+			else
+				scale = powf(0.99f, fabs(cy - cursorY));
+
+			texv->Scale(scale);
+			Sys_SetCursorPos(cursorX, cursorY);
+
+			WndMain_UpdateWindows(W_TEXTURE);
+		}
+		return;
+	}
+	// <---sikk
+
+	// rbutton = drag texture origin
+	if (buttons == MK_RBUTTON)
+	{
+		// Context Menu
+		if (!rMoved && (abs(mDownX - x) > 1 || abs(mDownY - y) > 1))
+			rMoved = true;
+
+		if (rMoved) SetCursor(NULL);
+
+		Sys_GetCursorPos(&cx, &cy);
+		if ((cy != cursorY) && rMoved)
+		{
+			texv->Scroll(cy - cursorY, (buttons & MK_SHIFT) > 0);
+			Sys_SetCursorPos(cursorX, cursorY);
+
+			WndMain_UpdateWindows(W_TEXTURE);
+		}
+	}
+	else
+		MouseOver(x, y);
+}
+
+/*
+============
+WndTexture::MouseOver
+============
+*/
+void WndTexture::MouseOver(const int x, const int y)
+{
+	char		texstring[256];
+	Texture*	tex;
+
+	tex = texv->TexAtCursorPos(x, y);
+	if (tex)
+	{
+		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
+		WndMain_Status(texstring, 0);
+		return;
+	}
+	sprintf(texstring, "");
+	WndMain_Status(texstring, 0);
+}
+
+void WndTexture::MouseUp(const int x, const int y, const int btnup, const int buttons)
+{
+	// Context Menu
+	if (btnup == MK_RBUTTON && !buttons && !rMoved)
+		DoPopupMenu(x, y);
+}
+

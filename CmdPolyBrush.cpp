@@ -24,7 +24,7 @@ the input point list must be clockwise.
 
 
 CmdPolyBrush::CmdPolyBrush() : Command("CmdPolyBrush"), 
-	work(nullptr), axis(XY),
+	work(nullptr), axis(GRID_XY),
 	texdef(g_qeglobals.d_workTexDef),
 	lowBound(g_qeglobals.d_v3WorkMin[axis]),
 	highBound(g_qeglobals.d_v3WorkMax[axis])

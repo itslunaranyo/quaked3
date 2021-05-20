@@ -10,7 +10,6 @@
 // General Manipulation Tool
 // translates, plane slides, new brush draws, quick skews
 
-class WndView;
 class CmdGeoMod;
 class CmdPlaneShift;
 class CmdTranslate;
@@ -23,16 +22,16 @@ public:
 	ManipTool();
 	~ManipTool();
 
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
+	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void SelectionChanged();
 
-	bool Draw3D(CameraView &v);
-	bool Draw2D(XYZView &v);
-	bool Draw1D(ZView &v);
+	bool Draw3D(CameraRenderer &rc);
+	bool Draw2D(GridViewRenderer &gv);
+	bool Draw1D(ZViewRenderer &zv);
 
 private:
 	enum {

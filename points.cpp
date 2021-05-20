@@ -7,7 +7,7 @@
 #include "points.h"
 #include "map.h"
 #include "CameraView.h"
-#include "XYZView.h"
+#include "GridView.h"
 
 
 static vec3		s_pointvecs[MAX_POINTFILE];
@@ -31,6 +31,21 @@ void Pointfile_Delete ()
 
 /*
 ==================
+Pointfile_Jump
+
+advance camera to point
+==================
+*/
+void Pointfile_Jump()
+{
+	g_vCamera.SetOrigin(s_pointvecs[s_check_point]);
+	g_vCamera.PointAt(s_pointvecs[s_check_point + 1]);
+	for (int i = 0; i < 4; i++)
+		g_vGrid[i].Center(s_pointvecs[s_check_point]);
+	WndMain_UpdateWindows(W_SCENE);
+}
+/*
+==================
 Pointfile_Next
 
 advance camera to next point
@@ -38,26 +53,13 @@ advance camera to next point
 */
 void Pointfile_Next ()
 {
-	vec3 dir;
-
 	if (s_check_point >= s_num_points - 2)
 	{
 		Sys_Printf("End of pointfile.\n");
 		return;
 	}
 	s_check_point++;
-	g_vCamera.origin = s_pointvecs[s_check_point];
-	// lunaran - grid view reunification
-	for (int i = 0; i < 4; i++)
-	{
-		g_vXYZ[i].origin = s_pointvecs[s_check_point];
-	}
-	dir = s_pointvecs[s_check_point + 1] - g_vCamera.origin;
-	VectorNormalize(dir);
-	g_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	g_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
-
-	WndMain_UpdateWindows(W_SCENE);
+	Pointfile_Jump();
 }
 
 /*
@@ -69,26 +71,13 @@ advance camera to previous point
 */
 void Pointfile_Prev ()
 {
-	vec3	dir;
-
 	if (s_check_point == 0)
 	{
 		Sys_Printf("Beginning of pointfile.\n");
 		return;
 	}
 	s_check_point--;
-	g_vCamera.origin = s_pointvecs[s_check_point];
-	// lunaran - grid view reunification
-	for (int i = 0; i < 4; i++)
-	{
-		g_vXYZ[i].origin = s_pointvecs[s_check_point];
-	}
-	dir = s_pointvecs[s_check_point + 1] - g_vCamera.origin;
-	VectorNormalize(dir);
-	g_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	g_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
-
-	WndMain_UpdateWindows(W_SCENE);
+	Pointfile_Jump();
 }
 
 /*

@@ -8,7 +8,6 @@
 #include "Tool.h"
 class CmdTextureMod;
 class CmdCompound;
-class WndView;
 
 class TextureTool :	public Tool
 {
@@ -17,8 +16,8 @@ public:
 	~TextureTool();
 	HWND hwndReplaceDlg;
 
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void SelectionChanged();

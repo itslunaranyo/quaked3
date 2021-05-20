@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	50
+#define QE_VERSION_BUILD	51
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -25,6 +25,7 @@
 #define QE3_STATUSBAR_STYLE (WS_CHILD | WS_BORDER | WS_VISIBLE | SBARS_SIZEGRIP)
 
 #define	MAIN_WINDOW_CLASS		"QMAIN"
+#define BASE_WINDOW_CLASS		"QBASEWND"
 #define VIEW_WINDOW_CLASS		"QVIEWWND"
 #define	CAMERA_WINDOW_CLASS		"QCAM"
 #define	XYZ_WINDOW_CLASS		"QXYZ%d"
@@ -51,18 +52,7 @@
 #define QE_TIMERSPLASH		2
 
 #define	ON_EPSILON	0.01
-/*
-#define	KEY_FORWARD		1
-#define	KEY_BACK		2
-#define	KEY_TURNLEFT	4
-#define	KEY_TURNRIGHT	8
-#define	KEY_LEFT		16
-#define	KEY_RIGHT		32
-#define	KEY_LOOKUP		64
-#define	KEY_LOOKDOWN	128
-#define	KEY_UP			256
-#define	KEY_DOWN		512
-*/
+
 // menu indexes for modifying menus
 #define	MENU_VIEW		2
 #define	MENU_TEXTURE	6
@@ -128,7 +118,7 @@
 #define TEX_PROJECT_FACE	1
 
 // used in some Drawing routines
-enum VIEWTYPE {YZ, XZ, XY};
+enum eViewType_t { GRID_YZ = 0, GRID_XZ = 1, GRID_XY = 2 };
 // XY = x0, y1; XZ = x0, y2; YZ = x1, y2.
 
 enum texModType_t {
@@ -140,9 +130,9 @@ enum texModType_t {
 
 enum drawMode_t
 {
-	cd_wire,
-	cd_solid,
-	cd_texture
+	CD_WIRE,
+	CD_FLAT,
+	CD_TEXTURED
 };
 
 enum surfIgnoreFlags_t

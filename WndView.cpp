@@ -10,8 +10,8 @@
 std::vector<WndView*> WndView::wndviews;
 
 WndView*	WndView::wvbInitializing;
-HDC			WndView::w_hdcBase;
-HGLRC		WndView::w_hglrcBase;
+HDC			g_hdcBase;
+HGLRC		g_hglrcBase;
 WNDCLASS	WndView::w_wcView;
 
 #define WND_RESIZE_SNAP 8
@@ -471,7 +471,6 @@ WndView::ForceUpdate
 void WndView::ForceUpdate()
 {
 	InvalidateRect(w_hwnd, &clientRect, FALSE);
-	//UpdateWindow(w_hwnd);
 }
 
 /*
@@ -535,7 +534,7 @@ int WndView::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SIZE:
 		GetClientRect(w_hwnd, &clientRect);
-		v->Resize(clientRect.right, clientRect.bottom);
+		//v->Resize(clientRect.right, clientRect.bottom);
 		InvalidateRect(w_hwnd, NULL, FALSE);
 		return 0;
 
@@ -653,14 +652,14 @@ void WndView::MakeFont()
 	if (!hfont)
 		Error("Could not create font.");
 
-	SelectObject(w_hdcBase, hfont);
+	SelectObject(g_hdcBase, hfont);
 
 	if ((g_qeglobals.d_nFontList = glGenLists(256)) == 0)
 		Error("Could not create font dlists.");
 
 	// create the bitmap display lists
 	// we're making images of glyphs 0 thru 255
-	if (!wglUseFontBitmaps(w_hdcBase, 1, 255, g_qeglobals.d_nFontList))
+	if (!wglUseFontBitmaps(g_hdcBase, 1, 255, g_qeglobals.d_nFontList))
 		Error("WCam_WndProc: wglUseFontBitmaps failed.");
 
 	// indicate start of glyph display lists
@@ -728,10 +727,10 @@ void WndView::OnCreate()
 		Error("wglMakeCurrent failed.");
 
 	// treat first created drawing context as base for sharing font display list
-	if (!w_hdcBase || !w_hglrcBase)
+	if (!g_hdcBase || !g_hglrcBase)
 	{
-		w_hdcBase = w_hdc;
-		w_hglrcBase = w_hglrc;
+		g_hdcBase = w_hdc;
+		g_hglrcBase = w_hglrc;
 
 		MakeFont();
 		Textures::SetTextureMode(g_cfgUI.TextureMode);
@@ -745,7 +744,7 @@ void WndView::OnCreate()
 		//glPolygonStipple((GLubyte *)s_stipple);
 		glLineStipple(3, 0xaaaa);
 	}
-	else if (!wglShareLists(w_hglrcBase, w_hglrc))
+	else if (!wglShareLists(g_hglrcBase, w_hglrc))
 		Error("wglShareLists failed.");
 }
 
@@ -775,7 +774,7 @@ void WndView::OnPaint()
 	if (!BeginPaint(w_hwnd, &ps)) return;
 
 	QE_CheckOpenGLForErrors();
-	v->Draw();
+	//v->Draw();
 	QE_CheckOpenGLForErrors();
 	EndPaint(w_hwnd, &ps);
 	SwapBuffers(w_hdc);

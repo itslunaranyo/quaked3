@@ -4,7 +4,6 @@
 
 #include "pre.h"
 #include "qe3.h"
-#include "io.h"
 #include "parse.h"
 #include "winding.h"
 
@@ -753,7 +752,7 @@ void Brush::Draw ()
     Texture *tprev = 0;
 	winding_t  *w;
 
-//	if (owner->IsPoint() && g_cfgUI.DrawMode == cd_texture)
+//	if (owner->IsPoint() && g_cfgUI.DrawMode == CD_TEXTURED)
 //		glDisable (GL_TEXTURE_2D);
 
 	if (owner->IsPoint())
@@ -767,7 +766,7 @@ void Brush::Draw ()
 			return;
 		}
 
-		if (g_cfgUI.DrawMode == cd_texture)
+		if (g_cfgUI.DrawMode == CD_TEXTURED)
 			glDisable(GL_TEXTURE_2D);
 	}
 
@@ -780,7 +779,7 @@ void Brush::Draw ()
 			continue;	// freed face
 
 		assert(face->texdef.tex);
-		if (face->texdef.tex != tprev && g_cfgUI.DrawMode == cd_texture)
+		if (face->texdef.tex != tprev && g_cfgUI.DrawMode == CD_TEXTURED)
 		{
 			// set the texture for this face
 			tprev = face->texdef.tex;
@@ -795,14 +794,14 @@ void Brush::Draw ()
 
 	    for (i = 0; i < w->numpoints; i++)
 		{
-			if (g_cfgUI.DrawMode == cd_texture)
+			if (g_cfgUI.DrawMode == CD_TEXTURED)
 				glTexCoord2fv(&w->points[i].s);
 			glVertex3fv(&w->points[i].point[0]);
 		}
 		glEnd();
 	}
 
-	if (owner->IsPoint() && g_cfgUI.DrawMode == cd_texture)
+	if (owner->IsPoint() && g_cfgUI.DrawMode == CD_TEXTURED)
 		glEnable(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);

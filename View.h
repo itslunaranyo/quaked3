@@ -6,43 +6,11 @@
 
 // window system independent view code
 
-struct mouseContext_t {
-	mouseContext_t() : pt(vec3(0)), up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), dims(0) {}
-	vec3 pt;
-	vec3 up;
-	vec3 right;
-	vec3 ray;
-	vec3 org;
-	int dims;
-};
-
 class View
 {
 public:
-	View();
-	~View();
-
-	int		width, height;
-	float	scale;
-	vec3	origin;
-	bool	timing;
-
-	virtual mouseContext_t	const GetMouseContext(const int x, const int y) { return mouseContext_t(); }
-
-	virtual void Resize(const int w, const int h) { width = w; height = h; }
-	virtual void MouseDown(const int x, const int y, const int buttons) {};
-	virtual void MouseUp(const int x, const int y, const int buttons) {};
-	virtual void MouseMoved(const int x, const int y, const int buttons) {};
-	virtual void Draw();
-	virtual bool DrawTools();
-
-	void	DrawPathLines();
-	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward) { return false; }
-	void	GLSelectionColor();
-	void	GLSelectionColorAlpha(float alpha);
-
-	int	cursorX, cursorY;
-private:
+	View() {}
+	virtual ~View() {}
 };
 
 #endif

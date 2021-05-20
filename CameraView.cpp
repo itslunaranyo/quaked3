@@ -26,8 +26,9 @@ CameraView::Init
 */
 void CameraView::Init()
 {
-	focus = origin + vpn * 256.0f;
+	Reset();
 	//viewdistance = 256;
+	BuildMatrix();
 }
 
 // sikk---> Center Camera on Selection. Same as PositionView() for XY View
@@ -50,25 +51,9 @@ void CameraView::PositionCenter ()
 		angles[1] = 45;
 		angles[2] = 0;
 	}
+	BuildMatrix();
 }
 // <---sikk
-
-
-/*
-===============
-CameraView::BuildMatrix
-===============
-*/
-glm::mat4 CameraView::RotateMatrix(glm::mat4 mat)
-{
-	glm::mat4 out;
-	// put Z going up
-	out = glm::rotate(mat, (float)(-90 * Q_DEG2RAD), vec3(1, 0, 0));
-	out = glm::rotate(out, (float)(90 * Q_DEG2RAD), vec3(0, 0, 1));
-	out = glm::rotate(out, (float)(angles[0] * Q_DEG2RAD), vec3(0, 1, 0));
-	out = glm::rotate(out, (float)(-angles[1] * Q_DEG2RAD), vec3(0, 0, 1));
-	return out;
-}
 
 
 /*
@@ -84,14 +69,14 @@ void CameraView::BuildMatrix ()
 	ya = angles[1] / 180 * Q_PI;
 
 	// the movement matrix is kept 2d
-    forward[0] = cos(ya);
-    forward[1] = sin(ya);
-    right[0] = forward[1];
-    right[1] = -forward[0];
+    mvForward[0] = cos(ya);
+    mvForward[1] = sin(ya);
+    mvRight[0] = mvForward[1];
+    mvRight[1] = -mvForward[0];
 
 	float yfov = atan((float)width / height);
 	matProj = glm::perspective(yfov, (float)width / height, 2.0f, (float)g_cfgEditor.MapSize);
-	matProj = RotateMatrix(matProj);
+	matProj = RotateMatrix(matProj, angles[PITCH], angles[YAW]);
 	matProj = glm::translate(matProj, -origin);
 
 	for (i = 0; i < 3; i++)
@@ -107,6 +92,8 @@ void CameraView::BuildMatrix ()
 
 	mpUp = AxisForVector(vup);
 	mpRight = AxisForVector(vright);
+
+	InitCull();
 }
 
 /*
@@ -147,7 +134,7 @@ void CameraView::ChangeFloor (bool up)
 
 	origin[2] += current - bestd;
 
-	WndMain_UpdateWindows(W_CAMERA | W_Z);
+	BuildMatrix();
 }
 
 void CameraView::PointAt(vec3 pt)
@@ -158,7 +145,6 @@ void CameraView::PointAt(vec3 pt)
 	BoundAngles();
 
 	BuildMatrix();
-	WndMain_UpdateWindows(W_CAMERA | W_XY);
 }
 
 void CameraView::LevelView()
@@ -168,7 +154,6 @@ void CameraView::LevelView()
 	BoundAngles();
 
 	BuildMatrix();
-	WndMain_UpdateWindows(W_CAMERA | W_XY);
 }
 
 
@@ -179,22 +164,16 @@ void CameraView::LevelView()
 CameraView::Strafe
 ================
 */
-void CameraView::Strafe ()
+void CameraView::Strafe(int dX, int dY)
 {
-	int	x, y;
-
 	SetCursor(NULL); // sikk - Remove Cursor
-	Sys_GetCursorPos(&x, &y);
 
-	if (x != cursorX || y != cursorY)
+	if (dX != 0 || dY != 0)
 	{
-		x -= cursorX;
-		origin = origin + (float)x * vright;
-		y -= cursorY;
-		origin[2] -= y;
+		origin = origin + (float)dX * vright;
+		origin[2] -= dY;
 
-		Sys_SetCursorPos(cursorX, cursorY);
-		WndMain_UpdateWindows(W_CAMERA | W_XY);
+		BuildMatrix();
 	}
 }
 
@@ -204,23 +183,7 @@ void CameraView::Strafe ()
 CameraView::Orbit
 ==================
 */
-void CameraView::Orbit()
-{
-	int x, y;
-	float yaw, pitch;
-
-	SetCursor(NULL); // sikk - Remove Cursor
-	Sys_GetCursorPos(&x, &y);
-
-	if (x == cursorX && y == cursorY)
-		return;
-
-	pitch = y - cursorY;
-	yaw = x - cursorX;
-	Orbit(pitch, yaw);
-}
-
-void CameraView::Orbit(float pitch, float yaw)
+void CameraView::Orbit(float yaw, float pitch)
 {
 	float vecdist;
 	angles[PITCH] -= pitch;
@@ -232,9 +195,6 @@ void CameraView::Orbit(float pitch, float yaw)
 	origin = focus - vecdist * vpn;
 
 	BuildMatrix();
-
-	Sys_SetCursorPos(cursorX, cursorY);
-	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -259,6 +219,7 @@ void CameraView::SetOrbit(vec3 dir)
 		focus = origin + 256.0f * dir;
 	}
 	PointAt(focus);
+	BuildMatrix();
 }
 
 void CameraView::SetOrbit(int x, int y)
@@ -267,6 +228,33 @@ void CameraView::SetOrbit(int x, int y)
 	PointToRay(x, y, dir);
 	SetOrbit(dir);
 }
+
+void CameraView::SetOrbit()
+{
+	SetOrbit(vpn);
+}
+
+/*
+================
+CameraView::FreeLook
+================
+*/
+void CameraView::FreeLook(int dX, int dY)
+{
+	if (!dX && !dY)
+		return;
+
+	if (angles[PITCH] > 100)
+		angles[PITCH] -= 360;
+
+	// TODO: sensitivity preference
+	angles[PITCH] -= 0.65f * dY;
+	angles[YAW] -= 0.65f * dX;
+
+	BoundAngles();
+	BuildMatrix();
+}
+
 
 /*
 ================
@@ -284,117 +272,70 @@ void CameraView::BoundAngles()
 
 /*
 ================
-CameraView::FreeLook
+CameraView::Step
+ground plane aligned movement for driving around
 ================
 */
-void CameraView::FreeLook ()
+void CameraView::Step(float fwd, float rt, float up)
 {
-	int	x, y;
-
-	SetCursor(NULL); // sikk - Remove Cursor
-	Sys_GetCursorPos (&x, &y);
-
-	if (x == cursorX && y == cursorY)
-		return;
-	
-	x -= cursorX;
-	y -= cursorY;
-
-	if (angles[PITCH] > 100)
-		angles[PITCH] -= 360;
-
-	// TODO: sensitivity preference
-	angles[PITCH] -= 0.65f * y;
-	angles[YAW] -= 0.65f * x;
-
-	BoundAngles();
-
-	Sys_SetCursorPos(cursorX, cursorY);
-	WndMain_UpdateWindows(W_XY | W_CAMERA | W_Z);
+	origin += fwd * mvForward + rt * mvRight;
+	origin.z += up;
+	BuildMatrix();
 }
 
-
-
+void CameraView::Reset()
+{
+	angles = vec3(0);
+	origin = vec3(0, 0, 48);
+	focus = vec3(256, 0, 48);
+}
 
 /*
 ================
-CameraView::RealtimeControl
+CameraView::SetOrigin
 ================
 */
-void CameraView::RealtimeControl (float dtime)
+void CameraView::SetOrigin(vec3 newOrg)
 {
-	int		xl, xh;
-	int		yl, yh;
-	float	xf, yf;
+	origin = newOrg;
+	BuildMatrix();
+}
 
-	if (!(nCamButtonState & MK_RBUTTON))
-		return;
+/*
+================
+CameraView::Move
+relative, for absolute use SetOrigin
+================
+*/
+void CameraView::Move(float fwd, float rt, float up)
+{
+	origin += vup * up + vpn * fwd + vright * rt;
+	BuildMatrix();
+}
 
-	if (g_cfgEditor.CameraMoveStyle == CAMERA_CLASSIC)
-	{
-		if (nCamButtonState != MK_RBUTTON)
-			return;
-		
-		xf = (float)(buttonX - width / 2) / (width / 2);
-		yf = (float)(buttonY - height / 2) / (height / 2);
+/*
+================
+CameraView::Turn
+yaw only
+================
+*/
+void CameraView::Turn(float ang, bool absolute)
+{
+	angles[YAW] = absolute ? ang : (angles[YAW] + ang);
+	BoundAngles();
+	BuildMatrix();
+}
 
-		xl = width / 3;
-		xh = xl * 2;
-		yl = height / 3;
-		yh = yl * 2;
-
-#if 0
-		// strafe
-		if (buttonY < yl && (buttonX < xl || buttonX > xh))
-			origin = origin + xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * right;
-		else
-#endif
-		{
-			xf *= 1.0 - fabs(yf);
-			if (xf < 0)
-			{
-				xf += 0.1f;
-				if (xf > 0)
-					xf = 0;
-			}
-			else
-			{
-				xf -= 0.1f;
-				if (xf < 0)
-					xf = 0;
-			}
-
-			if (xf == 0 && yf == 0)
-				return;
-			origin = origin + yf * dtime * (int)g_cfgEditor.CameraSpeed * forward;
-			angles[YAW] += xf * -dtime * ((int)g_cfgEditor.CameraSpeed / 2);
-		}
-	}
-	else if (g_cfgEditor.CameraMoveStyle == CAMERA_WASD)
-	{
-		vec3 move;
-		if (nCamButtonState & MK_SHIFT)	// orbiting
-		{
-			float yaw = 0;
-			if (GetKeyState('D') < 0 || GetKeyState(VK_RIGHT) < 0) yaw -= 1;
-			if (GetKeyState('A') < 0 || GetKeyState(VK_LEFT) < 0) yaw += 1;
-			if (yaw)
-				Orbit(0, yaw * dtime * (float)g_cfgEditor.CameraSpeed * 0.0625f);
-		}
-		else	// flying
-		{
-			if (GetKeyState('D') < 0 || GetKeyState(VK_RIGHT) < 0) move += vright;
-			if (GetKeyState('A') < 0 || GetKeyState(VK_LEFT) < 0) move -= vright;
-			//if (GetKeyState(VK_SHIFT) < 0) move *= 4.0f;
-		}
-		if (GetKeyState('W') < 0 || GetKeyState(VK_UP) < 0) move += vpn;
-		if (GetKeyState('S') < 0 || GetKeyState(VK_DOWN) < 0) move -= vpn;
-		if (move == vec3(0))
-			return;
-		origin += move * dtime * (float)g_cfgEditor.CameraSpeed;
-	}
-
-	WndMain_UpdateWindows(W_SCENE);
+/*
+================
+CameraView::Pitch
+================
+*/
+void CameraView::Pitch(float ang, bool absolute)
+{
+	angles[PITCH] = absolute ? ang : (angles[PITCH] + ang);
+	BoundAngles();
+	BuildMatrix();
 }
 
 /*
@@ -429,7 +370,7 @@ void CameraView::PointToRay(int x, int y, vec3 &rayOut)
 
 
 
-bool CameraView::GetBasis(vec3 &_right, vec3 &_up, vec3 &_forward)
+bool const CameraView::GetBasis(vec3 &_right, vec3 &_up, vec3 &_forward)
 {
 	_right = vright;
 	_up = vup;
@@ -450,175 +391,6 @@ mouseContext_t const CameraView::GetMouseContext(const int x, const int y)
 	return mc;
 }
 
-/*
-==============
-CameraView::MouseDown
-==============
-*/
-void CameraView::MouseDown (int x, int y, int buttons)
-{
-
-	Sys_GetCursorPos(&cursorX, &cursorY);
-
-	nCamButtonState = buttons;
-	buttonX = x;
-	buttonY = y;
-
-	// look-at for starting the camera orbit
-	if (buttons == (MK_RBUTTON | MK_SHIFT))
-	{
-		SetOrbit(x, y);
-		WndMain_UpdateWindows(W_CAMERA);
-	}
-}
-
-
-
-/*
-==============
-CameraView::MouseUp
-==============
-*/
-void CameraView::MouseUp (int x, int y, int buttons)
-{
-	//Drag_MouseUp();
-	WndMain_UpdateWindows(W_SCENE);
-	nCamButtonState = 0;
-}
-
-/*
-==============
-CameraView::MouseMoved
-==============
-*/
-void CameraView::MouseMoved (int x, int y, int buttons)
-{
-	char		camstring[256];
-	vec3		dir;
-	trace_t		t;
-
-	nCamButtonState = buttons;
-
-	if (!buttons)
-	{
-		// calc ray direction
-		PointToRay(x, y, dir);
-		t = Selection::TestRay(origin, dir, false);
-
-		if (t.brush)
-		{
-			vec3	size;
-			/*
-			Brush	*b;
-			vec3	mins, maxs;
-
-			ClearBounds(mins, maxs);
-			b = t.brush;
-			for (i = 0; i < 3; i++)
-			{
-				if (b->mins[i] < mins[i])
-					mins[i] = b->mins[i];
-				if (b->maxs[i] > maxs[i])
-					maxs[i] = b->maxs[i];
-			}
-			size = maxs - mins;
-			*/
-			size = t.brush->maxs - t.brush->mins;
-			if (t.brush->owner->IsPoint())
-				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
-			else
-				sprintf(camstring, "%s (%d %d %d) %s", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2], t.face->texdef.name);
-		}
-		else
-			sprintf(camstring, "");
-
-		WndMain_Status(camstring, 0);
-
-		return;
-	}
-
-	buttonX = x;
-	buttonY = y;
-
-	if (buttons & MK_RBUTTON)
-	{
-		if (buttons == (MK_RBUTTON | MK_CONTROL))
-		{
-			Strafe();
-		}
-		else if (buttons == (MK_RBUTTON | MK_SHIFT))
-		{
-			Orbit();
-		}
-		else if (buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT) ||
-			(buttons == MK_RBUTTON && g_cfgEditor.CameraMoveStyle == CAMERA_WASD))
-		{
-			FreeLook();
-		}
-		WndMain_UpdateWindows(W_SCENE);
-		return;
-	}
-
-
-// sikk---> Mouse Driven Texture Manipulation - TODO: Too sensitive...
-	if (buttons & MK_LBUTTON)
-	{			
-		if (GetKeyState(VK_MENU) < 0)
-		{
-			Sys_GetCursorPos(&x, &y);
-			/*
-			if (GetKeyState(VK_SHIFT) < 0)
-			{
-				if (GetKeyState(VK_CONTROL) < 0)
-					Surf_RotateTexture(cursorX - x);
-			}
-			else if (GetKeyState(VK_CONTROL) < 0)
-				Surf_ScaleTexture(x - cursorX, cursorY - y);
-
-			else
-				Surf_ShiftTexture(cursorX - x, cursorY - y);
-			*/
-			cursorX = x;
-			cursorY = y;
-		}
-// <---sikk
-		else
-		{
-			Sys_GetCursorPos(&cursorX, &cursorY);
-			//Drag_MouseMoved(x, y, buttons);
-			WndMain_UpdateWindows(W_SCENE);
-		}
-	}
-}
-
-/*
-============
-CameraView::MouseWheel
-============
-*/
-void CameraView::MouseWheel(const int x, const int y, bool up, const int buttons)
-{
-	if (buttons & MK_CONTROL)
-	{
-		ChangeFloor(up);
-	}
-	else
-	{
-		vec3 fwd;
-		if (buttons == (MK_RBUTTON | MK_SHIFT) || g_cfgEditor.CameraMoveStyle == CAMERA_WASD)
-		{
-			fwd = vpn;	// orbiting
-		}
-		else
-		{
-			fwd = forward;
-			if (buttons & MK_SHIFT)
-				fwd *= 4.0f;
-		}
-		if (!up) fwd *= -1;
-		origin += fwd * (float)g_cfgEditor.CameraSpeed * 0.0625f;	// cameraSpeed is huge because it's scaled for driving around
-	}
-}
 
 
 /*
@@ -699,6 +471,13 @@ bool CameraView::CullBrush (Brush *b)
 	}
 // <---sikk
 
+	// an explanation of this QE-original hack, for future reference:
+	// selecting the appropriate corners of the bounds to test from the eight possibilities
+	// is done with zero branching by exploiting the fact that a) array lookup is unbounded, 
+	// and b) mins and maxs are stored adjacent in the brush structure (so mins[3] actually
+	// yields maxs[0]). this will go bazonkas if the compiler should put padding between those 
+	// two vec3s for some reason, so if culling is broken and your quest has led you here,
+	// maybe look at that.	love, past lunaran
 	for (i = 0; i < 3; i++)
 		point[i] = ((float*)&b->mins)[nCullv1[i]] - origin[i];
 
@@ -714,389 +493,4 @@ bool CameraView::CullBrush (Brush *b)
 		return true;
 
 	return false;
-}
-
-/*
-==============
-CameraView::DrawGrid
-==============
-*/
-void CameraView::DrawGrid ()
-{
-	if (!g_cfgUI.ShowCameraGrid)
-		return;
-
-	int x, y, i;
-
-	i = g_cfgEditor.MapSize / 2;
-
-	glColor3fv(&g_colors.camGrid.r);
-//	glLineWidth(1);
-	glBegin(GL_LINES);
-	for (x = -i; x <= i; x += 256)
-	{
-		glVertex2i(x, -i);
-		glVertex2i(x, i);
-	}
-	for (y = -i; y <= i; y += 256)
-	{
-		glVertex2i(-i, y);
-		glVertex2i(i, y);
-	}
-	glEnd();
-}
-
-/*
-==============
-CameraView::DrawActive
-
-Display Axis in lower left corner of window and rotate with camera orientation
-==============
-*/
-void CameraView::DrawAxis()
-{
-	if (!g_cfgUI.ShowAxis)
-		return;
-
-	glDisable(GL_DEPTH_TEST);
-
-	glViewport(0, 0, 80, 80);
-	glm::mat4 proj = glm::perspective(0.75f, 1.0f, 1.0f, 256.0f);
-	proj = RotateMatrix(proj);
-	proj = glm::translate(proj, vpn * 64.0f);
-	glLoadMatrixf(&proj[0][0]);
-
-	glLineWidth(3.0);
-	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0);
-	glVertex3f(16, 0, 0);
-	glEnd();
-
-	glColor3f(0.0, 1.0, 0.0);
-	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 16, 0);
-	glEnd();
-
-	glColor3f(0.0f, 0.3f, 1.0f);
-	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0, 16);
-	glEnd();
-
-	glLineWidth(1);
-
-	// draw an indicator on the axis showing which two axes are mapped to the view plane
-	vec3 vaxis = mpUp + mpRight;
-	if (vaxis[0] == 0)
-	{
-		// y and z
-		glColor3f(0.0f, 0.3f, 1.0f);
-		glBegin(GL_LINES);
-		glVertex3f(0, 0, 8);
-		glVertex3f(0, 8, 8);
-		glEnd();
-
-		glColor3f(0.0, 1.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3f(0, 8, 0);
-		glVertex3f(0, 8, 8);
-		glEnd();
-	}
-	else if (vaxis[1] == 0)
-	{
-		// x and z
-		glColor3f(0.0f, 0.3f, 1.0f);
-		glBegin(GL_LINES);
-		glVertex3f(0, 0, 8);
-		glVertex3f(8, 0, 8);
-		glEnd();
-
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3f(8, 0, 0);
-		glVertex3f(8, 0, 8);
-		glEnd();
-	}
-	else
-	{
-		// x and y
-		glColor3f(0.0, 1.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3f(0, 8, 0);
-		glVertex3f(8, 8, 0);
-		glEnd();
-
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3f(8, 0, 0);
-		glVertex3f(8, 8, 0);
-		glEnd();
-	}
-
-	glEnable(GL_DEPTH_TEST);
-}
-
-/*
-==============
-CameraView::DrawActive
-
-draw active (unselected) brushes, sorting out the transparent ones for a separate draw
-==============
-*/
-void CameraView::DrawActive()
-{
-	int i, numTransBrushes = 0;
-
-	for (Brush *brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
-	{
-		if (brush->IsFiltered())
-			continue;
-		if (CullBrush(brush))
-			continue;
-		// TODO: Make toggle via Preferences Option. 
-		assert(brush->faces->texdef.tex);
-		if (brush->showFlags & BFL_TRANS)
-			g_pbrTransBrushes[numTransBrushes++] = brush;
-		else
-		{
-			brush->Draw();
-		}
-	}
-
-	// draw the transparent brushes
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	for (i = 0; i < numTransBrushes; i++ )
-		g_pbrTransBrushes[i]->Draw();
-	glDisable(GL_BLEND);
-}
-
-/*
-==============
-CameraView::DrawSelected
-
-draw selected brushes textured, then in red, then in wireframe
-==============
-*/
-void CameraView::DrawSelected(Brush	*pList, vec3 selColor)
-{
-	Brush	*brush;
-	Face	*face;
-
-	// Draw selected brushes
-	glMatrixMode(GL_PROJECTION);
-
-	// draw brushes first normally
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		brush->Draw();
-
-	// redraw tint on top
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glEnable(GL_BLEND);
-
-	// lunaran: brighten & clarify selection tint, use selection color preference
-	glColor4f(selColor[0], selColor[1], selColor[2], 0.3f);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-	glDisable(GL_TEXTURE_2D);
-
-	// fully selected brushes, then loose faces
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->faces; face; face = face->fnext)
-			face->Draw();
-
-	for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
-		(*fIt)->Draw();
-
-	// non-zbuffered outline
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glColor3f(1, 1, 1);
-
-	for (brush = pList->next; brush != pList; brush = brush->next)
-		for (face = brush->faces; face; face = face->fnext)
-			face->Draw();
-}
-
-/*
-==============
-CameraView::DrawTools
-==============
-*/
-bool CameraView::DrawTools()
-{
-	for (auto tIt = Tool::stack.rbegin(); tIt != Tool::stack.rend(); ++tIt)
-	{
-		if ((*tIt)->Draw3D(*this))
-			return true;
-	}
-	return false;
-}
-
-/*
-==============
-CameraView::Draw
-==============
-*/
-void CameraView::Draw ()
-{
-	int		bound;
-	double	start, end;
-	//float	screenaspect;
-	//float	yfov;
-
-	if (!g_map.brActive.next)
-		return;	// not valid yet
-
-	if (timing)
-		start = Sys_DoubleTime();
-
-	glViewport(0, 0, width, height);
-	glScissor(0, 0, width, height);
-	glClearColor(g_colors.camBackground[0],
-				 g_colors.camBackground[1],
-				 g_colors.camBackground[2],
-				 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// set up viewpoint
-	glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-	BuildMatrix();
-	glLoadMatrixf(&matProj[0][0]);
-	InitCull();
-
-	// draw stuff
-	switch (g_cfgUI.DrawMode)
-	{
-	case cd_wire:
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	    glDisable(GL_TEXTURE_2D);
-	    glDisable(GL_TEXTURE_1D);
-		glDisable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-	    glColor3f(1.0, 1.0, 1.0);
-//		glEnable (GL_LINE_SMOOTH);
-		break;
-
-	case cd_solid:
-		glCullFace(GL_FRONT);
-		glEnable(GL_CULL_FACE);
-		glShadeModel(GL_FLAT);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		break;
-
-	case cd_texture:
-		glCullFace(GL_FRONT);
-		glEnable(GL_CULL_FACE);
-		glShadeModel(GL_FLAT);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glDisable(GL_BLEND);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-
-#if 0
-		{
-			GLfloat fogColor[4] = {0.0, 1.0, 0.0, 0.25};
-
-			glFogi(GL_FOG_MODE, GL_LINEAR);
-			glHint(GL_FOG_HINT, GL_NICEST);  /*  per pixel   */
-			glFogf(GL_FOG_START, -8192);
-			glFogf(GL_FOG_END, 65536);
-			glFogfv(GL_FOG_COLOR, fogColor);
- 
-		}
-#endif
-		break;
-		/*
-	case cd_blend:
-		glCullFace(GL_FRONT);
-		glEnable(GL_CULL_FACE);
-		glShadeModel(GL_FLAT);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glDisable(GL_DEPTH_TEST);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		break;*/
-	}
-
-// sikk---> Camera Grid/Axis/Map Boundary Box
-	DrawGrid();
-
-
-	if (g_cfgUI.ShowMapBoundary)
-	{
-		bound = g_cfgEditor.MapSize / 2;
-		glColor3fv(&g_colors.camGrid.r);
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(-bound, -bound, -bound);
-		glVertex3f(bound, -bound, -bound);
-		glVertex3f(bound, bound, -bound);
-		glVertex3f(-bound, bound, -bound);
-		glEnd();
-
-		glBegin(GL_LINE_LOOP);
-		glVertex3f(-bound, -bound, bound);
-		glVertex3f(bound, -bound, bound);
-		glVertex3f(bound, bound, bound);
-		glVertex3f(-bound, bound, bound);
-		glEnd();
-
-		glBegin(GL_LINES);
-		glVertex3f(-bound, -bound, -bound);
-		glVertex3f(-bound, -bound, bound);
-		glVertex3f(bound, -bound, -bound);
-		glVertex3f(bound, -bound, bound);
-		glVertex3f(-bound, bound, -bound);
-		glVertex3f(-bound, bound, bound);
-		glVertex3f(bound, bound, -bound);
-		glVertex3f(bound, bound, bound);
-		glEnd();
-	}
-// <---sikk
-
-	// ----------------------------------------------------------------
-
-	DrawActive();
-	if (!DrawTools())
-		DrawSelected(&g_brSelectedBrushes, g_colors.selection);
-
-	// ----------------------------------------------------------------
-
-	glEnable(GL_DEPTH_TEST);
-
-	DrawPathLines();
-
-	if (g_qeglobals.d_nPointfileDisplayList)
-		Pointfile_Draw();
-
-	//glPopMatrix();
-
-	DrawAxis();
-
-	// bind back to the default texture
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-    glFinish();
-//	Sys_EndWait();
-	if (timing)
-	{
-		end = Sys_DoubleTime();
-		Sys_Printf("Camera: %d ms\n", (int)(1000 * (end - start)));
-	}
 }

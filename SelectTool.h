@@ -6,16 +6,16 @@
 #define __SELECT_TOOL_H__
 
 #include "Tool.h"
-class WndView;
+
 class SelectTool : public Tool
 {
 public:
 	SelectTool();
 	~SelectTool();
 
-	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
-	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
+	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd);
+	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd);
+	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:

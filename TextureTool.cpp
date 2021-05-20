@@ -14,7 +14,7 @@
 #include "CameraView.h"
 #include "TextureView.h"
 #include "surface.h"
-#include "WndView.h"
+#include "WndCamera.h"
 #include "win_dlg.h"
 
 TextureTool* g_texTool;
@@ -35,7 +35,7 @@ TextureTool::~TextureTool()
 // ----------------------------------------------------------------
 
 
-bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView & vWnd)
+bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd)
 {
 	vec3 ray;
 	trace_t t;
@@ -47,7 +47,7 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 		{
 			vWnd.GetMsgXY(lParam, x, y);
 			v.PointToRay(x, y, ray);
-			t = Selection::TestRay(v.origin, ray, SF_NOFIXEDSIZE);
+			t = Selection::TestRay(v.GetOrigin(), ray, SF_NOFIXEDSIZE);
 			if (!t.brush)
 				return false;
 
@@ -71,14 +71,14 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 			//SetCapture(vWnd.w_hwnd);
 			vWnd.GetMsgXY(lParam, x, y);
 			v.PointToRay(x, y, ray);
-			t = Selection::TestRay(v.origin, ray, SF_NOFIXEDSIZE);
+			t = Selection::TestRay(v.GetOrigin(), ray, SF_NOFIXEDSIZE);
 			if (!t.brush)
 				return true;
 
 			if (AltDown())
 			{
 				hot = true;
-				SetCapture(vWnd.w_hwnd);
+				SetCapture(vWnd.wHwnd);
 				lastWrap2 = lastWrap;
 				lastWrap = t.face;
 			}
@@ -126,7 +126,7 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 			return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		v.PointToRay(x, y, ray);
-		t = Selection::TestRay(v.origin, ray, SF_NOFIXEDSIZE);
+		t = Selection::TestRay(v.GetOrigin(), ray, SF_NOFIXEDSIZE);
 		if (!t.brush)
 			return false;
 		if (!lastWrap)
@@ -169,7 +169,7 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 	return false;
 }
 
-bool TextureTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd)
+bool TextureTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndTexture &vWnd)
 {
 	int xPos, yPos, fwKeys;
 	fwKeys = wParam;

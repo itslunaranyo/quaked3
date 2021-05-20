@@ -7,7 +7,6 @@
 #include "WndConsole.h"
 
 // for the logging part
-#include <io.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <exception>
@@ -231,3 +230,66 @@ char *Sys_TranslateString (char *buf)
 	return buf2;
 }
 
+
+/*
+=============================================================
+
+	REGISTRY INFO
+
+=============================================================
+*/
+
+/*
+==============
+Sys_RegistrySaveInfo
+==============
+*/
+bool Sys_RegistrySaveInfo(const char *pszName, void *pvBuf, long lSize)
+{
+	LONG	lres;
+	DWORD	dwDisp;
+	HKEY	hKeyId;
+
+	lres = RegCreateKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, NULL,
+		REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKeyId, &dwDisp);
+
+	if (lres != ERROR_SUCCESS)
+		return false;
+
+	lres = RegSetValueEx(hKeyId, pszName, 0, REG_BINARY, (BYTE*)pvBuf, lSize);
+
+	RegCloseKey(hKeyId);
+
+	if (lres != ERROR_SUCCESS)
+		return false;
+
+	return true;
+}
+
+/*
+==============
+Sys_RegistryLoadInfo
+==============
+*/
+bool Sys_RegistryLoadInfo(const char *pszName, void *pvBuf, long *plSize)
+{
+	HKEY	hKey;
+	long	lres, lType, lSize;
+
+	if (plSize == NULL)
+		plSize = &lSize;
+
+	lres = RegOpenKeyEx(HKEY_CURRENT_USER, QE3_WIN_REGISTRY, 0, KEY_READ, &hKey);
+
+	if (lres != ERROR_SUCCESS)
+		return false;
+
+	lres = RegQueryValueEx(hKey, pszName, NULL, (LPDWORD)&lType, (LPBYTE)pvBuf, (LPDWORD)plSize);
+
+	RegCloseKey(hKey);
+
+	if (lres != ERROR_SUCCESS)
+		return false;
+
+	return true;
+}

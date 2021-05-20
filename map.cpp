@@ -12,7 +12,7 @@
 #include "parse.h"
 
 #include "CameraView.h"
-#include "XYZView.h"
+#include "GridView.h"
 #include "CmdImportMap.h"
 #include "CmdPaste.h"
 #include "win_dlg.h"
@@ -78,10 +78,8 @@ void Map::New()
 
 	world->eclass = EntClass::ForName("worldspawn", true, true);
 
-	g_vCamera.angles[YAW] = 0;
-	g_vCamera.origin = vec3(0);
-	g_vCamera.origin[2] = 48;
-	g_vXYZ[0].origin = vec3(0);
+	g_vCamera.Reset();
+	g_vGrid[0].Center(vec3(0));
 
 	if (LoadBetween(between))
 		BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
@@ -404,19 +402,17 @@ void Map::LoadFromFile(const char *filename)
 		if (!ent)
 			ent = g_map.FindEntity("classname", "info_player_deathmatch");
 
-		g_vCamera.angles[PITCH] = 0;
+		g_vCamera.Reset();
+		g_vGrid[0].Center(vec3(0));
 
 		if (ent)
 		{
-			ent->GetKeyValueVector("origin", g_vCamera.origin);
-			ent->GetKeyValueVector("origin", g_vXYZ[0].origin);
-			g_vCamera.angles[YAW] = ent->GetKeyValueFloat("angle");
-		}
-		else
-		{
-			g_vCamera.angles[YAW] = 0;
-			g_vCamera.origin = vec3(0);
-			g_vXYZ[0].origin = vec3(0);
+			vec3 startOrg;
+			ent->GetKeyValueVector("origin", startOrg);
+			ent->GetKeyValueVector("origin", startOrg);
+			g_vCamera.SetOrigin(startOrg);
+			g_vGrid[0].Center(startOrg);
+			g_vCamera.Turn(ent->GetKeyValueFloat("angle"), true);
 		}
 
 		Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
@@ -816,71 +812,21 @@ void Map::RegionOff()
 	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
-void Map::RegionXY()
+void Map::RegionXYZ(int gwin)
 {
 	RegionOff();
 
-	float w, h;
+	regionMins = g_vGrid[gwin].GetMins();
+	regionMins = g_vGrid[gwin].GetMaxs();
 
-	w = 0.5 * g_vXYZ[0].width / g_vXYZ[0].scale;
-	h = 0.5 * g_vXYZ[0].height / g_vXYZ[0].scale;
+	regionMins[g_vGrid[gwin].GetAxis()] = -g_cfgEditor.MapSize / 2;
+	regionMaxs[g_vGrid[gwin].GetAxis()] = g_cfgEditor.MapSize / 2;
 
-	// sikk---> Proper Regioning for XZ & YZ Views
-
-	if (g_vXYZ[0].GetAxis() == XY)
-	{
-		regionMins[0] = g_vXYZ[0].origin[0] - w;
-		regionMaxs[0] = g_vXYZ[0].origin[0] + w;
-		regionMins[1] = g_vXYZ[0].origin[1] - h;
-		regionMaxs[1] = g_vXYZ[0].origin[1] + h;
-		regionMins[2] = -g_cfgEditor.MapSize / 2;
-		regionMaxs[2] = g_cfgEditor.MapSize / 2;
-	}
-	else if (g_vXYZ[0].GetAxis() == XZ)
-	{
-		regionMins[0] = g_vXYZ[0].origin[0] - w;
-		regionMaxs[0] = g_vXYZ[0].origin[0] + w;
-		regionMins[1] = -g_cfgEditor.MapSize / 2;
-		regionMaxs[1] = g_cfgEditor.MapSize / 2;
-		regionMins[2] = g_vXYZ[0].origin[2] - h;
-		regionMaxs[2] = g_vXYZ[0].origin[2] + h;
-	}
-	else if (g_vXYZ[0].GetAxis() == YZ)
-	{
-		regionMins[0] = -g_cfgEditor.MapSize / 2;
-		regionMaxs[0] = g_cfgEditor.MapSize / 2;
-		regionMins[1] = g_vXYZ[0].origin[1] - w;
-		regionMaxs[1] = g_vXYZ[0].origin[1] + w;
-		regionMins[2] = g_vXYZ[0].origin[2] - h;
-		regionMaxs[2] = g_vXYZ[0].origin[2] + h;
-	}
-	// <---sikk
 	RegionApply();
 }
-
-void Map::RegionXZ()
-{
-	RegionOff();
-	regionMins[0] = g_vXYZ[2].origin[0] - 0.5 * g_vXYZ[2].width / g_vXYZ[2].scale;
-	regionMaxs[0] = g_vXYZ[2].origin[0] + 0.5 * g_vXYZ[2].width / g_vXYZ[2].scale;
-	regionMins[1] = -g_cfgEditor.MapSize / 2;
-	regionMaxs[1] = g_cfgEditor.MapSize / 2;
-	regionMins[2] = g_vXYZ[2].origin[2] - 0.5 * g_vXYZ[2].height / g_vXYZ[2].scale;
-	regionMaxs[2] = g_vXYZ[2].origin[2] + 0.5 * g_vXYZ[2].height / g_vXYZ[2].scale;
-	RegionApply();
-}
-
-void Map::RegionYZ()
-{
-	RegionOff();
-	regionMins[0] = -g_cfgEditor.MapSize / 2;
-	regionMaxs[0] = g_cfgEditor.MapSize / 2;
-	regionMins[1] = g_vXYZ[1].origin[1] - 0.5 * g_vXYZ[1].width / g_vXYZ[1].scale;
-	regionMaxs[1] = g_vXYZ[1].origin[1] + 0.5 * g_vXYZ[1].width / g_vXYZ[1].scale;
-	regionMins[2] = g_vXYZ[1].origin[2] - 0.5 * g_vXYZ[1].height / g_vXYZ[1].scale;
-	regionMaxs[2] = g_vXYZ[1].origin[2] + 0.5 * g_vXYZ[1].height / g_vXYZ[1].scale;
-	RegionApply();
-}
+void Map::RegionXY() { RegionXYZ(0); }
+void Map::RegionXZ() { RegionXYZ(2); }
+void Map::RegionYZ() { RegionXYZ(1); }
 
 void Map::RegionTallBrush()
 {

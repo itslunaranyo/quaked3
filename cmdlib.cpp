@@ -332,6 +332,64 @@ void IO_SafeWrite
 
 /*
 ==============
+IO_FileExists
+==============
+*/
+bool IO_FileExists(const char *filename)
+{
+	// see if we're checking a wildcard path
+	const char *src;
+	src = filename + strlen(filename) - 1;
+	while (*src != PATHSEPERATOR && src != filename)
+	{
+		if (*src == '.')
+		{
+			if (*--src == '*')
+			{
+				// we are, scan the directory instead
+				char dir[1024];
+				int len = src - filename;
+				strncpy_s(dir, filename, len);
+				dir[len] = 0;
+				return IO_FileWithExtensionExists(dir, src + 2);
+			}
+
+			// a single file
+			FILE *f = fopen(filename, "rb");
+			if (!f)
+				return false;
+			fclose(f);
+			return true;
+		}
+		src--;
+	}
+	
+	return false;	// 'filename' was a directory with no file/extension
+}
+
+bool IO_FileExists(const char *dir, const char *filename)
+{
+	char fullpath[1024];
+
+	sprintf(fullpath, "%s/%s\0", dir, filename);
+
+	return IO_FileExists(fullpath);
+}
+
+bool IO_FileWithExtensionExists(const char* dir, const char* ext)
+{
+	_finddata_t fileinfo;
+	int		handle;
+	char	path[1024];
+
+	sprintf(path, "%s/*.%s", dir, ext);
+
+	handle = _findfirst(path, &fileinfo);
+	return (handle != -1);
+}
+
+/*
+==============
 IO_LoadFile
 ==============
 */
@@ -433,6 +491,26 @@ bool IsPathAbsolute(const char* path)
 	if (path[1] == ':' && (path[2] == '/' || path[2] == '\\')) return true;
 	if (!strncmp(path, "//", 2) || !strncmp(path, "\\\\", 2)) return true;
 	return false;
+}
+
+/*
+==============
+IsPathDirectory
+==============
+*/
+bool IsPathDirectory(char* path)
+{
+	char *src;
+	src = path + strlen(path) - 1;
+
+	while (*src != PATHSEPERATOR && src != path)
+	{
+		if (*src == '.')
+			return false;                 // it has an extension
+		src--;
+	}
+
+	return true;
 }
 
 /*

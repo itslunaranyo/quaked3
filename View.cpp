@@ -7,26 +7,26 @@
 #include "View.h"
 #include "map.h"
 
-
-View::View() : origin(0), scale(1), timing(false)
+/*
+ViewOld::ViewOld() : origin(0), scale(1), timing(false)
 {
 }
 
 
-View::~View()
+ViewOld::~ViewOld()
 {
 }
 
 
-void View::Draw()
+void ViewOld::Draw()
 {
 	glClearColor((float)rand() / RAND_MAX, (float)rand() / RAND_MAX, (float)rand() / RAND_MAX, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-
+*/
 /*
 ==================
-View::DrawPathLines
+ViewOld::DrawPathLines
 
 Draws connections between entities.
 Needs to consider all entities, not just ones on screen,
@@ -34,7 +34,8 @@ because the lines can be visible when neither end is.
 Called for both camera view and xy view.
 ==================
 */
-void View::DrawPathLines()
+/*
+void ViewOld::DrawPathLines()
 {
 	if (!g_cfgUI.PathlineMode)
 		return;
@@ -71,9 +72,9 @@ void View::DrawPathLines()
 		}
 		glEnd();
 	}
-}
+}*/
 /*
-void View::DrawPathLines()
+void ViewOld::DrawPathLines()
 {
 	int			i, j, k;
 	vec3		mid, mid1;
@@ -169,8 +170,8 @@ void View::DrawPathLines()
 }
 */
 
-
-void View::GLSelectionColor()
+/*
+void ViewOld::GLSelectionColor()
 {
 	if (GetKeyState(VK_SPACE) < 0 && g_cfgEditor.CloneStyle == CLONE_DRAG)
 		glColor4f(g_colors.tool[0],
@@ -184,7 +185,7 @@ void View::GLSelectionColor()
 			1.0f);
 }
 
-void View::GLSelectionColorAlpha(float alpha)
+void ViewOld::GLSelectionColorAlpha(float alpha)
 {
 	if (GetKeyState(VK_SPACE) < 0 && g_cfgEditor.CloneStyle == CLONE_DRAG)
 		glColor4f(g_colors.tool[0],
@@ -201,7 +202,8 @@ void View::GLSelectionColorAlpha(float alpha)
 
 
 // returns false if the selection hasn't been drawn in a special way by a tool
-bool View::DrawTools()
+bool ViewOld::DrawTools()
 {
 	return false;
 }
+*/

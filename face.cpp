@@ -446,7 +446,7 @@ void Face::SetColor()
 	shade = ShadeForPlane();
 
 	// lunaran TODO: get rid of this branch
-	if (g_cfgUI.DrawMode == cd_texture && owner->owner->IsBrush())
+	if (g_cfgUI.DrawMode == CD_TEXTURED && owner->owner->IsBrush())
 	{
 		d_color[0] = d_color[1] = d_color[2] = shade;
 	}

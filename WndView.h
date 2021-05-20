@@ -7,6 +7,9 @@
 
 class View;
 
+extern HDC		g_hdcBase;
+extern HGLRC	g_hglrcBase;
+
 class WndView
 {
 public:
@@ -24,8 +27,6 @@ public:
 	HDC		w_hdc;
 	HGLRC	w_hglrc;
 
-	static HDC		w_hdcBase;
-	static HGLRC	w_hglrcBase;
 	static WNDCLASS w_wcView;
 
 	void CreateWnd();

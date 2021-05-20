@@ -64,6 +64,8 @@ void	AddPointToBounds(const vec3 v, vec3 &mins, vec3 &maxs);
 void	AngleVectors(const vec3 angles, vec3 &forward, vec3 &right, vec3 &up);
 void	VectorToAngles(const vec3 vec, vec3 &angles);
 
+glm::mat4 RotateMatrix(glm::mat4 mat, float pitch, float yaw);
+
 bool	Point_Equal(const vec3 p1, const vec3 p2, const float epsilon); // returns true if the points are equal
 
 void	rgbToHex(const vec3 vrgb, char *hex);

@@ -9,10 +9,18 @@
 #include "select.h"
 #include "winding.h"
 #include "modify.h"
-#include "CameraView.h"
-#include "XYZView.h"
+
 #include "ZView.h"
-#include "WndView.h"
+#include "ZViewRenderer.h"
+#include "WndZChecker.h"
+
+#include "CameraView.h"
+#include "CameraRenderer.h"
+#include "WndCamera.h"
+
+#include "GridView.h"
+#include "GridViewRenderer.h"
+#include "WndGrid.h"
 
 #include "CmdGeoMod.h"
 #include "CmdClone.h"
@@ -35,7 +43,7 @@ ManipTool::~ManipTool()
 
 // ----------------------------------------------------------------
 
-bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
+bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndCamera &vWnd)
 {
 	if (Input(uMsg, wParam, lParam))
 		return true;
@@ -51,7 +59,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || AltDown())
 			return false;
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		vWnd.GetMsgXY(lParam, mx, my);
@@ -89,7 +97,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	return hot;
 }
 
-bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
+bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndGrid &vWnd)
 {
 	if (Input(uMsg, wParam, lParam))
 		return true;
@@ -116,13 +124,13 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || (!CtrlDown() && AltDown()))
 			return false;
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		vWnd.GetMsgXY(lParam, mx, my);
-		v.ToPoint(mx, my, x, y);
+		v.ScreenToWorld(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
-		DragStart2D(mc, v.dViewType);
+		DragStart2D(mc, v.GetAxis());
 		WndMain_UpdateWindows(W_SCENE);
 		return true;
 
@@ -131,7 +139,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 		{
 			//assert(hot);	// happens after a context menu click
 			vWnd.GetMsgXY(lParam, mx, my);
-			v.ToPoint(mx, my, x, y);
+			v.ScreenToWorld(mx, my, x, y);
 			mc = v.GetMouseContext(mx, my);
 			DragMove(mc, mc.org);
 			WndMain_UpdateWindows(W_SCENE);
@@ -142,7 +150,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	case WM_LBUTTONUP:
 		if (!hot) return false;
 		vWnd.GetMsgXY(lParam, mx, my);
-		v.ToPoint(mx, my, x, y);
+		v.ScreenToWorld(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
 		DragFinish();
 
@@ -155,7 +163,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	return hot;
 }
 
-bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd)
+bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChecker &vWnd)
 {
 	if (Input(uMsg, wParam, lParam))
 		return true;
@@ -171,7 +179,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || CtrlDown() || AltDown())
 			return false;
-		SetCapture(vWnd.w_hwnd);
+		SetCapture(vWnd.wHwnd);
 		hot = true;
 
 		// do stuff
@@ -303,7 +311,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 
 			for (Face *f = b->faces; f; f = f->fnext)
 			{
-				if (f->TestSideSelectAxis(mc.org, XY))
+				if (f->TestSideSelectAxis(mc.org, GRID_XY))
 					fSidesTest.push_back(f);
 			}
 		}
@@ -771,18 +779,18 @@ void ManipTool::FrontSelectShearFaces(const Face *hit, std::vector<Face*> &fSide
 
 // ----------------------------------------------------------------
 
-bool ManipTool::Draw3D(CameraView &v)
+bool ManipTool::Draw3D(CameraRenderer &rc)
 {
 	if (cloneReady)
 	{
 		if (cmdTr && cmdTr->postDrag)
 		{
 			glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
-			v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
+			rc.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
 			glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		}
 		else
-			v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
+			rc.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
 		return true;
 	}
 
@@ -828,7 +836,7 @@ bool ManipTool::Draw3D(CameraView &v)
 		if (!cmdTr->postDrag)
 			return false;
 		glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
-		v.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
+		rc.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 		glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		return true;
 
@@ -839,7 +847,7 @@ bool ManipTool::Draw3D(CameraView &v)
 	return false;
 }
 
-bool ManipTool::Draw2D(XYZView &v)
+bool ManipTool::Draw2D(GridViewRenderer &v)
 {
 	if (cloneReady)
 	{
@@ -860,10 +868,7 @@ bool ManipTool::Draw2D(XYZView &v)
 		if (!brDragNew)
 			break;
 
-		v.BeginDrawSelection(g_colors.selection);
-		brDragNew->DrawXY(v.GetAxis());
-		v.EndDrawSelection();
-		v.DrawSizeInfo(brDragNew->mins, brDragNew->maxs);
+		v.DrawBrushSelected(brDragNew);
 		return true;
 
 	case MT_TRANSLATE:
@@ -882,7 +887,7 @@ bool ManipTool::Draw2D(XYZView &v)
 	return false;
 }
 
-bool ManipTool::Draw1D(ZView &v)
+bool ManipTool::Draw1D(ZViewRenderer &v)
 {
 	if (cloneReady)
 	{

@@ -95,6 +95,14 @@ bool Selection::OnlyBrushEntities()
 
 	return true;
 }
+bool Selection::OnlyWorldBrushes()
+{
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		if (!b->owner->IsWorld())
+			return false;
+
+	return true;
+}
 int Selection::NumBrushes()
 {
 	int i = 0;
@@ -1114,8 +1122,8 @@ void Selection::CompleteTall()
 	{
 		int nViewType;
 		nViewType = QE_BestViewAxis();
-		nDim1 = (nViewType == YZ) ? 1 : 0;
-		nDim2 = (nViewType == XY) ? 1 : 2;
+		nDim1 = (nViewType == GRID_YZ) ? 1 : 0;
+		nDim2 = (nViewType == GRID_XY) ? 1 : 2;
 	}
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
@@ -1158,8 +1166,8 @@ void Selection::PartialTall()
 	{
 		int nViewType;
 		nViewType = QE_BestViewAxis();
-		nDim1 = (nViewType == YZ) ? 1 : 0;
-		nDim2 = (nViewType == XY) ? 1 : 2;
+		nDim1 = (nViewType == GRID_YZ) ? 1 : 0;
+		nDim2 = (nViewType == GRID_XY) ? 1 : 2;
 	}
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)

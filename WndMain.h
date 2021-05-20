@@ -5,9 +5,11 @@
 #ifndef __WND_MAIN_H__
 #define __WND_MAIN_H__
 
+#define REBARBANDCOUNT 12
+
 extern HWND g_hwndMain;
 extern HWND g_hwndStatus;
-extern HWND g_hwndToolbar[11];
+extern HWND g_hwndToolbar[REBARBANDCOUNT];
 extern HWND g_hwndRebar;
 
 class WndCamera;
@@ -25,11 +27,12 @@ extern WndEntity	*g_wndEntity;
 extern WndConsole	*g_wndConsole;
 
 void	WndMain_SwapGridCam();
+void	WndMain_SyncInspectorPlacement();
 void	WndMain_SetInspectorMode(int nType);
-HWND	WndMain_WindowForPoint(int x, int y);
+HWND	WndMain_WindowForPoint(POINT point);
 void	WndMain_DefaultLayout(int nStyle = 0);
-bool	WndMain_SaveWindowState(HWND hWnd, const char *pszName);
-bool	WndMain_LoadWindowState(HWND hWnd, const char *pszName);
+bool	WndMain_SaveWindowStates();
+bool	WndMain_LoadStateForWindow(HWND hWnd, const char *pszName);
 
 void    WndMain_UpdateWindows(int bits);
 void	WndMain_ForceUpdateWindows(int bits = 0);
@@ -61,9 +64,8 @@ void	WndMain_UpdateGridStatusBar();
 void	WndMain_CreateStatusBar(HWND hWnd);
 
 // WndMain_Toolbar
-HWND	WndMain_CreateToolBar(HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButtons);
 void	WndMain_CreateReBar(HWND hWnd, HINSTANCE hInst);
-
+void	WndMain_SaveRebarPositions();
 
 class WndMain {	// sooon
 	WndMain();

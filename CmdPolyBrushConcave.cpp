@@ -8,7 +8,7 @@
 #include "CmdPolyBrush.h"
 
 CmdPolyBrushConcave::CmdPolyBrushConcave() : Command("CmdPolyBrushConcave"),
-	axis(XY), texdef(g_qeglobals.d_workTexDef),
+	axis(GRID_XY), texdef(g_qeglobals.d_workTexDef),
 	lowBound(g_qeglobals.d_v3WorkMin[axis]),
 	highBound(g_qeglobals.d_v3WorkMax[axis])
 {
@@ -87,7 +87,7 @@ void CmdPolyBrushConcave::SetTexDef(TexDef &tdef)
 
 void CmdPolyBrushConcave::SetAxis(int ax)
 {
-	assert(ax >= YZ && ax <= XY);
+	assert(ax >= GRID_YZ && ax <= GRID_XY);
 	axis = ax;
 }
 
@@ -100,7 +100,7 @@ CmdPolyBrushConcave::ToWorldSpace
 */
 void CmdPolyBrushConcave::ToWorldSpace(std::vector<vec3>& points)
 {
-	if (axis == XY)
+	if (axis == GRID_XY)
 		return;
 
 	int upAxis, rightAxis;

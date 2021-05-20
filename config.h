@@ -208,14 +208,12 @@ public:
 	qeConfig();
 	~qeConfig();
 
-	// belongs in registry
-	REBARBANDINFO rbiSettings[11];	// sikk - Save Rebar Band Info
-
 	std::vector<qecfgProject_t> projectPresets;	// current project is always moved to the first index
 	std::vector<qecfgColors_t> colorPresets;
 
 	bool Load();
 	void Save();
+	void ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest);
 	void ExpandProjectPaths();
 	void StandardColorPresets();
 

@@ -53,6 +53,33 @@ void WndMain_SwapGridCam()
 
 /*
 ==================
+WndMain_SyncInspectorPlacement
+
+one day we'll have a nice gui toolkit with dockable tabbed panes and this will be
+automatic and customizable and invisible and great
+==================
+*/
+void WndMain_SyncInspectorPlacement()
+{
+	if (IsWindowVisible(g_hwndTexture))
+	{
+		g_wndConsole->CopyPositionFrom(*g_wndTexture);
+		g_wndEntity->CopyPositionFrom(*g_wndTexture);
+	}
+	else if (IsWindowVisible(g_hwndConsole))
+	{
+		g_wndTexture->CopyPositionFrom(*g_wndConsole);
+		g_wndEntity->CopyPositionFrom(*g_wndConsole);
+	}
+	else if(IsWindowVisible(g_hwndEntity))
+	{
+		g_wndConsole->CopyPositionFrom(*g_wndEntity);
+		g_wndTexture->CopyPositionFrom(*g_wndEntity);
+	}
+}
+
+/*
+==================
 WndMain_ForceInspectorMode
 ==================
 */
@@ -86,7 +113,8 @@ WndMain_SetInspectorMode
 */
 void WndMain_SetInspectorMode(int nType)
 {
-	WndView *from, *to;
+	Window *from, *to;
+
 	switch (g_nInspectorMode)
 	{
 	case W_ENTITY:
@@ -115,9 +143,9 @@ void WndMain_SetInspectorMode(int nType)
 		break;
 	}
 
-	to->Swap(*from);
+	to->CopyPositionFrom(*from);
 	to->Focus();
-	g_nInspectorMode = nType;
+	WndMain_ForceInspectorMode(nType);
 }
 
 /*
@@ -301,30 +329,33 @@ void WndMain_DefaultLayout(int nStyle)
 
 /*
 ==============
-WndMain_SaveWindowState
+WndMain_SaveWindowStates
 ==============
 */
-bool WndMain_SaveWindowState(HWND hWnd, const char *pszName)
+bool WndMain_SaveWindowStates()
 {
-	RECT rc;
+	WndMain_SyncInspectorPlacement();
+	for (auto wvIt = Window::windex.begin(); wvIt != Window::windex.end(); ++wvIt)
+		(*wvIt)->SavePosition();
+	WndMain_SaveRebarPositions();
+	// TODO: save status bar visibility
 
-	GetWindowRect(hWnd, &rc);
-	if (hWnd != g_hwndMain)
-		MapWindowPoints(NULL, g_hwndMain, (POINT *)&rc, 2);
-	return SaveRegistryInfo(pszName, &rc, sizeof(rc));
+	RECT rc;
+	GetWindowRect(g_hwndMain, &rc);
+	return Sys_RegistrySaveInfo("MainWindow", &rc, sizeof(rc));
 }
 
 /*
 ==============
-WndMain_LoadWindowState
+WndMain_LoadStateForWindow
 ==============
 */
-bool WndMain_LoadWindowState(HWND hWnd, const char *pszName)
+bool WndMain_LoadStateForWindow(HWND hWnd, const char *pszName)
 {
 	RECT rc;
 	LONG lSize = sizeof(rc);
 
-	if (LoadRegistryInfo(pszName, &rc, &lSize))
+	if (Sys_RegistryLoadInfo(pszName, &rc, &lSize))
 	{
 		if (rc.left < 0)
 			rc.left = 0;
@@ -348,12 +379,13 @@ bool WndMain_LoadWindowState(HWND hWnd, const char *pszName)
 WndMain_WindowForPoint
 ============
 */
-HWND WndMain_WindowForPoint(int x, int y)
+HWND WndMain_WindowForPoint(POINT point)
 {
-	POINT	point;
-	point.x = x;
-	point.y = y;
-	return ChildWindowFromPoint(g_hwndMain, point);
+	HWND hwnd;
+	ScreenToClient(g_hwndMain, &point);
+	hwnd = ChildWindowFromPoint(g_hwndMain, point);
+
+	return hwnd;
 }
 
 
@@ -386,10 +418,10 @@ void WndMain_ForceUpdateWindows(int bits)
 		g_vTexture.Arrange();
 
 	// update any windows now
-	for (auto wvIt = WndView::wndviews.begin(); wvIt != WndView::wndviews.end(); ++wvIt)
+	for (auto wIt = Window::windex.begin(); wIt != Window::windex.end(); ++wIt)
 	{
-		if ((*wvIt)->vbits & g_nUpdateBits)
-			(*wvIt)->ForceUpdate();
+		if ((*wIt)->vbits & g_nUpdateBits)
+			(*wIt)->ForceUpdate();
 	}
 
 	if (g_nUpdateBits & W_TITLE)
@@ -426,7 +458,7 @@ void WndMain_CreateViews()
 	g_wndEntity->Initialize();
 
 	/*
-	// this could happen just fine in WndView::OnCreate, but delaying wglShareLists fixes
+	// this could happen just fine in window create, but delaying wglShareLists fixes
 	// troubles in some contexts (namely the GLX emulation in WINE)
 	// TODO: write new fantasy renderer that doesn't rely on crufty old stuff like wglShareLists
 	g_wndCamera->ShareLists();
@@ -483,7 +515,7 @@ LONG WINAPI WMain_WndProc(
 	LPTOOLTIPTEXT	lpToolTipText;
 	char	szToolTip[128];
 	time_t	lTime;
-	int		i, nBandIndex;	// sikk - Save Rebar Band Info
+	//int		i, nBandIndex;	// sikk - Save Rebar Band Info
 
 	GetClientRect(hWnd, &rect);
 
@@ -514,38 +546,8 @@ LONG WINAPI WMain_WndProc(
 		// call destroy window to cleanup and go away
 		if (!ConfirmModified())
 			return TRUE;
-		for (auto wvIt = WndView::wndviews.begin(); wvIt != WndView::wndviews.end(); ++wvIt)
-			(*wvIt)->SavePosition();
 
-		WndMain_SaveWindowState(g_hwndMain, "MainWindow");
-
-		// sikk---> Save Rebar Band Info
-		for (i = 0; i < 11; i++)
-		{
-			nBandIndex = SendMessage(g_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-			//Sys_Printf("Band %d\n", nBandIndex);
-			g_qeglobals.d_savedinfo.rbiSettings[i].cbSize = sizeof(REBARBANDINFO);
-			g_qeglobals.d_savedinfo.rbiSettings[i].fMask = RBBIM_CHILDSIZE | RBBIM_STYLE;
-			SendMessage(g_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);
-		}
-		/*	Code below saves the current Band order but there is a problem with
-			updating this at program start. (check QE_Init() in qe3.c)
-				j = 0;
-				while (j < 11)
-				{
-					for (i = 0; i < 11; i++)
-					{
-						nBandIndex = SendMessage(g_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-						if (nBandIndex == j)
-							g_qeglobals.d_savedinfo.nRebarSavedIndex[j] = ID_TOOLBAR + i;
-					}
-					j++;
-				}
-		*/
-		// <---sikk
-
-		// FIXME: is this right?
-		SaveRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, sizeof(g_qeglobals.d_savedinfo));
+		WndMain_SaveWindowStates();
 
 		time(&lTime);	// sikk - Print current time for logging purposes
 		Sys_Printf("\nSession Stopped: %s", ctime(&lTime));
@@ -686,7 +688,7 @@ void WndMain_Create()
 	sprintf(g_qeAppName, "QuakeEd 3.%i (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
 #endif
 
-	WndMain_LoadWindowState(g_hwndMain, "MainWindow");
+	WndMain_LoadStateForWindow(g_hwndMain, "MainWindow");
 
 	WndMain_CreateReBar(g_hwndMain, hInstance);
 	WndMain_CreateStatusBar(g_hwndMain);
@@ -699,7 +701,7 @@ void WndMain_Create()
 		if (g_cfgEditor.CubicClip)
 		{
 			CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, MF_CHECKED);
-			SendMessage(g_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP,
+			SendMessage(g_hwndToolbar[7], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP,
 				(g_cfgEditor.CubicClip ? (LPARAM)true : (LPARAM)false));
 		}
 	}

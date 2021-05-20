@@ -5,6 +5,7 @@
 #define __TEXTURES_H__
 
 class TextureGroup;
+struct _finddata_t;
 
 // lunaran - for mapping texture names to addresses without screwing around with std::strings
 typedef struct label_s
@@ -127,6 +128,8 @@ namespace Textures
 	void LibraryChanged();
 	void CleanUnknowns();
 	void FixWorkTexDef();
+
+	std::vector<_finddata_t> ListWadsInDirectory(const char* wadpath);
 
 	extern std::vector<TextureGroup*> groups;
 	extern std::map<label_t, Texture*> texMap;

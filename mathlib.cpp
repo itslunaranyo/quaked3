@@ -8,6 +8,7 @@
 #include "cmdlib.h"
 #include "mathlib.h"
 #include "qedefs.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 // for sorting arrays/lists of vectors with intent to strip duplicates
 bool VectorCompareLT(const vec3 &v1, const vec3 &v2)
@@ -236,6 +237,26 @@ bool Point_Equal(const vec3 p1, const vec3 p2, const float epsilon)
 
 	return true;
 }
+
+
+/*
+===============
+RotateMatrix
+take any default projection matrix and modify it for Z-up/pitch/yaw
+===============
+*/
+glm::mat4 RotateMatrix(glm::mat4 mat, float pitch, float yaw)
+{
+	glm::mat4 out;
+	// put Z going up
+	out = glm::rotate(mat, (float)(-90 * Q_DEG2RAD), vec3(1, 0, 0));
+	out = glm::rotate(out, (float)(90 * Q_DEG2RAD), vec3(0, 0, 1));
+	// turn to angle
+	out = glm::rotate(out, (float)(pitch * Q_DEG2RAD), vec3(0, 1, 0));
+	out = glm::rotate(out, (float)(-yaw * Q_DEG2RAD), vec3(0, 0, 1));
+	return out;
+}
+
 
 void rgbToHex(const vec3 vrgb, char *hex)
 {

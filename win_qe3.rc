@@ -24,320 +24,321 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Menu
 //
 
-IDR_MENU1 MENUEX
+IDR_MENU1 MENU
 BEGIN
-    POPUP "&File",                          65535,MFT_STRING,MFS_ENABLED
+    POPUP "&File"
     BEGIN
-        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE,MFT_STRING,MFS_ENABLED
-        MENUITEM "Save &As...\tCtrl+Shift+S",   ID_FILE_SAVEAS,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Import...",                  ID_FILE_IMPORTMAP,MFT_STRING,MFS_ENABLED
-        MENUITEM "E&xport Selection...",        ID_SELECTION_EXPORTMAP,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Pointfile",                  ID_FILE_POINTFILE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "E&xit",                       ID_FILE_EXIT,MFT_STRING,MFS_ENABLED
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...\tCtrl+Shift+S",   ID_FILE_SAVEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Import...",                  ID_FILE_IMPORTMAP
+        MENUITEM "E&xport Selection...",        ID_SELECTION_EXPORTMAP
+        MENUITEM SEPARATOR
+        MENUITEM "&Pointfile",                  ID_FILE_POINTFILE
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_FILE_EXIT
     END
-    POPUP "&Edit",                          65535,MFT_STRING,MFS_ENABLED
+    POPUP "&Edit"
     BEGIN
-        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Cut\tCtrl+X",                ID_EDIT_CUT,MFT_STRING,MFS_ENABLED
-        MENUITEM "C&opy\tCtrl+C",               ID_EDIT_COPY,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Clone\tSpace",               ID_SELECTION_CLONE,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Delete\tBackspace",          ID_SELECTION_DELETE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FINDBRUSH,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Map Info...\tF2",            ID_EDIT_MAPINFO,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Entity Info...\tF3",         ID_EDIT_ENTITYINFO,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Prefere&nces...\tF4",         ID_EDIT_PREFERENCES,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO
+        MENUITEM SEPARATOR
+        MENUITEM "&Cut\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "C&opy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM SEPARATOR
+        MENUITEM "&Clone\tSpace",               ID_SELECTION_CLONE
+        MENUITEM "&Delete\tBackspace",          ID_SELECTION_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "&Find...\tCtrl+F",            ID_EDIT_FINDBRUSH
+        MENUITEM "&Map Info...\tF2",            ID_EDIT_MAPINFO
+        MENUITEM "&Entity Info...\tF3",         ID_EDIT_ENTITYINFO
+        MENUITEM SEPARATOR
+        MENUITEM "Prefere&nces...\tF4",         ID_EDIT_PREFERENCES
     END
-    POPUP "&View",                          65535,MFT_STRING,MFS_ENABLED
+    POPUP "&View"
     BEGIN
-        POPUP "&Filter",                        65535,MFT_STRING,MFS_ENABLED
+        POPUP "&Filter"
         BEGIN
-            MENUITEM "Show &Clip",                  ID_VIEW_SHOWCLIP,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Hint",                  40422,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Sky",                   ID_VIEW_SHOWSKY,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show Li&quid",                ID_VIEW_SHOWWATER,MFT_STRING,MFS_CHECKED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "Show &Detail",                40421,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Func Wall",             ID_VIEW_SHOWFUNCWALL,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Lights",                ID_VIEW_SHOWLIGHTS,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Monsters",              ID_VIEW_SHOWMONSTERS,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Triggers",              ID_VIEW_SHOWTRIGGERS,MFT_STRING,MFS_CHECKED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "Show Wo&rld",                 ID_VIEW_SHOWWORLD,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Brush Entities",        ID_VIEW_SHOWBRUSHENTS,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Point Entities",        ID_VIEW_SHOWPOINTENTS,MFT_STRING,MFS_CHECKED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "Show All Skills",             ID_FILTER_SHOWALLSKILLS,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show Easy Skill",             ID_FILTER_SHOWEASYSKILL,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show Medium Skill",           ID_FILTER_SHOWMEDIUMSKILL,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show Hard Skill",             ID_FILTER_SHOWHARDSKILL,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show Deathmatch",             ID_FILTER_SHOWDEATHMATCH,MFT_STRING,MFS_ENABLED
+            MENUITEM "Show &Clip",                  ID_VIEW_SHOWCLIP, CHECKED
+            MENUITEM "Show &Hint",                  40422, CHECKED
+            MENUITEM "Show &Sky",                   ID_VIEW_SHOWSKY, CHECKED
+            MENUITEM "Show Li&quid",                ID_VIEW_SHOWWATER, CHECKED
+            MENUITEM SEPARATOR
+            MENUITEM "Show &Detail",                40421, CHECKED
+            MENUITEM "Show &Func Wall",             ID_VIEW_SHOWFUNCWALL, CHECKED
+            MENUITEM "Show &Lights",                ID_VIEW_SHOWLIGHTS, CHECKED
+            MENUITEM "Show &Monsters",              ID_VIEW_SHOWMONSTERS, CHECKED
+            MENUITEM "Show &Triggers",              ID_VIEW_SHOWTRIGGERS, CHECKED
+            MENUITEM SEPARATOR
+            MENUITEM "Show Wo&rld",                 ID_VIEW_SHOWWORLD, CHECKED
+            MENUITEM "Show &Brush Entities",        ID_VIEW_SHOWBRUSHENTS, CHECKED
+            MENUITEM "Show &Point Entities",        ID_VIEW_SHOWPOINTENTS, CHECKED
+            MENUITEM SEPARATOR
+            MENUITEM "Show All Skills",             ID_FILTER_SHOWALLSKILLS, CHECKED
+            MENUITEM "Show Easy Skill",             ID_FILTER_SHOWEASYSKILL
+            MENUITEM "Show Medium Skill",           ID_FILTER_SHOWMEDIUMSKILL
+            MENUITEM "Show Hard Skill",             ID_FILTER_SHOWHARDSKILL
+            MENUITEM "Show Deathmatch",             ID_FILTER_SHOWDEATHMATCH
         END
-        POPUP "&Hide/Show",                     65535,MFT_STRING,MFS_ENABLED
+        POPUP "&Hide/Show"
         BEGIN
-            MENUITEM "&Hide Selected\tH",           ID_VIEW_HIDESHOW_HIDESELECTED,MFT_STRING,MFS_ENABLED
-            MENUITEM "Hide &Unselected\tShift+H",   ID_VIEW_HIDESHOW_HIDEUNSELECTED,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Show Hidden\tCtrl+H",        ID_VIEW_HIDESHOW_SHOWHIDDEN,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Hide Selected\tH",           ID_VIEW_HIDESHOW_HIDESELECTED
+            MENUITEM "Hide &Unselected\tShift+H",   ID_VIEW_HIDESHOW_HIDEUNSELECTED
+            MENUITEM "&Show Hidden\tCtrl+H",        ID_VIEW_HIDESHOW_SHOWHIDDEN
         END
-        POPUP "Toggle",                         65535,MFT_STRING,MFS_ENABLED
+        POPUP "Toggle"
         BEGIN
-            MENUITEM "Show A&xis",                  ID_VIEW_SHOWAXIS,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Angles",                ID_VIEW_SHOWANGLES,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Blocks",                ID_VIEW_SHOWBLOCKS,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show Camera &Grid",           ID_VIEW_SHOWCAMERAGRID,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show C&oordinates",           ID_VIEW_SHOWCOORDINATES,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show L&ight Radius",          ID_VIEW_SHOWLIGHTRADIUS,MFT_STRING,MFS_ENABLED
-            MENUITEM "Show &Map Boundary",          ID_VIEW_SHOWMAPBOUNDARY,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Names",                 ID_VIEW_SHOWNAMES,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show Sizing Info",            ID_VIEW_SHOWSIZEINFO,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &View Name",             ID_VIEW_SHOWVIEWNAME,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show Work&zone",              ID_VIEW_SHOWWORKZONE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Show A&xis",                  ID_VIEW_SHOWAXIS, CHECKED
+            MENUITEM "Show &Angles",                ID_VIEW_SHOWANGLES, CHECKED
+            MENUITEM "Show &Blocks",                ID_VIEW_SHOWBLOCKS
+            MENUITEM "Show Camera &Grid",           ID_VIEW_SHOWCAMERAGRID, CHECKED
+            MENUITEM "Show C&oordinates",           ID_VIEW_SHOWCOORDINATES, CHECKED
+            MENUITEM "Show L&ight Radius",          ID_VIEW_SHOWLIGHTRADIUS
+            MENUITEM "Show &Map Boundary",          ID_VIEW_SHOWMAPBOUNDARY, CHECKED
+            MENUITEM "Show &Names",                 ID_VIEW_SHOWNAMES, CHECKED
+            MENUITEM "Show Sizing Info",            ID_VIEW_SHOWSIZEINFO, CHECKED
+            MENUITEM "Show &View Name",             ID_VIEW_SHOWVIEWNAME, CHECKED
+            MENUITEM "Show Work&zone",              ID_VIEW_SHOWWORKZONE
         END
-        POPUP "Target Lines",                   65535,MFT_STRING,MFS_ENABLED
+        POPUP "Target Lines"
         BEGIN
-            MENUITEM "All",                         ID_TARGETLINES_ALL,MFT_STRING,MFS_ENABLED
-            MENUITEM "Selection",                   ID_TARGETLINES_SEL,MFT_STRING,MFS_ENABLED
-            MENUITEM "Selection + Paths",           ID_TARGETLINES_SELPATH,MFT_STRING,MFS_ENABLED
-            MENUITEM "None",                        ID_TARGETLINES_NONE,MFT_STRING,MFS_ENABLED
+            MENUITEM "All",                         ID_TARGETLINES_ALL
+            MENUITEM "Selection",                   ID_TARGETLINES_SEL
+            MENUITEM "Selection + Paths",           ID_TARGETLINES_SELPATH
+            MENUITEM "None",                        ID_TARGETLINES_NONE
         END
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Center\tEnd",                ID_VIEW_CENTER,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Up Floor\tPage Up",          ID_VIEW_UPFLOOR,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Down Floor\tPage Down",      ID_VIEW_DOWNFLOOR,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Ne&xt (XY->XZ->YZ)\tTab",     ID_VIEW_NEXTVIEW,MFT_STRING,MFS_ENABLED
-        MENUITEM "Swap Grid/Cam\tShift-Tab",    ID_VIEW_SWAPGRIDCAM,MFT_STRING,MFS_ENABLED
-        POPUP "&Layout",                        65535,MFT_STRING,MFS_ENABLED
+        MENUITEM SEPARATOR
+        MENUITEM "&Center\tEnd",                ID_VIEW_CENTER
+        MENUITEM "&Up Floor\tPage Up",          ID_VIEW_UPFLOOR
+        MENUITEM "&Down Floor\tPage Down",      ID_VIEW_DOWNFLOOR
+        MENUITEM SEPARATOR
+        MENUITEM "Ne&xt (XY->XZ->YZ)\tTab",     ID_VIEW_NEXTVIEW
+        MENUITEM "Swap Grid/Cam\tShift-Tab",    ID_VIEW_SWAPGRIDCAM
+        POPUP "&Layout"
         BEGIN
-            MENUITEM "&XY (Top)",                   ID_VIEW_XY,MFT_STRING,MFS_ENABLED
-            MENUITEM "X&Z (Front)",                 ID_VIEW_XZ,MFT_STRING,MFS_ENABLED
-            MENUITEM "&YZ (Side)",                  ID_VIEW_YZ,MFT_STRING,MFS_ENABLED
+            MENUITEM "&XY (Top)",                   ID_VIEW_XY
+            MENUITEM "X&Z (Front)",                 ID_VIEW_XZ
+            MENUITEM "&YZ (Side)",                  ID_VIEW_YZ
         END
-        POPUP "&Zoom",                          65535,MFT_STRING,MFS_ENABLED
+        POPUP "&Zoom"
         BEGIN
-            MENUITEM "&XY 100%\tHome",              ID_VIEW_100,MFT_STRING,MFS_ENABLED
-            MENUITEM "XY Zoom &In\tInsert",         ID_VIEW_ZOOMIN,MFT_STRING,MFS_ENABLED
-            MENUITEM "XY Zoom &Out\tDelete",        ID_VIEW_ZOOMOUT,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "&Z 100%\tCtrl+Home",          ID_VIEW_Z100,MFT_STRING,MFS_ENABLED
-            MENUITEM "Z Zoom I&n\tCtrl+Insert",     ID_VIEW_ZZOOMIN,MFT_STRING,MFS_ENABLED
-            MENUITEM "Z Zoom O&ut\tCtrl+Delete",    ID_VIEW_ZZOOMOUT,MFT_STRING,MFS_ENABLED
+            MENUITEM "&XY 100%\tHome",              ID_VIEW_100
+            MENUITEM "XY Zoom &In\tInsert",         ID_VIEW_ZOOMIN
+            MENUITEM "XY Zoom &Out\tDelete",        ID_VIEW_ZOOMOUT
+            MENUITEM SEPARATOR
+            MENUITEM "&Z 100%\tCtrl+Home",          ID_VIEW_Z100
+            MENUITEM "Z Zoom I&n\tCtrl+Insert",     ID_VIEW_ZZOOMIN
+            MENUITEM "Z Zoom O&ut\tCtrl+Delete",    ID_VIEW_ZZOOMOUT
         END
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Center On &Selection\t\\",    ID_VIEW_CENTERONSELECTION,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Next Leak Spot\tCtrl+>",     ID_MISC_NEXTLEAKSPOT,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Previous Leak Spot\tCtrl+<", ID_MISC_PREVIOUSLEAKSPOT,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        POPUP "Cu&bic Clipping",                65535,MFT_STRING,MFS_ENABLED
+        MENUITEM SEPARATOR
+        MENUITEM "Center On &Selection\t\\",    ID_VIEW_CENTERONSELECTION
+        MENUITEM "&Next Leak Spot\tCtrl+>",     ID_MISC_NEXTLEAKSPOT
+        MENUITEM "&Previous Leak Spot\tCtrl+<", ID_MISC_PREVIOUSLEAKSPOT
+        MENUITEM SEPARATOR
+        POPUP "Cu&bic Clipping"
         BEGIN
-            MENUITEM "&Cubic Clip\tCtrl+\\",        ID_VIEW_CUBICCLIP,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "Cubic Clip Zoom &In\tCtrl+]", ID_VIEW_CUBICCLIPZOOMIN,MFT_STRING,MFS_ENABLED
-            MENUITEM "Cubic Clip Zoom &Out\tCtrl+[", ID_VIEW_CUBICCLIPZOOMOUT,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Cubic Clip\tCtrl+\\",        ID_VIEW_CUBICCLIP
+            MENUITEM SEPARATOR
+            MENUITEM "Cubic Clip &Nearer\tCtrl+[",  ID_VIEW_CUBICCLIPNEARER
+            MENUITEM "Cubic Clip &Farther\tCtrl+]", ID_VIEW_CUBICCLIPFARTHER
         END
-        POPUP "Draw &Mode",                     65535,MFT_STRING,MFS_ENABLED
+        POPUP "Draw &Mode"
         BEGIN
-            MENUITEM "&Wireframe",                  ID_DRAWMODE_WIREFRAME,MFT_STRING | MFT_RIGHTJUSTIFY,MFS_ENABLED
-            MENUITEM "&Flat Color",                 ID_DRAWMODE_FLATSHADE,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Textured",                   ID_DRAWMODE_TEXTURED,MFT_STRING,MFS_ENABLED
-        END
-    END
-    POPUP "&Selection",                     65535,MFT_STRING,MFS_ENABLED
-    BEGIN
-        MENUITEM "&Complete Tall\tAlt+C",       ID_SELECTION_SELECTCOMPLETETALL,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Touching\tAlt+T",            ID_SELECTION_SELECTTOUCHING,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Partial Tall\tAlt+P",        ID_SELECTION_SELECTPARTIALTALL,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Inside\tAlt+I",              ID_SELECTION_SELECTINSIDE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Select &All\tCtrl+A",         ID_SELECTION_SELECTALL,MFT_STRING,MFS_ENABLED
-        MENUITEM "Dese&lect/Cancel\tEsc",       ID_SELECTION_DESELECT,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Invert\tI",                  ID_SELECTION_INVERT,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Next Brush In Group\tCtrl+Tab", ID_SELECTION_GROUPNEXTBRUSH,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Select All of T&ype\tCtrl+Shift+A", ID_SELECTION_SELECTALLTYPE,MFT_STRING,MFS_ENABLED
-        MENUITEM "Select Matching Textures\tCtrl+T", ID_SELECTION_SELECTMATCHINGTEXTURES,MFT_STRING,MFS_ENABLED
-        MENUITEM "Select by Key/Value\tCtrl+E", ID_SELECTION_SELECTMATCHINGKEYVALUE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        POPUP "Convert",                        65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "Brushes to Faces",            ID_SELECTION_BRUSHESTOFACES,MFT_STRING,MFS_ENABLED
-            MENUITEM "Faces to Brushes (Complete)", ID_SELECTION_FACESTOBRUSHESCOMPLETE,MFT_STRING,MFS_ENABLED
-            MENUITEM "Faces to Brushes (Partial)",  ID_SELECTION_FACESTOBRUSHESPARTIAL,MFT_STRING,MFS_ENABLED
+            MENUITEM "&Wireframe",                  ID_DRAWMODE_WIREFRAME
+            MENUITEM "&Flat Color",                 ID_DRAWMODE_FLATSHADE
+            MENUITEM "&Textured",                   ID_DRAWMODE_TEXTURED
         END
     END
-    POPUP "&Tools",                         65535,MFT_STRING,MFS_ENABLED
+    POPUP "&Selection"
     BEGIN
-        MENUITEM "Draw &Brushes Tool\tB",       ID_TOOLS_DRAWBRUSHESTOOL,MFT_STRING,MFS_ENABLED
-        POPUP "&Clipper",                       65535,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Complete Tall\tAlt+C",       ID_SELECTION_SELECTCOMPLETETALL
+        MENUITEM "&Touching\tAlt+T",            ID_SELECTION_SELECTTOUCHING
+        MENUITEM "&Partial Tall\tAlt+P",        ID_SELECTION_SELECTPARTIALTALL
+        MENUITEM "&Inside\tAlt+I",              ID_SELECTION_SELECTINSIDE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All\tCtrl+A",         ID_SELECTION_SELECTALL
+        MENUITEM "Dese&lect/Cancel\tEsc",       ID_SELECTION_DESELECT
+        MENUITEM "&Invert\tI",                  ID_SELECTION_INVERT
+        MENUITEM "&Next Brush In Group\tCtrl+Tab", ID_SELECTION_GROUPNEXTBRUSH
+        MENUITEM SEPARATOR
+        MENUITEM "Select All of T&ype\tCtrl+Shift+A", ID_SELECTION_SELECTALLTYPE
+        MENUITEM "Select Matching Textures\tCtrl+T", ID_SELECTION_SELECTMATCHINGTEXTURES
+        MENUITEM "Select by Key/Value\tCtrl+E", ID_SELECTION_SELECTMATCHINGKEYVALUE
+        MENUITEM SEPARATOR
+        POPUP "Convert"
         BEGIN
-            MENUITEM "&Toggle Clipper\tX",          ID_SELECTION_CLIPPER,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "&Clip Selection\tEnter",      ID_SELECTION_CLIPSELECTED,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Split Selection\tShift+Enter", ID_SELECTION_SPLITSELECTED,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Flip Clip Orientation\tCtrl+Enter", ID_SELECTION_FLIPCLIP,MFT_STRING,MFS_ENABLED
-        END
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Drag &Edges\tE",              ID_SELECTION_DRAGEDGES,MFT_STRING,MFS_ENABLED
-        MENUITEM "Drag &Vertices\tV",           ID_SELECTION_DRAGVERTICES,MFT_STRING,MFS_ENABLED
-        MENUITEM "Drag &Faces\tF",              ID_SELECTION_DRAGFACES,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR,MFT_STRING,MFS_ENABLED
-        MENUITEM "Se&t Entity Key/Values...",   ID_TOOLS_SETENTITYKEYS,MFT_STRING,MFS_ENABLED
-        MENUITEM "C&onnect Entities\tCtrl+K",   ID_SELECTION_CONNECT,MFT_STRING,MFS_ENABLED
-        MENUITEM "Move to &World\tCtrl+U",      ID_SELECTION_UNGROUPENTITY,MFT_STRING,MFS_ENABLED
-        MENUITEM "Move to E&ntity\tCtrl+I",     ID_SELECTION_INSERTBRUSH,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        POPUP "F&lip",                          65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "Flip &X",                     ID_SELECTION_FLIPX,MFT_STRING,MFS_ENABLED
-            MENUITEM "Flip &Y",                     ID_SELECTION_FLIPY,MFT_STRING,MFS_ENABLED
-            MENUITEM "Flip &Z",                     ID_SELECTION_FLIPZ,MFT_STRING,MFS_ENABLED
-        END
-        POPUP "&Rotate",                        65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "Rotate &X",                   ID_SELECTION_ROTATEX,MFT_STRING,MFS_ENABLED
-            MENUITEM "Rotate &Y",                   ID_SELECTION_ROTATEY,MFT_STRING,MFS_ENABLED
-            MENUITEM "Rotate &Z",                   ID_SELECTION_ROTATEZ,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "Arbitrary &Rotation...\tR",   ID_SELECTION_ARBITRARYROTATION,MFT_STRING,MFS_ENABLED
-        END
-        POPUP "Sc&ale",                         65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "Scale Lock &X",               ID_SELECTION_SCALELOCKX,MFT_STRING,MFS_ENABLED
-            MENUITEM "Scale Lock &Y",               ID_SELECTION_SCALELOCKY,MFT_STRING,MFS_ENABLED
-            MENUITEM "Scale Lock &Z",               ID_SELECTION_SCALELOCKZ,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "&Scale...",                   ID_SELECTION_SCALE,MFT_STRING,MFS_ENABLED
-        END
-        MENUITEM MFT_SEPARATOR
-        POPUP "CS&G",                           65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "CSG &Hollow\tAlt+H",          ID_SELECTION_CSGHOLLOW,MFT_STRING,MFS_ENABLED
-            MENUITEM "CSG &Subtract\tAlt+S",        ID_SELECTION_CSGSUBTRACT,MFT_STRING,MFS_ENABLED
-            MENUITEM "CSG &Merge\tAlt+M",           ID_SELECTION_CSGMERGE,MFT_STRING,MFS_ENABLED
-        END
-        MENUITEM MFT_SEPARATOR
-        POPUP "&Primitives",                    65535,MFT_STRING,MFS_ENABLED
-        BEGIN
-            MENUITEM "Czg Cylinder (&12)",          ID_PRIMITIVES_CZGCYLINDER1,MFT_STRING,MFS_ENABLED
-            MENUITEM "Czg Cylinder (&24)",          ID_PRIMITIVES_CZGCYLINDER2,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "&Cylinder...",                ID_BRUSH_CYLINDER,MFT_STRING,MFS_ENABLED
-            MENUITEM "C&one...",                    ID_BRUSH_CONE,MFT_STRING,MFS_ENABLED
-            MENUITEM "&Sphere...",                  ID_BRUSH_SPHERE,MFT_STRING,MFS_ENABLED
+            MENUITEM "Brushes to Faces",            ID_SELECTION_BRUSHESTOFACES
+            MENUITEM "Faces to Brushes (Complete)", ID_SELECTION_FACESTOBRUSHESCOMPLETE
+            MENUITEM "Faces to Brushes (Partial)",  ID_SELECTION_FACESTOBRUSHESPARTIAL
         END
     END
-    POPUP "&Grid",                          65535,MFT_STRING,MFS_ENABLED
+    POPUP "&Tools"
     BEGIN
-        MENUITEM "Grid 1\t&1",                  ID_GRID_1,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 2\t&2",                  ID_GRID_2,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 4\t&3",                  ID_GRID_4,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 8\t&4",                  ID_GRID_8,MFT_STRING,MFS_CHECKED
-        MENUITEM "Grid 16\t&5",                 ID_GRID_16,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 32\t&6",                 ID_GRID_32,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 64\t&7",                 ID_GRID_64,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 128\t&8",                ID_GRID_128,MFT_STRING,MFS_ENABLED
-        MENUITEM "Grid 256\t&9",                ID_GRID_256,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Show Grid\t&0",               ID_GRID_TOGGLE,MFT_STRING,MFS_CHECKED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Snap To Grid",               ID_GRID_SNAPTOGRID,MFT_STRING,MFS_CHECKED
-    END
-    POPUP "Te&xtures",                      65535,MFT_STRING,MFS_ENABLED
-    BEGIN
-        MENUITEM "&Surface Inspector...\tS",    ID_TEXTURES_INSPECTOR,MFT_STRING,MFS_ENABLED
-        MENUITEM "Texture &Lock\tL",            ID_TEXTURES_LOCK,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Find / Replace...\tCtrl+R",  ID_TEXTURES_REPLACEALL,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Default Texture Scale...",   ID_TEXTURES_DEFAULTSCALE,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Flush &Unused\tF",            ID_TEXTURES_FLUSH_UNUSED,MFT_STRING,MFS_ENABLED
-        MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE,MFT_STRING,MFS_ENABLED
-        MENUITEM "Update &Texture Menu",        ID_TEXTURES_UPDATEMENU,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-    END
-    POPUP "&Region",                        65535,MFT_STRING,MFS_ENABLED
-    BEGIN
-        MENUITEM "&Off\tAlt+O",                 ID_REGION_OFF,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "Set &Selection",              ID_REGION_SETSELECTION,MFT_STRING,MFS_ENABLED
-        MENUITEM "Set &XY\tAlt+X",              ID_REGION_SETXY,MFT_STRING,MFS_ENABLED
-        MENUITEM "Set XZ\tAlt+Z",               ID_REGION_SETXZ,MFT_STRING,MFS_ENABLED
-        MENUITEM "Set YZ\tAlt+Y",               ID_REGION_SETYZ,MFT_STRING,MFS_ENABLED
-        MENUITEM "Set &Brush\tAlt+B",           ID_REGION_SETBRUSH,MFT_STRING,MFS_ENABLED
-        MENUITEM "Set Brush &Tall",             ID_REGION_SETTALLBRUSH,MFT_STRING,MFS_ENABLED
-    END
-    POPUP "&Bsp",                           65535,MFT_STRING,MFS_ENABLED
-    BEGIN
-        MENUITEM "&Test Map...\tF12",           ID_MISC_TESTMAP,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-    END
-    POPUP "&Window",                        65535,MFT_STRING,MFS_ENABLED
-    BEGIN
-        MENUITEM "Camera &View\tQ",             ID_VIEW_CAMERA,MFT_STRING,MFS_ENABLED
-        MENUITEM "C&onsole View\tO",            ID_VIEW_CONSOLE,MFT_STRING,MFS_ENABLED
-        MENUITEM "E&ntity View\tN",             ID_VIEW_ENTITY,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Texture View\tT",            ID_VIEW_TEXTURE,MFT_STRING,MFS_ENABLED
-        MENUITEM "XY View (Top)\tAlt+1",        ID_VIEW_TOGGLE_XY,MFT_STRING,MFS_ENABLED
-        MENUITEM "XZ View (Front)\tAlt+2",      ID_VIEW_TOGGLE_XZ,MFT_STRING,MFS_ENABLED
-        MENUITEM "&YZ View (Side)\tAlt+3",      ID_VIEW_TOGGLE_YZ,MFT_STRING,MFS_ENABLED
-        MENUITEM "Z View\tAlt+4",               ID_VIEW_TOGGLE_Z,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        POPUP "Tool B&ar",                      65535,MFT_STRING,MFS_ENABLED
+        MENUITEM "Draw &Brushes Tool\tB",       ID_TOOLS_DRAWBRUSHESTOOL
+        POPUP "&Clipper"
         BEGIN
-            MENUITEM "&File Band",                  ID_VIEW_TOOLBAR_FILEBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Edit Band",                  ID_VIEW_TOOLBAR_EDITBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "E&dit2 Band",                 ID_VIEW_TOOLBAR_EDIT2BAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Select Band",                ID_VIEW_TOOLBAR_SELECTBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&CSG Band",                   ID_VIEW_TOOLBAR_CSGBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Mode Band",                  ID_VIEW_TOOLBAR_MODEBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Entity Band",                ID_VIEW_TOOLBAR_ENTITYBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Brush Band",                 ID_VIEW_TOOLBAR_BRUSHBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&Texture Band",               ID_VIEW_TOOLBAR_TEXTUREBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "&View Band",                  ID_VIEW_TOOLBAR_VIEWBAND,MFT_STRING,MFS_CHECKED
-            MENUITEM "M&isc Band",                  ID_VIEW_TOOLBAR_MISCBAND,MFT_STRING,MFS_CHECKED
+            MENUITEM "&Toggle Clipper\tX",          ID_SELECTION_CLIPPER
+            MENUITEM SEPARATOR
+            MENUITEM "&Clip Selection\tEnter",      ID_SELECTION_CLIPSELECTED
+            MENUITEM "&Split Selection\tShift+Enter", ID_SELECTION_SPLITSELECTED
+            MENUITEM "&Flip Clip Orientation\tCtrl+Enter", ID_SELECTION_FLIPCLIP
         END
-        MENUITEM "Status Ba&r",                 ID_VIEW_STATUSBAR,MFT_STRING,MFS_CHECKED
-        MENUITEM MFT_SEPARATOR
-        POPUP "Presets",                        65535,MFT_STRING,MFS_ENABLED
+        MENUITEM SEPARATOR
+        MENUITEM "Drag &Edges\tE",              ID_SELECTION_DRAGEDGES
+        MENUITEM "Drag &Vertices\tV",           ID_SELECTION_DRAGVERTICES
+        MENUITEM "Drag &Faces\tF",              ID_SELECTION_DRAGFACES
+        MENUITEM SEPARATOR
+        MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR
+        MENUITEM "Se&t Entity Key/Values...",   ID_TOOLS_SETENTITYKEYS
+        MENUITEM "C&onnect Entities\tCtrl+K",   ID_SELECTION_CONNECT
+        MENUITEM "Move to &World\tCtrl+U",      ID_SELECTION_UNGROUPENTITY
+        MENUITEM "Move to E&ntity\tCtrl+I",     ID_SELECTION_INSERTBRUSH
+        MENUITEM SEPARATOR
+        POPUP "F&lip"
         BEGIN
-            MENUITEM "QE3 &Default",                ID_WINDOW_QE3DEFAULT,MFT_STRING,MFS_ENABLED
-            MENUITEM "QE3 &Reverse",                ID_WINDOW_QE3REVERSE,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "4 View w/ Z (Cam Left)",      ID_WINDOW_4WINDOWZCAMLEFT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View w/ Z (Cam Right)",     ID_WINDOW_4WINDOWZCAMRIGHT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View w/o Z (Cam Left)",     ID_WINDOW_4WINDOWNOZCAMLEFT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View w/o Z (Cam Right)",    ID_WINDOW_4WINDOWNOZCAMRIGHT,MFT_STRING,MFS_ENABLED
-            MENUITEM MFT_SEPARATOR
-            MENUITEM "4 View Reverse w/ Z (Cam Left)", ID_WINDOW_4REVERSEZCAMLEFT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View Reverse w/ Z (Cam Right)", ID_WINDOW_4REVERSEZCAMRIGHT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View Reverse w/o Z (Cam Left)", ID_WINDOW_4REVERSENOZCAMLEFT,MFT_STRING,MFS_ENABLED
-            MENUITEM "4 View Reverse w/o Z (Cam Right)", ID_WINDOW_4REVERSENOZCAMRIGHT,MFT_STRING,MFS_ENABLED
+            MENUITEM "Flip &X",                     ID_SELECTION_FLIPX
+            MENUITEM "Flip &Y",                     ID_SELECTION_FLIPY
+            MENUITEM "Flip &Z",                     ID_SELECTION_FLIPZ
         END
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Benchmark\tF10",             ID_MISC_BENCHMARK,MFT_STRING,MFS_ENABLED
+        POPUP "&Rotate"
+        BEGIN
+            MENUITEM "Rotate &X",                   ID_SELECTION_ROTATEX
+            MENUITEM "Rotate &Y",                   ID_SELECTION_ROTATEY
+            MENUITEM "Rotate &Z",                   ID_SELECTION_ROTATEZ
+            MENUITEM SEPARATOR
+            MENUITEM "Arbitrary &Rotation...\tR",   ID_SELECTION_ARBITRARYROTATION
+        END
+        POPUP "Sc&ale"
+        BEGIN
+            MENUITEM "Scale Lock &X",               ID_SELECTION_SCALELOCKX
+            MENUITEM "Scale Lock &Y",               ID_SELECTION_SCALELOCKY
+            MENUITEM "Scale Lock &Z",               ID_SELECTION_SCALELOCKZ
+            MENUITEM SEPARATOR
+            MENUITEM "&Scale...",                   ID_SELECTION_SCALE
+        END
+        MENUITEM SEPARATOR
+        POPUP "CS&G"
+        BEGIN
+            MENUITEM "CSG &Hollow\tAlt+H",          ID_SELECTION_CSGHOLLOW
+            MENUITEM "CSG &Subtract\tAlt+S",        ID_SELECTION_CSGSUBTRACT
+            MENUITEM "CSG &Merge\tAlt+M",           ID_SELECTION_CSGMERGE
+        END
+        MENUITEM SEPARATOR
+        POPUP "&Primitives"
+        BEGIN
+            MENUITEM "Czg Cylinder (&12)",          ID_PRIMITIVES_CZGCYLINDER1
+            MENUITEM "Czg Cylinder (&24)",          ID_PRIMITIVES_CZGCYLINDER2
+            MENUITEM SEPARATOR
+            MENUITEM "&Cylinder...",                ID_BRUSH_CYLINDER
+            MENUITEM "C&one...",                    ID_BRUSH_CONE
+            MENUITEM "&Sphere...",                  ID_BRUSH_SPHERE
+        END
     END
-    POPUP "&Help",                          65535,MFT_STRING,MFS_ENABLED
+    POPUP "&Grid"
     BEGIN
-        MENUITEM "&Help Topics...\tF1",         ID_HELP_HELP,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&Key Commands...",            ID_HELP_KEYLIST,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Mouse Commands...",          ID_HELP_MOUSELIST,MFT_STRING,MFS_ENABLED
-        MENUITEM MFT_SEPARATOR
-        MENUITEM "&About...",                   ID_HELP_ABOUT,MFT_STRING,MFS_ENABLED
+        MENUITEM "Grid 1\t&1",                  ID_GRID_1
+        MENUITEM "Grid 2\t&2",                  ID_GRID_2
+        MENUITEM "Grid 4\t&3",                  ID_GRID_4
+        MENUITEM "Grid 8\t&4",                  ID_GRID_8, CHECKED
+        MENUITEM "Grid 16\t&5",                 ID_GRID_16
+        MENUITEM "Grid 32\t&6",                 ID_GRID_32
+        MENUITEM "Grid 64\t&7",                 ID_GRID_64
+        MENUITEM "Grid 128\t&8",                ID_GRID_128
+        MENUITEM "Grid 256\t&9",                ID_GRID_256
+        MENUITEM SEPARATOR
+        MENUITEM "Show Grid\t&0",               ID_GRID_TOGGLE, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Snap To Grid",               ID_GRID_SNAPTOGRID, CHECKED
+    END
+    POPUP "Te&xtures"
+    BEGIN
+        MENUITEM "&Surface Inspector...\tS",    ID_TEXTURES_INSPECTOR
+        MENUITEM "Texture &Lock\tL",            ID_TEXTURES_LOCK
+        MENUITEM "&Find / Replace...\tCtrl+R",  ID_TEXTURES_REPLACEALL
+        MENUITEM SEPARATOR
+        MENUITEM "&Default Texture Scale...",   ID_TEXTURES_DEFAULTSCALE
+        MENUITEM SEPARATOR
+        MENUITEM "Flush &Unused\tF",            ID_TEXTURES_FLUSH_UNUSED
+        MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE
+        MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD
+        MENUITEM SEPARATOR
+        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
+        MENUITEM "Update &Texture Menu",        ID_TEXTURES_UPDATEMENU
+        MENUITEM SEPARATOR
+    END
+    POPUP "&Region"
+    BEGIN
+        MENUITEM "&Off\tAlt+O",                 ID_REGION_OFF
+        MENUITEM SEPARATOR
+        MENUITEM "Set &Selection",              ID_REGION_SETSELECTION
+        MENUITEM "Set &XY\tAlt+X",              ID_REGION_SETXY
+        MENUITEM "Set XZ\tAlt+Z",               ID_REGION_SETXZ
+        MENUITEM "Set YZ\tAlt+Y",               ID_REGION_SETYZ
+        MENUITEM "Set &Brush\tAlt+B",           ID_REGION_SETBRUSH
+        MENUITEM "Set Brush &Tall",             ID_REGION_SETTALLBRUSH
+    END
+    POPUP "&Bsp"
+    BEGIN
+        MENUITEM "&Test Map...\tF12",           ID_MISC_TESTMAP
+        MENUITEM SEPARATOR
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "Camera &View\tQ",             ID_VIEW_CAMERA
+        MENUITEM "C&onsole View\tO",            ID_VIEW_CONSOLE
+        MENUITEM "E&ntity View\tN",             ID_VIEW_ENTITY
+        MENUITEM "&Texture View\tT",            ID_VIEW_TEXTURE
+        MENUITEM "XY View (Top)\tAlt+1",        ID_VIEW_TOGGLE_XY
+        MENUITEM "XZ View (Front)\tAlt+2",      ID_VIEW_TOGGLE_XZ
+        MENUITEM "&YZ View (Side)\tAlt+3",      ID_VIEW_TOGGLE_YZ
+        MENUITEM "Z View\tAlt+4",               ID_VIEW_TOGGLE_Z
+        MENUITEM SEPARATOR
+        POPUP "Tool B&ar"
+        BEGIN
+            MENUITEM "&File Band",                  ID_VIEW_TOOLBAR_FILEBAND, CHECKED
+            MENUITEM "&Edit Band",                  ID_VIEW_TOOLBAR_EDITBAND, CHECKED
+            MENUITEM "&Window Band",                ID_VIEW_TOOLBAR_WINDOWBAND, CHECKED
+            MENUITEM "T&ransform Band",             ID_VIEW_TOOLBAR_EDIT2BAND, CHECKED
+            MENUITEM "&Select Band",                ID_VIEW_TOOLBAR_SELECTBAND, CHECKED
+            MENUITEM "&CSG Band",                   ID_VIEW_TOOLBAR_CSGBAND, CHECKED
+            MENUITEM "T&ool Band",                  ID_VIEW_TOOLBAR_MODEBAND, CHECKED
+            MENUITEM "&Entity Band",                ID_VIEW_TOOLBAR_ENTITYBAND, CHECKED
+            MENUITEM "&Brush Band",                 ID_VIEW_TOOLBAR_BRUSHBAND, CHECKED
+            MENUITEM "&Texture Band",               ID_VIEW_TOOLBAR_TEXTUREBAND, CHECKED
+            MENUITEM "&View Band",                  ID_VIEW_TOOLBAR_VIEWBAND, CHECKED
+            MENUITEM "&Misc Band",                  ID_VIEW_TOOLBAR_MISCBAND, CHECKED
+        END
+        MENUITEM "Status Ba&r",                 ID_VIEW_STATUSBAR, CHECKED
+        MENUITEM SEPARATOR
+        POPUP "Presets"
+        BEGIN
+            MENUITEM "QE3 &Default",                ID_WINDOW_QE3DEFAULT
+            MENUITEM "QE3 &Reverse",                ID_WINDOW_QE3REVERSE
+            MENUITEM SEPARATOR
+            MENUITEM "4 View w/ Z (Cam Left)",      ID_WINDOW_4WINDOWZCAMLEFT
+            MENUITEM "4 View w/ Z (Cam Right)",     ID_WINDOW_4WINDOWZCAMRIGHT
+            MENUITEM "4 View w/o Z (Cam Left)",     ID_WINDOW_4WINDOWNOZCAMLEFT
+            MENUITEM "4 View w/o Z (Cam Right)",    ID_WINDOW_4WINDOWNOZCAMRIGHT
+            MENUITEM SEPARATOR
+            MENUITEM "4 View Reverse w/ Z (Cam Left)", ID_WINDOW_4REVERSEZCAMLEFT
+            MENUITEM "4 View Reverse w/ Z (Cam Right)", ID_WINDOW_4REVERSEZCAMRIGHT
+            MENUITEM "4 View Reverse w/o Z (Cam Left)", ID_WINDOW_4REVERSENOZCAMLEFT
+            MENUITEM "4 View Reverse w/o Z (Cam Right)", ID_WINDOW_4REVERSENOZCAMRIGHT
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Benchmark\tF10",             ID_MISC_BENCHMARK
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics...\tF1",         ID_HELP_HELP
+        MENUITEM SEPARATOR
+        MENUITEM "&Key Commands...",            ID_HELP_KEYLIST
+        MENUITEM "&Mouse Commands...",          ID_HELP_MOUSELIST
+        MENUITEM SEPARATOR
+        MENUITEM "&About...",                   ID_HELP_ABOUT
     END
 END
 
@@ -376,7 +377,6 @@ BEGIN
             MENUITEM "CSG Hollow",                  ID_SELECTION_CSGHOLLOW
             MENUITEM "CSG Subtract",                ID_SELECTION_CSGSUBTRACT
             MENUITEM "CSG Merge",                   ID_SELECTION_CSGMERGE
-            MENUITEM "CSG &Convex Merge",           ID_SELECTION_CSGCONVEXMERGE
         END
         MENUITEM SEPARATOR
         POPUP "&Selection"
@@ -1117,8 +1117,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,50,0
- PRODUCTVERSION 3,2,50,0
+ FILEVERSION 3,2,51,0
+ PRODUCTVERSION 3,2,51,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1135,14 +1135,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 50)"
-            VALUE "FileVersion", "3.2.50.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 50)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 51)"
+            VALUE "FileVersion", "3.2.51.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 51)"
             VALUE "LegalCopyright", "Copyright © 1997-2019"
             VALUE "LegalTrademarks", "Quake™ 1996-2019"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.50.0"
+            VALUE "ProductVersion", "3.2.51.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1182,6 +1182,10 @@ BEGIN
     "S",            ID_FILE_SAVEAS,         VIRTKEY, SHIFT, CONTROL, NOINVERT
     VK_OEM_PERIOD,  ID_MISC_NEXTLEAKSPOT,   VIRTKEY, CONTROL, NOINVERT
     VK_OEM_COMMA,   ID_MISC_PREVIOUSLEAKSPOT, VIRTKEY, CONTROL, NOINVERT
+    VK_DOWN,        ID_NUDGE_DOWN,          VIRTKEY, ALT, NOINVERT
+    VK_LEFT,        ID_NUDGE_LEFT,          VIRTKEY, ALT, NOINVERT
+    VK_RIGHT,       ID_NUDGE_RIGHT,         VIRTKEY, ALT, NOINVERT
+    VK_UP,          ID_NUDGE_UP,            VIRTKEY, ALT, NOINVERT
     "O",            ID_REGION_OFF,          VIRTKEY, ALT, NOINVERT
     "B",            ID_REGION_SETBRUSH,     VIRTKEY, ALT, NOINVERT
     "X",            ID_REGION_SETXY,        VIRTKEY, ALT, NOINVERT
@@ -1207,8 +1211,8 @@ BEGIN
     "U",            ID_SELECTION_UNGROUPENTITY, VIRTKEY, CONTROL, NOINVERT
     "R",            ID_TEXTURES_REPLACEALL, VIRTKEY, CONTROL, NOINVERT
     VK_OEM_5,       ID_VIEW_CUBICCLIP,      VIRTKEY, CONTROL, NOINVERT
-    VK_OEM_6,       ID_VIEW_CUBICCLIPZOOMIN, VIRTKEY, CONTROL, NOINVERT
-    VK_OEM_4,       ID_VIEW_CUBICCLIPZOOMOUT, VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_6,       ID_VIEW_CUBICCLIPFARTHER, VIRTKEY, CONTROL, NOINVERT
+    VK_OEM_4,       ID_VIEW_CUBICCLIPNEARER, VIRTKEY, CONTROL, NOINVERT
     "H",            ID_VIEW_HIDESHOW_SHOWHIDDEN, VIRTKEY, CONTROL, NOINVERT
     "1",            ID_VIEW_TOGGLE_XY,      VIRTKEY, ALT, NOINVERT
     "2",            ID_VIEW_TOGGLE_XZ,      VIRTKEY, ALT, NOINVERT
@@ -1217,10 +1221,6 @@ BEGIN
     VK_HOME,        ID_VIEW_Z100,           VIRTKEY, CONTROL, NOINVERT
     VK_INSERT,      ID_VIEW_ZZOOMIN,        VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_VIEW_ZZOOMOUT,       VIRTKEY, CONTROL, NOINVERT
-    VK_UP,          ID_NUDGE_UP,            VIRTKEY, ALT, NOINVERT
-    VK_DOWN,        ID_NUDGE_DOWN,          VIRTKEY, ALT, NOINVERT
-    VK_RIGHT,       ID_NUDGE_RIGHT,         VIRTKEY, ALT, NOINVERT
-    VK_LEFT,        ID_NUDGE_LEFT,          VIRTKEY, ALT, NOINVERT
 END
 
 
@@ -1271,8 +1271,8 @@ BEGIN
     BUTTON      ID_TEXTURES_POPUP
     BUTTON      ID_VIEW_CAMSPEED
     BUTTON      ID_VIEW_CUBICCLIP
-    BUTTON      ID_VIEW_CUBICCLIPZOOMOUT
-    BUTTON      ID_VIEW_CUBICCLIPZOOMIN
+    BUTTON      ID_VIEW_CUBICCLIPFARTHER
+    BUTTON      ID_VIEW_CUBICCLIPNEARER
     SEPARATOR
     BUTTON      ID_MISC_TESTMAP
 END
@@ -1341,8 +1341,8 @@ BEGIN
     BUTTON      ID_TEXTURES_POPUP
     BUTTON      ID_VIEW_CAMSPEED
     BUTTON      ID_VIEW_CUBICCLIP
-    BUTTON      ID_VIEW_CUBICCLIPZOOMOUT
-    BUTTON      ID_VIEW_CUBICCLIPZOOMIN
+    BUTTON      ID_VIEW_CUBICCLIPNEARER
+    BUTTON      ID_VIEW_CUBICCLIPFARTHER
     SEPARATOR
     BUTTON      ID_MISC_TESTMAP
     BUTTON      ID_HELP_HELP
@@ -1875,12 +1875,12 @@ BEGIN
     ID_BRUSH_CONE           "Create N-Sided Cone (Ctrl+B)"
     ID_BRUSH_SPHERE         "Create N-Sided Sphere (Ctrl+Shift+B)"
     ID_VIEW_CUBICCLIP       "Cubic Clip the Camera Vew (Ctrl+\\)"
-    ID_VIEW_CUBICCLIPZOOMIN "Cubic Clip Zoom In (Ctrl+])"
+    ID_VIEW_CUBICCLIPNEARER "Cubic Clip Nearer (Ctrl+[)"
 END
 
 STRINGTABLE
 BEGIN
-    ID_VIEW_CUBICCLIPZOOMOUT "Cubic Clip Zoom Out (Ctrl+[)"
+    ID_VIEW_CUBICCLIPFARTHER "Cubic Clip Farther (Ctrl+])"
     ID_EDIT_MAPINFO         "Open Map Info Dialog (F2)"
     ID_FILE_PRINTXY         "Print Current XY View (Ctrl+P)"
     ID_EDIT_FINDBRUSH       "Find Brush or Entity (Ctrl+F)"

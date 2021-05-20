@@ -76,7 +76,20 @@ Main_HandleMWheel
 void Main_HandleMWheel(MSG &msg)
 {
 	if (msg.message != WM_MOUSEWHEEL) return;
-	msg.hwnd = WndMain_WindowForPoint((short)LOWORD(msg.lParam), (short)HIWORD(msg.lParam));
+
+	POINT p;
+	p.x = (short)LOWORD(msg.lParam);
+	p.y = (short)HIWORD(msg.lParam);
+
+	msg.hwnd = WndMain_WindowForPoint(p);
+	// mouse message coords are client-area relative, except for the mousewheel which
+	// is screen-relative, just to make win32 programming a fun adventure
+	ScreenToClient(msg.hwnd, &p);
+//#define LOWORD(l)		((WORD)(((DWORD_PTR)(l)) & 0xffff))
+//#define HIWORD(l)		((WORD)((((DWORD_PTR)(l)) >> 16) & 0xffff))
+	p.x = p.x & 0xffff;
+	p.y = (p.y & 0xffff) << 16;
+	msg.lParam = p.x + p.y;
 }
 
 /*

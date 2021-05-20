@@ -1,46 +1,37 @@
 //==============================
-//	z.h
+//	ZView.h
 //==============================
 #ifndef __ZVIEW_H__
 #define __ZVIEW_H__
 
 // window system independent z view code
-#include "View.h"
+#include "DisplayView.h"
 
-class ZView : public View
+class ZView : public DisplayView
 {
 public:
 	ZView();
 	~ZView();
 
-	void	MouseDown(const int x, const int y, const int buttons);
-	void	MouseUp(const int x, const int y, const int buttons);
-	void	MouseMoved(const int x, const int y, const int buttons);
+	inline vec3 GetOrigin() { return origin; }
+	inline float GetScale() { return scale; }
+
+	void	SetOrigin(vec3 norg) { origin = norg; }
 	void	ScaleUp();
 	void	ScaleDown();
+	void	ResetScale();
 	void	Scroll(float amt);
-	void	Draw();
-	void	DrawBrush(Brush *brush, vec3 selColor);
-	bool	DrawTools();
-	void	DrawSelection(vec3 selColor);
-
-	void	ToPoint(int x, int y, vec3 &point);
+	void	Resize(const int w, const int h);
+	void	Scale(float sc);
+	void	ScreenToWorld(int x, int y, vec3 &point);
+	void	ScreenToWorldSnapped(int x, int y, vec3 &point);
 	mouseContext_t const GetMouseContext(const int x, const int y);
-
 private:
-	struct zbr_t {
-		float top, bottom;
-		Brush* brush;
-		Texture* tex;
-		zbr_t() {};
-		zbr_t(Brush &br);
-	};
+	float	scale;
+	vec3	origin;
 
 	void	Init();
-	void	DrawGrid();
-	void	DrawCameraIcon();
-	void	DrawCoords();
-	bool	TestBrush(zbr_t &zbr);
+
 };
 
 //========================================================================
