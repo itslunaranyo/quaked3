@@ -47,6 +47,7 @@ private:
 	bool InputCommand(WPARAM w);
 
 	void Reset();
+	vec3 AxisForClip();
 	void PointsUpdated();
 	void Clip();
 	void Split();
@@ -60,7 +61,7 @@ private:
 	void StartQuickClip(GridView* xyz, int x, int y);
 	void EndQuickClip();
 
-	bool CamPointOnSelection(int x, int y, vec3 & out, int * outAxis);
+	bool CamPointOnSelection(int x, int y, vec3 & out);
 	void CamDropPoint(int x, int y);
 	clippoint_t* CamGetNearestClipPoint(int x, int y);
 	void CamMovePoint(int x, int y);
@@ -74,7 +75,7 @@ private:
 
 	void Draw();
 	void DrawPoints();
-	void DrawClipWire(std::vector<Brush*> *brList);
+	void DrawClipWire(std::vector<Brush*> *brList, vec3 color);
 };
 
 

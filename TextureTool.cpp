@@ -488,6 +488,9 @@ void TextureTool::FitTexture(float x, float y)
 // and thus one undo step.
 void TextureTool::ShiftTexture(int x, int y)
 {
+	if (!Selection::NumFaces() && !Selection::HasBrushes())
+		return;
+
 	GetTexModCommand(TM_SHIFT);
 	lastTexMod->Shift(x, y);
 
@@ -498,6 +501,9 @@ void TextureTool::ShiftTexture(int x, int y)
 
 void TextureTool::ScaleTexture(float x, float y)
 {
+	if (!Selection::NumFaces() && !Selection::HasBrushes())
+		return;
+
 	GetTexModCommand(TM_SCALE);
 	lastTexMod->Scale(x, y);
 
@@ -508,6 +514,9 @@ void TextureTool::ScaleTexture(float x, float y)
 
 void TextureTool::RotateTexture(float r)
 {
+	if (!Selection::NumFaces() && !Selection::HasBrushes())
+		return;
+
 	GetTexModCommand(TM_ROTATE);
 	lastTexMod->Rotate(r);
 
@@ -530,7 +539,7 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 		else if (Selection::NumFaces())
 			lastTexMod->UseFaces(Selection::faces);
 	}
-	else
-		Sys_Printf("combining texmod\n");
+//	else
+//		Sys_Printf("combining texmod\n");
 }
 

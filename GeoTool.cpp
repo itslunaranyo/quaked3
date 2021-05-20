@@ -174,14 +174,14 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndG
 		if (ShiftDown())
 			return false;
 
+		hot = true;
+		hotView = &v;
+		SetCapture(vWnd.wHwnd);
 		vWnd.GetMsgXY(lParam, mx, my);
 		mcCurrent = mcDown = v.GetMouseContext(mx, my);
 		mca = v.GetMouseContext(mcDown.pt[0] - GT_HANDLE_HITSIZE, mcDown.pt[1] - GT_HANDLE_HITSIZE);
 		mcb = v.GetMouseContext(mcDown.pt[0] + GT_HANDLE_HITSIZE, mcDown.pt[1] + GT_HANDLE_HITSIZE);
 		DragStart(mca, mcb);
-		SetCapture(vWnd.wHwnd);
-		hot = true;
-		hotView = &v;
 
 		WndMain_UpdateWindows(W_SCENE);
 		return true;

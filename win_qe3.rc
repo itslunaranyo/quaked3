@@ -261,7 +261,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Default Texture Scale...",   ID_TEXTURES_DEFAULTSCALE
         MENUITEM SEPARATOR
-        MENUITEM "Flush &Unused\tF",            ID_TEXTURES_FLUSH_UNUSED
+        MENUITEM "Flush &Unused",               ID_TEXTURES_FLUSH_UNUSED
         MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE
         MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD
         MENUITEM SEPARATOR
@@ -280,14 +280,9 @@ BEGIN
         MENUITEM "Set &Brush\tAlt+B",           ID_REGION_SETBRUSH
         MENUITEM "Set Brush &Tall",             ID_REGION_SETTALLBRUSH
     END
-    POPUP "&Bsp"
-    BEGIN
-        MENUITEM "&Test Map...\tF12",           ID_MISC_TESTMAP
-        MENUITEM SEPARATOR
-    END
     POPUP "&Window"
     BEGIN
-        MENUITEM "Camera &View\tQ",             ID_VIEW_CAMERA
+        MENUITEM "Camera &View",                ID_VIEW_CAMERA
         MENUITEM "C&onsole View\tO",            ID_VIEW_CONSOLE
         MENUITEM "E&ntity View\tN",             ID_VIEW_ENTITY
         MENUITEM "&Texture View\tT",            ID_VIEW_TEXTURE
@@ -328,8 +323,6 @@ BEGIN
             MENUITEM "4 View Reverse w/o Z (Cam Left)", ID_WINDOW_4REVERSENOZCAMLEFT
             MENUITEM "4 View Reverse w/o Z (Cam Right)", ID_WINDOW_4REVERSENOZCAMRIGHT
         END
-        MENUITEM SEPARATOR
-        MENUITEM "&Benchmark\tF10",             ID_MISC_BENCHMARK
     END
     POPUP "&Help"
     BEGIN
@@ -743,6 +736,7 @@ END
 
 IDD_SPLASH DIALOGEX 0, 0, 341, 236
 STYLE DS_SYSMODAL | DS_SETFONT | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+EXSTYLE WS_EX_TOPMOST
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         IDB_SPLASH,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_RIGHTJUST | SS_REALSIZEIMAGE,0,0,341,236
@@ -1117,8 +1111,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,51,0
- PRODUCTVERSION 3,2,51,0
+ FILEVERSION 3,2,52,0
+ PRODUCTVERSION 3,2,52,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1135,14 +1129,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 51)"
-            VALUE "FileVersion", "3.2.51.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 51)"
-            VALUE "LegalCopyright", "Copyright © 1997-2019"
-            VALUE "LegalTrademarks", "Quake™ 1996-2019"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 52)"
+            VALUE "FileVersion", "3.2.52.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 52)"
+            VALUE "LegalCopyright", "Copyright © 1997-2020"
+            VALUE "LegalTrademarks", "Quake™ 1996-2020"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.51.0"
+            VALUE "ProductVersion", "3.2.52.0"
         END
     END
     BLOCK "VarFileInfo"

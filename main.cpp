@@ -228,19 +228,15 @@ int WINAPI WinMain (
 	)
 {
 	g_qeglobals.d_hInstance = hInstance;
-// sikk - Quickly made Splash Screen
-#ifndef _DEBUG
+	g_bWarningOrError = false;
+
+//#ifndef _DEBUG
 	HWND hwndSplash;
 	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_hwndMain, SplashDlgProc);
-#endif
+//#endif
 	InitCommonControls ();
 
 	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
-	g_bWarningOrError = false;
-
-	// hack for broken NT 4.0 dual screen
-	//if (g_nScreenWidth > 2 * g_nScreenHeight)
-	//	g_nScreenWidth /= 2;
 
 	if (lpCmdLine && strlen(lpCmdLine))
 	{
@@ -253,7 +249,9 @@ int WINAPI WinMain (
 	// compiler flags we don't want to add, so Init and Loop are separated out to allow 
 	// catching access violations and stuff at this level only, to try and save work to 
 	// disk before finally crashing out
-	Main_Init();	
+	Main_Init();
+	DestroyWindow(hwndSplash);
+
 #ifndef _DEBUG
 	__try {
 #endif

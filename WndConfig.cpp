@@ -851,8 +851,7 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 		errCur += 30;
 		cfgOK = false;
 	}
-	else if ( !(IO_FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && 
-				IO_FileExists(cfgCtx.cfgEd.QuakePath, "quake.exe")) )
+	else if ( !IO_FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && !IO_FileExists(cfgCtx.cfgEd.QuakePath, "ID1/PAK0.PAK"))
 	{
 		strcpy(errCur, "Couldn't find 'quake.exe' or '/id1/pak0.pak' in specified Quake directory. Is it correct?\n");
 		errCur += 90;

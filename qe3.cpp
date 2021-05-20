@@ -30,33 +30,48 @@ void QE_FixMonFlags()
 	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
 	{
 		int sf, sf_lo, sf_mid, sf_hi, sf_new;
-		if (!(e->eclass->showFlags & EFL_MONSTER))
-			continue;
-
 		sf = e->GetKeyValueInt("spawnflags");
 
-		if (!strcmp(e->eclass->name, "monster_zombie"))	// fucking crucified flag
+		if ((e->eclass->showFlags & EFL_MONSTER))
 		{
-			sf_lo = sf & 60;	// the four flags we're shifting up
-			sf_mid = sf & 192;  // two flags we shift down
-			sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
 
-			sf_lo *= 4;
-			sf_mid /= 16;
+			if (!strcmp(e->eclass->name, "monster_zombie"))	// fucking crucified flag
+			{
+				sf_lo = sf & 60;	// the four flags we're shifting up
+				sf_mid = sf & 192;  // two flags we shift down
+				sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
+
+				sf_lo *= 4;
+				sf_mid /= 16;
+			}
+			else
+			{
+				sf_lo = sf & 30;	// the four flags we're shifting up
+				sf_mid = sf & 224;  // three flags we shift down
+				sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
+
+				sf_lo *= 8;
+				sf_mid /= 16;
+			}
+			sf_new = sf_lo + sf_mid + sf_hi;
+			// invert tfog flag, which is now 32
+			if (sf_new & 16)
+				sf_new ^= 32;
 		}
 		else
 		{
-			sf_lo = sf & 30;	// the four flags we're shifting up
-			sf_mid = sf & 224;  // three flags we shift down
-			sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
-
-			sf_lo *= 8;
-			sf_mid /= 16;
+			sf_new = sf;
 		}
-		sf_new = sf_lo + sf_mid + sf_hi;
-		// invert tfog flag, which is now 32
-		if (sf_new & 16)
-			sf_new ^= 32;
+		if (e->GetKeyValueInt("cooponly"))
+		{
+			sf_new ^= 4096;
+			e->DeleteKeyValue("cooponly");
+		}
+		if (e->GetKeyValueInt("notincoop"))
+		{
+			sf_new ^= 8192;
+			e->DeleteKeyValue("notincoop");
+		}
 
 		if (sf_new != sf)
 		{
@@ -138,7 +153,8 @@ void QE_RebarSpew()
 void QE_TestSomething()
 {
 #ifdef _DEBUG
-	QE_RebarSpew();
+	QE_FixMonFlags();
+	//QE_RebarSpew();
 	//QE_FindKTs();
 	//WndMain_UpdateWindows(W_ALL);
 #endif
@@ -469,7 +485,7 @@ bool QE_KeyDown (int key)
 		break;
 #endif
 	case 'Q':
-		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_CAMERA, 0);
+		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_SHOWSIZEINFO, 0);
 		break;
 	case 'R':	// sikk - added shortcut key
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_ARBITRARYROTATION, 0);

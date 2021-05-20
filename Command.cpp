@@ -186,7 +186,7 @@ bool CommandQueue::Complete(Command *cmd)
 	{
 		// dead command that produces no changes in the scene, throw it away
 #ifdef _DEBUG
-		Sys_Printf("DEBUG: command already a noop, deleting\n");
+		Sys_Printf("DEBUG: '%s' is a no-op, deleting\n", cmd->name);
 #endif
 		delete cmd;
 		return true;
@@ -205,7 +205,7 @@ bool CommandQueue::Complete(Command *cmd)
 	if (cmd->state == Command::NOOP)
 	{
 #ifdef _DEBUG
-		Sys_Printf("DEBUG: noop command after do, deleting\n");
+		Sys_Printf("DEBUG: no-op '%s' after do, deleting\n", cmd->name);
 #endif
 		delete cmd;
 		return true;

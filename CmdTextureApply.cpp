@@ -32,6 +32,8 @@ void CmdTextureApply::UseFaces(std::vector<Face*> &fList)
 
 void CmdTextureApply::UseBrush(Brush *br)
 {
+	if (br->owner->IsPoint())
+		return;
 	std::vector<Face*> fq;
 	for (Face* f = br->faces; f; f = f->fnext)
 		fq.push_back(f);
@@ -41,11 +43,15 @@ void CmdTextureApply::UseBrush(Brush *br)
 void CmdTextureApply::UseBrushes(Brush *brList)
 {
 	std::vector<Face*> fq;
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* br = brList->next; br != brList; br = br->next)
 	{
-		for (Face* f = b->faces; f; f = f->fnext)
+		if (br->owner->IsPoint())
+			continue;
+		for (Face* f = br->faces; f; f = f->fnext)
 			fq.push_back(f);
 	}
+	if (!fq.size())
+		return;
 	UseFaces(fq);
 }
 

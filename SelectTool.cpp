@@ -45,8 +45,7 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONDBLCLK:
 		if (!(wParam & MK_SHIFT)) return false;
-		if (uMsg == WM_LBUTTONDOWN)
-			hot = true;
+		hot = true;
 		SetCapture(vWnd.wHwnd);
 		xDown = x;
 		yDown = y;
@@ -65,7 +64,11 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 				selFlags |= SF_CYCLE;
 		}
 		if (uMsg == WM_LBUTTONDBLCLK)
+		{
+			hot = false;
+			ReleaseCapture();
 			selFlags |= SF_EXPAND;
+		}
 
 		TrySelect(wParam, v.GetOrigin(), ray, selFlags);
 		return true;

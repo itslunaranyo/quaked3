@@ -364,9 +364,12 @@ mouseContext_t const GridView::GetMouseContext(const int x, const int y)
 
 	ScreenToWorld(x, y, mc.org);
 
+	// the screen axis in XY and YZ points out of the screen, but in XZ points in
+	float rays[] = { 1, -1, 1 };
+
 	mc.pt = vec3(x, y, 0);
-	mc.org[viewType] = g_cfgEditor.MapSize / 2;
-	mc.ray[viewType] = -1;
+	mc.org[viewType] = rays[viewType] * g_cfgEditor.MapSize / 2;
+	mc.ray[viewType] = -rays[viewType];
 	mc.right[DimU()] = 1;
 	mc.up[DimV()] = 1;
 	mc.dims = 2;	// 2D view

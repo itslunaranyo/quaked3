@@ -498,19 +498,22 @@ void ManipTool::DragMove(const mouseContext_t &mc, vec3 point)
 	{
 	case MT_NEW:
 	{
-		vec3 mins, maxs;
+		vec3 ray, mins, maxs;
 		float dMin, dMax;
 
-		dMin = qround(DotProduct(g_qeglobals.d_v3WorkMin, mc.ray), g_qeglobals.d_nGridSize);
-		dMax = qround(DotProduct(g_qeglobals.d_v3WorkMax, mc.ray), g_qeglobals.d_nGridSize);
+		// mc.ray is negative for xy/yz but positive for xz
+		ray = -glm::abs(mc.ray);
+
+		dMin = qround(DotProduct(g_qeglobals.d_v3WorkMin, ray), g_qeglobals.d_nGridSize);
+		dMax = qround(DotProduct(g_qeglobals.d_v3WorkMax, ray), g_qeglobals.d_nGridSize);
 		if (dMin == dMax)
-			dMax -= g_qeglobals.d_nGridSize;	// subtract because mc.ray is negative
+			dMax -= g_qeglobals.d_nGridSize;	// subtract because ray is negative
 
 		// snap the total delta rather than snapping start and end, feels better
-		ptDelta = pointOnGrid(mc.org) * (mc.ray + vec3(1));	// null out the extra large third dimension
+		ptDelta = pointOnGrid(mc.org) * (ray + vec3(1));	// null out the extra large third dimension
 
-		mins = dMin * mc.ray + glm::min(ptDown, ptDelta);
-		maxs = dMax * mc.ray + glm::max(ptDown, ptDelta);
+		mins = dMin * ray + glm::min(ptDown, ptDelta);
+		maxs = dMax * ray + glm::max(ptDown, ptDelta);
 
 		if (glm::all(glm::lessThan(mins, maxs)))	// if all min components are < all max components
 		{

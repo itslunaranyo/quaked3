@@ -258,6 +258,70 @@ void ClipTool::Reset ()
 
 /*
 ==================
+ClipTool::AxisForClip
+
+divine what direction the user wants their clip plane to go from clip point/brush geo interaction
+==================
+*/
+vec3 ClipTool::AxisForClip()
+{
+	if (!points[1].set || points[2].set)
+		return vec3(0, 0, 0);
+
+	std::vector<vec3> faceAxes;
+	vec3 nAxis;
+
+	// first guess: see what faces in the selection the two points share
+	for (auto brIt = g_pcmdBC->brIn.begin(); brIt != g_pcmdBC->brIn.end(); ++brIt)
+	{
+		for (Face* f = (*brIt)->faces; f; f = f->fnext)
+		{
+			if (f->plane.PointOn(points[0].point) && f->plane.PointOn(points[1].point))
+			{
+				faceAxes.push_back(AxisForVector(f->plane.normal));
+			}
+		}
+	}
+	if (faceAxes.size() > 0)
+	{
+		nAxis = faceAxes[0];
+		if (faceAxes.size() == 1)
+		{
+			// only one shared face, use the axis for its normal
+			return nAxis;
+		}
+		// check if all the shared faces would map to the same axis anyway
+		auto fxIt = faceAxes.begin();
+		for (fxIt; fxIt != faceAxes.end(); ++fxIt)
+		{
+			if (*fxIt == nAxis)
+				continue;
+			break;
+		}
+		if (fxIt == faceAxes.end())
+			return nAxis;
+	}
+
+	// the two points don't have clearly resolvable faces in common
+
+	// guess based on orientation: assume points are least spread out along the cutting axis
+	/*
+	vec3 dif = points[0].point - points[1].point;
+	dif = glm::abs(dif);
+
+	if (dif[0] < dif[1] * 0.9f && dif[0] < dif[2] * 0.9f)
+		return vec3(1, 0, 0);
+	if (dif[1] < dif[0] * 0.9f && dif[1] < dif[2] * 0.9f)
+		return vec3(0, 1, 0);
+	if (dif[2] < dif[1] * 0.9f && dif[2] < dif[0] * 0.9f)
+		return vec3(0, 0, 1);
+	*/
+	// user has placed two points on a wholly ambiguous diagonal, just use the view direction
+	return AxisForVector(g_vCamera.GetViewDir());
+}
+
+/*
+==================
 ClipTool::PointsUpdated
 ==================
 */
@@ -416,7 +480,7 @@ void ClipTool::CamEndQuickClip()
 ClipTool::CamPointOnSelection
 ==================
 */
-bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)	// lunaran TODO: int*?
+bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out)
 {
 	vec3		dir, pn, pt;
 	trace_t		t;
@@ -425,16 +489,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)	// lun
 	if (t.brush && t.face)
 	{
 		pn = AxisForVector(t.face->plane.normal);
-
-		if (pn[0])
-			*outAxis = GRID_YZ;
-		else if (pn[1])
-			*outAxis = GRID_XZ;
-		else
-			*outAxis = GRID_XY;
-
 		pt = g_vCamera.GetOrigin() + t.dist * dir;
-		//ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pointOnGrid(pt));
 		pt = t.face->plane.ProjectPointAxial(pointOnGrid(pt), pn);
 
 		out = pt;
@@ -450,10 +505,9 @@ ClipTool::CamDropPoint
 */
 void ClipTool::CamDropPoint(int x, int y)
 {
-	int		nAxis = -1;
 	vec3	pt;
 
-	if (!CamPointOnSelection(x, y, pt, &nAxis))
+	if (!CamPointOnSelection(x, y, pt))
 		return;
 
 	if (ptMoving && GetCapture() == g_hwndCamera)
@@ -462,13 +516,19 @@ void ClipTool::CamDropPoint(int x, int y)
 	}
 	else
 	{
-		if (points[0].set == false)
-			axis = nAxis;
-
 		clippoint_t		*pPt;
 		pPt = StartNextPoint();
 		pPt->point = pt;
 	}
+
+	vec3 cAxis = AxisForClip();
+	if (cAxis[0])
+		axis = GRID_YZ;
+	else if (cAxis[1])
+		axis = GRID_XZ;
+	else
+		axis = GRID_XY;
+
 	PointsUpdated();
 	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
@@ -505,15 +565,21 @@ ClipTool::CamMovePoint
 */
 void ClipTool::CamMovePoint(int x, int y)
 {
-	int junk;
 	bool	bCrossHair = false;
 
 	// lunaran TODO: don't use windows mouse capture status for control flow maybe
 	if (ptMoving && GetCapture() == g_hwndCamera)
 	{
 		// lunaran - grid view reunification
-		if (CamPointOnSelection(x, y, ptMoving->point, &junk))
+		if (CamPointOnSelection(x, y, ptMoving->point))
 		{
+			vec3 cAxis = AxisForClip();
+			if (cAxis[0])
+				axis = GRID_YZ;
+			else if (cAxis[1])
+				axis = GRID_XZ;
+			else
+				axis = GRID_XY;
 			PointsUpdated();
 			WndMain_UpdateWindows(W_XY | W_CAMERA);
 			bCrossHair = true;
@@ -527,7 +593,7 @@ void ClipTool::CamMovePoint(int x, int y)
 			bCrossHair = true;
 			ptHover.set = false;
 		}
-		else if (CamPointOnSelection(x, y, ptHover.point, &junk))
+		else if (CamPointOnSelection(x, y, ptHover.point))
 		{
 			ptHover.set = true;
 			WndMain_UpdateWindows(W_XY | W_CAMERA);
@@ -774,7 +840,7 @@ bool ClipTool::Draw2D(GridViewRenderer &gr)
 	gr.DrawSelection(g_colors.selection);
 	
 	if (g_pcmdBC)
-		DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);
+		DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront, vec3(1,1,0));
 
 	DrawPoints();
 	return true;
@@ -813,13 +879,13 @@ void ClipTool::DrawPoints()
 	//glEnable(GL_DEPTH_TEST);
 }
 
-void ClipTool::DrawClipWire(std::vector<Brush*> *brList)
+void ClipTool::DrawClipWire(std::vector<Brush*> *brList, vec3 color)
 {
 	Face* face;
 
 	// draw yellow wireframe of carved brushes
 	glDisable(GL_DEPTH_TEST);
-	glColor3f(1, 1, 0);
+	glColor3fv(&color.r);
 	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
 		for (face = (*brIt)->faces; face; face = face->fnext)
 			face->DrawWire();
@@ -854,7 +920,16 @@ void ClipTool::Draw()
 			face->Draw();
 	glDisable(GL_BLEND);
 
-	DrawClipWire(brList);
+	if (backside)
+	{
+		DrawClipWire(&g_pcmdBC->brFront, vec3(1,1,1));
+		DrawClipWire(&g_pcmdBC->brBack, vec3(1,1,0));
+	}
+	else
+	{
+		DrawClipWire(&g_pcmdBC->brBack, vec3(1,1,1));
+		DrawClipWire(&g_pcmdBC->brFront, vec3(1,1,0));
+	}
 	glEnable(GL_TEXTURE_2D);
 }
 
