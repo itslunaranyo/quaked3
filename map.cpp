@@ -77,6 +77,7 @@ void Map::New()
 	if (LoadBetween(between))
 		BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
 
+	QE_SetInspectorMode(W_TEXTURE);
 	Sys_UpdateWindows(W_ALL);
 }
 
@@ -127,9 +128,7 @@ void Map::Free()
 		delete world;
 	world = nullptr;
 
-	// dump the wads after brushes delete their geometry, because flush calls MapRebuild 
-	// which will generate a bunch of notextures that just get thrown away
-	Textures::Flush();
+	Textures::FlushAll();
 	g_qeglobals.d_workTexDef = TexDef();
 
 	g_cmdQueue.Clear();
@@ -245,19 +244,20 @@ bool Map::ParseBufferMerge(const char *data)
 	Selection::DeselectAll();
 	elist.MergeListIntoList(&entities);
 	blist.MergeListIntoList(&g_brSelectedBrushes);	// merge to selection
+	SanityCheck();
 	return true;
 }
 
 /*
 ================
-Map::ParseBufferReplace
+Map::LoadFromFile_Parse
 
 parse all entities and brushes from the text buffer, assuming the scene is empty
 
 only for File > Load
 ================
 */
-bool Map::ParseBufferReplace(const char *data)
+bool Map::LoadFromFile_Parse(const char *data)
 {
 	Entity elist;
 	Brush blist;
@@ -288,20 +288,47 @@ bool Map::ParseBufferReplace(const char *data)
 	// now merge the fully loaded data into the scene
 	elist.MergeListIntoList(&entities);
 	blist.MergeListIntoList(&brActive);
+	SanityCheck();
 	return true;
 }
+
+
+void Map::SanityCheck()
+{
+#ifdef _DEBUG
+	Entity *e;
+	Brush *b;
+	for (e = entities.next; e != &entities; e = e->next)
+	{
+		assert(e->next->prev == e);
+		assert(e->brushes.onext->oprev == &e->brushes);
+		assert(e->brushes.oprev->onext == &e->brushes);
+
+		for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+		{
+			assert(b->onext->oprev == b);
+		}
+	}
+
+#endif
+}
+
 
 /*
 ================
 Map::LoadFromFile
 
 replace all current map data with the contents of a file
+
+load map
+load wads
+build brush data
+flush wads
 ================
 */
 void Map::LoadFromFile(const char *filename)
 {
 	char	temp[1024];
-	char	*tempwad, wadkey[1024];
 	Entity	*ent;
 	bool	bSnapCheck = false;
 	qeBuffer between(0);
@@ -328,7 +355,7 @@ void Map::LoadFromFile(const char *filename)
 	if (IO_LoadFile(filename, buf) < 1)
 		Error("Couldn't load %s!", filename);
 
-	if (ParseBufferReplace((char*)*buf))
+	if (LoadFromFile_Parse((char*)*buf))
 	{
 		strcpy(name, filename);
 		hasFilename = true;
@@ -345,12 +372,7 @@ void Map::LoadFromFile(const char *filename)
 		if (!*world->GetKeyValue("wad"))
 			Warning("No \"wad\" key.");
 		else
-		{
-			strcpy(wadkey, world->GetKeyValue("wad"));
-
-			for (tempwad = strtok(wadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-				Textures::LoadWad(tempwad);
-		}
+			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
 
 		for (Brush* b = brActive.next; b != &brActive; b = b->next)
 			numBrushes++;
@@ -388,13 +410,14 @@ void Map::LoadFromFile(const char *filename)
 			g_qeglobals.d_vXYZ[0].origin = vec3(0);
 		}
 
-		Textures::FlushUnused(false);	// don't build the map twice
+		Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
 
 		QE_UpdateTitle();
 		RegionOff();
 	}
 
 	Sys_UpdateBrushStatusBar();
+	QE_SetInspectorMode(W_TEXTURE);
 	Sys_UpdateWindows(W_ALL);
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
@@ -408,10 +431,16 @@ void Map::LoadFromFile(const char *filename)
 Map::ImportFromFile
 
 merge the contents of a file into the current map data
+
+load map
+reload current wads + load wads added to wadstring
+build brush data
+flush only wads added to wadstring
 ================
 */
 void Map::ImportFromFile(const char *filename)
 {
+	const char	*w;
 	char	temp[1024];
 	bool	bSnapCheck = false;
 
@@ -423,11 +452,31 @@ void Map::ImportFromFile(const char *filename)
 	Sys_Printf("Map::ImportFromFile: %s\n", temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();
-	cmdIM->File(filename);
-	g_cmdQueue.Complete(cmdIM);
+
+	if (ImportOptionsDialog(cmdIM))
+	{
+		cmdIM->File(filename);
+		g_cmdQueue.Complete(cmdIM);
+
+		Textures::ReloadAll();
+		w = cmdIM->WadsAdded();
+		if (w)
+		{
+			Textures::LoadWadsFromWadstring(w);
+			Textures::RefreshUsedStatus();
+			Textures::FlushUnusedFromWadstring(w);
+		}
+		g_map.BuildBrushData();
+
+		Sys_UpdateWindows(W_ALL);
+	}
+	else
+	{
+		Sys_Printf("Import canceled.\n");
+		delete cmdIM;
+	}
 
 	Sys_EndWait();
-	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -661,7 +710,7 @@ void Map::WriteSelected(std::ostream &out)
 
 /*
 ================
-Map::WriteSelected
+Map::WriteAll
 
 map-print all brushes and entities to the buffer
 ================

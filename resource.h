@@ -44,6 +44,10 @@
 #define IDD_MOUSELIST                   197
 #define IDD_SETKEYVALUES                198
 #define IDB_SAMPLE                      199
+#define IDD_IMPORT                      200
+#define IDR_MENU2                       202
+#define IDR_CONTEXT_TEX                 202
+#define IDR_CONTEXT_TEXGRP              202
 #define IDC_E_FLAG1                     1026
 #define IDC_E_FLAG2                     1027
 #define IDC_E_FLAG3                     1028
@@ -238,6 +242,11 @@
 #define IDC_CHECK_SETKVINCR             1322
 #define IDC_CHECK_EXTTARGETS            1323
 #define IDC_EDIT_SETKVSTART             1324
+#define IDC_RADIO_WKM_ADD               1325
+#define IDC_RADIO_WKM_OVERWRITE         1326
+#define IDC_CHECK_WKV                   1327
+#define IDC_CHECK_WAD                   1328
+#define IDC_CHECK_TARGETS               1329
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -504,16 +513,21 @@
 #define ID_TARGETLINES_NONE             40485
 #define ID_NUDGE_UP                     40486
 #define ID_NUDGE_DOWN                   40487
+#define ID_CONTEXT                      40487
 #define ID_NUDGE_LEFT                   40488
+#define ID_CONTEXT_RELOAD               40488
 #define ID_NUDGE_RIGHT                  40489
+#define ID_CONTEXT_FLUSHUNUSED          40489
+#define ID_TEXTURES_RELOAD              40490
+#define ID_CONTEXT_LOADCOMPLETELY       40490
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        200
-#define _APS_NEXT_COMMAND_VALUE         40486
-#define _APS_NEXT_CONTROL_VALUE         1324
+#define _APS_NEXT_RESOURCE_VALUE        203
+#define _APS_NEXT_COMMAND_VALUE         40491
+#define _APS_NEXT_CONTROL_VALUE         1331
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

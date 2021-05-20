@@ -1189,7 +1189,8 @@ Brush *Brush::Parse ()
 		// read the texturedef
 		GetToken(false);
 		StringTolower(g_szToken);
-		strncpy(f->texdef.name, g_szToken, MAX_TEXNAME);
+		strncpy(f->texdef.name, g_szToken, MAX_TEXNAME - 1);
+		f->texdef.name[MAX_TEXNAME - 1] = 0;
 		GetToken(false);
 		f->texdef.shift[0] = atof(g_szToken);
 		GetToken(false);

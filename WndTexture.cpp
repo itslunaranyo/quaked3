@@ -23,6 +23,43 @@ void WndTexture::Initialize()
 	g_qeglobals.d_hwndTexture = w_hwnd;
 }
 
+
+void WndTexture::DoPopupMenu(int x, int y)
+{
+	HMENU	hMenu;
+	POINT	point;
+	int		retval;
+
+	TextureView::texWndGroup_t* twg = texv->TexGroupAtCursorPos(x, y);
+	if (!twg) return;
+	GetCursorPos(&point);
+	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), 0);
+
+	//bool flushed = twg->tg->flushed;
+	//QE_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
+	//QE_CheckMenuItem(hMenu, ID_CONTEXT_LOADCOMPLETELY, !flushed);
+
+	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, w_hwnd, NULL);
+
+	switch (retval)
+	{
+	case ID_CONTEXT_RELOAD:
+		Textures::MenuReloadGroup(twg->tg);
+		break;
+	case ID_CONTEXT_FLUSHUNUSED:
+		Textures::FlushUnused(twg->tg);
+		break;
+	case ID_CONTEXT_LOADCOMPLETELY:
+		Textures::MenuLoadWad(twg->tg->name);
+		break;
+	default:
+		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, retval, 0);
+	}
+
+	DestroyMenu(hMenu);
+}
+
+
 int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 

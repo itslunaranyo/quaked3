@@ -55,18 +55,21 @@ public:
 	~TextureGroup();
 
 	bool operator< (const TextureGroup& other) const {
-		return (strncmp(name, other.name, 32) < 0);
+		return (strncmp(name, other.name, MAX_WADNAME) < 0);
 	}
 	static bool sortcmp(const TextureGroup* a, const TextureGroup* b) { return *a < *b; }
 
 	Texture* first;
 	int	numTextures;
-	char name[32];
+	int id;
+	char name[MAX_WADNAME];
+	bool flushed;
 
 	Texture *ForName(const char *name);
 	Texture *ByColor(const vec3 oc);
 	void ClearUsed();
 	void FlushUnused();
+	void Flush();
 	void Add(Texture* tx);
 private:
 };
@@ -94,23 +97,36 @@ private:
 namespace Textures
 {
 	void Init();
-	void Flush();
-	void FlushUnused(bool rebuild = true);
+	void HandleChange();
+	void ReloadAll();
+	void MenuReloadAll();
+	void MenuReloadGroup(TextureGroup *tg);
 	void RefreshUsedStatus();
+	void FlushAll();
+	void FlushUnused();
+	void FlushUnused(TextureGroup *tg);
+	void FlushUnusedFromWadstring(const char* wadstring);
+	void MenuFlushUnused();
 
 	Texture *CreateSolid(const char *name);
 	Texture *MakeNullTexture();
 	Texture *ForName(const char *name);
 
+	void LoadWadsFromWadstring(const char *wadstring);
 	void LoadWad(const char* wadfile);
 	void LoadPalette();
-	void MenuLoadWad(const int menunum);
+	void MenuLoadWad(const char* menuwad);
 	void SetTextureMode(const int mode);
 	void SetDrawMode(const int mode);
 	void SetParameters();
 	void RemoveFromNameMap(TextureGroup* tg);
 	void AddToNameMap(TextureGroup* tg);
 	void SelectFirstTexture();
+	void ReloadGroup(TextureGroup *tg);
+	void ReloadGroup(std::vector<TextureGroup*>::iterator tgIt);
+	void LibraryChanged();
+	void CleanUnknowns();
+	void FixWorkTexDef();
 
 	extern std::vector<TextureGroup*> groups;
 	extern std::map<label_t, Texture*> texMap;
@@ -120,9 +136,6 @@ namespace Textures
 	extern TextureGroup group_solid;	// bucket for silly solid color entity textures
 };
 
-// as yet orphan bs:
-
-void FillTextureMenu ();
 
 
 #endif

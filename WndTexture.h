@@ -14,6 +14,7 @@ public:
 	TextureView *texv;
 
 	void Initialize();
+	void DoPopupMenu(int x, int y);
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 

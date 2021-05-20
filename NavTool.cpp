@@ -223,6 +223,13 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 
 		v.MouseDown(xPos, yPos, wParam);
+		// Context Menu
+		if (uMsg == WM_RBUTTONDOWN)
+		{
+			g_bMoved = false;
+			g_nMouseX = xPos;
+			g_nMouseY = yPos;
+		}
 		return true;
 
 	case WM_MBUTTONUP:
@@ -234,6 +241,10 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 		v.MouseUp(xPos, yPos, wParam);
 		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
+
+		// Context Menu
+		if (uMsg == WM_RBUTTONUP && !g_bMoved)
+			dynamic_cast<WndTexture&>(vWnd).DoPopupMenu(xPos, yPos);
 		return false;
 
 	case WM_MOUSEMOVE:
@@ -241,6 +252,10 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
 
 		v.MouseMoved(xPos, yPos, wParam);
+
+		// Context Menu
+		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
+			g_bMoved = true;
 		return false;
 	}
 	return false;

@@ -17,6 +17,8 @@ public:
 	static EPair *ParseEpair();
 	bool		IsTarget();
 	bool		IsTargetName();
+	void		SetKey(const char *k);
+	void		SetValue(const char *v);
 };
 
 //==============================

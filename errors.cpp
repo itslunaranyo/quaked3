@@ -5,6 +5,7 @@
 #include "qe3.h"
 
 bool g_bWarningOrError;
+bool g_CrashSaving = false;
 
 /*
 =================
@@ -72,6 +73,17 @@ int CrashSave(const char* reason)
 	char crashmap[_MAX_FNAME];
 	char badnews[4096];
 	SYSTEMTIME time;
+
+	// protect against the wrong (unhandled) kind of crash looping the emergency save 
+	// and vomiting bad crashmaps all over
+	if (g_CrashSaving)
+	{
+		sprintf(badnews, "%s\r\nMap could not be saved. Sorry.", reason);
+		QE_Exit(badnews);
+		return 0;
+	}
+	g_CrashSaving = true;
+
 	GetSystemTime(&time);
 	sprintf(crashmap, "%s\\crash.%i%i%i%i%i%i.map", g_qePath, time.wHour, time.wMinute, time.wSecond, time.wDay, time.wMonth, time.wYear);
 	try {
@@ -88,7 +100,7 @@ int CrashSave(const char* reason)
 
 /*
 =================
-SEHCrashSave
+SEHExceptionString
 
 scruting the inscrutable
 =================

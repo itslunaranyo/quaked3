@@ -51,6 +51,13 @@ CmdSetKeyvalue::keyvalue_change_s::keyvalue_change_s(Entity *_e, const char* _cv
 
 //==============================
 
+/*
+this command applies only one keyvalue to a group of entities on Do, but
+because it can be overwriting many disparate values with a common one,
+it has to handle reapplying these multiple unique keyvalues to each entity 
+in that group on Undo
+*/
+
 void CmdSetKeyvalue::SetNew()
 {
 	// special handling for the special keyvalues

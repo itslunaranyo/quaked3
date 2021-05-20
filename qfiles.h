@@ -35,6 +35,7 @@
 #define MAX_BRUSH_SIZE			8192	//4096 // quake default 
 
 #define MAX_TEXNAME	16
+#define MAX_WADNAME	32
 
 // key / value pair sizes
 #define	MAX_KEY		32

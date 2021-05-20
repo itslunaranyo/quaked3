@@ -169,12 +169,15 @@ bool TextureTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView 
 
 	switch (uMsg)
 	{
-	case WM_MBUTTONDOWN:
 	case WM_LBUTTONDOWN:
+	case WM_MBUTTONDOWN:
 		{
 			TexDef texdef;
 			Texture* tw = v.TexAtCursorPos(xPos, yPos);
 
+			if (!tw) return false;
+
+			// are we currently sampling for the F&R dialog?
 			if (tw && sampleState && hwndReplaceDlg)
 			{
 				if (sampleState == TTSS_FIND)
@@ -191,8 +194,6 @@ bool TextureTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView 
 				return true;
 			}
 
-			if (!tw)
-				return false;
 			texdef.Set(tw);
 			v.ChooseTexture(&texdef);
 			if (uMsg == WM_MBUTTONDOWN)

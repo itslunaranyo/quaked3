@@ -51,12 +51,42 @@ void QE_FixMonFlags()
 	}
 }
 
+void QE_FindKTs()
+{
+	char *killtarget = nullptr;
+	char *targetname = nullptr;
+	char *target = nullptr;
+	char *target2 = nullptr;
+	char *target3 = nullptr;
+	char *target4 = nullptr;
+
+	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
+	{
+		killtarget = e->GetKeyValue("killtarget");
+		if (!killtarget || killtarget[0] == 0) continue;
+		targetname = e->GetKeyValue("targetname");
+		target = e->GetKeyValue("target");
+		target2 = e->GetKeyValue("target2");
+		target3 = e->GetKeyValue("target3");
+		target4 = e->GetKeyValue("target4");
+
+		if (!strcmp(killtarget, targetname) ||
+			!strcmp(killtarget, target) ||
+			!strcmp(killtarget, target2) ||
+			!strcmp(killtarget, target3) ||
+			!strcmp(killtarget, target4))
+			Selection::HandleBrush(e->brushes.next, true);
+	}
+}
+
 // it can test aaanything you want just press PEE
 #pragma optimize("", off)
 void QE_TestSomething()
 {
-	QE_FixMonFlags();
+#ifdef _DEBUG
+	QE_FindKTs();
 	Sys_UpdateWindows(W_ALL);
+#endif
 }
 
 #pragma optimize("", on)

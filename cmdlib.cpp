@@ -424,7 +424,7 @@ void IO_SaveFile (char *filename, void *buffer, int count)
 ==============
 IsPathAbsolute
 
-this needs to be made portable one day
+TODO: this needs to be made portable one day
 ==============
 */
 bool IsPathAbsolute(const char* path)

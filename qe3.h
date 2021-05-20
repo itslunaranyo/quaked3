@@ -259,6 +259,7 @@ void	QE_UpdateTitle();
 bool	QE_InitProject();
 int		QE_BestViewAxis();
 bool	QE_SingleBrush();
+void	QE_CheckMenuItem(HMENU hMenu, unsigned item, bool check);
 void	QE_UpdateCommandUI();
 void	QE_UpdateCommandUIFilters(HMENU hMenu);
 char   *QE_ExpandRelativePath (char *p);
@@ -307,6 +308,7 @@ BOOL DoColor (int iIndex);
 bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut);
 void DoTestMap ();	// sikk - Test Map
 void DoWindowPosition (int nStyle);	// sikk - Window Positions
+void FillTextureMenu();
 
 static HWND CreateStatusBar (HWND hWnd);
 static HWND CreateReBar (HWND hWnd, HINSTANCE hInst);	// sikk - Rebar
@@ -340,6 +342,7 @@ void DoCamSpeed();	// sikk - Camera Speed Dialog
 void DoDefaultTexScale();	// sikk - Default Texture Scale Dialog
 void DoFindKeyValue();	// sikk - Find Key/Value Dialog
 void DoSetKeyValues();
+bool ImportOptionsDialog(class CmdImportMap *cmdIM);
 
 // win_surf.c
 void WndSurf_UpdateUI();

@@ -428,6 +428,7 @@ void QE_ForceInspectorMode(int nType)
 	case W_CONSOLE:
 	default:
 		g_qeglobals.d_wndConsole->Show();
+		g_qeglobals.d_wndConsole->ScrollToEnd();
 		break;
 	}
 
@@ -461,6 +462,7 @@ void QE_SetInspectorMode(int nType)
 	case W_CONSOLE:
 	default:
 		to = g_qeglobals.d_wndConsole;
+		g_qeglobals.d_wndConsole->ScrollToEnd();
 		break;
 	}
 
@@ -1170,6 +1172,68 @@ HWND CreateTrackBar (HWND hWnd, HINSTANCE hInst, int nIndex)
 }*/
 
 
+#define	MAX_TEXTUREDIRS	128
+int		g_nTextureNumMenus;
+char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
+
+/*
+==================
+FillTextureMenu
+==================
+*/
+void FillTextureMenu()
+{
+	HMENU	hmenu;
+	int		i;
+	struct _finddata_t fileinfo;
+	int		handle;
+	char    temp[1024];
+	char	path[1024];
+	char    dirstring[1024];
+	char   *s;
+
+	hmenu = GetSubMenu(GetMenu(g_qeglobals.d_hwndMain), MENU_TEXTURE);
+
+	// delete everything
+	for (i = 0; i < g_nTextureNumMenus; i++)
+		DeleteMenu(hmenu, CMD_TEXTUREWAD + i, MF_BYCOMMAND);
+
+	g_nTextureNumMenus = 0;
+
+	//	strcpy(g_szWadString, "");	// sikk - Wad Loading
+
+		// add everything
+	strcpy(dirstring, g_project.wadPath);
+	//strcpy(dirstring, g_qeglobals.d_entityProject->GetKeyValue("texturepath"));
+	sprintf(path, "%s*.wad", dirstring);	// sikk - Wad Loading
+
+	QE_ConvertDOSToUnixName(temp, dirstring);
+	Sys_Printf("ScanTexturePath: %s\n", temp);
+
+	s = dirstring + strlen(dirstring) - 1;
+	while ((*s != '\\') && (*s != '/') && (s != dirstring))
+		s--;
+	*s = 0;
+
+	handle = _findfirst(path, &fileinfo);
+	if (handle != -1)
+	{
+		do
+		{
+			Sys_Printf("FoundFile: %s/%s\n", dirstring, fileinfo.name);
+
+			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)fileinfo.name);
+			strcpy(g_szTextureMenuNames[g_nTextureNumMenus], fileinfo.name);
+			//			sprintf(g_szWadString, "%s%s%s", g_szWadString, g_szWadString[0] ? ";" : "", filename);	// sikk - Wad Loading
+
+			if (++g_nTextureNumMenus == MAX_TEXTUREDIRS)
+				break;
+		} while (_findnext(handle, &fileinfo) != -1);
+
+		_findclose(handle);
+	}
+}
+
 
 
 
@@ -1486,6 +1550,15 @@ LONG WINAPI CommandHandler (
 		case ID_VIEW_SHOWTRIGGERS:
 			QE_ToggleViewFilter(EFL_TRIGGER);
 			break;
+
+		/*
+		"all" all flags 0
+		"all singleplayer" none of !e, !m, or !h
+		"easy only" not !e
+		"normal only" not !m
+		"hard only" not !h
+		"deathmatch only" not !dm
+		*/
 
 		case ID_FILTER_SHOWALLSKILLS:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
@@ -1903,21 +1976,21 @@ LONG WINAPI CommandHandler (
 			QE_SetInspectorMode(W_CONSOLE);
 			break;
 
-		case ID_TEXTURES_FLUSH_ALL:
-			//Sys_BeginWait();
-			Textures::Flush();
+		case ID_TEXTURES_RELOAD:
 			QE_SetInspectorMode(W_TEXTURE);
+			Textures::MenuReloadAll();
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 		case ID_TEXTURES_FLUSH_UNUSED:
 			//Sys_BeginWait();
-			Textures::FlushUnused();
 			QE_SetInspectorMode(W_TEXTURE);
+			Textures::MenuFlushUnused();
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 		case ID_TEXTURES_SHOWINUSE:
-			Textures::RefreshUsedStatus();
 			QE_SetInspectorMode(W_TEXTURE);
+			Textures::RefreshUsedStatus();
+			Sys_UpdateWindows(W_TEXTURE);
 			break;
 
 		case ID_TEXTURES_RESETSCALE:	// sikk - Reset Texture View Scale
@@ -2031,8 +2104,9 @@ LONG WINAPI CommandHandler (
 		case CMD_TEXTUREWAD + 62:
 		case CMD_TEXTUREWAD + 63:
 			Sys_BeginWait();
-			Textures::MenuLoadWad(LOWORD(wParam));
+			Textures::MenuLoadWad(g_szTextureMenuNames[LOWORD(wParam) - CMD_TEXTUREWAD]);
 			QE_SetInspectorMode(W_TEXTURE);
+			Sys_EndWait();
 			break;
 
 //===================================
@@ -2590,13 +2664,15 @@ void WinMain_Loop()
 
 			// lunaran - all consequences of selection alteration put in one place for consistent behavior
 			Selection::HandleChange();
+			// some consequences of texture library changes are also best kept out of the loop
+			Textures::HandleChange();
 
 			if (g_bWarningOrError)
 			{
+				g_bWarningOrError = false;
 				QE_SetInspectorMode(W_CONSOLE);
 				g_qeglobals.d_wndConsole->ScrollToEnd();
 				Sys_Status("There were problems: see console for details", 1);
-				g_bWarningOrError = false;
 			}
 
 			Sys_CheckBspProcess();

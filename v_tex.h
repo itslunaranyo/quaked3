@@ -15,10 +15,12 @@ public:
 	~TextureView();
 
 	void	Arrange();
-	void	Refresh() { stale = true; }
+	void	Refresh();
 
 	void	ChooseTexture(TexDef *texdef);
+	void	ChooseFirstTexture();
 	Texture *TexAtCursorPos(const int cx, const int cy);
+	bool	FoldTextureGroup(const int cx, const int cy);
 
 	void	MouseDown(const int x, const int y, const int buttons);
 	void	MouseUp(const int x, const int y, const int buttons);
@@ -27,26 +29,43 @@ public:
 	void	SetScale(float inscale);
 	void	Scale(float inscale);
 	void	Scroll(int dist, bool fast);
+	void	ResetScroll();
 
 	void	Draw();
 
 private:
 	// lunaran: cached layout
-	struct texWndPlacement_t {
-		texWndPlacement_t(int _x, int _y, int _w, int _h, Texture* _tex) : x(_x), y(_y), w(_w), h(_h), tex(_tex) {};
+	struct texWndItem_t {
+		texWndItem_t(int _x, int _y, int _w, int _h, Texture* _tex) : x(_x), y(_y), w(_w), h(_h), tex(_tex) {};
 		int x, y, w, h;
 		Texture* tex;
 	};
-	int		length;
-	std::vector<texWndPlacement_t> layout;
+
+public:
+	struct texWndGroup_t {
+		std::vector<texWndItem_t> layout;
+		int height, top;
+		bool folded;
+		TextureGroup *tg;
+		int tgID;
+	};
+	TextureView::texWndGroup_t *TexGroupAtCursorPos(const int cx, const int cy);
+
+private:
+	int layoutLength;	// height of layout in pixels
+	std::vector<texWndGroup_t> layoutGroups;
 
 	bool	stale;	// layout is old and should be rebuilt before drawing
 
-	int		AddToLayout(TextureGroup * tg, int top);
+	void	ArrangeGroup(TextureGroup &txGrp);
+	void	VertAlignGroups();
+	texWndItem_t* GetItemForTexture(const Texture *tex);
 	void	Resize(const int w, const int h);
 	Texture* TexAtPos(int x, int y);
-	//void	SelectTexture(int x, int y);
 	void	SortTextures();
+	bool	FoldTextureGroup(texWndGroup_t *grp);
+	TextureView::texWndGroup_t *TexGroupAtPos(int x, int y);
+
 	void	UpdateStatus(TexDef* texdef);
 
 };

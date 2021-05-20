@@ -35,6 +35,7 @@ public:
 	void	BuildBrushData(Brush &blist);
 	void	BuildBrushData();
 
+	void	SanityCheck();
 	void	LoadFromFile(const char* filename);
 	void	SaveToFile(const char* filename, bool use_region);
 	void	ImportFromFile(const char* filename);
@@ -66,7 +67,7 @@ private:
 	bool	LoadBetween(qeBuffer& buf);
 
 	bool	ParseBufferMerge(const char *data);
-	bool	ParseBufferReplace(const char *data);
+	bool	LoadFromFile_Parse(const char *data);
 	void	WriteSelected(std::ostream &out);
 	void	WriteAll(std::ostream &out, bool use_region);
 };

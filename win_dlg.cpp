@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdImportMap.h"
 
 #pragma warning(disable: 4800)	// 'LRESULT': forcing value to bool 'true' or 'false' (performance warning)
 
@@ -2051,3 +2052,75 @@ void DoSetKeyValues()
 }
 
 
+// =======================================================
+
+BOOL CALLBACK ImportOptionsDlgProc(
+	HWND	hwndDlg,// handle to dialog box
+	UINT	uMsg,	// message
+	WPARAM	wParam,	// first message parameter
+	LPARAM	lParam 	// second message parameter
+)
+{
+	int out = 0;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		EnableWindow(GetDlgItem(hwndDlg, IDC_RADIO_WKM_ADD), 0);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_RADIO_WKM_OVERWRITE), 0);
+		SendDlgItemMessage(hwndDlg, IDC_RADIO_WKM_ADD, BM_SETCHECK, 1, 0);
+		return TRUE;
+
+	case WM_CLOSE:
+		EndDialog(hwndDlg, 0);
+		return TRUE;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED)
+		{
+			switch (LOWORD(wParam))
+			{
+			case IDC_CHECK_WKV:
+			{
+				bool on = (SendDlgItemMessage(hwndDlg, IDC_CHECK_WKV, BM_GETCHECK, 0, 0) != 0);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_RADIO_WKM_ADD), on);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_RADIO_WKM_OVERWRITE), on);
+				return TRUE;
+			}
+			case IDOK:
+				if (SendDlgItemMessage(hwndDlg, IDC_CHECK_WKV, BM_GETCHECK, 0, 0) != 0) out += 1;
+				if (SendDlgItemMessage(hwndDlg, IDC_CHECK_WAD, BM_GETCHECK, 0, 0) != 0) out += 2;
+				if (SendDlgItemMessage(hwndDlg, IDC_CHECK_TARGETS, BM_GETCHECK, 0, 0) != 0) out += 4;
+				if (SendDlgItemMessage(hwndDlg, IDC_RADIO_WKM_OVERWRITE, BM_GETCHECK, 0, 0) != 0) out += 8;
+				EndDialog(hwndDlg, out);
+				return TRUE;
+			case IDCANCEL:
+				EndDialog(hwndDlg, out);
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
+bool ImportOptionsDialog(CmdImportMap *cmdIM)
+{
+	int result = DialogBoxParamA(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_IMPORT), g_qeglobals.d_hwndMain, ImportOptionsDlgProc, 0L);
+
+	if (result <= 0)
+		return false;
+
+	if (result & 1)
+	{
+		if (result & 8)
+			cmdIM->MergeWorldKeys(CmdImportMap::KVM_OVERWRITE);
+		else
+			cmdIM->MergeWorldKeys(CmdImportMap::KVM_ADD);
+	}
+	if (result & 2)
+		cmdIM->MergeWads(true);
+	if (result & 4)
+		cmdIM->AdjustTargets(true);
+
+	return true;
+}

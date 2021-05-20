@@ -40,7 +40,7 @@ extern bool		g_bComEOF;
 
 //========================================================================
 
-void   *qmalloc(int size);
+//void   *qmalloc(int size);	// not used outside cmdlib.cpp, no touchy
 
 char   *COM_Parse (char *data);
 

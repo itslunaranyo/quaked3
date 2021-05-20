@@ -194,83 +194,11 @@ void WndGrid::DoPopupMenu(int x, int y)
 
 int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-
 	if (Tool::HandleInput2D(uMsg, wParam, lParam, *xyzv, *this))
 	{
 		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
 			Focus();
 		return 1;
 	}
-	/*
-	int		fwKeys, xPos, yPos;
-	switch (uMsg)
-	{
-	case WM_KEYDOWN:
-		return QE_KeyDown(wParam);
-	//case WM_KEYUP:
-	//	return QE_KeyUp(wParam);
-
-	case WM_MOUSEWHEEL:
-		Focus();
-		if ((short)HIWORD(wParam) < 0)
-		{
-			v->scale = max(0.05f, v->scale * 0.8f);
-		}
-		else
-		{
-			v->scale = min(32.0f, v->scale * 1.25f);
-		}
-		Sys_UpdateWindows(vbits);
-		return 0;
-
-	case WM_MBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-	case WM_LBUTTONDOWN:
-		Focus();
-		SetCapture(w_hwnd);
-		fwKeys = wParam;        // key flags 
-		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		v->MouseDown(xPos, yPos, fwKeys);
-		// sikk---> Context Menu
-		if (uMsg == WM_RBUTTONDOWN)
-		{
-			g_bMoved = false;
-			g_nMouseX = xPos;
-			g_nMouseY = yPos;
-		}
-		// <---sikk
-		return 0;
-
-	case WM_MBUTTONUP:
-	case WM_RBUTTONUP:
-	case WM_LBUTTONUP:
-		fwKeys = wParam;        // key flags 
-		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		v->MouseUp(xPos, yPos, fwKeys);
-		if (!(fwKeys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
-			ReleaseCapture();
-		// sikk---> Context Menu
-		if (uMsg == WM_RBUTTONUP && !g_bMoved)
-			DoPopupMenu(xPos, yPos);
-		// <---sikk
-		return 0;
-
-	case WM_MOUSEMOVE:
-		fwKeys = wParam;        // key flags 
-		xPos = (short)LOWORD(lParam);  // horizontal position of cursor 
-		yPos = (short)HIWORD(lParam);  // vertical position of cursor 
-		yPos = (int)clientRect.bottom - 1 - yPos;
-		v->MouseMoved(xPos, yPos, fwKeys);
-		// sikk---> Context Menu
-		if (!g_bMoved && (g_nMouseX != xPos || g_nMouseY != yPos))
-			g_bMoved = true;
-		// <---sikk
-		return 0;
-	}
-	*/
 	return 1;
 }

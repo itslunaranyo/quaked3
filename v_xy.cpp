@@ -243,92 +243,6 @@ mouseContext_t const XYZView::GetMouseContext(const int x, const int y)
 
 
 
-
-
-/*
-==================
-XYZView::DragDelta
-==================
-*/
-/*
-bool XYZView::DragDelta (int x, int y, vec3 move)
-{
-	vec3	xvec, yvec, delta;
-	int		i;
-
-	xvec[0] = 1 / scale;
-	xvec[1] = xvec[2] = 0;
-	yvec[1] = 1 / scale;
-	yvec[0] = yvec[2] = 0;
-
-	for (i = 0; i < 3; i++)
-	{
-		delta[i] = xvec[i] * (x - pressx) + yvec[i] * (y - pressy);
-
-		if (g_qeglobals.bGridSnap)
-			delta[i] = floor(delta[i] / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;		
-	}
-	move = delta - pressdelta;
-	pressdelta = delta;
-
-	if (move[0] || move[1] || move[2])
-		return true;
-
-	return false;
-}
-*/
-/*
-==============
-XYZView::DragNewBrush
-==============
-*/
-/*
-void XYZView::DragNewBrush (int x, int y)
-{
-	vec3		mins, maxs, junk;
-	int			i;
-	float		temp;
-	Brush	   *n;
-
-	if (!DragDelta(x, y, junk))
-		return;
-
-	// delete the current selection
-	if (Selection::HasBrushes())
-		delete g_brSelectedBrushes.next;
-
-	SnapToPoint(pressx, pressy, mins);
-	mins[dViewType] = g_qeglobals.d_nGridSize * ((int)(g_qeglobals.d_v3WorkMin[dViewType] / g_qeglobals.d_nGridSize));
-
-	SnapToPoint(x, y, maxs);
-	maxs[dViewType] = g_qeglobals.d_nGridSize * ((int)(g_qeglobals.d_v3WorkMax[dViewType] / g_qeglobals.d_nGridSize));
-
-	if (maxs[dViewType] <= mins[dViewType])
-		maxs[dViewType] = mins[dViewType] + g_qeglobals.d_nGridSize;
-
-	for (i = 0; i < 3; i++)
-	{
-		if (mins[i] == maxs[i])
-			return;	// don't create a degenerate brush
-		if (mins[i] > maxs[i])
-		{
-			temp = mins[i];
-			mins[i] = maxs[i];
-			maxs[i] = temp;
-		}
-	}
-
-	n = Brush::Create(mins, maxs, &g_qeglobals.d_workTexDef);
-	if (!n)
-		return;
-
-	n->AddToList(&g_brSelectedBrushes);
-	g_map.world->LinkBrush(n);
-	n->Build();
-
-	Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
-}
-*/
 /*
 ==============
 XYZView::MouseDown
@@ -411,36 +325,6 @@ XYZView::MouseUp
 */
 void XYZView::MouseUp (int x, int y, int buttons)
 {
-//	Drag_MouseUp();
-
-	//if (!press_selection)
-	//	Sys_UpdateWindows(W_SCENE);
-	/*
-// sikk--->	Free Rotate & Free Scaling
-	if (g_bRotateCheck || g_bScaleCheck)
-	{
-		nRotate = 0;
-
-		if (g_bSnapCheck)
-		{
-			g_qeglobals.bGridSnap = true;
-			g_bSnapCheck = false;
-		}
-
-		g_bRotateCheck = false;
-		g_bScaleCheck = false;
-
-// sikk - Undo/Redo for Free Rotate & Free Scale
-		//Undo::EndBrushList(&g_brSelectedBrushes);
-		//Undo::End();
-// <---sikk
-
-		Sys_UpdateWindows(W_XY | W_Z);
-	}
-// <---sikk
-*/
-
-	//buttonstate = 0;
 }
 
 /*
@@ -456,8 +340,6 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	char	xystring[256];
 	int		cx, cy;
 
-	//char	szRotate[16];	// sikk - Free Rotate
-
 	Sys_GetCursorPos(&cx, &cy);
 	if (cx == cursorX && cy == cursorY)
 		return;
@@ -471,30 +353,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 	if (!buttons)
 		return;
-	/*
-	// LMB without selection = drag new brush
-	if (buttons == MK_LBUTTON && !press_selection)
-	{
-	//	DragNewBrush(x, y);
 
-		// update g_v3RotateOrigin to new brush (for when 'quick move' is used)
-		//g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
-		return;
-	}
-
-	// LMB (possibly with control and or shift)
-	// with selection = drag selection
-	if (buttons & MK_LBUTTON)
-	{
-	//	Drag_MouseMoved(x, y, buttons);
-		
-		// update g_v3RotateOrigin to new brush
-		//g_v3RotateOrigin = Selection::GetTrueMid();	// sikk - Free Rotate
-
-		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-		return;
-	}
-	*/
 	// Ctrl+MMB = move camera
 	if (buttons == (MK_CONTROL | MK_MBUTTON))
 	{
@@ -519,32 +378,17 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	// MMB = angle camera
 	if (buttons == MK_MBUTTON)
 	{
-		/*
-// sikk---> Free Rotate: Pivot Icon
-		// Alt+MMB = move free rotate pivot icon
-		if (GetKeyState(VK_MENU) < 0)
+		SnapToPoint( x, y, point);
+		point = point - g_qeglobals.d_vCamera.origin;
+
+		nAngle = (dViewType == XY) ? YAW : PITCH;
+
+		if (point[nDim1] || point[nDim2])
 		{
-			SnapToPoint( x, y, point);
-			CopyVector(point, g_v3RotateOrigin);
-
-			Sys_UpdateWindows(W_XY);
-			return;
+			g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
+			g_qeglobals.d_vCamera.BoundAngles();
+			Sys_UpdateWindows(W_XY | W_CAMERA);
 		}
-// <---sikk
-		else
-		{*/
-			SnapToPoint( x, y, point);
-			point = point - g_qeglobals.d_vCamera.origin;
-
-			nAngle = (dViewType == XY) ? YAW : PITCH;
-
-			if (point[nDim1] || point[nDim2])
-			{
-				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
-				g_qeglobals.d_vCamera.BoundAngles();
-				Sys_UpdateWindows(W_XY | W_CAMERA);
-			}
-		//}
 		return;
 	}
 
@@ -553,120 +397,22 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
 
-		/*
-// sikk---> Free Rotate
-		// Alt+RMB = free rotate selected brush
-		if (GetKeyState(VK_MENU) < 0)
+		if (cx != cursorX || cy != cursorY)
 		{
-			g_bRotateCheck = true;
-
-			if (g_qeglobals.bGridSnap)
-			{
-				g_qeglobals.bGridSnap = false;
-				g_bSnapCheck = true;
-			}
-				
-			switch (dViewType)
-			{
-			case XY:
-				cx -= cursorX;
-				nRotate += cx;
-				Transform_RotateAxis(2, cx, true);
-				break;
-			case XZ:
-				cx = cursorX - cx;
-				nRotate += -cx;
-				Transform_RotateAxis(1, cx, true);
-				break;
-			case YZ:
-				cx -= cursorX;
-				nRotate += cx;
-				Transform_RotateAxis(0, cx, true);
-				break;
-			}
-
-			if (nRotate >= 360)
-				nRotate -= 360;
-			if (nRotate < -360)
-				nRotate += 360;
+			origin[nDim1] -= (cx - cursorX) / scale;
+			origin[nDim2] += (cy - cursorY) / scale;
+			SetBounds();
 
 			Sys_SetCursorPos(cursorX, cursorY);
+			Sys_UpdateWindows(W_XY| W_Z);
 
-			// sikk - this ensures that the windows are updated in realtime
-			Sys_ForceUpdateWindows(W_SCENE);
-
-			sprintf(szRotate, "Rotate: %d°", nRotate);
-			Sys_Status(szRotate, 0);
+			sprintf(xystring, "this Origin: (%d %d %d)", (int)origin[0], (int)origin[1], (int)origin[2]);
+			Sys_Status(xystring, 0);
 		}
-// <---sikk
-		else
-		{
-		*/
-			if (cx != cursorX || cy != cursorY)
-			{
-				origin[nDim1] -= (cx - cursorX) / scale;
-				origin[nDim2] += (cy - cursorY) / scale;
-				SetBounds();
-
-				Sys_SetCursorPos(cursorX, cursorY);
-				Sys_UpdateWindows(W_XY| W_Z);
-
-				sprintf(xystring, "this Origin: (%d %d %d)", (int)origin[0], (int)origin[1], (int)origin[2]);
-				Sys_Status(xystring, 0);
-			}
-		//}
 		return;
 	}
 		
-	/*
-// sikk---> Free Scaling
-	// Shift+RMB = free scale selected brush
-	if (buttons == (MK_SHIFT | MK_RBUTTON))
-	{
-		int i;
-
-		g_bScaleCheck = true;
-
-		if (g_qeglobals.bGridSnap)
-		{
-			g_qeglobals.bGridSnap = false;
-			g_bSnapCheck = true;
-		}
-			
-		SetCursor(NULL); // sikk - Remove Cursor
-
-		i = cursorY - cy;
-
-		if (i < 0)
-		{
-			if (g_qeglobals.d_savedinfo.bScaleLockX)
-				Transform_Scale(0.9f, 1.0f, 1.0f);
-			if (g_qeglobals.d_savedinfo.bScaleLockY)
-				Transform_Scale(1.0f, 0.9f, 1.0f);
-			if (g_qeglobals.d_savedinfo.bScaleLockZ)
-				Transform_Scale(1.0f, 1.0f, 0.9f);
-		}
-		if (i > 0)
-		{
-			if (g_qeglobals.d_savedinfo.bScaleLockX)
-				Transform_Scale(1.1f, 1.0f, 1.0f);
-			if (g_qeglobals.d_savedinfo.bScaleLockY)
-				Transform_Scale(1.0f, 1.1f, 1.0f);
-			if (g_qeglobals.d_savedinfo.bScaleLockZ)
-				Transform_Scale(1.0f, 1.0f, 1.1f);
-		}
-			
-		Sys_SetCursorPos(cursorX, cursorY);
-//			cursorY = y;
-
-		// sikk - this ensures that the windows are updated in realtime
-		Sys_ForceUpdateWindows(W_SCENE);
-
-		return;
-	}
-// <---sikk
-*/
-// sikk---> Mouse Zoom
+	// sikk---> Mouse Zoom
 	// Ctrl+RMB = zoom xy view
 	if (buttons == (MK_CONTROL | MK_RBUTTON))
 	{
@@ -689,8 +435,6 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	}
 // <---sikk
 }
-
-
 
 
 
@@ -1076,37 +820,6 @@ void XYZView::DrawCoords()
 // <---sikk
 
 	DrawViewName();	
-
-/*
-// sikk---> Show Axis in center of view
-	if (g_qeglobals.d_savedinfo.bShow_Axis)
-	{
-		glLineWidth(2);
-		if (dViewType == XY)
-			glColor3f(1.0, 0.0, 0.0);	
-		else if (dViewType == XZ)
-			glColor3f(1.0, 0.0, 0.0);
-		else
-			glColor3f(0.0, 1.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex2f(0, 0);
-		glVertex2f(64,0);
-		glEnd();
-			
-		if (dViewType == XY)
-			glColor3f(0.0, 1.0, 0.0);
-		else if (dViewType == XZ)
-			glColor3f(0.0, 0.0, 1.0);
-		else
-			glColor3f(0.0, 0.0, 1.0);
-		glBegin(GL_LINES);
-		glVertex2f(0, 0);
-		glVertex2f(0, 64);
-		glEnd();
-		glLineWidth(1);
-	}
-// <---sikk
-*/
 }
 
 /*

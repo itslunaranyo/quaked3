@@ -263,9 +263,9 @@ BEGIN
         MENUITEM MFT_SEPARATOR
         MENUITEM "Flush &Unused\tF",            ID_TEXTURES_FLUSH_UNUSED,MFT_STRING,MFS_ENABLED
         MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE,MFT_STRING,MFS_ENABLED
-        MENUITEM "Flush &All",                  ID_TEXTURES_FLUSH_ALL,MFT_STRING,MFS_ENABLED
-        MENUITEM "&Reset Window Scale",         ID_TEXTURES_RESETSCALE,MFT_STRING,MFS_ENABLED
+        MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
+        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE,MFT_STRING,MFS_ENABLED
         MENUITEM "Update &Texture Menu",        ID_TEXTURES_UPDATEMENU,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
     END
@@ -423,6 +423,18 @@ BEGIN
         MENUITEM "Insert Brush",                ID_SELECTION_INSERTBRUSH
         MENUITEM SEPARATOR
         MENUITEM "Select Entity Color",         ID_MISC_SELECTENTITYCOLOR
+    END
+END
+
+IDR_CONTEXT_TEXGRP MENU
+BEGIN
+    POPUP "Context"
+    BEGIN
+        MENUITEM "Reload",                      ID_CONTEXT_RELOAD
+        MENUITEM "Flush Unused",                ID_CONTEXT_FLUSHUNUSED
+        MENUITEM "Load Completely",             ID_CONTEXT_LOADCOMPLETELY
+        MENUITEM SEPARATOR
+        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
     END
 END
 
@@ -1052,6 +1064,25 @@ BEGIN
     CTEXT           "(integer or single character)",IDC_STATIC,30,66,96,12,SS_CENTERIMAGE
 END
 
+IDD_IMPORT DIALOGEX 0, 0, 181, 118
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
+CAPTION "Import Options"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Import worldspawn keyvalues",IDC_CHECK_WKV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,6,111,10
+    CONTROL         "Keep the value from the current map",IDC_RADIO_WKM_ADD,
+                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP | WS_TABSTOP,18,28,134,10
+    CONTROL         "Use the value from the imported map",IDC_RADIO_WKM_OVERWRITE,
+                    "Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_TABSTOP,18,40,135,10
+    CONTROL         "Merge wad keyvalues from both worldspawns",IDC_CHECK_WAD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,62,162,10
+    CONTROL         "Auto-increment conflicting targets/targetnames",IDC_CHECK_TARGETS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,76,168,10
+    DEFPUSHBUTTON   "OK",IDOK,70,97,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,124,97,50,14
+    GROUPBOX        "Conflict Resolution",IDC_STATIC,10,18,161,38
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1059,8 +1090,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,48,0
- PRODUCTVERSION 3,2,48,0
+ FILEVERSION 3,2,49,0
+ PRODUCTVERSION 3,2,49,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1077,14 +1108,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 48)"
-            VALUE "FileVersion", "3.2.48.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 48)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 49)"
+            VALUE "FileVersion", "3.2.49.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 49)"
             VALUE "LegalCopyright", "Copyright © 1997-2019"
-            VALUE "LegalTrademarks", "Quake™ 1996-2018"
+            VALUE "LegalTrademarks", "Quake™ 1996-2019"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.48.0"
+            VALUE "ProductVersion", "3.2.49.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1159,10 +1190,10 @@ BEGIN
     VK_HOME,        ID_VIEW_Z100,           VIRTKEY, CONTROL, NOINVERT
     VK_INSERT,      ID_VIEW_ZZOOMIN,        VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_VIEW_ZZOOMOUT,       VIRTKEY, CONTROL, NOINVERT
-	VK_UP,			ID_NUDGE_UP,       		VIRTKEY, ALT, NOINVERT
-	VK_DOWN,		ID_NUDGE_DOWN,       	VIRTKEY, ALT, NOINVERT
-	VK_RIGHT,		ID_NUDGE_RIGHT,       	VIRTKEY, ALT, NOINVERT
-	VK_LEFT,		ID_NUDGE_LEFT,      	VIRTKEY, ALT, NOINVERT
+    VK_UP,          ID_NUDGE_UP,            VIRTKEY, ALT, NOINVERT
+    VK_DOWN,        ID_NUDGE_DOWN,          VIRTKEY, ALT, NOINVERT
+    VK_RIGHT,       ID_NUDGE_RIGHT,         VIRTKEY, ALT, NOINVERT
+    VK_LEFT,        ID_NUDGE_LEFT,          VIRTKEY, ALT, NOINVERT
 END
 
 
@@ -1539,6 +1570,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 84
     END
+
+    IDD_IMPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 174
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 111
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -1724,6 +1763,11 @@ BEGIN
 END
 
 IDD_SETKEYVALUES AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_IMPORT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

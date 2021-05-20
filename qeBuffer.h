@@ -24,17 +24,25 @@ public:
 
 	size_t size() const { return len; }
 	void* operator*() const { return reinterpret_cast<void*>(buf); }
-//	operator char*() const { return reinterpret_cast<char*>(buf); }	// this is not a string class, cast it manually if you want to pretend it is
+//	operator char*() const { return reinterpret_cast<char*>(buf); }	// this is not a string class, use c_str() manually if you want to pretend it is
 	byte& operator[](unsigned i) { assert(i < len); return buf[i]; }
 	byte& operator[](unsigned i) const { assert(i < len); return buf[i]; }
 
 	bool operator==(const char* other) const { return ( strncmp((char*)buf, other, len) == 0 ); }
+	qeBuffer& operator=(const char* other) {
+		resize(strlen(other) + 1);
+		std::memcpy(buf, other, len);
+		return *this;
+	}
+
+	bool operator==(const qeBuffer& other) const { return ( len == other.len && ((char*)buf, (char*)*other, len) == 0 ); }
 	qeBuffer& operator=(const qeBuffer& other) {
 		resize(other.len);
 		std::memcpy(buf, other.buf, len);
 		return *this;
 	}
 
+	char* const c_str() { return reinterpret_cast<char*>(buf); }	// TODO: use this in all the places it should be
 	void resize(size_t size) { 
 		destroy(); 
 		len = size;

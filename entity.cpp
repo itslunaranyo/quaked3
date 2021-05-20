@@ -87,7 +87,7 @@ Entity::SetKeyValue
 void Entity::SetKeyValue(const char *key, const char *value)
 {
 	EPair	*ep;
-	int vlen = strlen(value);
+	//int vlen = strlen(value);
 
 	if (!key || !key[0])
 		return;
@@ -96,9 +96,9 @@ void Entity::SetKeyValue(const char *key, const char *value)
 	{
 		if (ep->key == key)
 		{
-			if ((int)ep->value.size() <= vlen)
-				ep->value.resize(vlen + 8);
-			//ep->value.zero();
+			//if ((int)ep->value.size() <= vlen)
+			//	ep->value.resize(vlen + 8);
+			ep->SetValue(value);
 			break;
 		}
 	}
@@ -107,12 +107,14 @@ void Entity::SetKeyValue(const char *key, const char *value)
 		ep = new EPair();
 		ep->next = epairs;
 		epairs = ep;
-		ep->key.resize(strlen(key) + 8);
-		strcpy((char*)*ep->key, key);
-		ep->value.resize(vlen + 8);
+		//ep->key.resize(strlen(key) + 8);
+		//strcpy((char*)*ep->key, key);
+		//ep->value.resize(vlen + 8);
+		ep->SetKey(key);
+		ep->SetValue(value);
 	}
 
-	strcpy((char*)*ep->value, value);
+	//strcpy((char*)*ep->value, value);
 
 	// this has to go here and not in SetSpawnflag because the user could enter
 	// the number directly into the keyvalue instead of ticking the boxes
@@ -455,12 +457,14 @@ EPair *EPair::ParseEpair ()
 	
 	e = new EPair();
 	
-	e->key.resize(strlen(g_szToken) + 8);
-	strcpy((char*)*e->key, g_szToken);
+	//e->key.resize(strlen(g_szToken) + 8);
+	//strcpy((char*)*e->key, g_szToken);
+	e->SetKey(g_szToken);
 
 	GetToken(false);
-	e->value.resize(strlen(g_szToken) + 8);
-	strcpy((char*)*e->value, g_szToken);
+//	e->value.resize(strlen(g_szToken) + 8);
+//	strcpy((char*)*e->value, g_szToken);
+	e->SetValue(g_szToken);
 
 	return e;
 }
@@ -522,6 +526,37 @@ bool EPair::IsTargetName()
 		}
 	}
 	return false;
+}
+
+/*
+================
+EPair::SetKey
+
+maintain safe buffer padding
+================
+*/
+void EPair::SetKey(const char *k)
+{
+	assert(*k);
+	int klen = strlen(k);
+	if ((int)key.size() <= klen)
+		key.resize(klen + 8);
+	strcpy(key.c_str(), k);
+}
+
+/*
+================
+EPair::SetValue
+
+maintain safe buffer padding
+================
+*/
+void EPair::SetValue(const char *v)
+{
+	int vlen = strlen(v);
+	if ((int)value.size() <= vlen)
+		value.resize(vlen + 8);
+	strcpy(value.c_str(), v);
 }
 
 /*
