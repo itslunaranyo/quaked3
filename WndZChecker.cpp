@@ -27,7 +27,6 @@ void WndZChecker::Initialize()
 
 int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int		fwKeys, xPos, yPos;
 
 	if (Tool::HandleInput1D(uMsg, wParam, lParam, *zv, *this))
 	{
@@ -35,13 +34,14 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Focus();
 		return 1;
 	}
-
+	/*
+	int		fwKeys, xPos, yPos;
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
-	case WM_KEYUP:
-		return QE_KeyUp(wParam);
+	//case WM_KEYUP:
+	//	return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();
@@ -99,5 +99,6 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		zv->MouseMoved(xPos, yPos, fwKeys);
 		return 0;
 	}
+	*/
 	return 1;
 }

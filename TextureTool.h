@@ -13,11 +13,16 @@ class TextureTool :	public Tool
 public:
 	TextureTool();
 	~TextureTool();
+	HWND hwndReplaceDlg;
 
 	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
-	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
+	bool InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, WndView &vWnd);
+	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void SelectionChanged();
+
+	bool InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void FindTextureDialog();
 
 	void FitTexture(float x, float y);
 	void ShiftTexture(int x, int y);
@@ -29,7 +34,15 @@ private:
 	clock_t lastTexModTime;
 	Face *lastWrap, *lastWrap2;
 
+	std::vector<label_t> findHistory, replaceHistory;
+	enum sampleState_e {
+		TTSS_NONE = 0,
+		TTSS_FIND,
+		TTSS_REPLACE
+	} sampleState;
+
 	void GetTexModCommand(texModType_t tm);
+	void UpdateFindReplaceHistories();
 };
 
 #endif

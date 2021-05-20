@@ -14,6 +14,10 @@ typedef struct label_s
 	label_s(const char* name) { strncpy(n, name, MAX_TEXNAME); }
 	bool operator<(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) < 0); }
 	bool operator==(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) == 0); }
+	bool operator!=(const label_s &other) const { return (strncmp(n, other.n, MAX_TEXNAME) != 0); }
+	bool operator<(const char* &other) const { return (strncmp(n, other, MAX_TEXNAME) < 0); }
+	bool operator==(const char* &other) const { return (strncmp(n, other, MAX_TEXNAME) == 0); }
+	bool operator!=(const char* &other) const { return (strncmp(n, other, MAX_TEXNAME) != 0); }
 } label_t;
 
 const int g_textureModes[] =

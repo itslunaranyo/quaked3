@@ -17,10 +17,11 @@ public:
 	vec3	mpUp, mpRight;		// mouse manipulation plane
 	int		nCamButtonState;
 
-	void MouseDown (int x, int y, int buttons);
-	void MouseUp (int x, int y, int buttons);
-	void MouseMoved (int x, int y, int buttons);
-	void MouseControl (float dtime);
+	void MouseDown (const int x, const int y, const int buttons);
+	void MouseUp (const int x, const int y, const int buttons);
+	void MouseMoved(const int x, const int y, const int buttons);
+	void MouseWheel(const int x, const int y, bool up, const int buttons);
+	void RealtimeControl (float dtime);
 
 	void GetAimPoint(vec3 &pt);
 	void PointToRay(int x, int y, vec3 &rayOut);
@@ -31,15 +32,18 @@ public:
 	void PointAt(vec3 pt);
 	void LevelView();
 	void FreeLook();
-	void PositionDrag();
+	void Strafe();
 	void PositionCenter();	// sikk - Center Camera on Selection
 	void Orbit();
+	void Orbit(float pitch, float yaw);
+	void SetOrbit(vec3 dir);
+	void SetOrbit(int x, int y);
 	void BoundAngles();
 
 	void Draw ();
 	bool CullBrush(Brush *b);
 
-	void DrawSelected(Brush	*pList);
+	void DrawSelected(Brush	*pList, vec3 selColor);
 
 private:
 

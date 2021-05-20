@@ -117,7 +117,7 @@ void ZView::MouseDown(int x, int y, int buttons)
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
 		g_qeglobals.d_vCamera.origin[2] = org[2];
-		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+		Sys_UpdateWindows(W_SCENE);
 	}
 }
 
@@ -209,6 +209,21 @@ void ZView::MouseMoved(int x, int y, int buttons)
 // <---sikk
 }
 
+void ZView::ScaleUp()
+{
+	scale = min(32.0f, scale * 1.25f);
+	Sys_UpdateWindows(W_Z);
+}
+void ZView::ScaleDown()
+{
+	scale = max(0.05f, scale * 0.8f);
+	Sys_UpdateWindows(W_Z);
+}
+void ZView::Scroll(float amt)
+{
+	origin.z += amt / scale;
+	Sys_UpdateWindows(W_Z);
+}
 
 /*
 ============================================================================
@@ -370,7 +385,7 @@ bool ZView::DrawTools()
 ZView::DrawSelection
 ==============
 */
-void ZView::DrawSelection()
+void ZView::DrawSelection(vec3 selColor)
 {
 	Brush*	brush;
 	float	top, bottom;
@@ -383,36 +398,36 @@ void ZView::DrawSelection()
 	org_bottom = origin;
 	org_bottom[2] = -g_cfgEditor.MapSize / 2;
 
-	// draw selected brushes
+	// draw selected brushes as quads filled with the brush color
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if (!(brush->mins[0] >= origin[0] ||
+		if (brush->mins[0] >= origin[0] ||
 			brush->maxs[0] <= origin[0] ||
 			brush->mins[1] >= origin[1] ||
-			brush->maxs[1] <= origin[1]))
-		{
-			if (brush->RayTest(org_top, vec3(0,0,-1), &top))
-			{
-				top = org_top[2] - top;
-				if (brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
-				{
-					bottom = org_bottom[2] + bottom;
-					q = Textures::ForName(brush->faces->texdef.name);
+			brush->maxs[1] <= origin[1])
+			continue;
 
-					glColor3f(q->color[0], q->color[1], q->color[2]);
-					glBegin(GL_QUADS);
-					glVertex2f(-xCam, bottom);
-					glVertex2f(xCam, bottom);
-					glVertex2f(xCam, top);
-					glVertex2f(-xCam, top);
-					glEnd();
-				}
-			}
+		if (!brush->RayTest(org_top, vec3(0, 0, -1), &top))
+			continue;
+
+		top = org_top[2] - top;
+		if (brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
+		{
+			bottom = org_bottom[2] + bottom;
+			q = Textures::ForName(brush->faces->texdef.name);
+
+			glColor3f(q->color[0], q->color[1], q->color[2]);
+			glBegin(GL_QUADS);
+			glVertex2f(-xCam, bottom);
+			glVertex2f(xCam, bottom);
+			glVertex2f(xCam, top);
+			glVertex2f(-xCam, top);
+			glEnd();
 		}
 	}
 
 	// lunaran: draw all selection borders over the colored quads so nothing in the selection is obscured
-	GLSelectionColor();
+	glColor4f(selColor[0], selColor[1], selColor[2], 1.0f);
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
 		glBegin(GL_LINE_LOOP);
@@ -521,7 +536,7 @@ void ZView::Draw ()
 	}
 
 	if (!DrawTools())
-		DrawSelection();
+		DrawSelection(g_colors.selection);
 
 	DrawCameraIcon();
 

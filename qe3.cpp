@@ -115,6 +115,7 @@ void QE_Init ()
 
 	// create tools - creation order determines which tools get first chance to handle inputs
 	Sys_Printf("Creating base tools\n");
+	new NavTool();
 	new SelectTool();
 	new TextureTool();
 	new ManipTool();
@@ -375,12 +376,14 @@ bool QE_KeyDown (int key)
 	case 'X':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
 		break;
+		/*
 	case ' ':
 		if (g_cfgEditor.CloneStyle == CLONE_DRAG)
 			Sys_UpdateWindows(W_SCENE);
 		else
 			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
 		break;
+		*/
 	case VK_BACK:
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DELETE, 0);
 		break;
@@ -520,7 +523,7 @@ bool QE_KeyUp(int key)
 	//bool shift, ctrl;
 	//shift = (GetKeyState(VK_SHIFT) < 0);
 	//ctrl = (GetKeyState(VK_CONTROL) < 0);
-
+	/*
 	switch (key)
 	{
 	case ' ':
@@ -529,7 +532,7 @@ bool QE_KeyUp(int key)
 		break;
 	default:
 		return false;
-	}
+	}*/
 	return true;
 }
 
@@ -802,6 +805,23 @@ void QE_UpdateCommandUIFilters(HMENU hMenu)
 	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, ((g_cfgUI.ViewFilter & EFL_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS, ((g_cfgUI.ViewFilter & EFL_MONSTER) ? MF_UNCHECKED : MF_CHECKED));
 	CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS, ((g_cfgUI.ViewFilter & EFL_TRIGGER) ? MF_UNCHECKED : MF_CHECKED));
+
+
+	CheckMenuItem(hMenu, ID_FILTER_SHOWEASYSKILL, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_FILTER_SHOWMEDIUMSKILL, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_FILTER_SHOWHARDSKILL, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_FILTER_SHOWDEATHMATCH, MF_UNCHECKED);
+	CheckMenuItem(hMenu, ID_FILTER_SHOWALLSKILLS, MF_UNCHECKED);
+	if (g_cfgUI.ViewFilter & EFL_EASY)
+		CheckMenuItem(hMenu, ID_FILTER_SHOWEASYSKILL, MF_CHECKED);
+	else if (g_cfgUI.ViewFilter & EFL_MEDIUM)
+		CheckMenuItem(hMenu, ID_FILTER_SHOWMEDIUMSKILL, MF_CHECKED);
+	else if (g_cfgUI.ViewFilter & EFL_HARD)
+		CheckMenuItem(hMenu, ID_FILTER_SHOWHARDSKILL, MF_CHECKED);
+	else if (g_cfgUI.ViewFilter & EFL_DEATHMATCH)
+		CheckMenuItem(hMenu, ID_FILTER_SHOWDEATHMATCH, MF_CHECKED);
+	else
+		CheckMenuItem(hMenu, ID_FILTER_SHOWALLSKILLS, MF_CHECKED);
 }
 
 void QE_UpdateCommandUI ()

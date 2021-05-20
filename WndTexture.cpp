@@ -25,7 +25,6 @@ void WndTexture::Initialize()
 
 int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int xPos, yPos, fwKeys;
 
 	if (Tool::HandleInputTex(uMsg, wParam, lParam, *texv, *this))
 	{
@@ -33,13 +32,14 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Focus();
 		return 1;
 	}
-
+	/*
+	int xPos, yPos, fwKeys;
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
-	case WM_KEYUP:
-		return QE_KeyUp(wParam);
+	//case WM_KEYUP:
+	//	return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();
@@ -87,6 +87,6 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		texv->MouseMoved(xPos, yPos, wParam);
 		return 0;
 	}
-
+	*/
 	return 1;
 }

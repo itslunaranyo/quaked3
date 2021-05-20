@@ -824,7 +824,7 @@ CreateStatusBar
 HWND CreateStatusBar (HWND hWnd)
 {
 	HWND hwndSB;
-	int partsize[4] = { 192, 640, 960, -1 };	// EER //sikk - adjusted sizes
+	int partsize[4] = { 256, 720, 960, -1 };
 
 	hwndSB = CreateStatusWindow(
 		QE3_STATUSBAR_STYLE,	// window styles
@@ -1136,6 +1136,7 @@ MAIN WINDOW
 
 bool	g_bHaveQuit;
 
+
 /*
 ==============
 CommandHandler
@@ -1436,6 +1437,32 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 
+		case ID_FILTER_SHOWALLSKILLS:
+			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+			Sys_UpdateWindows(W_SCENE|W_ENTITY);
+			break;
+		case ID_FILTER_SHOWEASYSKILL:
+			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+			g_cfgUI.ViewFilter |= EFL_EASY;
+			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			break;
+		case ID_FILTER_SHOWMEDIUMSKILL:
+			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+			g_cfgUI.ViewFilter |= EFL_MEDIUM;
+			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			break;
+		case ID_FILTER_SHOWHARDSKILL:
+			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+			g_cfgUI.ViewFilter |= EFL_HARD;
+			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			break;
+		case ID_FILTER_SHOWDEATHMATCH:
+			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+			g_cfgUI.ViewFilter |= EFL_DEATHMATCH;
+			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			break;
+
+
 		case ID_VIEW_CAMERA:	// sikk - Toggle Camera View
 			g_qeglobals.d_wndCamera->Toggle();
 			break;
@@ -1583,9 +1610,9 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
 			
-		case ID_SELECTION_CLONE:
-			Modify::Clone();
-			break;
+	//	case ID_SELECTION_CLONE:
+	//		Modify::Clone();
+	//		break;
 		case ID_SELECTION_DESELECT:
 			if (!Tool::HotTool())
 			{
@@ -1802,9 +1829,11 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows(W_TEXTURE);
 			break;
 
+		/*
 		case ID_TEXTURES_REPLACEALL:
-			DoFindTexture();
-			break;
+			TextureTool::FindTextureDialog();
+			//DoFindTexture();
+			break;*/
 		case ID_TEXTURES_LOCK:
 			g_qeglobals.d_bTextureLock ^= true;
 			Sys_UpdateWindows(W_CAMERA);
@@ -2226,26 +2255,41 @@ LONG WINAPI WMain_WndProc (
 		}
 		return 0;
 
-	// lunaran: give tools a last chance to interpret key/menu inputs
 	case WM_KEYDOWN:
 		if (Tool::HandleInput(uMsg, wParam, lParam))
 			return 0;
 		return QE_KeyDown(wParam);
-	case WM_KEYUP:
+	/*case WM_KEYUP:
 		if (Tool::HandleInput(uMsg, wParam, lParam))
 			return 0;
 		return QE_KeyUp(wParam);
-
+	*/
+	case WM_MOUSEMOVE:
+		if (Tool::HandleInput(uMsg, wParam, lParam))
+			return 0;
+		return 1;
 	case WM_COMMAND:
 		if (Tool::HandleInput(uMsg, wParam, lParam))
 			return 0;
 		return CommandHandler(hWnd, wParam, lParam);
-
 	default:
 		break;
 	}
+	/*
+	// lunaran: give tools a last chance to interpret key/mouse/menu inputs
+	if (Tool::FilterInput(uMsg))
+	{
+		if (Tool::HandleInput(uMsg, wParam, lParam))
+			return FALSE;
 
-
+		if (uMsg == WM_KEYDOWN)
+			return QE_KeyDown(wParam);
+		//else if (uMsg == WM_KEYUP)
+		//	return QE_KeyUp(wParam);
+		else if (uMsg == WM_COMMAND)
+			return CommandHandler(hWnd, wParam, lParam);
+	}
+	*/
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
@@ -2563,7 +2607,8 @@ int WINAPI WinMain (
 
 				// lunaran - send keys to dialogs first before trying accelerators, so we can tab through
 				// the surface dialog and such
-				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg))
+				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg) &&
+					!IsDialogMessage(g_qeglobals.d_texTool->hwndReplaceDlg, &msg))
 				{
 					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
 					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg))
@@ -2590,13 +2635,15 @@ int WINAPI WinMain (
 			// <---sikk
 
 			// run time dependent behavior
-			g_qeglobals.d_vCamera.MouseControl(g_deltaTime);
+			SendMessage(g_qeglobals.d_hwndCamera, WM_REALTIME, 0, 0);
+			//g_qeglobals.d_vCamera.RealtimeControl(g_deltaTime);
 
 			// update any windows now
 			Sys_ForceUpdateWindows(g_nUpdateBits);
 
 			// if not driving in the camera view, block
-			if (!g_qeglobals.d_vCamera.nCamButtonState && !g_bHaveQuit)
+			//if (!g_qeglobals.d_vCamera.nCamButtonState && !g_bHaveQuit)
+			if (!Tool::HotTool() && !g_bHaveQuit)
 				WaitMessage();
 #ifndef _DEBUG
 		}

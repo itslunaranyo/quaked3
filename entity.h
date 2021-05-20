@@ -30,6 +30,7 @@ public:
 	vec3		origin;
 	EntClass	*eclass;
 	EPair		*epairs;
+	int			showflags;
 
 	bool		IsPoint() const { return (eclass->IsPointClass()); }
 	bool		IsBrush() const { return !(eclass->IsPointClass()); }
@@ -55,6 +56,7 @@ public:
 	void	Transform(mat4 mat);
 
 	void	SetSpawnFlag(int flag, bool on);
+	void	SetSpawnflagFilter();
 
 	void	SetKeyValue(const char *key, const char *value);
 	void	SetKeyValue(const char *key, const float fvalue);

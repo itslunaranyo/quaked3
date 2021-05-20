@@ -354,6 +354,7 @@ void CommandQueue::ClearAllRedos()
 		redoQueue.pop_back();
 		delete cmd;
 	}
+	idFirstAfterSave = 0;
 }
 
 /*
@@ -370,5 +371,6 @@ void CommandQueue::ClearAllUndos()
 		undoQueue.pop_back();
 		delete cmd;
 	}
+	idLastBeforeSave = 0;
 }
 

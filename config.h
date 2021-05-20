@@ -47,6 +47,7 @@ struct qecfgEditor_t
 	bool BrushPrecision;
 	bool VFEModesExclusive;
 	int CloneStyle;
+	int CameraMoveStyle;
 	int TexProjectionMode;
 
 	bool CubicClip;

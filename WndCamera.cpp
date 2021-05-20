@@ -25,15 +25,14 @@ void WndCamera::Initialize()
 
 int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int		fwKeys, xPos, yPos;
-
 	if (Tool::HandleInput3D(uMsg, wParam, lParam, *cv, *this))
 	{
 		if (uMsg > WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)
 			Focus();
 		return 1;
 	}
-
+	/*
+	int		fwKeys, xPos, yPos;
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
@@ -41,11 +40,11 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		else
 			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
-	case WM_KEYUP:
-		if (QE_KeyUp(wParam))
-			return 0;
-		else
-			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
+	//case WM_KEYUP:
+	//	if (QE_KeyUp(wParam))
+	//		return 0;
+	//	else
+	//		return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();
@@ -105,5 +104,6 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		v->MouseMoved(xPos, yPos, fwKeys);
 		return 0;
 	}
+	*/
 	return 1;
 }

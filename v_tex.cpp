@@ -23,41 +23,15 @@ MOUSE ACTIONS
 ============================================================================
 */
 
-
 /*
 ==============
 TextureView::MouseDown
 ==============
 */
-void TextureView::MouseDown(int x, int y, int buttons)
+void TextureView::MouseDown(const int x, const int y, const int buttons)
 {
-	int cx, cy;
-
+	// necessary for scrolling
 	Sys_GetCursorPos(&cursorX, &cursorY);
-	cx = x;
-	cy = height - 1 - y;
-
-	// lbutton = select texture
-	if (buttons == MK_LBUTTON || buttons == MK_MBUTTON)
-	{
-	//	SelectTexture(cx, cy);
-	//	return;
-
-		TexDef texdef;
-		Texture* tw;
-
-		tw = TexAtPos(cx, cy);
-		if (tw)
-		{
-			texdef.Set(tw);
-			ChooseTexture(&texdef);
-			if (buttons == MK_MBUTTON)
-				Surface::SetTexdef(texdef, SFI_ALL - SFI_NAME);
-			else
-				Surface::SetTexdef(texdef, 0);
-			return;
-		}
-	}
 }
 
 /*
@@ -354,6 +328,17 @@ Texture* TextureView::TexAtPos(int x, int y)
 	}
 	return NULL;
 }
+
+/*
+==============
+TextureView::TexAtCursorPos
+==============
+*/
+Texture* TextureView::TexAtCursorPos(const int cx, const int cy)
+{
+	return TexAtPos(cx, height - 1 - cy);
+}
+
 
 /*
 ============

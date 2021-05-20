@@ -124,8 +124,7 @@ bool Brush::IsFiltered() const
 	if (!owner)
 		return true;		// during construction
 
-	//if (g_qeglobals.d_savedinfo.nViewFilter & (showFlags | owner->eclass->showFlags) )
-	if (g_cfgUI.ViewFilter & (showFlags | owner->eclass->showFlags) )
+	if (g_cfgUI.ViewFilter & (showFlags | owner->showflags | owner->eclass->showFlags) )
 		return true;
 
 	return false;

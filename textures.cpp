@@ -315,6 +315,8 @@ void Textures::SelectFirstTexture()
 {
 	if (groups.empty())
 		return;
+	if (!groups.front()->numTextures)
+		return;
 
 	g_qeglobals.d_workTexDef.Set(groups.front()->first);
 	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);

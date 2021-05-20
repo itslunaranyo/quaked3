@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	40
+#define QE_VERSION_BUILD	41
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -51,7 +51,7 @@
 #define QE_TIMER1   2
 
 #define	ON_EPSILON	0.01
-
+/*
 #define	KEY_FORWARD		1
 #define	KEY_BACK		2
 #define	KEY_TURNLEFT	4
@@ -62,7 +62,7 @@
 #define	KEY_LOOKDOWN	128
 #define	KEY_UP			256
 #define	KEY_DOWN		512
-
+*/
 // menu indexes for modifying menus
 #define	MENU_VIEW		2
 #define	MENU_TEXTURE	6
@@ -88,7 +88,7 @@
 #define	W_ALL			0xFFFF
 
 
-
+#define WM_REALTIME		(WM_USER + 266)
 #define WM_BENCHMARK	(WM_USER + 267)
 
 // toolbar ID's
@@ -119,6 +119,9 @@
 #define CLONE_OFFSET	0
 #define CLONE_INPLACE	1
 #define CLONE_DRAG		2
+
+#define CAMERA_CLASSIC	0
+#define CAMERA_WASD		1
 
 #define TEX_PROJECT_AXIAL	0
 #define TEX_PROJECT_FACE	1
@@ -166,17 +169,17 @@ enum entitymask_t
 
 	// entity flags
 	EFL_WORLDSPAWN	= 1 << 7,
-	EFL_POINTENTITY	= 1 << 8,
-	EFL_BRUSHENTITY	= 1 << 9,
-	EFL_TRIGGER		= 1 << 10,
-	EFL_LIGHT		= 1 << 11,
-	EFL_MONSTER		= 1 << 12,
-	EFL_FUNCWALL	= 1 << 13,
-	EFL_DETAIL		= 1 << 14,
-	EFL_X1			= 1 << 15,
-	EFL_X2			= 1 << 16,
-	EFL_X3			= 1 << 17,
-	EFL_X4			= 1 << 18,
+	EFL_EASY		= 1 << 8,	// < these 4 filter flags match the spawnflags that they filter
+	EFL_MEDIUM		= 1 << 9,	// <
+	EFL_HARD		= 1 << 10,	// <
+	EFL_DEATHMATCH	= 1 << 11,	// <
+	EFL_POINTENTITY	= 1 << 12,
+	EFL_BRUSHENTITY	= 1 << 13,
+	EFL_LIGHT		= 1 << 14,
+	EFL_TRIGGER		= 1 << 15,
+	EFL_MONSTER		= 1 << 16,
+	EFL_FUNCWALL	= 1 << 17,
+	EFL_DETAIL		= 1 << 18,	// func_detail*, including ericw-tools wall/illusionary detail
 	EFL_CUSTOM1		= 1 << 19,
 	EFL_CUSTOM2		= 1 << 20,
 	EFL_CUSTOM3		= 1 << 21,

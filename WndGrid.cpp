@@ -192,12 +192,8 @@ void WndGrid::DoPopupMenu(int x, int y)
 }
 
 
-int		g_nMouseX, g_nMouseY;
-bool	g_bMoved;
-
 int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	int		fwKeys, xPos, yPos;
 
 	if (Tool::HandleInput2D(uMsg, wParam, lParam, *xyzv, *this))
 	{
@@ -205,13 +201,14 @@ int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Focus();
 		return 1;
 	}
-
+	/*
+	int		fwKeys, xPos, yPos;
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
-	case WM_KEYUP:
-		return QE_KeyUp(wParam);
+	//case WM_KEYUP:
+	//	return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();
@@ -274,5 +271,6 @@ int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// <---sikk
 		return 0;
 	}
+	*/
 	return 1;
 }

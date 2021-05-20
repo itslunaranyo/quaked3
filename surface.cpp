@@ -208,7 +208,7 @@ void Surface::AbsoluteToLocal(Plane normal2, TexDef &td, vec3 &p1, vec3 &p2, vec
 Surface::FindReplace
 ===============
 */
-void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce)
+void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool bForce)
 {
 	Brush	*br;
 	Face	*f;
@@ -219,7 +219,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected, bool bFor
 	tdRepl.Set(pReplace);
 
 	CmdTextureApply *cmdTA = new CmdTextureApply();
-
+	/*
 	if (bForce)
 	{
 		if (bSelected)
@@ -253,6 +253,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected, bool bFor
 		}
 	}
 	else
+	*/
 	{
 		if (Selection::HasBrushes())
 		{
@@ -301,8 +302,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected, bool bFor
 	cmdTA->Apply(tdRepl, SFI_ALL - SFI_NAME);
 	g_cmdQueue.Complete(cmdTA);
 
-	// while f&r dialog is modal, forcibly redraw the camera view so we can see the result immediately
-	Sys_ForceUpdateWindows(W_CAMERA);
+	Sys_UpdateWindows(W_CAMERA);
 }
 
 /*

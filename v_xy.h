@@ -22,10 +22,12 @@ public:
 	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward);
 	void	GetDims(int &d1, int &d2, int &vType) { d1 = nDim1; d2 = nDim2; vType = dViewType; }
 
-	void	MouseDown(int x, int y, int buttons);
-	void	MouseUp(int x, int y, int buttons);
-	void	MouseMoved(int x, int y, int buttons);
+	void	MouseDown(const int x, const int y, const int buttons);
+	void	MouseUp(const int x, const int y, const int buttons);
+	void	MouseMoved(const int x, const int y, const int buttons);
 	void	PositionView();
+	void	ScaleUp();
+	void	ScaleDown();
 	static void PositionAllViews();
 
 	void	const ToPoint(const int x, const int y, vec3 &point);
@@ -37,8 +39,8 @@ public:
 
 	mouseContext_t	const GetMouseContext(const int x, const int y);
 	void	Draw();
-	void	DrawSelection();
-	void	BeginDrawSelection();
+	void	DrawSelection(vec3 selColor);
+	void	BeginDrawSelection(vec3 selColor);
 	void	EndDrawSelection();
 	bool	CullBrush(Brush *b);
 	void	DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds);
@@ -55,6 +57,7 @@ private:
 	void	Init();
 	void	SetBounds();
 	void	CopyVector(const vec3 in, vec3 &out);
+	void	AngleCamera(vec3 point);
 
 	void	DrawGrid ();
 	void	DrawBlockGrid ();
@@ -66,7 +69,7 @@ private:
 	void	DrawZIcon ();
 	bool	DrawTools();
 
-	bool	DragDelta(int x, int y, vec3 move);
+	//bool	DragDelta(int x, int y, vec3 move);
 	//void	DragNewBrush(int x, int y);
 };
 

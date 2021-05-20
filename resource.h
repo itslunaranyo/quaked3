@@ -42,6 +42,7 @@
 #define IDD_NEWNAME                     195
 #define IDD_CONFIG_COLOR                196
 #define IDD_MOUSELIST                   197
+#define IDB_SAMPLE                      199
 #define IDC_E_FLAG1                     1026
 #define IDC_E_FLAG2                     1027
 #define IDC_E_FLAG3                     1028
@@ -168,6 +169,8 @@
 #define IDC_CHECK_PARAMGAME             1249
 #define IDC_COMBO_CLONESTYLE            1249
 #define IDC_EDIT_PARAMGAME              1250
+#define IDC_COMBO_CLONESTYLE2           1250
+#define IDC_COMBO_CAMSTYLE              1250
 #define IDC_SLIDER_GAMMA                1251
 #define IDC_CHECK_PARAMSKILL            1252
 #define IDC_CHECK_NOSTIPPLE             1253
@@ -219,8 +222,11 @@
 #define IDC_EDIT_KEYLIST                1312
 #define IDC_EDIT_MOUSELIST              1313
 #define IDC_RADIO_TEXAXIAL              1314
-#define IDC_RADIO2                      1315
 #define IDC_RADIO_TEXFACE               1315
+#define IDC_COMBO_TEXFIND               1316
+#define IDC_COMBO_TEXREPLACE            1317
+#define IDC_TEXFIND_SAMPLE              1318
+#define IDC_TEXREPLACE_SAMPLE           1319
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -466,14 +472,19 @@
 #define ID_DRAWMODE_WIREFRAME           40464
 #define ID_HELP_MOUSECOMMANDS           40465
 #define ID_HELP_MOUSELIST               40466
+#define ID_FILTER_SHOWALLSKILLS         40467
+#define ID_FILTER_SHOWEASYSKILL         40468
+#define ID_FILTER_SHOWMEDIUMSKILL       40469
+#define ID_FILTER_SHOWHARDSKILL         40470
+#define ID_FILTER_SHOWDEATHMATCH        40471
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        199
-#define _APS_NEXT_COMMAND_VALUE         40467
-#define _APS_NEXT_CONTROL_VALUE         1316
+#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_COMMAND_VALUE         40472
+#define _APS_NEXT_CONTROL_VALUE         1319
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -42,12 +42,6 @@ void CameraView::PositionCenter ()
 		angles[1] = 45;
 		angles[2] = 0;
 	}
-	else
-	{
-		origin[0] = origin[0];
-		origin[1] = origin[1];
-		origin[2] = origin[2];
-	}
 }
 // <---sikk
 
@@ -152,10 +146,10 @@ void CameraView::LevelView()
 
 /*
 ================
-CameraView::PositionDrag
+CameraView::Strafe
 ================
 */
-void CameraView::PositionDrag ()
+void CameraView::Strafe ()
 {
 	int	x, y;
 
@@ -182,9 +176,8 @@ CameraView::Orbit
 */
 void CameraView::Orbit()
 {
-	int			x, y;// , i, j;
-	int yaw, pitch;
-	float vecdist;
+	int x, y;
+	float yaw, pitch;
 
 	SetCursor(NULL); // sikk - Remove Cursor
 	Sys_GetCursorPos(&x, &y);
@@ -192,9 +185,14 @@ void CameraView::Orbit()
 	if (x == cursorX && y == cursorY)
 		return;
 
-	yaw = x - cursorX;
 	pitch = y - cursorY;
+	yaw = x - cursorX;
+	Orbit(pitch, yaw);
+}
 
+void CameraView::Orbit(float pitch, float yaw)
+{
+	float vecdist;
 	angles[PITCH] -= pitch;
 	angles[YAW] -= yaw;
 	BoundAngles();
@@ -206,7 +204,38 @@ void CameraView::Orbit()
 	BuildMatrix();
 
 	Sys_SetCursorPos(cursorX, cursorY);
-	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+	Sys_UpdateWindows(W_SCENE);
+}
+
+/*
+==============
+CameraView::SetOrbit
+==============
+*/
+void CameraView::SetOrbit(vec3 dir)
+{
+	vec3 aim;
+	trace_t vtest;
+	vtest = Selection::TestRay(origin, dir, 0);
+	if (vtest.brush)
+	{
+		if (vtest.brush->owner->IsPoint())
+			focus = vtest.brush->owner->origin;
+		else
+			focus = origin + vtest.dist * dir;
+	}
+	else
+	{
+		focus = origin + 256.0f * dir;
+	}
+	PointAt(focus);
+}
+
+void CameraView::SetOrbit(int x, int y)
+{
+	vec3 dir;
+	PointToRay(x, y, dir);
+	SetOrbit(dir);
 }
 
 /*
@@ -244,8 +273,9 @@ void CameraView::FreeLook ()
 	if (angles[PITCH] > 100)
 		angles[PITCH] -= 360;
 
-	angles[PITCH] -= y;
-	angles[YAW] -= x;
+	// TODO: sensitivity preference
+	angles[PITCH] -= 0.65f * y;
+	angles[YAW] -= 0.65f * x;
 
 	BoundAngles();
 
@@ -258,51 +288,80 @@ void CameraView::FreeLook ()
 
 /*
 ================
-CameraView::MouseControl
+CameraView::RealtimeControl
 ================
 */
-void CameraView::MouseControl (float dtime)
+void CameraView::RealtimeControl (float dtime)
 {
 	int		xl, xh;
 	int		yl, yh;
 	float	xf, yf;
 
-	if (nCamButtonState != MK_RBUTTON)
+	if (!(nCamButtonState & MK_RBUTTON))
 		return;
 
-	xf = (float)(buttonX - width / 2) / (width / 2);
-	yf = (float)(buttonY - height / 2) / (height / 2);
+	if (g_cfgEditor.CameraMoveStyle == CAMERA_CLASSIC)
+	{
+		xf = (float)(buttonX - width / 2) / (width / 2);
+		yf = (float)(buttonY - height / 2) / (height / 2);
 
-	xl = width / 3;
-	xh = xl * 2;
-	yl = height / 3;
-	yh = yl * 2;
+		xl = width / 3;
+		xh = xl * 2;
+		yl = height / 3;
+		yh = yl * 2;
 
 #if 0
-	// strafe
-	if (buttonY < yl && (buttonX < xl || buttonX > xh))
-		origin = origin + xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * right;
-	else
-#endif
-	{
-		xf *= 1.0 - fabs(yf);
-		if (xf < 0)
-		{
-			xf += 0.1f;
-			if (xf > 0)
-				xf = 0;
-		}
+		// strafe
+		if (buttonY < yl && (buttonX < xl || buttonX > xh))
+			origin = origin + xf * dtime * g_qeglobals.d_savedinfo.nCameraSpeed * right;
 		else
+#endif
 		{
-			xf -= 0.1f;
+			xf *= 1.0 - fabs(yf);
 			if (xf < 0)
-				xf = 0;
+			{
+				xf += 0.1f;
+				if (xf > 0)
+					xf = 0;
+			}
+			else
+			{
+				xf -= 0.1f;
+				if (xf < 0)
+					xf = 0;
+			}
+
+			if (xf == 0 && yf == 0)
+				return;
+			origin = origin + yf * dtime * (int)g_cfgEditor.CameraSpeed * forward;
+			angles[YAW] += xf * -dtime * ((int)g_cfgEditor.CameraSpeed / 2);
 		}
-		
-		origin = origin + yf * dtime * (int)g_cfgEditor.CameraSpeed * forward;
-		angles[YAW] += xf * -dtime * ((int)g_cfgEditor.CameraSpeed / 2);
 	}
-	Sys_UpdateWindows(W_CAMERA | W_XY);
+	else if (g_cfgEditor.CameraMoveStyle == CAMERA_WASD)
+	{
+		vec3 move;
+		if (nCamButtonState & MK_SHIFT)	// orbiting
+		{
+			float yaw = 0;
+			if (GetKeyState('D') < 0 || GetKeyState(VK_RIGHT) < 0) yaw -= 1;
+			if (GetKeyState('A') < 0 || GetKeyState(VK_LEFT) < 0) yaw += 1;
+			if (yaw)
+				Orbit(0, yaw * dtime * (float)g_cfgEditor.CameraSpeed * 0.0625f);
+		}
+		else	// flying
+		{
+			if (GetKeyState('D') < 0 || GetKeyState(VK_RIGHT) < 0) move += vright;
+			if (GetKeyState('A') < 0 || GetKeyState(VK_LEFT) < 0) move -= vright;
+			//if (GetKeyState(VK_SHIFT) < 0) move *= 4.0f;
+		}
+		if (GetKeyState('W') < 0 || GetKeyState(VK_UP) < 0) move += vpn;
+		if (GetKeyState('S') < 0 || GetKeyState(VK_DOWN) < 0) move -= vpn;
+		if (move == vec3(0))
+			return;
+		origin += move * dtime * (float)g_cfgEditor.CameraSpeed;
+	}
+
+	Sys_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -354,8 +413,6 @@ CameraView::MouseDown
 */
 void CameraView::MouseDown (int x, int y, int buttons)
 {
-	vec3	dir;
-	PointToRay(x, y, dir);
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
 
@@ -366,23 +423,12 @@ void CameraView::MouseDown (int x, int y, int buttons)
 	// look-at for starting the camera orbit
 	if (buttons == (MK_RBUTTON | MK_SHIFT))
 	{
-		vec3 aim;
-		trace_t vtest;
-		vtest = Selection::TestRay(origin, dir, 0);
-		if (vtest.brush)
-		{
-			if (vtest.brush->owner->IsPoint())
-				focus = vtest.brush->owner->origin;
-			else
-				focus = origin + vtest.dist * dir;
-		}
-		else
-		{
-			focus = origin + 256.0f * dir;
-		}
-		PointAt(focus);
+		SetOrbit(x, y);
+		Sys_UpdateWindows(W_CAMERA);
 	}
 }
+
+
 
 /*
 ==============
@@ -450,26 +496,25 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 	buttonX = x;
 	buttonY = y;
 
-	if (buttons == (MK_RBUTTON | MK_CONTROL))
+	if (buttons & MK_RBUTTON)
 	{
-		PositionDrag();
-		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+		if (buttons == (MK_RBUTTON | MK_CONTROL))
+		{
+			Strafe();
+		}
+		else if (buttons == (MK_RBUTTON | MK_SHIFT))
+		{
+			Orbit();
+		}
+		else if (buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT) ||
+			(buttons == MK_RBUTTON && g_cfgEditor.CameraMoveStyle == CAMERA_WASD))
+		{
+			FreeLook();
+		}
+		Sys_UpdateWindows(W_SCENE);
 		return;
 	}
 
-	if (buttons == (MK_RBUTTON | MK_SHIFT))
-	{
-		Orbit();
-		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-		return;
-	}
-
-	if (buttons == (MK_RBUTTON | MK_CONTROL | MK_SHIFT))
-	{
-		FreeLook();
-		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-		return;
-	}
 
 // sikk---> Mouse Driven Texture Manipulation - TODO: Too sensitive...
 	if (buttons & MK_LBUTTON)
@@ -497,10 +542,40 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		{
 			Sys_GetCursorPos(&cursorX, &cursorY);
 			//Drag_MouseMoved(x, y, buttons);
-			Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+			Sys_UpdateWindows(W_SCENE);
 		}
 	}
 }
+
+/*
+============
+CameraView::MouseWheel
+============
+*/
+void CameraView::MouseWheel(const int x, const int y, bool up, const int buttons)
+{
+	if (buttons & MK_CONTROL)
+	{
+		ChangeFloor(up);
+	}
+	else
+	{
+		vec3 fwd;
+		if (buttons == (MK_RBUTTON | MK_SHIFT) || g_cfgEditor.CameraMoveStyle == CAMERA_WASD)
+		{
+			fwd = vpn;	// orbiting
+		}
+		else
+		{
+			fwd = forward;
+			if (buttons & MK_SHIFT)
+				fwd *= 4.0f;
+		}
+		if (!up) fwd *= -1;
+		origin += fwd * (float)g_cfgEditor.CameraSpeed * 0.0625f;	// cameraSpeed is huge because it's scaled for driving around
+	}
+}
+
 
 /*
 ============
@@ -669,7 +744,7 @@ CameraView::DrawSelected
 draw selected brushes textured, then in red, then in wireframe
 ==============
 */
-void CameraView::DrawSelected(Brush	*pList)
+void CameraView::DrawSelected(Brush	*pList, vec3 selColor)
 {
 	Brush	*brush;
 	Face	*face;
@@ -686,7 +761,7 @@ void CameraView::DrawSelected(Brush	*pList)
 	glEnable(GL_BLEND);
 
 	// lunaran: brighten & clarify selection tint, use selection color preference
-	GLSelectionColorAlpha(0.3f);
+	glColor4f(selColor[0], selColor[1], selColor[2], 0.3f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glDisable(GL_TEXTURE_2D);
 
@@ -873,7 +948,7 @@ void CameraView::Draw ()
 
 	DrawActive();
 	if (!DrawTools())
-		DrawSelected(&g_brSelectedBrushes);
+		DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 
 	// ----------------------------------------------------------------
 

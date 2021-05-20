@@ -745,7 +745,7 @@ bool ClipTool::Draw3D(CameraView &v)
 	if (points[1].set)
 		Draw();
 	else
-		v.DrawSelected(&g_brSelectedBrushes);
+		v.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 
 	DrawPoints();
 	glEnable(GL_DEPTH_TEST);
@@ -756,7 +756,7 @@ bool ClipTool::Draw2D(XYZView &v)
 {
 	if (!points[0].set && !ptHover.set)
 		return false;
-	v.DrawSelection();
+	v.DrawSelection(g_colors.selection);
 	
 	if (g_pcmdBC)
 		DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);

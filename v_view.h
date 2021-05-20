@@ -29,10 +29,10 @@ public:
 
 	virtual mouseContext_t	const GetMouseContext(const int x, const int y) { return mouseContext_t(); }
 
-	virtual void Resize(int w, int h) { width = w; height = h; }
-	virtual void MouseDown(int x, int y, int buttons) {};
-	virtual void MouseUp(int x, int y, int buttons) {};
-	virtual void MouseMoved(int x, int y, int buttons) {};
+	virtual void Resize(const int w, const int h) { width = w; height = h; }
+	virtual void MouseDown(const int x, const int y, const int buttons) {};
+	virtual void MouseUp(const int x, const int y, const int buttons) {};
+	virtual void MouseMoved(const int x, const int y, const int buttons) {};
 	virtual void Draw();
 	virtual bool DrawTools();
 

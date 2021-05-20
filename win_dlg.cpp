@@ -921,12 +921,12 @@ void DoKeylist ()
 
 =====================================================================
 */
-
 /*
 ============
 FindTextureDlgProc
 ============
 */
+/*
 BOOL CALLBACK FindTextureDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
@@ -988,16 +988,18 @@ BOOL CALLBACK FindTextureDlgProc (
 	}
 	return FALSE;
 }
-
+*/
 /*
 ============
 DoFindTexture
 ============
 */
+/*
 void DoFindTexture ()
 {
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDREPLACE), g_qeglobals.d_hwndMain, FindTextureDlgProc);
 }
+*/
 
 
 // sikk---> Create Entity Dialog (*ripped from QE5)

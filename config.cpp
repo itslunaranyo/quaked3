@@ -74,6 +74,7 @@ ConfigVarInt	cfgv_UndoLevels(g_cfgEditor.UndoLevels, "UndoLevels", 32);
 ConfigVarBool	cfgv_BrushPrecision(g_cfgEditor.BrushPrecision, "BrushPrecision", 0);
 ConfigVarBool	cfgv_VFEModesExclusive(g_cfgEditor.VFEModesExclusive, "VFEModesExclusive", 1);
 ConfigVarInt	cfgv_CloneStyle(g_cfgEditor.CloneStyle, "CloneStyle", CLONE_OFFSET);
+ConfigVarInt	cfgv_CameraMoveStyle(g_cfgEditor.CameraMoveStyle, "CameraMoveStyle", CAMERA_CLASSIC);
 ConfigVarInt	cfgv_TexProjectionMode(g_cfgEditor.TexProjectionMode, "TexProjectionMode", TEX_PROJECT_AXIAL);
 
 ConfigVarBool	cfgv_CubicClip(g_cfgEditor.CubicClip, "CubicClip", 1);
@@ -92,6 +93,7 @@ ConfigVar* const cfgEditorVars[] = {
 	&cfgv_BrushPrecision,
 	&cfgv_VFEModesExclusive,
 	&cfgv_CloneStyle,
+	&cfgv_CameraMoveStyle,
 	&cfgv_TexProjectionMode,
 
 	&cfgv_CubicClip,

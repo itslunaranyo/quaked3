@@ -7,9 +7,7 @@
 const char *g_pszDimStrings[] = {"x:%.f", "y:%.f", "z:%.f"};
 const char *g_pszOrgStrings[] = {"(x:%.f  y:%.f)", "(x:%.f  z:%.f)", "(y:%.f  z:%.f)"};
 
-// sikk - Free Rotate & Free Scale
-bool	g_bSnapCheck, g_bRotateCheck, g_bScaleCheck;
-// TODO: this is a tool, not an attribute of a view
+bool	g_bSnapCheck;
 	
 
 XYZView::XYZView() : nRotate(0)
@@ -106,6 +104,16 @@ void XYZView::CopyVector (const vec3 in, vec3 &out)
 }
 
 
+void XYZView::ScaleUp()
+{
+	scale = min(32.0f, scale * 1.25f);
+	Sys_UpdateWindows(W_XY);
+}
+void XYZView::ScaleDown()
+{
+	scale = max(0.05f, scale * 0.8f);
+	Sys_UpdateWindows(W_XY);
+}
 
 /*
 ============================================================================
@@ -115,10 +123,10 @@ void XYZView::CopyVector (const vec3 in, vec3 &out)
 ============================================================================
 */
 
-static int		buttonstate;
-static int		pressx, pressy;
-static bool		press_selection;
-static vec3		pressdelta;
+//static int		buttonstate;
+//static int		pressx, pressy;
+//static bool		press_selection;
+//static vec3		pressdelta;
 
 /*
 ==================
@@ -239,6 +247,7 @@ mouseContext_t const XYZView::GetMouseContext(const int x, const int y)
 XYZView::DragDelta
 ==================
 */
+/*
 bool XYZView::DragDelta (int x, int y, vec3 move)
 {
 	vec3	xvec, yvec, delta;
@@ -264,7 +273,7 @@ bool XYZView::DragDelta (int x, int y, vec3 move)
 
 	return false;
 }
-
+*/
 /*
 ==============
 XYZView::DragNewBrush
@@ -327,14 +336,13 @@ void XYZView::MouseDown (int x, int y, int buttons)
 	vec3	point;
 	vec3	orgLocal, dir, right, up;
 
-	int nAngle;
+	//int nAngle;
 
-	buttonstate = buttons;
+	//buttonstate = buttons;
+	//pressx = x;
+	//pressy = y;
 
-	pressx = x;
-	pressy = y;
-
-	pressdelta = vec3(0);
+	//pressdelta = vec3(0);
 	ToPoint(x, y, point);
 	orgLocal = point;
 
@@ -343,41 +351,33 @@ void XYZView::MouseDown (int x, int y, int buttons)
 	right[nDim1] = 1 / scale;
 	up[nDim2] = 1 / scale;
 
-	press_selection = (Selection::HasBrushes());
+	//press_selection = (Selection::HasBrushes());
 
 	Sys_GetCursorPos(&cursorX, &cursorY);
 
-	if (buttonstate & MK_MBUTTON)
+	if (buttons & MK_MBUTTON)
 	{
-		// Ctrl+MMB = move camera
-		if (buttonstate == (MK_CONTROL | MK_MBUTTON))
+		// Ctrl+MMB = place camera
+		// Alt+MMB = place camera and drag to aim
+		if (buttons & MK_CONTROL || GetKeyState(VK_MENU) < 0)
 		{
 			CopyVector(point, g_qeglobals.d_vCamera.origin);
 
 			Sys_UpdateWindows(W_SCENE);
 			return;
 		}
-		// MMB = angle camera
-		else if (buttonstate == MK_MBUTTON)
-		{
-			point = point - g_qeglobals.d_vCamera.origin;
-
-			nAngle = (dViewType == XY) ? YAW : PITCH;
-
-			if (point[nDim2] || point[nDim1])
-			{
-				g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
-				g_qeglobals.d_vCamera.BoundAngles();
-				Sys_UpdateWindows(W_XY|W_CAMERA);
-			}
-			return;
-		}
-		// Shift+MMB = move z checker
-		else if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+		// Shift+MMB = place z checker
+		else if (buttons & MK_SHIFT)
 		{
 			SnapToPoint(x, y, point);
 			CopyVector(point, g_qeglobals.d_vZ.origin);
 			Sys_UpdateWindows(W_XY | W_Z);
+			return;
+		}
+		// MMB = angle camera
+		else if (buttons == MK_MBUTTON)
+		{
+			AngleCamera(point - g_qeglobals.d_vCamera.origin);
 			return;
 		}
 	}
@@ -400,6 +400,7 @@ void XYZView::MouseDown (int x, int y, int buttons)
 */
 }
 
+
 /*
 ==============
 XYZView::MouseUp
@@ -409,9 +410,9 @@ void XYZView::MouseUp (int x, int y, int buttons)
 {
 //	Drag_MouseUp();
 
-	if (!press_selection)
-		Sys_UpdateWindows(W_SCENE);
-
+	//if (!press_selection)
+	//	Sys_UpdateWindows(W_SCENE);
+	/*
 // sikk--->	Free Rotate & Free Scaling
 	if (g_bRotateCheck || g_bScaleCheck)
 	{
@@ -434,9 +435,9 @@ void XYZView::MouseUp (int x, int y, int buttons)
 		Sys_UpdateWindows(W_XY | W_Z);
 	}
 // <---sikk
+*/
 
-
-	buttonstate = 0;
+	//buttonstate = 0;
 }
 
 /*
@@ -450,21 +451,26 @@ void XYZView::MouseMoved (int x, int y, int buttons)
     int		nAngle;			
 	vec3	tdp;
 	char	xystring[256];
+	int		cx, cy;
 
-	char	szRotate[16];	// sikk - Free Rotate
+	//char	szRotate[16];	// sikk - Free Rotate
 
-	if (!buttonstate || buttonstate ^ MK_RBUTTON)
+	Sys_GetCursorPos(&cx, &cy);
+	if (cx == cursorX && cy == cursorY)
+		return;
+
+	if (!buttons || buttons ^ MK_RBUTTON)
 	{
 		SnapToPoint( x, y, tdp);
 		sprintf(xystring, "xyz Coordinates: (%d %d %d)", (int)tdp[0], (int)tdp[1], (int)tdp[2]);
 		Sys_Status(xystring, 0);
 	}
 
-	if (!buttonstate)
+	if (!buttons)
 		return;
 	/*
 	// LMB without selection = drag new brush
-	if (buttonstate == MK_LBUTTON && !press_selection)
+	if (buttons == MK_LBUTTON && !press_selection)
 	{
 	//	DragNewBrush(x, y);
 
@@ -475,7 +481,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 	// LMB (possibly with control and or shift)
 	// with selection = drag selection
-	if (buttonstate & MK_LBUTTON)
+	if (buttons & MK_LBUTTON)
 	{
 	//	Drag_MouseMoved(x, y, buttons);
 		
@@ -487,7 +493,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	}
 	*/
 	// Ctrl+MMB = move camera
-	if (buttonstate == (MK_CONTROL | MK_MBUTTON))
+	if (buttons == (MK_CONTROL | MK_MBUTTON))
 	{
 		SnapToPoint( x, y, point);
 		CopyVector(point, g_qeglobals.d_vCamera.origin);
@@ -497,7 +503,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	}
 
 	// Shift+MMB = move z checker
-	if (buttonstate == (MK_SHIFT | MK_MBUTTON))
+	if (buttons == (MK_SHIFT | MK_MBUTTON))
 	{
 		SnapToPoint( x, y, point);
 
@@ -508,7 +514,7 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	}
 
 	// MMB = angle camera
-	if (buttonstate == MK_MBUTTON)
+	if (buttons == MK_MBUTTON)
 	{
 		/*
 // sikk---> Free Rotate: Pivot Icon
@@ -540,11 +546,11 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 	}
 
 	// RMB = drag xy origin
-	if (buttonstate == MK_RBUTTON)
+	if (buttons == MK_RBUTTON)
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
-		Sys_GetCursorPos(&x, &y);
 
+		/*
 // sikk---> Free Rotate
 		// Alt+RMB = free rotate selected brush
 		if (GetKeyState(VK_MENU) < 0)
@@ -560,19 +566,19 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 			switch (dViewType)
 			{
 			case XY:
-				x -= cursorX;
-				nRotate += x;
-				Transform_RotateAxis(2, x, true);
+				cx -= cursorX;
+				nRotate += cx;
+				Transform_RotateAxis(2, cx, true);
 				break;
 			case XZ:
-				x = cursorX - x;
-				nRotate += -x;
-				Transform_RotateAxis(1, x, true);
+				cx = cursorX - cx;
+				nRotate += -cx;
+				Transform_RotateAxis(1, cx, true);
 				break;
 			case YZ:
-				x -= cursorX;
-				nRotate += x;
-				Transform_RotateAxis(0, x, true);
+				cx -= cursorX;
+				nRotate += cx;
+				Transform_RotateAxis(0, cx, true);
 				break;
 			}
 
@@ -592,10 +598,11 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 // <---sikk
 		else
 		{
-			if (x != cursorX || y != cursorY)
+		*/
+			if (cx != cursorX || cy != cursorY)
 			{
-				origin[nDim1] -= (x - cursorX) / scale;
-				origin[nDim2] += (y - cursorY) / scale;
+				origin[nDim1] -= (cx - cursorX) / scale;
+				origin[nDim2] += (cy - cursorY) / scale;
 				SetBounds();
 
 				Sys_SetCursorPos(cursorX, cursorY);
@@ -604,13 +611,14 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 				sprintf(xystring, "this Origin: (%d %d %d)", (int)origin[0], (int)origin[1], (int)origin[2]);
 				Sys_Status(xystring, 0);
 			}
-		}
+		//}
 		return;
 	}
 		
+	/*
 // sikk---> Free Scaling
 	// Shift+RMB = free scale selected brush
-	if (buttonstate == (MK_SHIFT | MK_RBUTTON))
+	if (buttons == (MK_SHIFT | MK_RBUTTON))
 	{
 		int i;
 
@@ -623,9 +631,8 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		}
 			
 		SetCursor(NULL); // sikk - Remove Cursor
-		Sys_GetCursorPos(&x, &y);
 
-		i = cursorY - y;
+		i = cursorY - cy;
 
 		if (i < 0)
 		{
@@ -655,20 +662,19 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 		return;
 	}
 // <---sikk
-
+*/
 // sikk---> Mouse Zoom
 	// Ctrl+RMB = zoom xy view
-	if (buttonstate == (MK_CONTROL | MK_RBUTTON))
+	if (buttons == (MK_CONTROL | MK_RBUTTON))
 	{
 		SetCursor(NULL); // sikk - Remove Cursor
-		Sys_GetCursorPos(&x, &y);
 			
-		if (y != cursorY)
+		if (cy != cursorY)
 		{
-			if (y > cursorY)
-				scale *= powf(1.01f, fabs(y - cursorY));
+			if (cy > cursorY)
+				scale *= powf(1.01f, fabs(cy - cursorY));
 			else
-				scale *= powf(0.99f, fabs(y - cursorY));
+				scale *= powf(0.99f, fabs(cy - cursorY));
 
 			scale = max(0.05f, min(scale, 32.0f));
 
@@ -684,6 +690,25 @@ void XYZView::MouseMoved (int x, int y, int buttons)
 
 
 
+
+/*
+==============
+XYZView::AngleCamera
+==============
+*/
+void XYZView::AngleCamera(vec3 point)
+{
+	int nAngle;
+	nAngle = (dViewType == XY) ? YAW : PITCH;
+
+	if (point[nDim2] || point[nDim1])
+	{
+		g_qeglobals.d_vCamera.angles[nAngle] = 180 / Q_PI * atan2(point[nDim2], point[nDim1]);
+		g_qeglobals.d_vCamera.BoundAngles();
+		Sys_UpdateWindows(W_SCENE);
+	}
+	return;
+}
 
 
 
@@ -1289,7 +1314,10 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
-		GLSelectionColor();
+		glColor4f(g_colors.selection[0],
+			g_colors.selection[1],
+			g_colors.selection[2],
+			1.0f);
 
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / scale, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
@@ -1441,7 +1469,10 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	}
 	glEnd();
 
-	GLSelectionColor();
+	glColor4f(g_colors.selection[0],
+		g_colors.selection[1],
+		g_colors.selection[2],
+		1.0f);
 	glBegin(GL_LINE_STRIP);
 	for (f = 0; f <= 8; f += fStep)
 	{
@@ -1497,9 +1528,8 @@ bool XYZView::CullBrush(Brush *b)
 	return false;
 }
 
-void XYZView::BeginDrawSelection()
+void XYZView::BeginDrawSelection(vec3 selColor)
 {
-	GLSelectionColor();
 	if (g_cfgUI.Stipple)
 		glEnable(GL_LINE_STIPPLE);
 	if (g_qeglobals.d_selSelectMode != sel_face)
@@ -1511,6 +1541,7 @@ void XYZView::BeginDrawSelection()
 	{
 		glLineStipple(2, 0xaaaa);
 	}
+	glColor4f(selColor[0], selColor[1], selColor[2], 1.0f);
 }
 
 void XYZView::EndDrawSelection() 
@@ -1519,13 +1550,13 @@ void XYZView::EndDrawSelection()
 	glLineWidth(1);
 }
 
-void XYZView::DrawSelection()
+void XYZView::DrawSelection(vec3 selColor)
 {
 	bool	bFixedSize;
 	vec3	vMinBounds, vMaxBounds;
 	Brush	*brush;
 
-	BeginDrawSelection();
+	BeginDrawSelection(selColor);
 
 	if (g_qeglobals.d_selSelectMode == sel_face)
 	{
@@ -1653,7 +1684,7 @@ void XYZView::Draw ()
 		glCallList(g_qeglobals.d_nPointfileDisplayList);
 	
 	if (!DrawTools())
-		DrawSelection();
+		DrawSelection(g_colors.selection);
 	
 	if (!(dViewType == XY))
 		glPopMatrix();

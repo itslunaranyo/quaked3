@@ -44,6 +44,7 @@ public:
 
 protected:
 	void Crosshair(bool bCrossHair);
+	void MsgToXY(const LPARAM lParam, const WndView &vWnd, int &xPos, int &yPos);
 
 	bool ShiftDown() { return (GetKeyState(VK_SHIFT) < 0); }
 	bool CtrlDown() { return (GetKeyState(VK_CONTROL) < 0); }

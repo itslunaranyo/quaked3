@@ -713,6 +713,7 @@ void WndCfg_ConfigToWnd()
 	SetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz);
 
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_SETCURSEL, g_cfgEditor.CloneStyle, 0);
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CAMSTYLE, CB_SETCURSEL, g_cfgEditor.CameraMoveStyle, 0);
 	// TexProjectionMode is in the surface dlg
 
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_SETCHECK, (g_cfgEditor.LogConsole ? BST_CHECKED : BST_UNCHECKED), 0);
@@ -763,6 +764,7 @@ void WndCfg_WndToConfigEditor(qecfgEditor_t &cfgEd)
 	cfgEd.MapSize = atoi(sz);
 
 	cfgEd.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
+	cfgEd.CameraMoveStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CAMSTYLE, CB_GETCURSEL, 0, 0);
 	// TexProjectionMode is in the surface dlg
 
 	cfgEd.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0) != 0;
@@ -1126,6 +1128,9 @@ void WndCfg_CreateWnd(HWND hwndDlg)
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Press, w/ offset");
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Press, in place");
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Hold and drag");
+
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CAMSTYLE, CB_ADDSTRING, 0, (LPARAM)"Classic (RMB drive)");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CAMSTYLE, CB_ADDSTRING, 0, (LPARAM)"WASD (RMB pan)");
 
 	SendDlgItemMessage(hwndCfgEditor, IDC_BUTTON_GAMEPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
 

@@ -737,7 +737,7 @@ void GeoTool::DrawPointSet(std::vector<handle>::iterator &start, std::vector<han
 
 bool GeoTool::Draw3D(CameraView &v)
 {
-	v.DrawSelected(&g_brSelectedBrushes);
+	v.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 	glDisable(GL_DEPTH_TEST);
 	DrawPoints();
 	if (hotView == &v)
@@ -748,7 +748,7 @@ bool GeoTool::Draw3D(CameraView &v)
 
 bool GeoTool::Draw2D(XYZView & v)
 {
-	v.DrawSelection();
+	v.DrawSelection(g_colors.selection);
 	DrawPoints();
 	if (hotView == &v)
 		DrawSelectionBox();

@@ -574,13 +574,14 @@ int WndView::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	if (!OnMessage(uMsg, wParam, lParam))
 		return 0;
-
+	
 	return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
 }
 
 /*
 ==================
 WndView::OnMessage
+virtual
 ==================
 */
 int WndView::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)

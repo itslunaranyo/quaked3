@@ -188,7 +188,7 @@ Tool* Tool::HotTool()
 
 bool Tool::FilterInput(UINT uMsg)
 {
-	return ( uMsg == WM_COMMAND ||
+	return ( uMsg == WM_COMMAND || uMsg == WM_REALTIME ||
 			(uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) ||
 			(uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) );
 }
@@ -201,5 +201,13 @@ Tool::Crosshair
 void Tool::Crosshair(bool bCrossHair)
 {
 	SetCursor((bCrossHair) ? LoadCursor(NULL, IDC_CROSS) : LoadCursor(NULL, IDC_ARROW));
+}
+
+// FIXME: https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-getmessagepos
+void Tool::MsgToXY(const LPARAM lParam, const WndView &vWnd, int &xPos, int &yPos)
+{
+	xPos =  (short)LOWORD(lParam);  // horizontal position of cursor 
+	yPos = (short)HIWORD(lParam);  // vertical position of cursor 
+	yPos = (int)vWnd.clientRect.bottom - 1 - yPos;
 }
 

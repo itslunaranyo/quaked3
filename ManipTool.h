@@ -22,6 +22,7 @@ public:
 	bool Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd);
 	bool Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd);
 	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
+	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	bool Draw3D(CameraView &v);
 	bool Draw2D(XYZView &v);
@@ -38,6 +39,7 @@ private:
 	} state;
 	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
 	vec3 ptDown;
+	bool cloneReady;
 
 	Brush *brDragNew;
 	CmdGeoMod *cmdGM;

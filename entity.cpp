@@ -10,7 +10,7 @@
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
-	origin(0)
+	showflags(0), origin(0)
 {
 	brushes.onext = brushes.oprev = &brushes;
 	brushes.owner = this;
@@ -68,6 +68,17 @@ void Entity::SetSpawnFlag(int flag, bool on)
 	SetKeyValue("spawnflags", ival);
 }
 
+void Entity::SetSpawnflagFilter()
+{
+	int		ival, efl;
+	const int all_efl = (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
+	ival = GetKeyValueInt("spawnflags");
+
+	efl = ival & all_efl;
+	//showflags = all_efl - efl;
+	showflags = efl;
+}
+
 /*
 ==============
 Entity::SetKeyValue
@@ -102,7 +113,11 @@ void Entity::SetKeyValue(const char *key, const char *value)
 	}
 
 	strcpy((char*)*ep->value, value);
-	//g_map.modified = true;
+
+	// this has to go here and not in SetSpawnflag because the user could enter
+	// the number directly into the keyvalue instead of ticking the boxes
+	if (!strcmp(key, "spawnflags"))
+		SetSpawnflagFilter();
 }
 
 /*
@@ -273,6 +288,7 @@ void Entity::FreeEpairs ()
 		delete ep;
 	}
 	epairs = nullptr;
+	SetSpawnflagFilter();
 }
 
 /*
@@ -471,6 +487,7 @@ Entity *Entity::Parse (bool onlypairs)
 		has_brushes = true;
 
 	ent->GetKeyValueVector("origin", ent->origin);
+	ent->SetSpawnflagFilter();
 
 	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
 	// with brushes or brush entities without any, so that all the downstream code Just Works
@@ -841,6 +858,7 @@ Entity *Entity::Clone()
 		np->next = n->epairs;
 		n->epairs = np;
 	}
+	n->showflags = showflags;
 	n->origin = origin;
 	//	n->CloseLinks();
 	return n;

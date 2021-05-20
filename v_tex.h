@@ -26,14 +26,16 @@ public:
 
 	bool	stale;	// layout is old and should be rebuilt before drawing
 
-	void	MouseDown(int x, int y, int buttons);
-	void	MouseUp(int x, int y, int buttons);
-	void	MouseMoved(int x, int y, int buttons);
-	void	MouseOver(int x, int y);
+	Texture *TexAtCursorPos(const int cx, const int cy);
+
+	void	MouseDown(const int x, const int y, const int buttons);
+	void	MouseUp(const int x, const int y, const int buttons);
+	void	MouseMoved(const int x, const int y, const int buttons);
+	void	MouseOver(const int x, const int y);
 	void	Draw();
 	int		AddToLayout(TextureGroup * tg, int top, int* curIdx);
 	void	Layout();
-	void	Resize(int w, int h);
+	void	Resize(const int w, const int h);
 	void	Scale(float inscale);
 	void	SetScale(float inscale);
 	void	Scroll(int dist, bool fast);

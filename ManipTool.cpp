@@ -12,7 +12,7 @@
 #include "CmdAddRemove.h"
 
 ManipTool::ManipTool() :
-	state(MT_OFF),
+	state(MT_OFF), cloneReady(false),
 	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr), cmdCmpClone(nullptr),
 	Tool("Manipulate", false)	// not modal
 {
@@ -26,6 +26,9 @@ ManipTool::~ManipTool()
 
 bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
 {
+	if (Input(uMsg, wParam, lParam))
+		return true;
+
 	int keys = wParam;
 	int mx, my;
 	mouseContext_t mc;
@@ -77,6 +80,9 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 
 bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndView &vWnd)
 {
+	if (Input(uMsg, wParam, lParam))
+		return true;
+
 	int keys = wParam;
 	int x, y, mx, my;
 	mouseContext_t mc;
@@ -129,6 +135,9 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 
 bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd)
 {
+	if (Input(uMsg, wParam, lParam))
+		return true;
+
 	int keys = wParam;
 	int mx, my;
 	mouseContext_t mc;
@@ -176,6 +185,52 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 		return true;
 	}
 	return hot;
+}
+
+bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_COMMAND)
+	{
+		if (LOWORD(wParam) == ID_SELECTION_CLONE && !hot)
+		{
+			Modify::Clone();
+			return true;
+		}
+		return hot;
+	}
+	if (uMsg == WM_KEYUP)
+	{
+		if (wParam == VK_SPACE)
+		{
+			if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+			{
+				cloneReady = false;
+				Sys_UpdateWindows(W_SCENE);
+			}
+			return true;
+		}
+		return false;
+	}
+	if (state != MT_OFF) return false;
+
+	if (uMsg == WM_KEYDOWN)
+	{
+		if (wParam == VK_SPACE)
+		{
+			if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+			{
+				cloneReady = true;
+				Sys_UpdateWindows(W_SCENE);
+			}
+			else
+				PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
+			return true;
+		}
+		return false;
+	}
+
+
+	return false;
 }
 
 // ----------------------------------------------------------------
@@ -665,6 +720,12 @@ void ManipTool::FrontSelectShearFaces(const Face *hit, std::vector<Face*> &fSide
 
 bool ManipTool::Draw3D(CameraView &v)
 {
+	if (cloneReady)
+	{
+		v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
+		return true;
+	}
+
 	switch (state)
 	{
 	case MT_NEW:
@@ -680,7 +741,10 @@ bool ManipTool::Draw3D(CameraView &v)
 		glEnable(GL_BLEND);
 
 		// lunaran: brighten & clarify selection tint, use selection color preference
-		v.GLSelectionColorAlpha(0.3f);
+		glColor4f(g_colors.selection[0],
+			g_colors.selection[1],
+			g_colors.selection[2],
+			0.3f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDisable(GL_TEXTURE_2D);
 		for (Face *face = brDragNew->faces; face; face = face->fnext)
@@ -704,7 +768,7 @@ bool ManipTool::Draw3D(CameraView &v)
 		if (!cmdTr->postDrag)
 			return false;
 		glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
-		v.DrawSelected(&g_brSelectedBrushes);
+		v.DrawSelected(&g_brSelectedBrushes, g_colors.selection);
 		glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		return true;
 
@@ -717,13 +781,26 @@ bool ManipTool::Draw3D(CameraView &v)
 
 bool ManipTool::Draw2D(XYZView &v)
 {
+	if (cloneReady)
+	{
+		if (cmdTr && cmdTr->postDrag)
+		{
+			glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
+			v.DrawSelection(g_colors.tool);
+			glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
+		}
+		else
+			v.DrawSelection(g_colors.tool);
+		return true;
+	}
+
 	switch (state)
 	{
 	case MT_NEW:
 		if (!brDragNew)
 			break;
 
-		v.BeginDrawSelection();
+		v.BeginDrawSelection(g_colors.selection);
 		brDragNew->DrawXY(v.GetAxis());
 		v.EndDrawSelection();
 		v.DrawSizeInfo(brDragNew->mins, brDragNew->maxs);
@@ -734,7 +811,7 @@ bool ManipTool::Draw2D(XYZView &v)
 		if (!cmdTr || !cmdTr->postDrag)
 			return false;
 		glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
-		v.DrawSelection();
+		v.DrawSelection(g_colors.selection);
 		glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
 		return true;
 
@@ -747,6 +824,11 @@ bool ManipTool::Draw2D(XYZView &v)
 
 bool ManipTool::Draw1D(ZView &v)
 {
+	if (cloneReady)
+	{
+		v.DrawSelection(g_colors.tool);
+		return true;
+	}
 	switch (state)
 	{
 	// lunaran TODO: draw the MT_NEW brush if it intersects the z-core
@@ -757,7 +839,7 @@ bool ManipTool::Draw1D(ZView &v)
 		if (!cmdTr->postDrag)
 			return false;
 		glTranslatef(0, cmdTr->trans[2], 0);
-		v.DrawSelection();
+		v.DrawSelection(g_colors.selection);
 		glTranslatef(0, -cmdTr->trans[2], 0);
 		return true;
 	default:

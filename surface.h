@@ -16,7 +16,7 @@ namespace Surface
 	void AbsoluteToLocal(Plane normal2, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3);
 	void RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin);
 
-	void FindReplace(char *pFind, char *pReplace, bool bSelected, bool bForce);
+	void FindReplace(char *pFind, char *pReplace, bool bSelected);// , bool bForce);
 	void SetTexdef(TexDef &texdef, unsigned flags);
 	void ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags);
 	void RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin);

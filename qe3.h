@@ -74,6 +74,7 @@
 #include "WndConsole.h"
 
 #include "Tool.h"
+#include "NavTool.h"
 #include "SelectTool.h"
 #include "ManipTool.h"
 #include "TextureTool.h"
@@ -83,8 +84,6 @@
 //========================================================================
 
 // persistent preferences saved into the registry
-// lunaran TODO: move a bunch of this stuff into a text config, because starting QE
-// to find 100% of your settings are gone because of a tiny change really sucks
 typedef struct
 {
 	int		nSize;				// structure size
