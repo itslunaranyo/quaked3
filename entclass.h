@@ -4,7 +4,7 @@
 //	entclass.h
 //==============================
 
-#define	MAX_FLAGS	8
+#define	MAX_FLAGS	16
 
 // lunaran TODO: too much static shit in this class
 

@@ -112,7 +112,7 @@ void WndSurf_FromEditTexdef()
 {
 	char	sz[MAX_TEXNAME];
 	TexDef  *texdef;
-	float	shiftxp, shiftyp;// , rotp;
+	//float	shiftxp, shiftyp;// , rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
@@ -126,39 +126,38 @@ void WndSurf_FromEditTexdef()
 		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
 
 	// lunaran: trunc safety
-	shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
-	shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
+	//shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
+	//shiftyp = texdef->shift[1] + ((texdef->shift[1] < 0) ? -0.01f : 0.01f);
 	//rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
 	if (g_nEditSurfMixed & SFI_SHIFTX)
 		sz[0] = 0;
 	else
-		sprintf(sz, "%d", (int)shiftxp);
+		FloatToString(texdef->shift[0], sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
 
 	if (g_nEditSurfMixed & SFI_SHIFTY)
 		sz[0] = 0;
 	else
-		sprintf(sz, "%d", (int)shiftyp);
+		FloatToString(texdef->shift[1], sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
 	if (g_nEditSurfMixed & SFI_SCALEX)
 		sz[0] = 0;
 	else
-		FloatToString(texdef->scale[0], sz);
+		FloatToString(texdef->scale[0], sz, 5);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_SCALEY)
 		sz[0] = 0;
 	else
-		FloatToString(texdef->scale[1], sz);
+		FloatToString(texdef->scale[1], sz, 5);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_ROTATE)
 		sz[0] = 0;
 	else
-		FloatToString(texdef->rotate, sz);	// lunaran: moving to float rotations
-		//sprintf(sz, "%d", (int)rotp);
+		FloatToString(texdef->rotate, sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
 
 	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 1, 0);

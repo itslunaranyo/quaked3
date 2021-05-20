@@ -24,6 +24,8 @@ public:
 	bool Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView &vWnd);
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+	void SelectionChanged();
+
 	bool Draw3D(CameraView &v);
 	bool Draw2D(XYZView &v);
 	bool Draw1D(ZView &v);
@@ -40,18 +42,22 @@ private:
 	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
 	vec3 ptDown;
 	bool cloneReady;
+	clock_t lastNudgeTime;
 
 	Brush *brDragNew;
 	CmdGeoMod *cmdGM;
 	CmdPlaneShift *cmdPS;
-	CmdTranslate *cmdTr;
+	CmdTranslate *cmdTr, *lastNudge;
 	CmdCompound *cmdCmpClone;
 
 	void DragStart3D(const mouseContext_t &mc);
 	void DragStart2D(const mouseContext_t &mc, int vDim);
 	void DragStart1D(const mouseContext_t &mc);
 	void DragMove(const mouseContext_t &mc, vec3 point);
-	void DragFinish(const mouseContext_t &mc);
+	void DragFinish();
+	//void DragFinish(const mouseContext_t &mc);
+
+	void Nudge(int nudge, vec3 right, vec3 up);
 
 	void SetupTranslate();
 	void StartTranslate();

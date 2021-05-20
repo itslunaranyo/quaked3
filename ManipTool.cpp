@@ -14,6 +14,7 @@
 ManipTool::ManipTool() :
 	state(MT_OFF), cloneReady(false),
 	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr), cmdCmpClone(nullptr),
+	lastNudge(nullptr), lastNudgeTime(0),
 	Tool("Manipulate", false)	// not modal
 {
 }
@@ -67,7 +68,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 
 		vWnd.GetMsgXY(lParam, mx, my);
 		mc = v.GetMouseContext(mx, my);
-		DragFinish(mc);
+		DragFinish();
 
 		Sys_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
@@ -89,8 +90,19 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 
 	switch (uMsg)
 	{
-	//case WM_COMMAND:
-	//	return InputCommand(wParam);
+	case WM_COMMAND:
+		if (hot) return true;
+		switch (LOWORD(wParam)) {
+		case ID_NUDGE_UP:
+		case ID_NUDGE_DOWN:
+		case ID_NUDGE_LEFT:
+		case ID_NUDGE_RIGHT:
+			mc = v.GetMouseContext(0,0);
+			Nudge(LOWORD(wParam), mc.right, mc.up);
+			break;
+		default:
+			return false;
+		}
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || (!CtrlDown() && AltDown()))
 			return false;
@@ -122,7 +134,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 		vWnd.GetMsgXY(lParam, mx, my);
 		v.ToPoint(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
-		DragFinish(mc);
+		DragFinish();
 
 		Sys_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
@@ -176,7 +188,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 		// do stuff
 		vWnd.GetMsgXY(lParam, mx, my);
 		mc = v.GetMouseContext(mx, my);
-		DragFinish(mc);
+		DragFinish();
 
 		Sys_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
@@ -191,12 +203,13 @@ bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_COMMAND)
 	{
+		int what = LOWORD(wParam);
 		if (LOWORD(wParam) == ID_SELECTION_CLONE && !hot)
 		{
 			Modify::Clone();
 			return true;
 		}
-		return hot;
+		return false;
 	}
 	if (uMsg == WM_KEYUP)
 	{
@@ -231,6 +244,14 @@ bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 	return false;
+}
+
+// ----------------------------------------------------------------
+
+void ManipTool::SelectionChanged()
+{
+	lastNudge = nullptr;
+	lastNudgeTime = 0;
 }
 
 // ----------------------------------------------------------------
@@ -377,7 +398,8 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 
 void ManipTool::DragStart3D(const mouseContext_t &mc)
 {
-	mousePlane.normal = CrossProduct(mc.right, mc.up);
+	vec3 mpN = CrossProduct(mc.right, mc.up);
+	mousePlane.normal = mpN;
 
 	trace_t t;
 
@@ -386,7 +408,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 	{
 		if (!Selection::OnlyBrushEntities())
 		{
-			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.dist = DotProduct(Selection::GetMid(), mpN);
 			mousePlane.TestRay(mc.org, mc.ray, ptDown);
 			SetupTranslate();
 			return;
@@ -398,7 +420,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 			// we'll trace future mouse events against an implied plane centered on where we hit
 			// the selection, so it feels like we're dragging the selection by the point we 'grabbed'
 			ptDown = mc.org + mc.ray * t.dist;
-			mousePlane.dist = DotProduct(ptDown, mousePlane.normal);
+			mousePlane.dist = DotProduct(ptDown, mpN);
 
 			if (CtrlDown())
 			{
@@ -410,7 +432,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 		}
 		else
 		{
-			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.dist = DotProduct(Selection::GetMid(), mpN);
 			mousePlane.TestRay(mc.org, mc.ray, ptDown);
 
 			if (CtrlDown())
@@ -433,11 +455,11 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 		if (t.face && Selection::IsFaceSelected(t.face))
 		{
 			ptDown = mc.org + mc.ray * t.dist;
-			mousePlane.dist = DotProduct(ptDown, mousePlane.normal);
+			mousePlane.dist = DotProduct(ptDown, mpN);
 		}
 		else
 		{
-			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
+			mousePlane.dist = DotProduct(Selection::GetMid(), mpN);
 			mousePlane.TestRay(mc.org, mc.ray, ptDown);
 		}
 		if (CtrlDown())
@@ -509,7 +531,7 @@ void ManipTool::DragMove(const mouseContext_t &mc, vec3 point)
 	}
 }
 
-void ManipTool::DragFinish(const mouseContext_t &vc)
+void ManipTool::DragFinish()
 {
 	switch (state)
 	{
@@ -559,6 +581,38 @@ void ManipTool::DragFinish(const mouseContext_t &vc)
 }
 
 // ----------------------------------------------------------------
+
+// needs a lot more work
+// CmdTranslate needs to be modifiable post-do
+void ManipTool::Nudge(int nudge, vec3 right, vec3 up)
+{
+	/*
+	if (Selection::IsEmpty()) return;
+
+	SetupTranslate();
+	StartTranslate();
+
+	switch (nudge)
+	{
+	case ID_NUDGE_UP:
+		cmdTr->Translate(up * (float)g_qeglobals.d_nGridSize);
+		break;
+	case ID_NUDGE_DOWN:
+		cmdTr->Translate(up * -(float)g_qeglobals.d_nGridSize);
+		break;
+	case ID_NUDGE_LEFT:
+		cmdTr->Translate(right * -(float)g_qeglobals.d_nGridSize);
+		break;
+	case ID_NUDGE_RIGHT:
+		cmdTr->Translate(right * (float)g_qeglobals.d_nGridSize);
+		break;
+	}
+
+	DragFinish();
+	*/
+}
+
+
 
 void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
 {

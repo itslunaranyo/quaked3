@@ -5,8 +5,8 @@
 #include "qe3.h"
 #include "CmdSetSpawnflag.h"
 
-#define DLGBORDER_X		4
-#define DLGBORDER_Y		4
+#define DLGBORDER_X		2
+#define DLGBORDER_Y		2
 #define KVMIXED			"__QE3MIXEDVALUES_"
 #define KVMIXEDLABEL	"[multiple values]"
 
@@ -26,6 +26,10 @@ int g_nEntDialogIDs[ENT_LAST] =
 	IDC_E_FLAG10,
 	IDC_E_FLAG11,
 	IDC_E_FLAG12,
+	IDC_E_FLAG13,
+	IDC_E_FLAG14,
+	IDC_E_FLAG15,
+	IDC_E_FLAG16,
 	IDC_E_PROPS,
 	IDC_E_0,
 	IDC_E_45,
@@ -290,6 +294,10 @@ BOOL CALLBACK WndEntity::EntityDlgProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_E_FLAG10:
 		case IDC_E_FLAG11:
 		case IDC_E_FLAG12:
+		case IDC_E_FLAG13:
+		case IDC_E_FLAG14:
+		case IDC_E_FLAG15:
+		case IDC_E_FLAG16:
 			Focus();
 			FlagChecked(LOWORD(wParam) - IDC_E_FLAG1 + 1);
 			break;
@@ -514,7 +522,7 @@ void WndEntity::UpdateUI()
 	{
 		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)"");
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, -1, 0);
-		for (i = 0; i < 8; i++)
+		for (i = 0; i < MAX_FLAGS; i++)
 		{
 			HWND hwnd = w_hwndCtrls[ENT_CHECK1 + i];
 			// disable check box
@@ -532,7 +540,7 @@ void WndEntity::UpdateUI()
 		// Set up the description
 		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString((char*)*pec->comments));
 
-		for (i = 0; i < 8; i++)
+		for (i = 0; i < MAX_FLAGS; i++)
 		{
 			HWND hwnd = w_hwndCtrls[ENT_CHECK1 + i];
 
@@ -596,6 +604,17 @@ WndEntity::ResizeControls
 Update the listbox, checkboxes and k/v pairs to reflect the new selection
 ==============
 */
+RECT WndEntity::WndEntRect(int left, int top, int right, int bottom)
+{
+	RECT r;
+	r.left = (clientRect.right + left + DLGBORDER_X) % clientRect.right;
+	r.right = (clientRect.right + right - left - 2 * DLGBORDER_X) % clientRect.right; // width
+
+	r.top = (clientRect.bottom + top + DLGBORDER_Y) % clientRect.bottom;
+	r.bottom = (clientRect.bottom + bottom - top - 2 * DLGBORDER_Y) % clientRect.bottom; // height
+	return r;
+}
+
 void WndEntity::ResizeControls()
 {
 	int nWidth, nHeight;
@@ -614,80 +633,57 @@ void WndEntity::ResizeControls()
 
 	fold = (4 * nHeight) / 9;
 
-	if (nWidth > 450)
+	if (nWidth > 600)
 	{
-		rectClasses.left = DLGBORDER_X;
-		rectClasses.top = DLGBORDER_Y;
-		rectClasses.right = 150 - DLGBORDER_X;	// width
-		rectClasses.bottom = fold - DLGBORDER_Y * 2;	// height
+		flagRows = MAX_FLAGS / 2;
+		flagCols = 2;
+		fold = flagRows * yCheck;
+		rectComment = WndEntRect(350, 0, 0, 0);
 
-		rectComment.left = 150 + DLGBORDER_X;
-		rectComment.top = DLGBORDER_Y;
-		rectComment.right = nWidth - 150 - DLGBORDER_X * 2;
-		rectComment.bottom = fold - DLGBORDER_Y * 2;
+		rectClasses = WndEntRect(0, 0, 150, fold);
 
-		rectFlags.left = nWidth - 125;
-		rectFlags.top = fold;
-		rectFlags.right = 125 - DLGBORDER_X;
-		rectFlags.bottom = nHeight - fold - DLGBORDER_Y;
+		rectFlags = WndEntRect(150, 0, 350, fold);
 
-		rectProps.left = DLGBORDER_X;
-		rectProps.top = fold;
-		rectProps.right = nWidth - 125 - DLGBORDER_X * 2;
-		rectProps.bottom = nHeight - rectProps.top - 110;
-		flagRows = 12;
-		flagCols = 1;
+		rectProps = WndEntRect(0, fold, 350, -110);
+		rectKV = WndEntRect(0, -110, 350, -70);	// keyvalue entry boxes
+		rectAngle = WndEntRect(0, -70, 350, 0);	// angle selection and stuff
+	}
+	else if (nWidth > 450)
+	{
+		rectClasses = WndEntRect(0, 0, 150, fold);
+		rectComment = WndEntRect(150, 0, 0, fold);
 
-		// keyvalue entry boxes
-		rectKV.top = rectProps.top + rectProps.bottom + DLGBORDER_Y;
-		rectKV.left = DLGBORDER_X;
-		rectKV.bottom = 40 + DLGBORDER_Y;
-		rectKV.right = nWidth - 175 - DLGBORDER_X * 2;
+		flagRows = MAX_FLAGS / 2;
+		flagCols = 2;
+		rectFlags = WndEntRect(-200, fold, 0, 0);
+
+		rectProps = WndEntRect(0, fold, -200, -110);
+		rectKV = WndEntRect(0, -110, -200, -70);	// keyvalue entry boxes
+		rectAngle = WndEntRect(0, -70, 300, 0);	// angle selection and stuff
 	}
 	else
 	{
-		rectClasses.left = DLGBORDER_X;
-		rectClasses.top = DLGBORDER_Y;
-		rectClasses.right = nWidth - DLGBORDER_X * 2;	// width
-		rectClasses.bottom = fold / 2 - DLGBORDER_Y;	// height
-
-		rectComment.left = DLGBORDER_X;
-		rectComment.top = DLGBORDER_Y + fold / 2;
-		rectComment.right = nWidth - DLGBORDER_X * 2;
-		rectComment.bottom = fold / 2 - DLGBORDER_Y * 2;
-
-		rectFlags.left = DLGBORDER_X;
-		rectFlags.top = fold;
-		rectFlags.right = nWidth - 2 * DLGBORDER_X;
-		rectFlags.bottom = yCheck * 4;
+		rectClasses = WndEntRect(0, 0, 0, fold / 2);
+		rectComment = WndEntRect(0, fold / 2, 0, fold);
 
 		flagRows = 4;
-		flagCols = 3;
-
-		rectProps.left = DLGBORDER_X;
-		rectProps.top = rectFlags.top + rectFlags.bottom + DLGBORDER_Y;
-		rectProps.right = nWidth - 2 * DLGBORDER_X;
-		rectProps.bottom = nHeight - rectProps.top - 110;
+		flagCols = MAX_FLAGS / flagRows;
+		rectFlags = WndEntRect(0, fold, 0, fold + yCheck * flagRows);
+		rectProps = WndEntRect(0, rectFlags.top + rectFlags.bottom, 0, -110);
 
 		// keyvalue entry boxes
-		rectKV.top = rectProps.top + rectProps.bottom + DLGBORDER_Y;
-		rectKV.left = DLGBORDER_X;
-		rectKV.bottom = 40 + DLGBORDER_Y;
-		rectKV.right = nWidth - 50 - DLGBORDER_X * 2;
-	}
+		rectKV = WndEntRect(0, -110, 0, -70);
 
-	// angle selection and stuff
-	rectAngle.left = DLGBORDER_X;
-	rectAngle.top = rectKV.top + rectKV.bottom;
-	rectAngle.right = 300;
-	rectAngle.bottom = nHeight - rectAngle.top - DLGBORDER_Y;
+		// angle selection and stuff
+		rectAngle = WndEntRect(0, -70, 300, 0);
+	}
 
 	MoveRect(w_hwndCtrls[ENT_CLASSLIST], rectClasses);
 	MoveRect(w_hwndCtrls[ENT_COMMENT], rectComment);
 
 	x = rectFlags.left;
-	xCheck = nWidth / flagCols;	// xCheck = width of a single check box
-	for (flagOffset = 0; flagOffset < 12; flagOffset += flagRows)
+	xCheck = rectFlags.right / flagCols;	// xCheck = width of a single check box
+	for (flagOffset = 0; flagOffset < MAX_FLAGS; flagOffset += flagRows)
 	{
 		y = rectFlags.top;
 		for (i = 0; i < flagRows; i++)
@@ -701,10 +697,10 @@ void WndEntity::ResizeControls()
 	MoveRect(w_hwndCtrls[ENT_PROPS], rectProps);
 
 	w = rectKV.right - (DLGBORDER_X + 45);
-	MoveRect(w_hwndCtrls[ENT_KEYLABEL], DLGBORDER_X, rectKV.top, 40, yCheck);
-	MoveRect(w_hwndCtrls[ENT_KEYFIELD], DLGBORDER_X + 40, rectKV.top, rectKV.right, yCheck);
-	MoveRect(w_hwndCtrls[ENT_VALUELABEL], DLGBORDER_X, rectKV.top + yCheck, 40, yCheck);
-	MoveRect(w_hwndCtrls[ENT_VALUEFIELD], DLGBORDER_X + 40, rectKV.top + yCheck, rectKV.right, yCheck);
+	MoveRect(w_hwndCtrls[ENT_KEYLABEL], rectKV.left, rectKV.top, 40, yCheck);
+	MoveRect(w_hwndCtrls[ENT_KEYFIELD], rectKV.left + 40, rectKV.top, rectKV.right-40, yCheck);
+	MoveRect(w_hwndCtrls[ENT_VALUELABEL], rectKV.left, rectKV.top + yCheck, 40, yCheck);
+	MoveRect(w_hwndCtrls[ENT_VALUEFIELD], rectKV.left + 40, rectKV.top + yCheck, rectKV.right-40, yCheck);
 
 	x = rectAngle.right / 9;
 	y = rectAngle.bottom / 3;
@@ -770,7 +766,7 @@ WndEntity::FlagChecked
 */
 void WndEntity::FlagChecked(int flag)
 {
-	if (flag < 1 || flag > 12)
+	if (flag < 1 || flag > MAX_FLAGS)
 		return;	// sanity check, no such flag
 
 	bool on = !(SendMessage(w_hwndCtrls[ENT_CHECK1 + flag - 1], BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -955,7 +951,7 @@ Update the checkboxes to reflect the flag state of the entity
 */
 void WndEntity::FlagsFromEnt()
 {
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < MAX_FLAGS; i++)
 	{
 		SendMessage(w_hwndCtrls[ENT_CHECK1 + i], BM_SETCHECK, g_nEditEntFlags[i], 0);
 	}
@@ -970,7 +966,7 @@ void WndEntity::RefreshEditEntityFlags(int inFlags, bool first)
 {
 	int f;
 
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < MAX_FLAGS; i++)
 	{
 		if (g_nEditEntFlags[i] == BST_INDETERMINATE)
 			continue;
@@ -1000,7 +996,7 @@ void WndEntity::RefreshEditEntity()
 
 	g_eEditEntity.FreeEpairs();
 	g_eEditEntity.eclass = NULL;
-	memset(g_nEditEntFlags, 0, 12 * sizeof(char));
+	memset(g_nEditEntFlags, 0, MAX_FLAGS * sizeof(char));
 
 	eo = NULL;
 	first = true;
@@ -1015,7 +1011,7 @@ void WndEntity::RefreshEditEntity()
 		eo = b->owner;
 		if (first)
 		{
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < MAX_FLAGS; i++)
 			{
 				strncpy(g_szEditFlagNames[i], eo->eclass->flagnames[i], 32);
 			}
@@ -1031,7 +1027,7 @@ void WndEntity::RefreshEditEntity()
 		}
 		else for (ep = eo->epairs; ep; ep = ep->next)
 		{
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < MAX_FLAGS; i++)
 			{
 				if (_stricmp(g_szEditFlagNames[i], eo->eclass->flagnames[i]))
 					strncpy(g_szEditFlagNames[i], "~\0", 2);

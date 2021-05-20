@@ -149,7 +149,7 @@ winding_t *Face::MakeWinding()
 		}
 
 		// flip the plane, because we want to keep the back side
-		p.normal = vec3(0) - clip->plane.normal;
+		p.normal = dvec3(0) - clip->plane.normal;
 		p.dist = -clip->plane.dist;
 
 		w = Winding::Clip(w, &p, false);
@@ -269,20 +269,21 @@ bool Face::TestSideSelectAxis(const vec3 origin, const int axis)
 Face::FitTexture
 
 lunaran: rewrote all this so it works with decimal fit increments
-TODO: fix sometimes flipping vertically
-TODO: try to maintain similar offsets as start state
 =================
 */
-void Face::FitTexture(float fHeight, float fWidth)
+void Face::FitTexture(const float fHeight, const float fWidth)
 {
-	float		scale;
+	float		scale, baseline;
 	vec3		u, v, n;
+	int			uSign, vSign, offset;
 	float		min, max, len;
 	winding_t	*w;
 
 	w = face_winding;
 	if (!w)
 		return;
+
+	uSign = vSign = 1;
 
 	// convert current rotation to U and V vectors
 	plane.GetTextureAxis(u, v);
@@ -294,22 +295,46 @@ void Face::FitTexture(float fHeight, float fWidth)
 		VectorRotate(v, n, v);
 	}
 
+	// maintain negations
+	if (texdef.scale[0] < 0)
+	{
+		uSign = -1;
+		u = -u;
+	}
+	if (texdef.scale[1] < 0)
+	{
+		vSign = -1;
+		v = -v;
+	}
+
 	// find size of winding along those vectors and resize
 	if (fWidth != 0.0f)
 	{
 		BoundsOnAxis(u, &min, &max);
+		// for fits smaller than the texture, snap to any existing shift in the
+		// alignment that's close to the period of the fit (so we don't always
+		// reset to the bottom left corner and lose existing alignment on trims/etc)
+		baseline = ((min + texdef.shift[0]) / texdef.tex->width) / texdef.scale[0];
+		baseline = roundf(baseline / fWidth) * fWidth;
+		offset = roundf(baseline * texdef.tex->width);
+
 		len = max - min;
-		scale = (len / texdef.tex->width) / fWidth;
-		texdef.shift[0] = -((int)roundf(min / scale + 0.001f) % texdef.tex->width);
+		scale = (len / texdef.tex->width) / fWidth * uSign;
+		texdef.shift[0] = -fmod((min / scale - offset), texdef.tex->width) * vSign;
 		texdef.scale[0] = scale;
 	}
 
 	if (fHeight != 0.0f)
 	{
 		BoundsOnAxis(v, &min, &max);
+
+		baseline = ((min + texdef.shift[1]) / texdef.tex->height) / texdef.scale[1];
+		baseline = roundf(baseline / fHeight) * fHeight;
+		offset = roundf(baseline * texdef.tex->height);
+
 		len = max - min;
-		scale = (len / texdef.tex->height) / fHeight;
-		texdef.shift[1] = -((int)roundf(min / scale + 0.001f) % texdef.tex->width);
+		scale = (len / texdef.tex->height) / fHeight * vSign;
+		texdef.shift[1] = -fmod((min / scale - offset), texdef.tex->height) * vSign;
 		texdef.scale[1] = scale;
 	}
 }
@@ -321,7 +346,7 @@ Face::Transform
 */
 void Face::Transform(mat4 mat, bool bTexLock)
 {
-	vec3	p1, p2, p3;
+	dvec3	p1, p2, p3;
 
 	if (bTexLock)
 		Surface::ComputeAbsolute(this, p1, p2, p3);
@@ -332,9 +357,9 @@ void Face::Transform(mat4 mat, bool bTexLock)
 
 	if (bTexLock)
 	{
-		p1 = mat * glm::vec4(p1, 1);
-		p2 = mat * glm::vec4(p2, 1);
-		p3 = mat * glm::vec4(p3, 1);
+		p1 = mat * glm::dvec4(p1, 1);
+		p2 = mat * glm::dvec4(p2, 1);
+		p3 = mat * glm::dvec4(p3, 1);
 		Surface::AbsoluteToLocal(plane, texdef, p1, p2, p3);
 	}
 }

@@ -19,12 +19,16 @@ void TexDef::Clamp()
 		return;
 	}
 
-	while (shift[0] > tex->width)
-		shift[0] -= tex->width;
-	while (shift[1] > tex->height)
-		shift[1] -= tex->height;
-	while (shift[0] < 0)
-		shift[0] += tex->width;
-	while (shift[1] < 0)
-		shift[1] += tex->height;
+	int i;
+
+	// lunaran: don't bound a value by repeatedly summing floats
+	for (i = 0; i * tex->width < shift[0]; i++);
+	shift[0] -= i * tex->width;
+	for (i = 0; i * tex->height < shift[1]; i++);
+	shift[1] -= i * tex->height;
+
+	for (i = 0; i * tex->width > shift[0]; i--);
+	shift[0] -= i * tex->width;
+	for (i = 0; i * tex->height > shift[1]; i--);
+	shift[1] -= i * tex->height;
 }

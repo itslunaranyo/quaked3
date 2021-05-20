@@ -1201,9 +1201,9 @@ LONG WINAPI CommandHandler (
 
 	switch (LOWORD(wParam))
 	{
-//===================================
-// File menu
-//===================================
+		//===================================
+		// File menu
+		//===================================
 		case ID_FILE_NEW:
 			if (!ConfirmModified())
 				return TRUE;
@@ -1236,6 +1236,10 @@ LONG WINAPI CommandHandler (
 				Pointfile_Check();
 			break;
 
+		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog
+			ExportDialog();
+			break;
+
 		case IDMRU + 1:
 		case IDMRU + 2:
 		case IDMRU + 3:
@@ -1254,9 +1258,9 @@ LONG WINAPI CommandHandler (
 			PostMessage(hWnd, WM_CLOSE, 0, 0L);
 			break;
 
-//===================================
-// Edit menu
-//===================================
+		//===================================
+		// Edit menu
+		//===================================
 		case ID_EDIT_UNDO:
 			g_cmdQueue.Undo();
 			break;
@@ -1295,10 +1299,9 @@ LONG WINAPI CommandHandler (
 			DoConfigWindow();
 			break;
 
-//===================================
-// View menu
-//===================================
-// sikk---> Toolbar/Statusbar Toggle
+		//===================================
+		// View menu
+		//===================================
 		case ID_VIEW_TOOLBAR_FILEBAND:
 			nBandIndex = SendMessage(g_qeglobals.d_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + 0, (LPARAM)0);
 			if (IsWindowVisible(g_qeglobals.d_hwndToolbar[0]))
@@ -1429,12 +1432,7 @@ LONG WINAPI CommandHandler (
 			g_cfgUI.ShowAngles ^= true;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
-			/*
-		case ID_VIEW_SHOWPATH:
-			g_cfgUI.PathlineMode ^= true;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
-			break;
-			*/
+
 		case ID_TARGETLINES_ALL:
 			g_cfgUI.PathlineMode = TargetGraph::tgm_all;
 			Sys_UpdateWindows(W_XY | W_CAMERA | W_TARGETGRAPH);
@@ -1646,9 +1644,28 @@ LONG WINAPI CommandHandler (
 			Modify::ShowHidden();
 			break;
 
-//===================================
-// Selection menu
-//===================================
+
+		//===================================
+		// Tools/Operations
+		//===================================
+		case ID_NUDGE_UP:
+		case ID_NUDGE_DOWN:
+		case ID_NUDGE_LEFT:
+		case ID_NUDGE_RIGHT:
+		{
+			// translateAccelerator helpfully destroys both the message and record of the message's intended window
+			// so NUDGEs directed at a certain window systemically cannot get there :(
+			HWND dstHwnd = GetFocus();
+			if (dstHwnd != g_qeglobals.d_hwndXYZ[0] &&
+				dstHwnd != g_qeglobals.d_hwndXYZ[1] &&
+				dstHwnd != g_qeglobals.d_hwndXYZ[2] &&
+				dstHwnd != g_qeglobals.d_hwndXYZ[3] &&
+				dstHwnd != g_qeglobals.d_hwndZ)
+				dstHwnd = g_qeglobals.d_hwndCamera;
+			SendMessage(dstHwnd, WM_COMMAND, wParam, lParam);
+		}
+		break;
+
 		case ID_SELECTION_DRAGEDGES:
 			GeoTool::ToggleMode(GeoTool::GT_EDGE);
 			Sys_UpdateWindows(W_XY | W_CAMERA);
@@ -1768,13 +1785,27 @@ LONG WINAPI CommandHandler (
 			Modify::InsertBrush();
 			break;
 
-		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog
-			ExportDialog();
+		case ID_BRUSH_CYLINDER:
+			DoSides(0);
+			break;
+		case ID_BRUSH_CONE:
+			DoSides(1);
+			break;
+		case ID_BRUSH_SPHERE:
+			DoSides(2);
+			break;
+		case ID_PRIMITIVES_CZGCYLINDER1:
+			Modify::MakeCzgCylinder(1);
+			break;
+		case ID_PRIMITIVES_CZGCYLINDER2:
+			Modify::MakeCzgCylinder(2);
 			break;
 
-//===================================
-// BSP menu
-//===================================
+
+
+		//===================================
+		// BSP menu
+		//===================================
 		case CMD_BSPCOMMAND:
 		case CMD_BSPCOMMAND + 1:
 		case CMD_BSPCOMMAND + 2:
@@ -1810,9 +1841,10 @@ LONG WINAPI CommandHandler (
 			RunBsp(g_szBSP_Commands[LOWORD(wParam - CMD_BSPCOMMAND)]);
 			break;
 
-//===================================
-// grid menu
-//===================================
+
+		//===================================
+		// Grid Menu
+		//===================================
 		case ID_GRID_1:
 		case ID_GRID_2:
 		case ID_GRID_4:
@@ -1861,9 +1893,10 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateGridStatusBar();
 			break;
 
-//===================================
-// Texture menu
-//===================================
+
+		//===================================
+		// Texture menu
+		//===================================
 		case ID_TEXTURES_UPDATEMENU:
 			//Sys_BeginWait();
 			FillTextureMenu();
@@ -2051,28 +2084,6 @@ LONG WINAPI CommandHandler (
 			break;
 		case ID_REGION_SETSELECTION:
 			g_map.RegionSelectedBrushes();
-			break;
-
-//===================================
-// Brush menu
-//===================================
-
-// sikk---> Brush Primitives
-		case ID_BRUSH_CYLINDER:
-			DoSides(0);
-			break;
-		case ID_BRUSH_CONE:
-			DoSides(1);
-			break;
-		case ID_BRUSH_SPHERE:
-			DoSides(2);
-			break;
-// <---sikk
-		case ID_PRIMITIVES_CZGCYLINDER1:
-			Modify::MakeCzgCylinder(1);
-			break;
-		case ID_PRIMITIVES_CZGCYLINDER2:
-			Modify::MakeCzgCylinder(2);
 			break;
 
 

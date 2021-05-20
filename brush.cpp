@@ -550,8 +550,8 @@ Face *Brush::RayTest(const vec3 origin, const vec3 dir, float *dist)
 
 	for (f = faces; f; f = f->fnext)
 	{
-		d1 = DotProduct(p1, f->plane.normal) - f->plane.dist;
-		d2 = DotProduct(p2, f->plane.normal) - f->plane.dist;
+		d1 = DotProduct(p1, vec3(f->plane.normal)) - f->plane.dist;
+		d2 = DotProduct(p2, vec3(f->plane.normal)) - f->plane.dist;
 
 		if (d1 >= 0 && d2 >= 0)
 		{
@@ -599,7 +599,7 @@ bool Brush::PointTest(const vec3 origin)
 	float d;
 	for (Face *f = faces; f; f = f->fnext)
 	{
-		d = DotProduct(origin, f->plane.normal) - f->plane.dist;
+		d = DotProduct(origin, vec3(f->plane.normal)) - f->plane.dist;
 
 		if (d >= 0)
 			return false;	// point is on front side of face
@@ -1191,12 +1191,11 @@ Brush *Brush::Parse ()
 		StringTolower(g_szToken);
 		strncpy(f->texdef.name, g_szToken, MAX_TEXNAME);
 		GetToken(false);
-		f->texdef.shift[0] = atoi(g_szToken);
+		f->texdef.shift[0] = atof(g_szToken);
 		GetToken(false);
-		f->texdef.shift[1] = atoi(g_szToken);
+		f->texdef.shift[1] = atof(g_szToken);
 		GetToken(false);
-		f->texdef.rotate = atof(g_szToken);	// lunaran: moving to float rotations
-		//f->texdef.rotate = atoi(g_szToken);	
+		f->texdef.rotate = atof(g_szToken);	
 		GetToken(false);
 		f->texdef.scale[0] = atof(g_szToken);
 		GetToken(false);
@@ -1216,7 +1215,7 @@ void Brush::Write(std::ostream& out)
 {
 	int		i;
 	char	*pname;
-	char	frot[16];
+	char	ftxt[16];
 	Face	*fa;
 
 	out << "{\n";
@@ -1234,20 +1233,23 @@ void Brush::Write(std::ostream& out)
 
 		//CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
 
-		// lunaran: moving to float rotations
-		FloatToString(fa->texdef.rotate, frot);
-		out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << frot << " ";
-		//out << pname << " " << (int)fa->texdef.shift[0] << " " << (int)fa->texdef.shift[1] << " " << (int)fa->texdef.rotate << " ";
+		// lunaran: moving to float shifts and rotations
+		FloatToString(fa->texdef.shift[0], ftxt);
+		out << pname << " " << ftxt;
+		FloatToString(fa->texdef.shift[1], ftxt);
+		out << " " << ftxt << " ";
+		FloatToString(fa->texdef.rotate, ftxt);
+		out << ftxt << " ";
 
 		if (fa->texdef.scale[0] == (int)fa->texdef.scale[0])
 			out << (int)fa->texdef.scale[0] << " ";
 		else
-			out << (float)fa->texdef.scale[0] << " ";
+			out << fa->texdef.scale[0] << " ";
 
 		if (fa->texdef.scale[1] == (int)fa->texdef.scale[1])
 			out << (int)fa->texdef.scale[1] << " ";
 		else
-			out << (float)fa->texdef.scale[1] << " ";
+			out << fa->texdef.scale[1] << " ";
 
 		out << "\n";
 	}

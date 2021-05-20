@@ -199,11 +199,11 @@ void Map::BuildBrushData()
 
 /*
 ================
-Map::ParseBufferReplace
+Map::ParseBufferMerge
 
 parse all entities and brushes from the text buffer, assuming the scene is not empty
 
-for import/paste/etc
+only called by loadbetween, now
 ================
 */
 bool Map::ParseBufferMerge(const char *data)

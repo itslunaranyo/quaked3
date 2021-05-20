@@ -9,10 +9,6 @@
 #include "CmdTextureFit.h"
 #include "CmdTextureMod.h"
 
-// 400ms debounce time for adding a new texmod cmd to the undo queue vs reusing the last one
-#define TEXCMD_COMBINE_TIME		(CLOCKS_PER_SEC * 0.4f)
-
-
 
 TextureTool::TextureTool() : 
 	lastTexMod(nullptr), lastWrap(nullptr), lastWrap2(nullptr), cmdCmp(nullptr),
@@ -414,7 +410,7 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 	if (!lastTexMod || !g_cmdQueue.CanUndo() ||
 		g_cmdQueue.LastUndo() != lastTexMod ||
 		lastTexMod->action != tm ||
-		lastTexModTime + TEXCMD_COMBINE_TIME < clock())
+		lastTexModTime + CMD_COMBINE_TIME < clock())
 	{
 		lastTexMod = new CmdTextureMod();
 

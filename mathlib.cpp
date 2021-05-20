@@ -43,6 +43,13 @@ float VectorNormalize(vec3 &v)
 	return l;
 }
 
+double VectorNormalize(dvec3 &v)
+{
+	double l = glm::length(v);
+	v = v / l;
+	return l;
+}
+
 static float Cross2D(const vec3 a, const vec3 b) { return (a[0] * b[1] - a[1] * b[0]); }
 
 bool LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2start, const vec3 l2end, vec3 &intersect)
@@ -102,14 +109,7 @@ void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
 
 	va = vIn;
 	vWork = va;
-	/*
-	nIndex[0][0] = 1;
-	nIndex[0][1] = 2;
-	nIndex[1][0] = 2;
-	nIndex[1][1] = 0;
-	nIndex[2][0] = 0;
-	nIndex[2][1] = 1;
-	*/
+
 	for (int i = 0; i < 3; i++)
 	{
 		if (vRotation[i] != 0)
@@ -125,9 +125,34 @@ void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
 	out = vWork;
 }
 
-void VectorRotate2(const vec3 vIn, const vec3 vRotation, const vec3 vOrigin, vec3 &out)
+void VectorRotate(const dvec3 vIn, const dvec3 vRotation, dvec3 &out)
 {
-	vec3 v, vo;
+	dvec3	vWork, va;
+	double	dAngle;
+	double	c, s;
+	const int nIndex[3][2] = { 1,2,2,0,0,1 };
+
+	va = vIn;
+	vWork = va;
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (vRotation[i] != 0)
+		{
+			dAngle = vRotation[i] * Q_PI / 180.0;
+			c = cos(dAngle);
+			s = sin(dAngle);
+			vWork[nIndex[i][0]] = va[nIndex[i][0]] * c - va[nIndex[i][1]] * s;
+			vWork[nIndex[i][1]] = va[nIndex[i][0]] * s + va[nIndex[i][1]] * c;
+		}
+		va = vWork;
+	}
+	out = vWork;
+}
+
+void VectorRotate2(const dvec3 vIn, const dvec3 vRotation, const dvec3 vOrigin, dvec3 &out)
+{
+	dvec3 v, vo;
 	v = vIn - vOrigin;
 	VectorRotate(v, vRotation, vo);
 	out = vo + vOrigin;

@@ -34,7 +34,7 @@ void ProjectOnPlane(const vec3 normal, const float dist, const vec3 ez, vec3 &ou
 Surface::Back
 ===============
 */
-void Surface::Back(const vec3 dir, vec3 &p)
+void Surface::Back(const dvec3 dir, dvec3 &p)
 {
 	if (fabs(dir[0]) == 1)
 		p[0] = 0;
@@ -66,7 +66,7 @@ void Surface::ComputeScale(const vec3 rex, const vec3 rey, vec3 &p, TexDef &td)
 Surface::ComputeAbsolute
 ===============
 */
-void Surface::ComputeAbsolute(Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
+void Surface::ComputeAbsolute(const Face *f, dvec3 &p1, dvec3 &p2, dvec3 &p3)
 {
 	ComputeAbsolute(f->plane, f->texdef, p1, p2, p3);
 }
@@ -76,11 +76,11 @@ void Surface::ComputeAbsolute(Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 Surface::ComputeAbsolute
 ===============
 */
-void Surface::ComputeAbsolute(Plane &p, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3)
+void Surface::ComputeAbsolute(const Plane &p, const TexDef &td, dvec3 &p1, dvec3 &p2, dvec3 &p3)
 {
-	vec3	ex, ey, ez;	        // local axis base
-	vec3	rot;
-	vec3	rex, rey;
+	dvec3	ex, ey, ez;	        // local axis base
+	dvec3	rot;
+	dvec3	rex, rey;
 
 	// compute first local axis base
 	p.GetTextureAxis(ex, ey);
@@ -89,11 +89,12 @@ void Surface::ComputeAbsolute(Plane &p, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3
 	ex *= td.scale[0];
 	ey *= td.scale[1];
 
-	p1 = ex * -td.shift[0] + ey * -td.shift[1];
+	p1 = ex * -(double)td.shift[0] + ey * -(double)td.shift[1];
 	p2 = p1 + ex;
 	p3 = p1 + ey;
 
-	rot = ez * -td.rotate;
+	rot = ez * -(double)td.rotate;
+
 	VectorRotate(p1, rot, p1);
 	VectorRotate(p2, rot, p2);
 	VectorRotate(p3, rot, p3);
@@ -112,9 +113,10 @@ Surface::Clamp
 */
 void Surface::Clamp(float *f, int nClamp)
 {
-	float fFrac = *f - (int)*f;
-	*f = (int)*f % nClamp;
-	*f += fFrac;
+	*f = fmodf(*f, (float)nClamp);
+	//float fFrac = *f - (int)*f;
+	//*f = (int)*f % nClamp;
+	//*f += fFrac;
 }
 
 /*
@@ -122,15 +124,15 @@ void Surface::Clamp(float *f, int nClamp)
 Surface::AbsoluteToLocal
 ===============
 */
-void Surface::AbsoluteToLocal(Plane pl, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3)
+void Surface::AbsoluteToLocal(const Plane pl, TexDef &td, dvec3 &p1, dvec3 &p2, dvec3 &p3)
 {
-	vec3	ex, ey, ez;
-	vec3	aux;
-	vec3	rex, rey;
-	float	x;
-	float	y;
+	dvec3	ex, ey, ez;
+	dvec3	aux;
+	dvec3	rex, rey;
+	double	x, y;
 
 	// computing new local axis base
+	//ez = pl.GetTextureAxis(ex, ey);
 	pl.GetTextureAxis(ex, ey);
 	ez = CrossProduct(ex, ey);
 
@@ -147,7 +149,7 @@ void Surface::AbsoluteToLocal(Plane pl, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3
 	td.rotate = 180 * atan2(y, x) / Q_PI;
 
 	// computing rotated local axis base
-	aux = ez * td.rotate;
+	aux = ez * (double)td.rotate;
 	VectorRotate(ex, aux, rex);
 	VectorRotate(ey, aux, rey);
 
@@ -163,7 +165,7 @@ void Surface::AbsoluteToLocal(Plane pl, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3
 	y /= td.scale[1];
 
 	p1 = rex * x + rey * y;
-	aux = ez * -td.rotate;
+	aux = ez * -(double)td.rotate;
 	VectorRotate(p1, aux, p1);
 	td.shift[0] = -DotProduct(p1, ex);
 	td.shift[1] = -DotProduct(p1, ey);
@@ -188,8 +190,10 @@ void Surface::AbsoluteToLocal(Plane pl, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3
 		td.scale[1] *= -1.0f;
 	}
 	// lunaran fix: snap texture shifts back to whole numbers so they don't creep with successive translations
-	td.shift[0] = roundf(td.shift[0]);
-	td.shift[1] = roundf(td.shift[1]);
+	if (fabs(fabs(td.shift[0]) - fabs(roundf(td.shift[0]))) < EQUAL_EPSILON)
+		td.shift[0] = roundf(td.shift[0]);
+	if (fabs(fabs(td.shift[1]) - fabs(roundf(td.shift[1]))) < EQUAL_EPSILON)
+		td.shift[1] = roundf(td.shift[1]);
 
 	td.scale[0] = glm::round(td.scale[0] * 1000) / 1000;
 	td.scale[1] = glm::round(td.scale[1] * 1000) / 1000;
@@ -391,7 +395,8 @@ Surface::RotateFaceTexture
 */
 void Surface::RotateFaceTexture(Face* f, int nAxis, float fDeg, const vec3 vOrigin)
 {
-	vec3	p1, p2, p3, rota;
+	dvec3	p1, p2, p3;
+	vec3	rota;
 	vec3	vNormal;
 	Plane	normal2;
 
@@ -433,24 +438,20 @@ void Surface::RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 void Surface::WrapProjection(Face* from, Face* to, TexDef &td)
 {
 	mat4 trans;
-	vec3 fp1, fp2, fp3;
-	vec3 rot, org, dir;
-	vec3 norm1, norm2;
-	float ang;
+	dvec3 fp1, fp2, fp3;
+	dvec3 rot;
+	vec3 org, dir;
+	dvec3 norm1, norm2;
+	double ang;
 
 	Plane &pfrom = from->plane;
 	Plane &pto = to->plane;
 
-	//if (pfrom.normal == pto.normal)
 	if (pfrom.EqualTo(&pto, false))
 		return;
 
 	// pfrom-plane local texdef pto absolute
 	ComputeAbsolute(pfrom, td, fp1, fp2, fp3);
-
-	//fp1 = ZeroTinyComponents(fp1);
-	//fp2 = ZeroTinyComponents(fp2);
-	//fp3 = ZeroTinyComponents(fp3);
 
 	// find point on intersection line
 	dir = glm::normalize(fp2 - fp1);
@@ -484,7 +485,7 @@ void Surface::WrapProjection(Face* from, Face* to, TexDef &td)
 	}
 
 	// rotate absolutes around intersection vector
-	ang = acosf(DotProduct(norm1, norm2));
+	ang = acos(DotProduct(norm1, norm2));
 	if (!ang)
 		return;
 	fp1 = glm::rotate(fp1, ang, rot);
@@ -496,10 +497,6 @@ void Surface::WrapProjection(Face* from, Face* to, TexDef &td)
 	fp2 += org;
 	fp3 += org;
 
-	//fp1 = ZeroTinyComponents(fp1);
-	//fp2 = ZeroTinyComponents(fp2);
-	//fp3 = ZeroTinyComponents(fp3);
-	
 	// convert back to local for to-plane
 	AbsoluteToLocal(pto, td, fp1, fp2, fp3);
 }

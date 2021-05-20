@@ -515,7 +515,7 @@ bool CmdGeoMod::Polygon::Resolve()
 	int x, y, z;
 	unsigned tries;
 	int rCount, vCount;
-	float dot;
+	double dot;
 
 	polyVerts = vertices;	// start with just our own verts
 
@@ -569,7 +569,7 @@ bool CmdGeoMod::Polygon::Resolve()
 				if (*mvIt == vertQueue[x] || *mvIt == vertQueue[y] || *mvIt == vertQueue[z])
 					continue;
 
-				dot = DotProduct(*(*mvIt), p.normal) - p.dist;
+				dot = DotProduct(dvec3(*(*mvIt)), p.normal) - p.dist;
 				if (dot >= -ZERO_EPSILON)	// found a point on or outside the plane
 				{
 					if (std::find(polyVerts.begin(), polyVerts.end(), *mvIt) != polyVerts.end())

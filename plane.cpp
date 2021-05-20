@@ -27,9 +27,9 @@ Plane::Plane() : dist(0), normal(0)
 {
 }
 
-bool Plane::PointOn(const vec3 &pt)
+bool Plane::PointOn(const vec3 &pt) const
 {
-	return (fabs(DotProduct(pt, normal) - dist) < ON_EPSILON);
+	return (fabs(DotProduct(dvec3(pt), normal) - dist) < ON_EPSILON);
 }
 
 /*
@@ -37,22 +37,21 @@ bool Plane::PointOn(const vec3 &pt)
 Plane::EqualTo
 =============
 */
-bool Plane::EqualTo(const Plane *b, const int flip)
+bool Plane::EqualTo(const Plane *b, const int flip) const
 {
 	double	tdist;
-	vec3	tnorm;
+	dvec3	tnorm;
 
 	if (flip == SIDE_ON)	// planes can be equal or inverse
 	{
-		tnorm = glm::abs(normal) - glm::abs(b->normal);
-		tdist = fabs(dist) - fabs(b->dist);
+		return (EqualTo(b, false) || EqualTo(b, true));
 	}
 	else if (flip == SIDE_BACK)	// planes must be inverse
 	{
 		tnorm = normal + b->normal;
 		tdist = dist + b->dist;
 	}
-	else	// SIDE_ON	// planes must be equal
+	else	// SIDE_FRONT	// planes must be equal
 	{
 		tnorm = normal - b->normal;
 		tdist = dist - b->dist;
@@ -82,9 +81,9 @@ code is interested in (ideally corresponding to face winding points),
 otherwise the result is fairly meaningless.
 =============
 */
-bool Plane::ConvexTo(const Plane *other)
+bool Plane::ConvexTo(const Plane *other) const
 {
-	vec3 p;
+	dvec3 p;
 
 	p = (pts[0] + pts[1] + pts[2]) / 3.0f;
 	if (DotProduct(p, other->normal) >= other->dist)
@@ -105,15 +104,15 @@ returns false and does not modify the plane if the points are collinear
 */
 bool Plane::FromPoints(const vec3 p0, const vec3 p1, const vec3 p2)
 {
-	vec3	pNorm;
+	dvec3	pNorm;
 
-	pNorm = CrossProduct(p0 - p1, p2 - p1);
+	pNorm = CrossProduct(dvec3(p0) - dvec3(p1), dvec3(p2) - dvec3(p1));
 
 	if (VectorNormalize(pNorm) < 0.1)
 		return false;
 
 	normal = pNorm;
-	dist = DotProduct(p0, pNorm);
+	dist = DotProduct(dvec3(p0), pNorm);
 	pts[0] = p0;
 	pts[1] = p1;
 	pts[2] = p2;
@@ -131,16 +130,17 @@ bool Plane::FromNormDist(const vec3 n, const double d)
 bool Plane::FromNormPoint(const vec3 n, const vec3 pt)
 {
 	normal = n;
-	dist = DotProduct(pt, normal);
+	dist = DotProduct(dvec3(pt), normal);
 	return true;
 }
 
-bool Plane::TestRay(const vec3 org, const vec3 dir, vec3 &out)
+bool Plane::TestRay(const vec3 org, const vec3 dir, vec3 &out) const
 {
 	float	d1, d2, fr;
+	dvec3	dorg = dvec3(org);
 
-	d1 = DotProduct(org, normal) - dist;
-	d2 = DotProduct(org + dir * (float)g_cfgEditor.MapSize, normal) - dist;
+	d1 = DotProduct(dorg, normal) - dist;
+	d2 = DotProduct(dorg + dvec3(dir) * (double)g_cfgEditor.MapSize, normal) - dist;
 	if (d1 == d2)	// FIXME precision
 		return false;	// parallel to plane
 
@@ -156,8 +156,8 @@ bool Plane::ClipLine(vec3 &p1, vec3 &p2)
 	float	d1, d2, fr;
 	vec3	*v;
 
-	d1 = DotProduct(p1, normal) - dist;
-	d2 = DotProduct(p2, normal) - dist;
+	d1 = DotProduct(dvec3(p1), normal) - dist;
+	d2 = DotProduct(dvec3(p2), normal) - dist;
 
 	if (d1 >= 0 && d2 >= 0)
 		return false;	// totally outside
@@ -195,7 +195,7 @@ bool Plane::Make()
 	}
 
 	normal = norm;
-	dist = DotProduct(pts[1], normal);
+	dist = DotProduct(dvec3(pts[1]), normal);
 	return true;
 }
 
@@ -226,7 +226,7 @@ void Plane::Translate(const vec3 move)
 	pts[0] += move;
 	pts[1] += move;
 	pts[2] += move;
-	dist = DotProduct(pts[0], normal);
+	dist = DotProduct(dvec3(pts[0]), normal);
 }
 
 /*
@@ -250,7 +250,7 @@ Plane::BasePoly
 */
 winding_t *Plane::BasePoly()
 {
-	vec3		org, vright, vup;
+	dvec3		org, vright, vup;
 	winding_t  *w;
 
 	/*
@@ -295,12 +295,12 @@ winding_t *Plane::BasePoly()
 	*/
 
 	// lunaran - this made it shorter and removed all the branches, and made it zero percent faster :(
-	org = normal * (float)dist;
+	org = normal * dist;
 	vup = VectorPerpendicular(normal);
 	vright = CrossProduct(vup, normal);
 
-	vup = vup * (float)g_cfgEditor.MapSize;
-	vright = vright * (float)g_cfgEditor.MapSize;
+	vup = vup * (double)g_cfgEditor.MapSize;
+	vright = vright * (double)g_cfgEditor.MapSize;
 
 	// project a really big	axis aligned box onto the plane
 	w = Winding::Alloc(4);
@@ -320,7 +320,7 @@ winding_t *Plane::BasePoly()
 Plane::GetTextureAxis
 ==================
 */
-vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
+vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv) const
 {
 	int		i, bestaxis;
 	float	dot, best;
@@ -330,7 +330,7 @@ vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 
 	for (i = 0; i < 6; i++)
 	{
-		dot = DotProduct(normal, g_v3BaseAxis[i * 3]);
+		dot = DotProduct(normal, dvec3(g_v3BaseAxis[i * 3]));
 		if (dot > best)
 		{
 			best = dot;
@@ -343,14 +343,35 @@ vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 	return g_v3BaseAxis[bestaxis * 3];
 }
 
+dvec3 Plane::GetTextureAxis(dvec3 &xv, dvec3 &yv) const
+{
+	vec3 x, y, n;
+	n = GetTextureAxis(x, y);
+	xv = x;
+	yv = y;
+	return n;
+
+}
+
 /*
 ==================
 Plane::ProjectPointAxial
 ==================
 */
-vec3 Plane::ProjectPointAxial(const vec3 &in, const vec3 &axis)
+vec3 Plane::ProjectPointAxial(const vec3 &in, const vec3 &axis) const
 {
 	vec3 out = in;
+	if (fabs(axis[0]) == 1)
+		out[0] = (dist - normal[1] * in[1] - normal[2] * in[2]) / normal[0];
+	else if (fabs(axis[1]) == 1)
+		out[1] = (dist - normal[0] * in[0] - normal[2] * in[2]) / normal[1];
+	else
+		out[2] = (dist - normal[0] * in[0] - normal[1] * in[1]) / normal[2];
+	return out;
+}
+dvec3 Plane::ProjectPointAxial(const dvec3 &in, const dvec3 &axis) const
+{
+	dvec3 out = in;
 	if (fabs(axis[0]) == 1)
 		out[0] = (dist - normal[1] * in[1] - normal[2] * in[2]) / normal[0];
 	else if (fabs(axis[1]) == 1)
@@ -365,7 +386,7 @@ vec3 Plane::ProjectPointAxial(const vec3 &in, const vec3 &axis)
 Plane::ProjectVectorAxial
 ==================
 */
-vec3 Plane::ProjectVectorAxial(const vec3 &in, const vec3 &axis)
+vec3 Plane::ProjectVectorAxial(const vec3 &in, const vec3 &axis) const
 {
 	vec3 out = in;
 	if (fabs(axis[0]) == 1)

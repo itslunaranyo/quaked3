@@ -161,7 +161,7 @@ EntClass *EntClass::InitFromText(char *text)
 
 	// any remaining words are parm flags
 	p = parms;
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < MAX_FLAGS; i++)
 	{
 		p = COM_Parse(p);
 		if (!p)
@@ -172,6 +172,16 @@ EntClass *EntClass::InitFromText(char *text)
 			continue;
 		}
 		strcpy(e->flagnames[i], g_szComToken);
+	}
+	if (i < 8)
+	{
+		// .def doesn't include skill level flags, put them in manually
+		strcpy(e->flagnames[8], "!Easy");
+		strcpy(e->flagnames[9], "!Normal");
+		strcpy(e->flagnames[10], "!Hard");
+		strcpy(e->flagnames[11], "!Deathmatch");
+
+		// TODO: specify default spawnflags in project file? ie for quoth/copper coop flags
 	}
 
 	// find the length until close comment

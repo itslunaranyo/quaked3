@@ -174,18 +174,17 @@ supercedes old CSG merge which was buggy and weird
 
 notexmerge: if true, don't combine coincident planes if they have different textures
 		if false, coincident planes' texdefs are overwritten with first one found
-
-TODO: upconvert float vectors to double to try to eliminate precision bugs
 ==============
 */
 Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 {
 	Brush	*result;
 	Face	*f;
-	vec3	*pointBuf;
-	Plane	*planeBuf;
+	std::vector<dvec3> pointBuf;
+	std::vector<Plane> planeBuf;
+	std::vector<dvec3>::iterator curPoint;
+	std::vector<Plane>::iterator curPlane;
 	int		numPoints, numPlanes;
-	vec3	*nextPoint, *curPoint;
 	int		pointBufSize;
 
 	// put all input points in a buffer
@@ -194,41 +193,50 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 	{
 		pointBufSize += (*fIt)->face_winding->numpoints;	// buffer size is very greedy
 	}
-	pointBuf = new vec3[pointBufSize]();
+	pointBuf.reserve(pointBufSize);
 
-	numPoints = 0;
-	nextPoint = pointBuf;
 	for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 	{
 		for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
 		{
-			curPoint = pointBuf;
+			dvec3 dpt = (*fIt)->face_winding->points[i].point;
 			// avoid duplicates in point buffer
-			while (curPoint != nextPoint)
+			for (curPoint = pointBuf.begin(); curPoint != pointBuf.end(); ++curPoint)
 			{
-				if (VectorCompare((*fIt)->face_winding->points[i].point, *curPoint))	// skip xyzst
+				dvec3 pdelta = dpt - *curPoint;
+				if ((fabs(pdelta[0]) < 0.05) && (fabs(pdelta[1]) < 0.05) && (fabs(pdelta[2]) < 0.05))	// more aggressive point merging
+				//if (VectorCompare(dpt, *curPoint))
+				{
+					// dealing with imprecision: keep whichever components are closer to an integer grid
+					// point, and not just the first ones found. in nearly all cases, we want the healthy
+					// integer grid points that haven't wandered around, and in cases where we're already 
+					// dealing with significantly off-integer points we're already off the rails anyway
+					if (fabs(dpt[0] - std::lround(dpt[0])) <= fabs((*curPoint)[0] - std::lround((*curPoint)[0])))
+						(*curPoint)[0] = dpt[0];
+					if (fabs(dpt[1] - std::lround(dpt[1])) <= fabs((*curPoint)[1] - std::lround((*curPoint)[1])))
+						(*curPoint)[1] = dpt[1];
+					if (fabs(dpt[2] - std::lround(dpt[2])) <= fabs((*curPoint)[2] - std::lround((*curPoint)[2])))
+						(*curPoint)[2] = dpt[2];
 					break;
-				curPoint++;
+				}
 			}
-			if (curPoint == nextPoint)
+			if (curPoint == pointBuf.end())
 			{
-				*nextPoint = (*fIt)->face_winding->points[i].point;
-				nextPoint++;
-				numPoints++;
+				pointBuf.push_back(dpt);
 			}
 		}
 	}
+	numPoints = pointBuf.size();
 
 	// find all planes defined by the outermost points
 	numPlanes = numPoints * 2 - 4;
-	planeBuf = new Plane[numPlanes]();
+	planeBuf.reserve(numPlanes);
 	result = new Brush();
 
 	Plane	p;
 	int		x, y, z, t;
 	int		lCount, rCount, pl;
-	float	dot;
-	vec3	*pT;
+	double	dot;
 
 	pl = 0;
 	// for every unique trio of points
@@ -246,8 +254,7 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 		{
 			if (t == x || t == y || t == z) continue;
 				
-			pT = &pointBuf[t];
-			dot = DotProduct(*pT, p.normal) - p.dist;
+			dot = DotProduct(dvec3(pointBuf[t]), p.normal) - p.dist;
 			// skip coplanar points
 			if (dot < -ON_EPSILON) lCount++;
 			if (dot > ON_EPSILON) rCount++;
@@ -263,17 +270,17 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 		if (!rCount || !lCount)
 		{
 			// avoid duplicates in plane buffer now since many collinear plane points could lead to a ton of duplicate planes
-			// FIXME: EqualTo is not precise enough, leads to refusal to merge
-			int pN;
-			for (pN = 0; pN < pl; pN++)
-				if (p.EqualTo(&planeBuf[pN], false))
-					break;
-			assert(!p.EqualTo(&planeBuf[pN], true));	// there should be no equal opposite planes
-
-			if (pN == pl)
+			for (curPlane = planeBuf.begin(); curPlane != planeBuf.end(); ++curPlane)
 			{
-				planeBuf[pl] = p;
-				pl++;
+				// FIXME: EqualTo is not precise enough, leads to refusal to merge
+				if (p.EqualTo(&(*curPlane), false))
+					break;
+				assert(!p.EqualTo(&(*curPlane), true));	// there should be no equal opposite planes
+			}
+
+			if (curPlane == planeBuf.end())
+			{
+				planeBuf.push_back(p);
 
 				// add a face to the brush now while we still have the plane
 				f = new Face(result);
@@ -281,7 +288,7 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 			}
 		}
 	}
-	numPlanes = pl;
+	numPlanes = planeBuf.size();
 
 	if (numPlanes <= 3)
 	{
@@ -290,8 +297,8 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 		return nullptr;
 	}
 
-	delete[] pointBuf;
-	delete[] planeBuf;
+	//delete[] pointBuf;
+	//delete[] planeBuf;
 
 	for (f = result->faces; f; f = f->fnext)
 	{
@@ -300,7 +307,7 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 		Texture* ftx = nullptr;
 		for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 		{
-			if ((*fIt)->plane.EqualTo(&f->plane, false) || (*fIt)->plane.EqualTo(&f->plane, true))
+			if ((*fIt)->plane.EqualTo(&f->plane, false))
 			{
 				if (match && ftx != (*fIt)->texdef.tex)
 				{
@@ -328,10 +335,12 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 	result->owner = fList.front()->owner->owner;
 	result->Build();
 
+	// FIXME: only here for imprecision reasons
+	// point on plane testing is still vague enough thanks to fp error that
+	// sometimes we get empty faces that have been clipped away
+	//result->RemoveEmptyFaces();
 	for (Face *ft = result->faces; ft; ft = ft->fnext)
 	{
-		// TODO: point on plane testing is still vague enough thanks to fp error that
-		// sometimes we get empty faces that have been clipped away
 		if (!ft->face_winding)
 		{
 			delete result;

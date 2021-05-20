@@ -56,6 +56,10 @@
 #define IDC_E_FLAG10                    1035
 #define IDC_E_FLAG11                    1036
 #define IDC_E_FLAG12                    1037
+#define IDC_E_FLAG13                    1038
+#define IDC_E_FLAG14                    1039
+#define IDC_E_FLAG15                    1040
+#define IDC_E_FLAG16                    1041
 #define IDC_EDIT_FIND                   1059
 #define IDC_RICHEDIT_KEYLIST            1059
 #define IDC_EDIT_REPLACE                1060
@@ -94,7 +98,6 @@
 #define IDC_ABOUT_GLEXTENSIONS          1115
 #define IDC_BUTTON_FIT                  1115
 #define IDC_CHECK_SELECTED              1116
-#define IDC_BUTTON_FIT2                 1116
 #define IDC_BUTTON_FITRESET             1116
 #define IDC_CHECK_FORCE                 1117
 #define IDC_SPIN_SIDES                  1127
@@ -499,6 +502,10 @@
 #define ID_TARGETLINES_ALL              40483
 #define ID_TARGETLINES_SELPATH          40484
 #define ID_TARGETLINES_NONE             40485
+#define ID_NUDGE_UP                     40486
+#define ID_NUDGE_DOWN                   40487
+#define ID_NUDGE_LEFT                   40488
+#define ID_NUDGE_RIGHT                  40489
 
 // Next default values for new objects
 // 

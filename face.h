@@ -53,7 +53,7 @@ public:
 	inline bool ClipLine(vec3 &p1, vec3 &p2) { return plane.ClipLine(p1, p2); }
 	inline void MakePlane() { plane.Make(); }
 
-	void	FitTexture(float fHeight, float fWidth);
+	void	FitTexture(const float fHeight, const float fWidth);
 	void	Transform(mat4 mat, bool bTexLock);
 	void	MoveTexture(const vec3 delta);
 	void	ColorAndTexture();

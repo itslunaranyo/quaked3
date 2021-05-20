@@ -10,6 +10,10 @@ class XYZView;
 class ZView;
 class TextureView;
 
+// 600ms debounce time for adding a modification to the prior command vs creating a new one
+// ie combining little texture shifts or selection nudges
+#define CMD_COMBINE_TIME		(CLOCKS_PER_SEC * 0.6f)
+
 class Tool
 {
 public:

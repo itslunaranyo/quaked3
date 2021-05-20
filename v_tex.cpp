@@ -295,6 +295,7 @@ under the current mouse position.
 */
 Texture* TextureView::TexAtPos(int x, int y)
 {
+	if (stale) Arrange();
 	y += origin[1] - height;
 
 	for (auto twp = layout.begin(); twp != layout.end(); ++twp)
@@ -347,6 +348,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 	Sys_UpdateWindows(W_TEXTURE | W_SURF);
 
 	// scroll origin so the texture is completely on screen
+	if (stale) Arrange();
 	for (auto twp = layout.begin(); twp != layout.end(); ++twp)
 	{
 		if (!_strcmpi(texdef->name, twp->tex->name))

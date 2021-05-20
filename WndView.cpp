@@ -481,6 +481,7 @@ void WndView::SetTitle(const char * title)
 	SetWindowText(w_hwnd, title);
 }
 
+
 /*
 ==================
 WndView::WndProc
@@ -503,6 +504,7 @@ LONG WINAPI WndView::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	Error("Couldn't find view window for hWnd");
 	return 0;
 }
+
 
 /*
 ==================

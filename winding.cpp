@@ -295,10 +295,10 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 	int		counts[3];
 //	int		maxpts;
 	int		sides[MAX_POINTS_ON_WINDING];
-	float	dists[MAX_POINTS_ON_WINDING];
-	float	dot;
-	vec3	p1, p2;
-	vec3	mid;
+	double	dists[MAX_POINTS_ON_WINDING];
+	double	dot;
+	dvec3	p1, p2;
+	dvec3	mid;
 
 	// lunaran - scratch max-size winding for working in place, to reduce constant winding alloc/free
 	struct {
@@ -315,7 +315,7 @@ winding_t *Winding::Clip (winding_t *in, Plane *split, bool keepon)
 	// determine sides for each point
 	for (i = 0; i < in->numpoints; i++)
 	{
-		dot = DotProduct(in->points[i].point, split->normal);
+		dot = DotProduct(dvec3(in->points[i].point), split->normal);
 		dot -= split->dist;
 		dists[i] = dot;
 

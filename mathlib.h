@@ -41,18 +41,22 @@ bool	VectorCompareLT(const vec3 &v1, const vec3 &v2);
 bool	VectorCompare(const vec3 &v1, const vec3 &v2);
 inline float VectorLength(const vec3 v) { return glm::length(v); }
 inline float DotProduct(const vec3 x, const vec3 y) { return glm::dot(x, y); }
+inline double DotProduct(const dvec3 x, const dvec3 y) { return glm::dot(x, y); }
 vec3	VectorPerpendicular(const vec3 u);
 vec3	ZeroTinyComponents(const vec3 v);
 
 bool	LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2start, const vec3 l2end, vec3 &intersect);
 
 float	VectorNormalize(vec3 &v);
+double	VectorNormalize(dvec3 &v);
 inline void VectorInverse(vec3 &v) { v = -v; }
 void	VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out);
-void	VectorRotate2(const vec3 vIn, const vec3 vRotation, const vec3 vOrigin, vec3 &out);
+void	VectorRotate(const dvec3 vIn, const dvec3 vRotation, dvec3 &out);
+void	VectorRotate2(const dvec3 vIn, const dvec3 vRotation, const dvec3 vOrigin, dvec3 &out);
 void	VectorPolar(vec3 &v, const float radius, const float theta, const float phi);	// sikk - Brush Primitives
 
 inline vec3 CrossProduct(const vec3 v1, const vec3 v2) { return glm::cross(v1, v2); }
+inline dvec3 CrossProduct(const dvec3 v1, const dvec3 v2) { return glm::cross(v1, v2); }
 
 inline void ClearBounds(vec3 &mins, vec3 &maxs) { mins = vec3(99999); maxs = vec3(-99999); }
 void	AddPointToBounds(const vec3 v, vec3 &mins, vec3 &maxs);

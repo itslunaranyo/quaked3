@@ -81,7 +81,7 @@ void CmdPlaneShift::Do_Impl()
 	bool ok = false;
 	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
 	{
-		if (DotProduct(planeShift, (*fIt)->plane.normal))
+		if (DotProduct(dvec3(planeShift), (*fIt)->plane.normal))
 		{
 			ok = true;
 			break;

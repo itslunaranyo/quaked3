@@ -695,15 +695,18 @@ lunaran: trim trailing zeroes, including the . if necessary, for no other reason
 than I think they don't look very nice
 ==============
 */
-void FloatToString(const float f, char *string)
+void FloatToString(const float f, char *string, int dec)
 {
+	char fmt[8];
 	char *szVal;
 	char *pos;
+
+	sprintf(fmt, "%%0.%if", dec);
 
 	// trunc safety
 	float fp = f + ((f < 0) ? -0.000001f : 0.000001f);
 	szVal = string;
-	sprintf(szVal, "%0.5f", f);
+	sprintf(szVal, fmt, f);
 	pos = &szVal[strlen(szVal) - 1];
 	while (*pos == '0' && pos != szVal)
 	{

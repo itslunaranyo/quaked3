@@ -445,11 +445,11 @@ bool GeoTool::BoxTestHandles(const vec3 org1, const vec3 dir1, const vec3 org2, 
 			!(mode & GT_EDGE) && hIt->numPoints == 2 ||
 			!(mode & GT_FACE) && hIt->numPoints > 2)
 			continue;
-		if (DotProduct(hIt->origin, p[0].normal) < p[0].dist) continue;
-		if (DotProduct(hIt->origin, p[1].normal) < p[1].dist) continue;
-		if (DotProduct(hIt->origin, p[2].normal) < p[2].dist) continue;
-		if (DotProduct(hIt->origin, p[3].normal) < p[3].dist) continue;
-		if (DotProduct(hIt->origin, p[4].normal) < p[4].dist) continue;
+		if (DotProduct(hIt->origin, vec3(p[0].normal)) < p[0].dist) continue;
+		if (DotProduct(hIt->origin, vec3(p[1].normal)) < p[1].dist) continue;
+		if (DotProduct(hIt->origin, vec3(p[2].normal)) < p[2].dist) continue;
+		if (DotProduct(hIt->origin, vec3(p[3].normal)) < p[3].dist) continue;
+		if (DotProduct(hIt->origin, vec3(p[4].normal)) < p[4].dist) continue;
 
 		hlist.push_back(&*hIt);
 		found = true;

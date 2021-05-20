@@ -10,29 +10,55 @@
 qeglobals_t	g_qeglobals;
 qeConfig	g_qeconfig;
 
+void QE_FixMonFlags()
+{
+	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
+	{
+		int sf, sf_lo, sf_mid, sf_hi, sf_new;
+		if (!(e->eclass->showFlags & EFL_MONSTER))
+			continue;
+
+		sf = e->GetKeyValueInt("spawnflags");
+
+		if (!strcmp(e->eclass->name, "monster_zombie"))	// fucking crucified flag
+		{
+			sf_lo = sf & 60;	// the four flags we're shifting up
+			sf_mid = sf & 192;  // two flags we shift down
+			sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
+
+			sf_lo *= 4;
+			sf_mid /= 16;
+		}
+		else
+		{
+			sf_lo = sf & 30;	// the four flags we're shifting up
+			sf_mid = sf & 224;  // three flags we shift down
+			sf_hi = sf - sf_lo - sf_mid;	// the flags we're leaving alone
+
+			sf_lo *= 8;
+			sf_mid /= 16;
+		}
+		sf_new = sf_lo + sf_mid + sf_hi;
+		// invert tfog flag, which is now 32
+		if (sf_new & 16)
+			sf_new ^= 32;
+
+		if (sf_new != sf)
+		{
+			e->SetKeyValue("spawnflags", sf_new);
+			Sys_Printf("%s, %i -> %i\n", e->eclass->name, sf, sf_new);
+		}
+	}
+}
+
 // it can test aaanything you want just press PEE
 #pragma optimize("", off)
 void QE_TestSomething()
 {
-	/*
-	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
-	{
-		if (e->GetKeyValueInt("cooponly"))
-		{
-			e->SetSpawnFlag(4096, true);
-			e->DeleteKeyValue("cooponly");
-			Sys_Printf("cooponly on %s\n", e->eclass->name);
-		}
-		if (e->GetKeyValueInt("notincoop"))
-		{
-			e->SetSpawnFlag(8192, true);
-			e->DeleteKeyValue("notincoop");
-			Sys_Printf("notincoop on %s\n", e->eclass->name);
-		}
-	}
+	QE_FixMonFlags();
 	Sys_UpdateWindows(W_ALL);
-	*/
 }
+
 #pragma optimize("", on)
 
 
