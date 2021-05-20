@@ -17,6 +17,7 @@ public:
 	bool Input(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	int xDown, yDown;
 	bool selecting;	// vs deselecting, obvs
 	int selFlags;
 	bool TrySelect(int buttons, const vec3 origin, const vec3 dir, int &flags);

@@ -837,6 +837,7 @@ void CameraView::Draw ()
     glRotatef(90, 0, 0, 1);		// put Z going up
     glRotatef(angles[0], 0, 1, 0);
     glRotatef(-angles[1], 0, 0, 1);
+	glPushMatrix();
     glTranslatef(-origin[0], -origin[1], -origin[2]);
 
 	BuildMatrix();
@@ -911,31 +912,10 @@ void CameraView::Draw ()
 // sikk---> Camera Grid/Axis/Map Boundary Box
 	DrawGrid();
 
-	// TODO: Display Axis in lower left corner of window and rotate with camera orientation (e.g. blender)
-	bound = g_cfgEditor.MapSize / 2;
-	if (g_cfgUI.ShowAxis)
-	{
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex2i(-bound, 0);
-		glVertex2i(bound, 0);
-		glEnd();
-				
-		glColor3f(0.0, 1.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex2i(0, -bound);
-		glVertex2i(0, bound);
-		glEnd();
-
-		glColor3f(0.0, 0.0, 1.0);
-		glBegin(GL_LINES);
-		glVertex3i(0, 0, -bound);
-		glVertex3i(0, 0, bound);
-		glEnd();
-	}
 
 	if (g_cfgUI.ShowMapBoundary)
 	{
+		bound = g_cfgEditor.MapSize / 2;
 		glColor3fv(&g_colors.camGrid.r);
 		glBegin(GL_LINE_LOOP);
 		glVertex3f(-bound, -bound, -bound);
@@ -964,8 +944,6 @@ void CameraView::Draw ()
 	}
 // <---sikk
 
-	//glMatrixMode(GL_TEXTURE);
-
 	// ----------------------------------------------------------------
 
 	DrawActive();
@@ -980,6 +958,42 @@ void CameraView::Draw ()
 
 	if (g_qeglobals.d_nPointfileDisplayList)
 		Pointfile_Draw();
+
+	glPopMatrix();
+
+	// Display Axis in lower left corner of window and rotate with camera orientation
+	if (g_cfgUI.ShowAxis)
+	{
+		glViewport(0, 0, 64, 64);
+		glLoadIdentity();
+		gluPerspective(yfov/3, 1, 2, g_cfgEditor.MapSize);//8192);
+		glRotatef(-90, 1, 0, 0);	// put Z going up
+		glRotatef(90, 0, 0, 1);		// put Z going up
+		glRotatef(angles[0], 0, 1, 0);
+		glRotatef(-angles[1], 0, 0, 1);
+		glTranslatef(vpn[0] * 128, vpn[1] * 128, vpn[2] * 128);
+
+		glLineWidth(2.0);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3i(0, 0, 0);
+		glVertex3i(16, 0, 0);
+		glEnd();
+
+		glColor3f(0.0, 1.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3i(0, 0, 0);
+		glVertex3i(0, 16, 0);
+		glEnd();
+
+		glColor3f(0.0f, 0.2f, 1.0f);
+		glBegin(GL_LINES);
+		glVertex3i(0, 0, 0);
+		glVertex3i(0, 0, 16);
+		glEnd();
+		glLineWidth(1);
+	}
+
 
 	// bind back to the default texture
 	glBindTexture(GL_TEXTURE_2D, 0);

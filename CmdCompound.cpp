@@ -5,6 +5,18 @@
 #include "qe3.h"
 #include "CmdCompound.h"
 
+/*
+==============================
+a compound command acts as a self-contained command queue which can be
+treated as a single command.
+
+multiple commands can be created, configured, and then completed by passing
+them into the compound command, before it is then itself passed to the real
+command queue. this enables all the subcommands to be collectively treated
+as one action and undone/redone/canceled as a discrete unit.
+==============================
+*/
+
 CmdCompound::CmdCompound(const char* name) : Command(name)
 {
 	stalled = false;
@@ -40,7 +52,7 @@ bool CmdCompound::Complete(Command *cmd)
 	}
 	catch (...) {
 		delete cmd;
-		Undo_Impl();
+		Undo_Impl();	// revert all prior commands if one fails
 		state = NOOP;
 		return false;
 	}
@@ -76,7 +88,7 @@ int CmdCompound::EntityDelta()
 
 void CmdCompound::Do_Impl()
 {
-	// all commands are already doneS
+	// all commands are already done
 #ifdef _DEBUG
 	// or are they
 	for (auto cmdIt = series.begin(); cmdIt != series.end(); ++cmdIt)

@@ -750,34 +750,31 @@ void XYZView::DrawGrid ()
 			glVertex2f(xe, y);
 		}
 		glEnd();
-	}
 
-	// draw minor blocks
-	if (g_qeglobals.d_bShowGrid && g_qeglobals.d_nGridSize * scale >= 4)
-	{
-		glColor3fv(&g_colors.gridMinor.r);
-
-		glBegin(GL_LINES);
-		for (x = xb; x < xe; x += g_qeglobals.d_nGridSize)
+		// draw minor blocks
+		if (g_qeglobals.d_nGridSize * scale >= 4)
 		{
-			if (!((int)x & 63))
-				continue;
-			glVertex2f(x, yb);
-			glVertex2f(x, ye);
-		}
-		for (y = yb; y < ye; y += g_qeglobals.d_nGridSize)
-		{
-			if (!((int)y & 63))
-				continue;
-			glVertex2f(xb, y);
-			glVertex2f(xe, y);
-		}
-		glEnd();
-	}
+			glColor3fv(&g_colors.gridMinor.r);
 
-	// draw grid axis
-	if (g_qeglobals.d_bShowGrid)
-	{
+			glBegin(GL_LINES);
+			for (x = xb; x < xe; x += g_qeglobals.d_nGridSize)
+			{
+				if (!((int)x & 63))
+					continue;
+				glVertex2f(x, yb);
+				glVertex2f(x, ye);
+			}
+			for (y = yb; y < ye; y += g_qeglobals.d_nGridSize)
+			{
+				if (!((int)y & 63))
+					continue;
+				glVertex2f(xb, y);
+				glVertex2f(xe, y);
+			}
+			glEnd();
+		}
+
+		// draw grid axis
 		// lunaran - grid axis now block color, not grid major * 65%
 		glColor3fv(&g_colors.gridBlock.r);
 		glBegin(GL_LINES);

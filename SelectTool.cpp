@@ -39,6 +39,8 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 		if (uMsg == WM_LBUTTONDOWN)
 			hot = true;
 		SetCapture(vWnd.w_hwnd);
+		xDown = x;
+		yDown = y;
 		v.PointToRay(x, y, ray);
 
 		if (wParam & MK_CONTROL)
@@ -61,6 +63,7 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 
 	case WM_MOUSEMOVE:
 		if (!hot) return false;
+		if (x == xDown && y == yDown) return false;	// ignore the one immediate move that gets sent after a mousedown
 		if (!(wParam & MK_LBUTTON)) return false;
 		if (selFlags & SF_CYCLE) return false;
 		if (selFlags & SF_FACES && selFlags & SF_EXCLUSIVE) return false;
@@ -89,6 +92,7 @@ bool SelectTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wn
 	//case WM_COMMAND:
 	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDBLCLK:
 		if (!(wParam & MK_SHIFT)) return false;
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
@@ -98,6 +102,8 @@ bool SelectTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wn
 		selFlags = SF_ENTITIES_FIRST;
 		if (AltDown())
 			selFlags |= SF_CYCLE;
+		if (uMsg == WM_LBUTTONDBLCLK)
+			selFlags |= SF_EXPAND;
 
 		switch (v.GetAxis())
 		{

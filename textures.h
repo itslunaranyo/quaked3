@@ -116,32 +116,8 @@ namespace Textures
 	extern TextureGroup group_solid;	// bucket for silly solid color entity textures
 };
 
-
-class TexDef
-{
-public:
-	TexDef();
-
-	void	Set(Texture *stx) { tex = stx; strncpy(name, tex->name, MAX_TEXNAME);/* stx->used = true;*/ }
-	void	Set(const char* txn) { strncpy(name, txn, MAX_TEXNAME); tex = Textures::ForName(name); }
-	void	Clamp();
-
-	Texture	*tex;
-	char	name[MAX_TEXNAME];		// matches the WAD2 spec (16)
-	float	shift[2];
-	float	scale[2];
-	float	rotate;
-
-	//	int		contents;
-	//	int		flags;
-	//	int		value;
-};
-
-
-
 // as yet orphan bs:
 
-//void Texture_SetMode (int iMenu);	// GL_NEAREST, etc..
 void FillTextureMenu ();
 
 

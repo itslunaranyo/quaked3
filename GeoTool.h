@@ -44,7 +44,8 @@ private:
 	CmdGeoMod *cmdGM;
 	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
 	vec3 ptDownWorld, trans, snapTrans;
-	mouseContext_t mcDown;
+	mouseContext_t mcDown, mcCurrent;
+	View *hotView;
 
 	enum {
 		GT_NONE,
@@ -84,6 +85,7 @@ private:
 
 	static bool handlecmp(const handle &a, const handle &b);
 	void SortHandles();
+	void DrawSelectionBox();
 	void DrawPoints();
 	void DrawPointSet(std::vector<handle>::iterator & start, std::vector<handle>::iterator &end, vec3 color);
 };

@@ -2031,6 +2031,9 @@ LONG WINAPI CommandHandler (
 		case ID_HELP_KEYLIST:
 			DoKeylist();
 			break;
+		case ID_HELP_MOUSELIST:
+			DoMouselist();
+			break;
 
 		case ID_HELP_ABOUT:
 			DoAbout();

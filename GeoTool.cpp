@@ -10,7 +10,7 @@
 
 GeoTool::GeoTool(gt_mode_t gtm) :
 	mode(gtm), state(GT_NONE),
-	cmdGM(nullptr), pointBuf(nullptr),
+	cmdGM(nullptr), pointBuf(nullptr), hotView(nullptr),
 	Tool("Geometry", true)	// modal
 {
 	GenerateHandles();
@@ -101,12 +101,13 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 			return false;
 
 		vWnd.GetMsgXY(lParam, mx, my);
-		mcDown = v.GetMouseContext(mx, my);
+		mcCurrent = mcDown = v.GetMouseContext(mx, my);
 		mca = v.GetMouseContext(mcDown.pt[0] - GT_HANDLE_HITSIZE, mcDown.pt[1] - GT_HANDLE_HITSIZE);
 		mcb = v.GetMouseContext(mcDown.pt[0] + GT_HANDLE_HITSIZE, mcDown.pt[1] + GT_HANDLE_HITSIZE);
 		DragStart(mca, mcb, v.vup);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
+		hotView = &v;
 
 		Sys_UpdateWindows(W_SCENE);
 		return true;
@@ -136,6 +137,7 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
+		hotView = nullptr;
 		return true;
 	}
 	return hot;
@@ -154,12 +156,13 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 			return false;
 
 		vWnd.GetMsgXY(lParam, mx, my);
-		mcDown = v.GetMouseContext(mx, my);
+		mcCurrent = mcDown = v.GetMouseContext(mx, my);
 		mca = v.GetMouseContext(mcDown.pt[0] - GT_HANDLE_HITSIZE, mcDown.pt[1] - GT_HANDLE_HITSIZE);
 		mcb = v.GetMouseContext(mcDown.pt[0] + GT_HANDLE_HITSIZE, mcDown.pt[1] + GT_HANDLE_HITSIZE);
 		DragStart(mca, mcb, (v.dViewType == XY) ? vec3(0,1,0) : vec3(0,0,1));
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
+		hotView = &v;
 
 		Sys_UpdateWindows(W_SCENE);
 		return true;
@@ -188,6 +191,7 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
+		hotView = nullptr;
 		return true;
 	}
 	return hot;
@@ -289,6 +293,7 @@ void GeoTool::DragMove(const mouseContext_t &mc)
 	if (state == GT_BOXSEL)
 	{
 		// remember whatever corner this is so we can draw a selection box someday
+		mcCurrent = mc;
 	}
 	else if (state == GT_MOVE)
 	{
@@ -650,6 +655,35 @@ void GeoTool::SortHandles()
 
 //==============================
 
+void GeoTool::DrawSelectionBox()
+{
+	if (mode != GT_BOXSEL)
+		return;
+	if (mcDown.pt == mcCurrent.pt)
+		return;
+
+	mat4 mat;
+
+	glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat*)&mat);
+	glLoadIdentity();
+	glOrtho(0, hotView->width, 0, -hotView->height, -8, 8);
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor3fv(&g_colors.selection.r);
+
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(mcDown.pt.x, -mcDown.pt.y, 0);
+	glVertex3f(mcDown.pt.x, -mcCurrent.pt.y, 0);
+	glVertex3f(mcCurrent.pt.x, -mcCurrent.pt.y, 0);
+	glVertex3f(mcCurrent.pt.x, -mcDown.pt.y, 0);
+
+	glEnd();
+	glEnable(GL_TEXTURE_2D);
+
+	glLoadMatrixf((GLfloat*)&mat);
+}
+
 void GeoTool::DrawPoints()
 {
 	std::vector<handle>::iterator sstart, vstart, estart, fstart;
@@ -701,11 +735,13 @@ void GeoTool::DrawPointSet(std::vector<handle>::iterator &start, std::vector<han
 	glEnd();
 }
 
-bool GeoTool::Draw3D(CameraView & v)
+bool GeoTool::Draw3D(CameraView &v)
 {
 	v.DrawSelected(&g_brSelectedBrushes);
 	glDisable(GL_DEPTH_TEST);
 	DrawPoints();
+	if (hotView == &v)
+		DrawSelectionBox();
 	glEnable(GL_DEPTH_TEST);
 	return true;
 }
@@ -714,6 +750,8 @@ bool GeoTool::Draw2D(XYZView & v)
 {
 	v.DrawSelection();
 	DrawPoints();
+	if (hotView == &v)
+		DrawSelectionBox();
 	return true;
 }
 

@@ -100,23 +100,6 @@ void WndSurf_RefreshEditTexdef()
 	g_texdefEdit = g_qeglobals.d_workTexDef;
 }
 
-/*
-==============
-prettyftoa
-===============
-*/
-void prettyftoa(char* sz, float f)
-{
-	// lunaran: trunc safety
-	float fp = f + ((f < 0) ? -0.0001f : 0.0001f);
-
-	sprintf(sz, "%4.3f", fp);
-
-	// hack off trailing zeros
-	int l = strlen(sz) - 1;
-	while (sz[l] == '0' || sz[l] == '.')
-		sz[l--] = 0;
-}
 
 /*
 ==============
@@ -269,7 +252,7 @@ void WndSurf_UpdateFit(int idc, float dif)
 
 	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, idc, sz, 8);
 	num = atof(sz) + dif;
-	prettyftoa(sz, num);
+	FloatToString(num, sz);
 	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, idc, sz);
 }
 

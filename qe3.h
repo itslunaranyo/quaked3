@@ -41,6 +41,7 @@
 
 #include "palette.h"
 #include "textures.h"
+#include "texdef.h"
 #include "plane.h"
 #include "face.h"
 #include "brush.h"
@@ -314,12 +315,13 @@ extern BOOL SaveRegistryInfo (const char *pszName, void *pvBuf, long lSize);
 extern BOOL LoadRegistryInfo (const char *pszName, void *pvBuf, long *plSize);
 
 // win_dlg.c
-void DoFindBrush ();
-void DoRotate ();
-void DoSides (int nType);	// sikk - Brush Primitives (previously took no arguments)
-void DoKeylist ();
-void DoAbout ();
-void DoFindTexture ();
+void DoFindBrush();
+void DoRotate();
+void DoSides(int nType);	// sikk - Brush Primitives (previously took no arguments)
+void DoKeylist();
+void DoMouselist();
+void DoAbout();
+void DoFindTexture();
 //void DoNewProject();	// sikk - New Project Dialog
 //void DoProject (bool bFirst);	// sikk - Project Settings Dialog
 void FillEntityListbox(HWND hwnd, bool bPointbased, bool bBrushbased);	// sikk - Create Entity Dialog

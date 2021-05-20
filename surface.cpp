@@ -75,10 +75,13 @@ void ComputeAbsolute(Face *f, vec3 &p1, vec3 &p2, vec3 &p3)
 	f->plane.GetTextureAxis(ex, ey);
 	ez = CrossProduct(ex, ey);
 
+	/*
 	aux = ex * -f->texdef.shift[0];
 	p1 = aux;
 	aux = ey * -f->texdef.shift[1];
 	p1 = p1 + aux;
+	*/
+	p1 = ex * -f->texdef.shift[0] + ey * -f->texdef.shift[1];
 	p2 = p1 + ex;
 	p3 = p1 + ey;
 	aux = ez * -f->texdef.rotate;

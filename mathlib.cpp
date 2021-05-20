@@ -46,19 +46,20 @@ float VectorNormalize(vec3 &v)
 void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
 {
 	vec3	vWork, va;
-	int		nIndex[3][2];
 	double	dAngle;
 	float	c, s;
+	const int nIndex[3][2] = { 1,2,2,0,0,1 };
 
 	va = vIn;
 	vWork = va;
+	/*
 	nIndex[0][0] = 1;
 	nIndex[0][1] = 2;
 	nIndex[1][0] = 2;
 	nIndex[1][1] = 0;
 	nIndex[2][0] = 0;
 	nIndex[2][1] = 1;
-
+	*/
 	for (int i = 0; i < 3; i++)
 	{
 		if (vRotation[i] != 0)
