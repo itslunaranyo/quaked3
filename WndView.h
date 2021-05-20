@@ -16,6 +16,7 @@ public:
 	char *name;
 	int instance, minWidth, minHeight, vbits;
 	RECT clientRect;
+	bool mouseWithin;
 
 	HWND	w_hwnd;
 	HDC		w_hdc;

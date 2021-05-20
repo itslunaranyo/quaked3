@@ -2220,7 +2220,7 @@ LONG WINAPI WMain_WndProc (
 		DeleteMruMenu(g_qeglobals.d_lpMruMenu);
 		g_qeconfig.Save();
 		PostQuitMessage(0);
-		KillTimer(hWnd, QE_TIMER0);
+		KillTimer(hWnd, QE_TIMERAUTOSAVE);
 		return 0;
 
 	case WM_CREATE:
@@ -2399,7 +2399,7 @@ void WMain_Create ()
 		Error("Could not create Main Window.");
 
 	// autosave timer
-	SetTimer(g_qeglobals.d_hwndMain, QE_TIMER0, 1000, NULL);
+	SetTimer(g_qeglobals.d_hwndMain, QE_TIMERAUTOSAVE, 1000, NULL);
 
 #ifdef _DEBUG
 	sprintf(g_qeAppName, "QuakeEd 3.%i DEBUG (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
@@ -2411,89 +2411,6 @@ void WMain_Create ()
 
 	g_qeglobals.d_hwndRebar		= CreateReBar(g_qeglobals.d_hwndMain, hInstance);
 	g_qeglobals.d_hwndStatus	= CreateStatusBar(g_qeglobals.d_hwndMain);
-
-	// load misc info from registry
-	/*
-	long l = sizeof(g_qeglobals.d_savedinfo);
-	LoadRegistryInfo("SavedInfo", &g_qeglobals.d_savedinfo, &l);
-	
-	if (g_qeglobals.d_savedinfo.nSize != sizeof(g_qeglobals.d_savedinfo))
-	{
-		// fill in new defaults
-		g_qeglobals.d_savedinfo.nSize				= sizeof(g_qeglobals.d_savedinfo);
-		g_qeglobals.d_savedinfo.nRenderMode			= ID_TEXTURES_TRILINEAR;
-
-		// all 5 obsolete:
-		g_qeglobals.d_savedinfo.bShow_XYZ[0]		= true;	// lunaran - grid view reunification
-		g_qeglobals.d_savedinfo.bShow_XYZ[1]		= false;
-		g_qeglobals.d_savedinfo.bShow_XYZ[2]		= false;
-		g_qeglobals.d_savedinfo.bShow_XYZ[3]		= false;
-		g_qeglobals.d_savedinfo.bShow_Z				= true;		// Saved Window Toggle
-
-		g_qeglobals.d_savedinfo.nViewFilter			= BFL_HIDDEN;
-		g_qeglobals.d_savedinfo.bShow_Axis			= true;		// sikk - Show Axis
-		g_qeglobals.d_savedinfo.bShow_Blocks		= false;
-		g_qeglobals.d_savedinfo.bShow_CameraGrid	= true;		// sikk - Show Camera Grid
-		g_qeglobals.d_savedinfo.bShow_Coordinates	= true;
-		g_qeglobals.d_savedinfo.bShow_LightRadius	= false;	// sikk - Show Light Radius
-		g_qeglobals.d_savedinfo.bShow_MapBoundary	= true;		// sikk - Show Map Boundary Box
-		g_qeglobals.d_savedinfo.bShow_Names			= true;
-		g_qeglobals.d_savedinfo.bShow_SizeInfo		= true;
-		g_qeglobals.d_savedinfo.bShow_Viewname		= true;		// sikk - Show View Name
-		g_qeglobals.d_savedinfo.bShow_Workzone		= false;
-		g_qeglobals.d_savedinfo.bScaleLockX			= false;
-		g_qeglobals.d_savedinfo.bScaleLockY			= false;
-		g_qeglobals.d_savedinfo.bScaleLockZ			= false;
-		g_qeglobals.d_savedinfo.bCubicClip			= false;	// sikk - Cubic Clipping
-		g_qeglobals.d_savedinfo.nCubicScale			= 32;		// sikk - Cubic Clipping
-		g_qeglobals.d_savedinfo.nCameraSpeed		= 1024;		// sikk - Camera Speed Trackbar
-// sikk---> Preferences Dialog
-		g_qeglobals.d_savedinfo.bAutosave			= true;
-		g_qeglobals.d_savedinfo.bLogConsole			= true;
-		g_qeglobals.d_savedinfo.bRadiantLights		= true;
-		g_qeglobals.d_savedinfo.bVFEModesExclusive	= true;
-		g_qeglobals.d_savedinfo.nAutosave			= 5;
-		g_qeglobals.d_savedinfo.nMapSize			= 8192;
-		g_qeglobals.d_savedinfo.nUndoLevels			= 32;
-		g_qeglobals.d_savedinfo.fGamma				= 1.0;
-		strcpy(g_qeglobals.d_savedinfo.szHeapsize, "16384");
-		strcpy(g_qeglobals.d_savedinfo.szSkill, "1");
-// <---sikk
-
-		for (i = 0; i < 3; i++)
-		{
-			g_colors.brush[i]		= 0.0f;
-			g_colors.camBackground[i]	= 0.25f;
-			g_colors.camGrid[i]	= 0.2f;
-			g_colors.gridBackground[i]		= 1.0f;
-			g_colors.gridMajor[i]	= 0.5f;
-			g_colors.gridMinor[i]	= 0.75f;
-			g_colors.gridText[i]		= 0.0f;
-			g_colors.camGrid[i]	= 0.0f;
-			g_colors.texBackground[i]	= 0.25f;
-			g_colors.texText[i]	= 0.0f;
-		}
-
-		g_colors.tool[0]		= 0.0f;
-		g_colors.tool[1]		= 0.0f;
-		g_colors.tool[2]		= 1.0f;
-
-		g_colors.gridBlock[0]	= 0.0f;
-		g_colors.gridBlock[1]	= 0.0f;
-		g_colors.gridBlock[2]	= 1.0f;
-
-		g_colors.selection[0]	= 1.0f;
-		g_colors.selection[1]	= 0.0f;
-		g_colors.selection[2]	= 0.0f;
-
-		g_colors.gridText[0]		= 0.5f;
-		g_colors.gridText[1]		= 0.0f;
-		g_colors.gridText[2]		= 0.75f;
-
-		// sikk - Set window positions to QE3 Default
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_WINDOW_QE3DEFAULT, 0);
-	}
-	*/
 
 	if ((hMenu = GetMenu(g_qeglobals.d_hwndMain)) != 0)
 	{
@@ -2530,9 +2447,6 @@ void WMain_Create ()
 	ShowWindow(g_qeglobals.d_hwndMain, SW_SHOWMAXIMIZED);	// sikk - changed from "SW_SHOWDEFAULT" (personal preference)
 }
 
-// sikk---> Quickly made Splash Screen
-clock_t	g_clSplashTimer;
-
 /*
 ============
 SplashDlgProc
@@ -2552,113 +2466,87 @@ BOOL CALLBACK SplashDlgProc(
 		ShowWindow(hwndDlg, SW_SHOW);
 		InvalidateRect(hwndDlg, NULL, FALSE);
 		UpdateWindow(hwndDlg);
-		g_clSplashTimer = clock();
+		SetTimer(hwndDlg, QE_TIMERSPLASH, 3000, nullptr);
 		return FALSE;
 
+	case WM_TIMER:
 	case WM_LBUTTONDOWN:
 		DestroyWindow(hwndDlg);
-		return 0;
+		return FALSE;
+	case WM_CLOSE:
+		KillTimer(hwndDlg, QE_TIMERSPLASH);
+		return FALSE;
 	}
 	return 0;
 }
-// <---sikk
 
 
 /*
+==============================================================================
+
+	MAIN BUSINESS
+
+==============================================================================
+*/
+
+/*
 ==================
-WinMain
+WinMain_Init
 ==================
 */
-int WINAPI WinMain (
-	HINSTANCE hInstance, 
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine, 
-	int nCmdShow
-	)
+void WinMain_Init()
 {
-    MSG		msg;
-	HACCEL	accelerators;
-    time_t	lTime;
-	bool	haveQuit = false;
-
-	g_qeglobals.d_hInstance = hInstance;
-// sikk - Quickly made Splash Screen
-#ifndef _DEBUG
-	HWND	hwndSplash;
-	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
-#endif
-	InitCommonControls ();
-
-	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
-	g_nScreenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
-	g_bWarningOrError = false;
-
-	// hack for broken NT 4.0 dual screen
-	if (g_nScreenWidth > 2 * g_nScreenHeight)
-		g_nScreenWidth /= 2;
-
-	accelerators = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
-	if (!accelerators)
-		Error("LoadAccelerators: Failed.");
-
-	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
-
-	WMain_Create();
+	time_t	lTime;
 
 #ifndef _DEBUG
 	try
 	{
 #endif
+		WMain_Create();
+		Sys_LogFile();
+		time(&lTime);
+		Sys_Printf("%s\nSesson Started: %s\n", g_qeAppName, ctime(&lTime));
 
-	Sys_LogFile();
+		WMain_CreateViews();
+		GLenum glewerr = glewInit();
+		if (glewerr != GLEW_OK)
+			Error("GLEW init failed! %s", glewGetErrorString(glewerr));
 
-	WMain_CreateViews();
-
-	GLenum glewerr = glewInit();
-	if (glewerr != GLEW_OK)
-		Error("GLEW init failed! %s", glewGetErrorString(glewerr));
-
-	// sikk - Print App name and current time for logging purposes
-	time(&lTime);	
-	Sys_Printf("%s\nSesson Started: %s\n", g_qeAppName, ctime(&lTime));
-
-	if (lpCmdLine && strlen(lpCmdLine))
-	{
-		ParseCommandLine(lpCmdLine);
-		if (g_pszArgV[1])
-			Sys_Printf("Command line: %s\n", lpCmdLine);
-	}
-
-	QE_Init();
-
-	Sys_DeltaTime();
-
-	Sys_Printf("Entering message loop...\n");
-
+		QE_Init();
+		Sys_DeltaTime();
 #ifndef _DEBUG
 	}
 	catch (std::exception &ex)
 	{
-		//DestroyWindow(hwndSplash);
-		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Initialization Exception", MB_OK | MB_ICONEXCLAMATION);
-
-		// close logging if necessary
-		g_cfgEditor.LogConsole = false;
-		Sys_LogFile();
-
-		exit(1);
+		QE_Exit(ex.what());
 	}
 #endif
+}
+
+/*
+==================
+WinMain_Loop
+==================
+*/
+void WinMain_Loop()
+{
+	MSG		msg;
+	HACCEL	accelerators;
+	bool	haveQuit = false;
+
+	Sys_Printf("Entering message loop...\n");
+
+	accelerators = LoadAccelerators(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
+	if (!accelerators)
+		Error("LoadAccelerators: Failed.");
 
 	while (!haveQuit)
 	{
 		Sys_EndWait();	// remove wait cursor if active
-		
-#ifndef _DEBUG
-		try
-		{
-#endif
 
+#ifndef _DEBUG
+		try {
+#endif
 			Sys_DeltaTime();
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -2701,13 +2589,6 @@ int WINAPI WinMain (
 			}
 
 			Sys_CheckBspProcess();
-			// sikk---> Quickly made Splash Screen
-#ifndef _DEBUG
-			if (hwndSplash)
-				if (clock() - g_clSplashTimer > CLOCKS_PER_SEC * 3)
-					DestroyWindow(hwndSplash);
-#endif
-			// <---sikk
 
 			// run time dependent behavior
 			SendMessage(g_qeglobals.d_hwndCamera, WM_REALTIME, 0, 0);
@@ -2724,30 +2605,65 @@ int WINAPI WinMain (
 		}
 		catch (std::exception &ex)
 		{
-			// TODO: none of this ever happens because windows decides to snag the exception first
-			char crashmap[_MAX_FNAME];
-			char badnews[4096];
-			SYSTEMTIME time;
-			GetSystemTime(&time);
-			sprintf(crashmap, "%s\\crash.%i%i%i%i%i%i.map", g_qePath, time.wHour, time.wMinute, time.wSecond, time.wDay, time.wMonth, time.wYear);
-			try {
-				g_map.SaveToFile(crashmap, false);
-				sprintf(badnews, "%s\r\nMap written to %s.", ex.what(), crashmap);
-			}
-			catch (...)
-			{
-				sprintf(badnews, "%s\r\nMap could not be saved. Sorry.", ex.what());
-			}
-			MessageBox(g_qeglobals.d_hwndMain, badnews, "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
-
-			// close logging if necessary
-			g_cfgEditor.LogConsole = false;
-			Sys_LogFile();
-
-			exit(1);
+			// TODO: none of this ever happens if windows decides to snag the exception first
+			CrashSave(ex.what());
 		}
 #endif
 	}
+}
+
+
+/*
+==================
+WinMain
+==================
+*/
+int WINAPI WinMain (
+	HINSTANCE hInstance, 
+	HINSTANCE hPrevInstance,
+	LPSTR lpCmdLine, 
+	int nCmdShow
+	)
+{
+	g_qeglobals.d_hInstance = hInstance;
+// sikk - Quickly made Splash Screen
+#ifndef _DEBUG
+	HWND hwndSplash;
+	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_qeglobals.d_hwndMain, SplashDlgProc);
+#endif
+	InitCommonControls ();
+
+	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
+	g_nScreenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
+	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
+	g_bWarningOrError = false;
+
+	// hack for broken NT 4.0 dual screen
+	if (g_nScreenWidth > 2 * g_nScreenHeight)
+		g_nScreenWidth /= 2;
+
+	if (lpCmdLine && strlen(lpCmdLine))
+	{
+		ParseCommandLine(lpCmdLine);
+		if (g_pszArgV[1])
+			Sys_Printf("Command line: %s\n", lpCmdLine);
+	}
+
+	// lunaran: can't mix win32 exceptions with c++ exceptions in the same function without
+	// compiler flags we don't want to add, so Init and Loop are separated out to allow 
+	// catching access violations and stuff at this level only, to try and save work to 
+	// disk before finally crashing out
+	WinMain_Init();	
+#ifndef _DEBUG
+	__try {
+#endif
+		WinMain_Loop();
+#ifndef _DEBUG
+	} __except (CrashSave(SEHExceptionString(GetExceptionCode()))) {
+		return FALSE;	// never reached, CrashSave does the work
+	}
+#endif
+
     /* return success of application */
     return TRUE;
 }

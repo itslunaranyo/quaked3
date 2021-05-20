@@ -237,11 +237,8 @@ bool Face::TestSideSelect(const vec3 origin, const vec3 dir)
 	if (f2)
 		return false;
 
-	// lunaran: commented this out as it prevents side selects that don't clip
-	// off the origin of the ray (ie the ray starts 'alongside' the face) - 
-	// this could have been unintentionally nefarious, so keep an eye on it
-	//if (VectorCompare(p1, origin))
-	//	return false;
+	if (VectorCompare(p1, origin))
+		return false;
 
 	if (ClipLine(p1, p2))
 		return false;
@@ -251,9 +248,29 @@ bool Face::TestSideSelect(const vec3 origin, const vec3 dir)
 
 /*
 =================
+Face::TestSideSelectAxis
+=================
+*/
+bool Face::TestSideSelectAxis(const vec3 origin, const int axis)
+{
+	if (owner->Center()[axis] < origin[axis])
+	{
+		if (plane.normal[axis] >= 0.7071)
+			return true;
+	}
+	else if (plane.normal[axis] <= -0.7071)
+		return true;
+
+	return false;
+}
+
+/*
+=================
 Face::FitTexture
 
 lunaran: rewrote all this so it works with decimal fit increments
+TODO: fix sometimes flipping vertically
+TODO: try to maintain similar offsets as start state
 =================
 */
 void Face::FitTexture(float fHeight, float fWidth)

@@ -6,6 +6,7 @@
 #define __TARGET_GRAPH_H__
 
 #include <vector>
+class Map;
 
 class TargetGraph
 {
@@ -24,18 +25,23 @@ public:
 		vec3 start, end, color;
 	};
 
-	void Refresh(Entity &elist);
+	void Clear() { edgeList.clear(); mark = edgeList.end(); }
+	void Refresh(const Entity &elist);
 	bool YieldEdge(edgeGeo &edge);
 private:
 	struct edge {
-		Entity &from, &to;
-		edge(Entity &f, Entity &t) : from(f), to(t) {};
+		Entity *from, *to;
+		edge& operator=(const edge &other) { from = other.from; to = other.to; return *this; };
+		edge(const edge &other) : from(other.from), to(other.to) {};
+		edge(Entity *f, Entity *t) : from(f), to(t) {};
 	};
 	std::vector<edge> edgeList;
 	std::vector<edge>::iterator mark;
 
-	bool FilterByVisibility(Entity *e);
-	bool FilterBySelection(Entity *e);
+	static bool LineFilter(const edge& e);
+
+	bool FilterByVisibility(const Entity *e);
+	bool FilterBySelection(const Entity *e);
 };
 
 #endif // __TARGET_GRAPH_H__

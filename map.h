@@ -12,22 +12,24 @@ public:
 	Map();
 	~Map() {};
 
+	// PER MAP
 	char		name[MAX_PATH];
 	bool		hasFilename;	// has this map ever been saved?
-	clock_t		autosaveTime;
 	int			numBrushes, numEntities, numTextures;
-
 	Entity		*world;			// the world entity is NOT included in the entities chain
+	Entity		entities;
 
 	// head/tail of doubly linked lists
-	Entity		entities;
 	Brush		brActive;		// brushes currently being displayed
 	Brush		brRegioned;		// brushes that are outside the region
 
-	TargetGraph targetGraph;
-
 	vec3		regionMins, regionMaxs;
 	bool		regionActive;
+
+	// WHOLE SCENE
+	clock_t		autosaveTime;
+	TargetGraph targetGraph;
+
 
 	void	New();
 	void	BuildBrushData(Brush &blist);

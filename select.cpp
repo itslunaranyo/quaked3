@@ -114,7 +114,7 @@ bool Selection::OneBrushEntity()
 Selection::IsBrushSelected
 =================
 */
-bool Selection::IsBrushSelected(Brush* bSel)
+bool Selection::IsBrushSelected(const Brush* bSel)
 {
 	Brush* b;
 
@@ -130,7 +130,7 @@ bool Selection::IsBrushSelected(Brush* bSel)
 Selection::IsEntitySelected
 =================
 */
-bool Selection::IsEntitySelected(Entity* eSel)
+bool Selection::IsEntitySelected(const Entity* eSel)
 {
 	Brush* b;
 
@@ -255,7 +255,7 @@ bool Selection::DeselectAllFaces()
 Selection::IsFaceSelected
 ================
 */
-bool Selection::IsFaceSelected (Face *face)
+bool Selection::IsFaceSelected (const Face *face)
 {
 	//for (int i = 0; i < g_nSelFaceCount; i++)
 	//	if (face == g_vfSelectedFaces[i])
@@ -304,7 +304,7 @@ Selection::DeselectFace
 returns true or false if face could be deselected or not
 ================
 */
-bool Selection::DeselectFace(Face* f)
+bool Selection::DeselectFace(const Face* f)
 {
 	std::vector<Face*>::iterator fIdx;
 	fIdx = std::find(faces.begin(), faces.end(), f);
@@ -343,7 +343,7 @@ Selection::DeselectFace
 returns true or false if face could be deselected or not
 ================
 */
-void Selection::DeselectFaces(Brush *b)
+void Selection::DeselectFaces(const Brush *b)
 {
 	std::vector<Face*>::iterator fIdx;
 	for (Face *f = b->faces; f; f = f->fnext)
@@ -362,7 +362,7 @@ void Selection::DeselectFaces(Brush *b)
 Selection::NumBrushFacesSelected
 ===============
 */
-int Selection::NumBrushFacesSelected(Brush* b)
+int Selection::NumBrushFacesSelected(const Brush* b)
 {
 	int sum;
 	sum = 0;
@@ -900,23 +900,26 @@ vec3 Selection::GetMid()
 Selection::MatchingKeyValue
 ===============
 */
-void Selection::MatchingKeyValue(char *szKey, char *szValue)
+void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 {
-	Brush    *b, *bnext;
-	EPair	   *ep;
-	bool		bFound;
+	Brush   *b, *bnext;
+	EPair	*ep;
+	bool	bFound;
+	int		selected;
 
 	DeselectAll();
+	selected = 0;
 
 	if (strlen(szKey) && strlen(szValue))	// if both "key" & "value" are declared
 	{
 		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
-
+			if (b->IsFiltered()) continue;
 			if (!strcmp(b->owner->GetKeyValue(szKey), szValue))
 			{
 				SelectBrushSorted(b);
+				selected++;
 			}
 		}
 	}
@@ -925,10 +928,12 @@ void Selection::MatchingKeyValue(char *szKey, char *szValue)
 		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
+			if (b->IsFiltered()) continue;
 
 			if (strlen(b->owner->GetKeyValue(szKey)))
 			{
 				SelectBrushSorted(b);
+				selected++;
 			}
 		}
 	}
@@ -937,6 +942,7 @@ void Selection::MatchingKeyValue(char *szKey, char *szValue)
 		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
 		{
 			bnext = b->next;
+			if (b->IsFiltered()) continue;
 			bFound = false;
 
 			for (ep = b->owner->epairs; ep && !bFound; ep = ep->next)
@@ -944,12 +950,17 @@ void Selection::MatchingKeyValue(char *szKey, char *szValue)
 				if (ep->value == szValue)
 				{
 					SelectBrushSorted(b);
+					selected++;
 					bFound = true;	// this is so an entity with two different keys 
 				}					// with identical values are not selected twice
 			}
 		}
 	}
 	Selection::Changed();
+	if (selected)
+		Sys_Printf("Selected %i entities\n", selected);
+	else
+		Sys_Printf("No matching unhidden entities found\n");
 }
 // <---sikk
 
@@ -965,6 +976,7 @@ void Selection::MatchingTextures()
 	Face	*f;
 	TexDef	*texdef;
 	Texture	*txfind;
+	int selected = 0;
 
 	if (!faces.empty())
 		texdef = &(*faces.begin())->texdef;
@@ -978,14 +990,20 @@ void Selection::MatchingTextures()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
+		if (b->IsFiltered()) continue;
 		for (f = b->faces; f; f = f->fnext)
 		{
 			if (f->texdef.tex == txfind)
 			{
 				SelectFace(f);
+				selected++;
 			}
 		}
 	}
+	if (selected)
+		Sys_Printf("Selected %i faces with %s\n", selected, txfind->name);
+	else
+		Sys_Printf("No visible faces with %s found\n", txfind->name);
 }
 // <---sikk
 

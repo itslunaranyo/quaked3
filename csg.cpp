@@ -174,6 +174,8 @@ supercedes old CSG merge which was buggy and weird
 
 notexmerge: if true, don't combine coincident planes if they have different textures
 		if false, coincident planes' texdefs are overwritten with first one found
+
+TODO: upconvert float vectors to double to try to eliminate precision bugs
 ==============
 */
 Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
@@ -328,7 +330,13 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 
 	for (Face *ft = result->faces; ft; ft = ft->fnext)
 	{
-		assert(ft->face_winding);
+		// TODO: point on plane testing is still vague enough thanks to fp error that
+		// sometimes we get empty faces that have been clipped away
+		if (!ft->face_winding)
+		{
+			delete result;
+			return nullptr;
+		}
 	}
 
 	return result;

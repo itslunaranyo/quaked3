@@ -11,13 +11,29 @@ qeglobals_t	g_qeglobals;
 qeConfig	g_qeconfig;
 
 // it can test aaanything you want just press PEE
+#pragma optimize("", off)
 void QE_TestSomething()
 {
-	throw new std::exception("don't press p");
-	assert(0);
-	int* crash = nullptr;
-	int i = *crash;
+	/*
+	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
+	{
+		if (e->GetKeyValueInt("cooponly"))
+		{
+			e->SetSpawnFlag(4096, true);
+			e->DeleteKeyValue("cooponly");
+			Sys_Printf("cooponly on %s\n", e->eclass->name);
+		}
+		if (e->GetKeyValueInt("notincoop"))
+		{
+			e->SetSpawnFlag(8192, true);
+			e->DeleteKeyValue("notincoop");
+			Sys_Printf("notincoop on %s\n", e->eclass->name);
+		}
+	}
+	Sys_UpdateWindows(W_ALL);
+	*/
 }
+#pragma optimize("", on)
 
 
 

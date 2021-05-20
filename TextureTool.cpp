@@ -133,7 +133,7 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 				if (!cmdCmp)
 					cmdCmp = new CmdCompound("Wrap Texture");
 				TexDef td = lastWrap->texdef;
-				Surface::WrapProjection(lastWrap->plane, t.face->plane, td);
+				Surface::WrapProjection(lastWrap, t.face, td);
 				CmdTextureApply *cmdTA = new CmdTextureApply();
 				cmdTA->UseFace(t.face);
 				cmdTA->Apply(td);

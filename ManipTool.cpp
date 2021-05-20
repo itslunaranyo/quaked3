@@ -242,7 +242,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 
 	ptDown = mc.org;
 
-	std::vector<Face*> fSides, fBackSides;
+	std::vector<Face*> fSides, fSidesTest;
 	Brush* b;
 
 	// faces selected: always go for a plane drag
@@ -264,30 +264,20 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 				continue;
 
 			// check select hit first
-			ray = b->Center();
-			ray.z = mc.org.z;
-			if (b->PointTest(ray))
+			if (mc.org.z < b->maxs.z && mc.org.z > b->mins.z) // select by bounds because that's the outline the user sees
 			{
 				SetupTranslate();
 				return;
 			}
 
-			// make a ray to encompass each brush, so that the manip catches everything on XY
-			ray = (b->Center() - mc.org) * vec3(1, 1, 0);
-			if (!VectorNormalize(ray))	// z-center is centered on this brush
-			{
-				ray = (b->maxs - mc.org) * vec3(1, 1, 0);
-				if (!VectorNormalize(ray))
-					Error("literally impossible raytest failure on z plane detect\n");
-			}
 			for (Face *f = b->faces; f; f = f->fnext)
 			{
-				if (f->TestSideSelect(mc.org, ray))
-					fSides.push_back(f);
+				if (f->TestSideSelectAxis(mc.org, XY))
+					fSidesTest.push_back(f);
 			}
 		}
 
-		if (fSides.empty())
+		if (fSidesTest.empty())
 			return;		// is this even possible
 
 		// match backfaces to sliding front faces, so brush contacts move with their planes
@@ -295,14 +285,13 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 		{
 			for (Face *f = b->faces; f; f = f->fnext)
 			{
-				for (auto fsIt = fSides.begin(); fsIt != fSides.end(); ++fsIt)
+				for (auto fsIt = fSidesTest.begin(); fsIt != fSidesTest.end(); ++fsIt)
 				{
-					if (f->plane.EqualTo(&(*fsIt)->plane, true))
-						fBackSides.push_back(f);
+					if (f->plane.EqualTo(&(*fsIt)->plane, SIDE_ON)) // match front faces too
+						fSides.push_back(f);
 				}
 			}
 		}
-		fSides.insert(fSides.end(), fBackSides.begin(), fBackSides.end());
 	}
 
 	if (fSides.empty())
@@ -333,7 +322,7 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 			vec3 ptDelta;
 			ptDown = Selection::GetMid();
 			ptDown[vDim] = mc.org[vDim];
-			ptDelta = ptDown - pointOnGrid(mc.org);
+			ptDelta = pointOnGrid(mc.org) - ptDown;
 
 			SetupTranslate();
 			StartTranslate();

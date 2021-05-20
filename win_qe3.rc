@@ -575,7 +575,7 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,243,5,50,14
     CONTROL         IDB_ABOUT,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN | WS_BORDER,4,3,88,64
-    CONTROL         "Copyright (C) 1997-2018 id Software, Inc.",IDC_STATIC,
+    CONTROL         "Copyright (C) 1997-2019 id Software, Inc.",IDC_STATIC,
                     "Static",SS_LEFTNOWORDWRAP | WS_GROUP,96,21,190,11
     GROUPBOX        "OpenGL Properties",IDC_STATIC,4,72,289,45
     LTEXT           "Vendor:\t\tWHOEVER",IDC_ABOUT_GLVENDOR,13,83,270,10
@@ -614,7 +614,8 @@ BEGIN
     CONTROL         "Spin6",IDC_SPIN_WFIT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,124,151,11,14
     EDITTEXT        IDC_EDIT_HFIT,85,168,40,12,ES_AUTOHSCROLL
     CONTROL         "Spin7",IDC_SPIN_HFIT,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,124,168,11,14
-    PUSHBUTTON      "Fit",IDC_BUTTON_FIT,79,185,48,13
+    PUSHBUTTON      "Fit",IDC_BUTTON_FIT,84,185,48,13
+    PUSHBUTTON      "Reset",IDC_BUTTON_FITRESET,48,186,30,13
     DEFPUSHBUTTON   "Apply",IDAPPLY,49,208,41,15
     PUSHBUTTON      "Close",IDCLOSE,97,208,40,15
     LTEXT           "Texture:",IDC_STATIC,6,6,25,12,SS_CENTERIMAGE
@@ -625,7 +626,7 @@ BEGIN
     RTEXT           "Horizontal Scale:",IDC_STATIC,24,83,58,15,SS_CENTERIMAGE
     RTEXT           "Vertical Scale:",IDC_STATIC,24,98,58,15,SS_CENTERIMAGE
     RTEXT           "Rotate:",IDC_STATIC,26,119,56,11,SS_CENTERIMAGE
-    GROUPBOX        "Texture Fit",IDC_STATIC,46,140,91,62
+    GROUPBOX        "Texture Fit",IDC_STATIC,42,140,95,62
     RTEXT           "Width:",IDC_STATIC,53,153,28,10,0,WS_EX_TRANSPARENT
     RTEXT           "Height:",IDC_STATIC,53,170,29,10,0,WS_EX_TRANSPARENT
 END
@@ -955,16 +956,20 @@ STYLE DS_SETFONT | DS_CONTROL | WS_CHILD | WS_CLIPCHILDREN
 EXSTYLE WS_EX_TRANSPARENT
 FONT 8, "MS Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "Dotted Selection Lines",IDC_CHECK_NOSTIPPLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,78,114,12
+    CONTROL         "Dotted Selection Lines",IDC_CHECK_NOSTIPPLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,108,114,12
     CONTROL         "Radiant-Style (Diamond) Lights",IDC_CHECK_RADIANTLIGHTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,90,114,12
-    CONTROL         "",IDC_SLIDER_GAMMA,"msctls_trackbar32",TBS_AUTOTICKS | TBS_TOP | WS_TABSTOP,6,48,102,18
-    GROUPBOX        "Gamma",IDC_STATIC,0,30,114,42
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,120,114,12
+    CONTROL         "",IDC_SLIDER_GAMMA,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,6,48,102,15
+    GROUPBOX        "Gamma",IDC_STATIC,0,30,114,36
     CTEXT           "0.0",IDC_STATIC,6,39,14,8,SS_CENTERIMAGE
     CTEXT           "< Light  |  Dark >",IDC_STATIC,25,39,66,8
     CTEXT           "2.0",IDC_STATIC,90,39,18,8,SS_CENTERIMAGE
     COMBOBOX        IDC_COMBO_RENDERMODE,0,12,114,65,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Texture Filtering",IDC_STATIC,0,0,114,12,SS_CENTERIMAGE
+    GROUPBOX        "Brightness",IDC_STATIC,0,66,114,36
+    CONTROL         "",IDC_SLIDER_BRIGHTNESS,"msctls_trackbar32",TBS_TOP | TBS_NOTICKS | WS_TABSTOP,6,84,102,15
+    CTEXT           "0.0",IDC_STATIC,6,76,14,8,SS_CENTERIMAGE
+    CTEXT           "2.0",IDC_STATIC,90,76,18,8,SS_CENTERIMAGE
 END
 
 IDD_NEWNAME DIALOGEX 0, 0, 203, 57
@@ -1049,8 +1054,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,46,0
- PRODUCTVERSION 3,2,46,0
+ FILEVERSION 3,2,47,0
+ PRODUCTVERSION 3,2,47,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1067,14 +1072,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 46)"
-            VALUE "FileVersion", "3.2.46.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 46)"
-            VALUE "LegalCopyright", "Copyright © 1997-2018"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 47)"
+            VALUE "FileVersion", "3.2.47.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 47)"
+            VALUE "LegalCopyright", "Copyright © 1997-2019"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.46.0"
+            VALUE "ProductVersion", "3.2.47.0"
         END
     END
     BLOCK "VarFileInfo"

@@ -16,6 +16,7 @@ struct qecfgUI_t
 	int		TextureMode;	// filtering
 	int		DrawMode;		// wireframe/flat/textured
 	float	Gamma;
+	float	Brightness;
 
 	int		Stipple;
 	int		RadiantLights;

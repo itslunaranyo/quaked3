@@ -21,7 +21,8 @@ WndView
 */
 WndView::WndView() :
 	w_hwnd(nullptr), w_hdc(nullptr), w_hglrc(nullptr), 
-	name(nullptr), minWidth(64), minHeight(32), vbits(0), instance(0)
+	name(nullptr), minWidth(64), minHeight(32), vbits(0), instance(0),
+	mouseWithin(false)
 {
 	wndviews.push_back(this);
 }
@@ -569,6 +570,23 @@ int WndView::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_NCLBUTTONDOWN:
 	case WM_NCRBUTTONDOWN:
 		Focus();
+		break;
+
+	// generate mouseout events on all views by default
+	case WM_MOUSEMOVE:
+		if (!mouseWithin)
+		{
+			mouseWithin = true;
+			TRACKMOUSEEVENT tmev;
+			tmev.cbSize = sizeof(TRACKMOUSEEVENT);
+			tmev.hwndTrack = w_hwnd;
+			tmev.dwFlags = TME_LEAVE;
+
+			TrackMouseEvent(&tmev);
+		}
+		break;
+	case WM_MOUSELEAVE:
+		mouseWithin = false;
 		break;
 	}
 

@@ -785,6 +785,7 @@ void WndCfg_WndToConfigUI(qecfgUI_t &cfgUI)
 	cfgUI.Stipple = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_NOSTIPPLE, BM_GETCHECK, 0, 0);
 	cfgUI.RadiantLights = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_RADIANTLIGHTS, BM_GETCHECK, 0, 0);
 	cfgUI.Gamma = SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0) * 0.1f;
+	cfgUI.Brightness = SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_GETPOS, 0, 0) * 0.1f;
 	cfgUI.TextureMode = min(max(0, SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_GETCURSEL, 0, 0)), 5);
 }
 
@@ -897,15 +898,18 @@ WndCfg_ApplyToConfig
 */
 void WndCfg_ApplyToConfig(cfgContext_t cfgCtx)
 {
+	bool reloadPalette = false;
+
 	// Editor
 	if (g_cfgEditor.MapSize != cfgCtx.cfgEd.MapSize)
 		g_map.RegionOff();
 
 	// UI
-	if (cfgCtx.cfgUI.Gamma != g_cfgUI.Gamma)
+	if (cfgCtx.cfgUI.Gamma != g_cfgUI.Gamma || cfgCtx.cfgUI.Brightness != g_cfgUI.Brightness)
 	{
-		g_cfgNeedReload = true;	// TODO: gamma is still applied at texture load time :(
-		Textures::LoadPalette();
+		// TODO: gamma is still applied at texture load time :(
+		g_cfgNeedReload = true;
+		reloadPalette = true;
 	}
 
 	if (cfgCtx.cfgUI.TextureMode != g_cfgUI.TextureMode)
@@ -916,6 +920,9 @@ void WndCfg_ApplyToConfig(cfgContext_t cfgCtx)
 	g_cfgUI = cfgCtx.cfgUI;
 	g_colors = cfgCtx.cfgColor;
 	SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_SETCURSEL, 0, 0);
+
+	if (reloadPalette)
+		Textures::LoadPalette();
 
 	int i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
 	g_qeconfig.projectPresets[i] = cfgCtx.cfgProj;
@@ -941,7 +948,8 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		return TRUE;
 
 	case WM_HSCROLL:
-		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_SLIDER_GAMMA))
+		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_SLIDER_GAMMA) || 
+			(HWND)lParam == GetDlgItem(hwndDlg, IDC_SLIDER_BRIGHTNESS))
 			g_needApply = true;
 		return TRUE;
 
@@ -1151,6 +1159,12 @@ void WndCfg_CreateWnd(HWND hwndDlg)
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETLINESIZE, 0, (LPARAM)1);
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETPAGESIZE, 0, (LPARAM)2);
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)(g_cfgUI.Gamma * 10));
+
+	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_SETRANGE, (WPARAM)TRUE, (LPARAM)MAKELONG(0, 20));
+	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_SETTICFREQ, (WPARAM)2, (LPARAM)0);
+	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_SETLINESIZE, 0, (LPARAM)1);
+	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_SETPAGESIZE, 0, (LPARAM)2);
+	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_BRIGHTNESS, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)(g_cfgUI.Brightness * 10));
 
 	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest");
 	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest Mipmap");

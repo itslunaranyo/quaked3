@@ -21,7 +21,7 @@ namespace Surface
 	void ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags);
 	void RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin);
 
-	void WrapProjection(Plane &from, Plane &to, TexDef &td);
+	void WrapProjection(Face* from, Face* to, TexDef &td);
 }
 
 #endif

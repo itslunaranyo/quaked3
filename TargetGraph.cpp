@@ -3,7 +3,7 @@
 //==============================
 
 #include "qe3.h"
-
+#include <algorithm>
 
 /*
 a line is valid
@@ -25,7 +25,7 @@ TargetGraph::FilterByVisibility
 return true if entity is invisible for one of the several reasons it can be :(
 ==================
 */
-bool TargetGraph::FilterByVisibility(Entity *e)
+bool TargetGraph::FilterByVisibility(const Entity *e)
 {
 	if (e->IsFiltered())	// by entity flag
 		return true;
@@ -41,8 +41,7 @@ bool TargetGraph::FilterByVisibility(Entity *e)
 	return true;
 }
 
-
-bool TargetGraph::FilterBySelection(Entity *e)
+bool TargetGraph::FilterBySelection(const Entity *e)
 {
 	if (g_cfgUI.PathlineMode == TargetGraph::tgm_all)
 		return false;
@@ -67,9 +66,9 @@ bool TargetGraph::YieldEdge(edgeGeo &edge)
 
 	while (mark != edgeList.end())
 	{
-		edge.start = mark->from.GetCenter();
-		edge.end = mark->to.GetCenter();
-		edge.color = mark->from.eclass->color;
+		edge.start = mark->from->GetCenter();
+		edge.end = mark->to->GetCenter();
+		edge.color = mark->from->eclass->color;
 
 		++mark;
 		return true;
@@ -78,6 +77,22 @@ bool TargetGraph::YieldEdge(edgeGeo &edge)
 	mark = edgeList.begin();
 	return false;
 }
+
+
+bool TargetGraph::LineFilter(const edge &e)
+{
+	if (g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path)
+	{
+		if (((e.from->eclass->showFlags & e.to->eclass->showFlags) & EFL_PATH) == EFL_PATH)
+			return false;
+	}
+	if (Selection::IsEntitySelected(e.from))
+		return false;
+	if (Selection::IsEntitySelected(e.to))
+		return false;
+	return true;
+}
+
 
 /*
 ==================
@@ -91,28 +106,33 @@ tgm_selected_path: show pathlines only to or from a selected entity, or
 	between path_corners regardless of selection (so a line is valid if
 	the src OR dest is selected, or if the src AND dest are both paths)
 
+FIXME: IsEntitySelected is n^2 complex. building the entire graph (tgm_all)
+	is way faster than trying to filter by selection as the graph is built,
+	because every node is tested for selected status twice. so, just build
+	the whole graph, then use isSelected to throw away graph lines we don't
+	need (small set) rather than skip nodes we don't need (large set). 
 TODO: is calling IsEntitySelected() so many redundant times worth caching
 	a selected entity list instead?
 ==================
 */
-void TargetGraph::Refresh(Entity &elist)
+void TargetGraph::Refresh(const Entity &elist)
 {
 	if (!g_cfgUI.PathlineMode)
 		return;
 
-	bool srcIsPath, dstIsPath;
-	bool srcOK, dstOK;
+	//bool srcIsPath, dstIsPath;
+	//bool srcOK, dstOK;
+	//srcOK = dstOK = false;
 
 	edgeList.clear();
-	srcOK = dstOK = false;
 
 	for (Entity *es = elist.next; es != &elist; es = es->next)
 	{
 		if (FilterByVisibility(es))
 			continue;
 
-		srcOK = !FilterBySelection(es);
-		srcIsPath = ((es->eclass->showFlags & EFL_PATH) != 0);
+		//srcOK = !FilterBySelection(es);
+		//srcIsPath = ((es->eclass->showFlags & EFL_PATH) != 0);
 
 		for (EPair *src = es->epairs; src; src = src->next)
 		{
@@ -126,9 +146,9 @@ void TargetGraph::Refresh(Entity &elist)
 				if (FilterByVisibility(ed))
 					continue;
 
-				if (!srcOK)	// don't check twice if you don't have to
-					dstOK = !FilterBySelection(ed);
-				dstIsPath = ((ed->eclass->showFlags & EFL_PATH) != 0);
+				//if (!srcOK)	// don't check twice if you don't have to
+				//	dstOK = !FilterBySelection(ed);
+				//dstIsPath = ((ed->eclass->showFlags & EFL_PATH) != 0);
 
 				for (EPair *dest = ed->epairs; dest; dest = dest->next)
 				{
@@ -137,13 +157,23 @@ void TargetGraph::Refresh(Entity &elist)
 
 					if (!strcmp((char*)*src->value, (char*)*dest->value))
 					{
-						if (srcOK || dstOK ||
-							((g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path) && srcIsPath && dstIsPath))
-							edgeList.emplace_back(*es, *ed);
+						//if (srcOK || dstOK ||
+						//	((g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path) && srcIsPath && dstIsPath))
+							edgeList.emplace_back(es, ed);
 					}
 				}
 			}
 		}
 	}
+
+	// prune lines from the graph based on selection
+	// most entities in a map are not targets/targetnames, so the set of connections
+	// between nodes is sparse. thus it's faster to build the whole graph and filter
+	// by selection after, because IsEntitySelected() is very slow for big selections
+	if (g_cfgUI.PathlineMode != TargetGraph::tgm_all)
+	{
+		edgeList.erase(std::remove_if(edgeList.begin(), edgeList.end(), &TargetGraph::LineFilter), edgeList.end());
+	}
+
 	mark = edgeList.begin();
 }

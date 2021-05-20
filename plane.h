@@ -32,7 +32,8 @@ public:
 	void		Snap(int increment = 1);
 	winding_t	*BasePoly();
 	vec3		GetTextureAxis(vec3 &xv, vec3 &yv);
-	vec3		ProjectPointAxial(vec3 &in, vec3 &axis);
+	vec3		ProjectPointAxial(const vec3 &in, const vec3 &axis);
+	vec3		ProjectVectorAxial(const vec3 &in, const vec3 &axis);
 };
 
 

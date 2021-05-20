@@ -90,6 +90,8 @@ trashes all map data, but does not restore a workable blank state (use New() for
 void Map::Free()
 {
 	Pointfile_Clear();
+	targetGraph.Clear();
+
 	name[0] = 0;
 	hasFilename = false;
 	//Sys_SetTitle(name);

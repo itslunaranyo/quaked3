@@ -74,8 +74,8 @@ public:
 	bool	GetKeyValueVector(const char *key, vec3 &out) const;
 	void 	DeleteKeyValue(const char *key);
 
-	bool	IsFiltered();
-	vec3	GetCenter();
+	bool	IsFiltered() const;
+	vec3	GetCenter() const;
 
 	// sikk---> Undo/Redo
 	int		MemorySize();

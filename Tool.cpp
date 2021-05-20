@@ -190,7 +190,8 @@ bool Tool::FilterInput(UINT uMsg)
 {
 	return ( uMsg == WM_COMMAND || uMsg == WM_REALTIME ||
 			(uMsg >= WM_KEYFIRST && uMsg <= WM_KEYLAST) ||
-			(uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) );
+			(uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST) || // all mouse messages are between MOUSEFIRST and MOUSELAST
+			(uMsg == WM_MOUSELEAVE) );	// "syke no they're not lol" -windows
 }
 
 /*

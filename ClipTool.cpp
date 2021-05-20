@@ -78,6 +78,10 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 			return !!keys;
 		}
 		return false;
+	case WM_MOUSELEAVE:
+		ptHover.set = false;
+		Sys_UpdateWindows(W_XY | W_CAMERA);
+		return false;
 	}
 	return hot;
 }
@@ -518,7 +522,11 @@ void ClipTool::CamMovePoint(int x, int y)
 		}
 		else
 		{
-			ptHover.set = false;
+			if (ptHover.set)
+			{
+				ptHover.set = false;
+				Sys_UpdateWindows(W_XY | W_CAMERA);
+			}
 		}
 	}
 

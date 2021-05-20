@@ -342,31 +342,40 @@ create a cardinal splitting ray, and test its intersection/endpoint
 CmdPolyBrushConcave::loopRay_t CmdPolyBrushConcave::InitialRay(const std::vector<vec3> &loop, const int rv, const vec3 dir)
 {
 	int len = (int)loop.size();
+	float bestLen = 9999999;
+	int bestEdge = -1;
 	int e;
 	vec3 sect;
 	loopRay_t ray(loop[rv] + dir, -1, -1);
-
+	
 	// find what edge or vert this ray hits
 	for (e = 0; e < len; e++)
 	{
 		if (e == rv || (e + 1) % len == rv)	// don't test the edges that share the origin vert
 			continue;
+		// check all lines for intersection to find the nearest
 		if (LineSegmentIntersect2D(loop[rv], loop[rv] + dir, loop[e], loop[(e + 1) % len], sect))
 		{
-			ray.endv1 = e;
-			ray.endv2 = (e + 1) % len;
-			break;
+			float l = VectorLength(sect - loop[rv]);
+			if (l < bestLen)
+			{
+				bestLen = l;
+				bestEdge = e;
+				ray.end = sect;
+			}
 		}
 	}
-	if (e == len)
+	if (bestEdge == -1)
 		return ray;
 
-	if (sect == loop[e])
+	ray.endv1 = bestEdge;
+	ray.endv2 = (bestEdge + 1) % len;
+
+	if (ray.end == loop[bestEdge])
 		ray.endv2 = ray.endv1;
-	else if (sect == loop[(e + 1) % len])
+	else if (ray.end == loop[(bestEdge + 1) % len])
 		ray.endv1 = ray.endv2;
 
-	ray.end = sect;
 	return ray;
 }
 

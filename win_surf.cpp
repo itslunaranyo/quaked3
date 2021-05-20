@@ -439,6 +439,10 @@ BOOL CALLBACK SurfaceDlgProc(
 				Sys_UpdateWindows(W_CAMERA|W_SURF);
 			}
 			break;
+		case IDC_BUTTON_FITRESET:
+			SetDlgItemText(hwndDlg, IDC_EDIT_HFIT, "1.0");
+			SetDlgItemText(hwndDlg, IDC_EDIT_WFIT, "1.0");
+			break;
 		}
 		return 0;
 

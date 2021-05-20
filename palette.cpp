@@ -74,25 +74,17 @@ void Palette::GenerateErrorPalette()
 void Palette::GenerateGammaTable(byte *gammatable)
 {
 	int		i;
+	float	v;
 	int		inf;
-	float	gamma;
 
-	gamma = (float)g_cfgUI.Gamma;
+	for (i = 0; i < 256; i++)
+	{
+		v = min(255.0f, (float)i * (float)g_cfgUI.Brightness);
+		v = 255 * pow((v + 0.5f) / 255.5, (float)g_cfgUI.Gamma) + 0.5f;
+		inf = ceil(max(0.0f, min(255.0f, v)));
+		gammatable[i] = inf;
+	}
 
-	if (gamma == 1.0)
-	{
-		for (i = 0; i < 256; i++)
-			gammatable[i] = i;
-	}
-	else
-	{
-		for (i = 0; i < 256; i++)
-		{
-			inf = 255 * pow((i + 0.5) / 255.5, gamma) + 0.5;
-			inf = max(0, min(255, inf));
-			gammatable[i] = inf;
-		}
-	}
 }
 
 vec3 Palette::ColorAsVec3(const byte i)

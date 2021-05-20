@@ -51,7 +51,7 @@ TextureView::MouseMoved
 void TextureView::MouseMoved(int x, int y, int buttons)
 {
 	if (stale)
-		Layout();
+		Arrange();
 
 	// sikk--->	Mouse Zoom Texture Window
 	// rbutton+control = zoom texture view
@@ -138,7 +138,7 @@ lunaran: cache texture window layout instead of rebuilding it every frame
 ============================================================================
 */
 
-int TextureView::AddToLayout(TextureGroup* tg, int top, int* curIdx)
+int TextureView::AddToLayout(TextureGroup* tg, int top)
 {
 	Texture	*q;
 	int		curX, curY, curRowHeight;
@@ -162,12 +162,7 @@ int TextureView::AddToLayout(TextureGroup* tg, int top, int* curIdx)
 				curRowHeight = 0;
 			}
 		}
-
-		layout[*curIdx].tex = q;
-		layout[*curIdx].x = curX;
-		layout[*curIdx].y = curY;
-		layout[*curIdx].w = q->width * scale;
-		layout[*curIdx].h = q->height * scale;
+		layout.emplace_back(curX, curY, q->width * scale, q->height * scale, q);
 
 		// Is our texture larger than the row? If so, grow the row height to match it
 		if (curRowHeight < q->height * scale)	// sikk - Mouse Zoom Texture Window
@@ -176,9 +171,6 @@ int TextureView::AddToLayout(TextureGroup* tg, int top, int* curIdx)
 		// never go less than 64, or the names get all crunched up
 		curX += q->width * scale < 64 ? 64 : q->width * scale;	// sikk - Mouse Zoom Texture Window
 		curX += 8;
-
-		(*curIdx)++;
-		count++;
 	}
 
 	// new row
@@ -187,20 +179,16 @@ int TextureView::AddToLayout(TextureGroup* tg, int top, int* curIdx)
 
 /*
 ============
-TextureView::Layout
+TextureView::Arrange
 ============
 */
-void TextureView::Layout()
+void TextureView::Arrange()
 {
-	int curY, curIdx;
+	int curY, count;
 
 	curY = -8;
 
-	if (layout)
-	{
-		delete[] layout;
-		layout = nullptr;
-	}
+	layout.clear();
 
 	count = Textures::group_unknown.numTextures;
 	for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
@@ -208,15 +196,13 @@ void TextureView::Layout()
 
 	if (count)
 	{
-		layout = new texWndPlacement_t[count];
+		layout.reserve(count);
 
-		curIdx = 0;
-		count = 0;
 		for (auto tgIt = Textures::groups.begin(); tgIt != Textures::groups.end(); tgIt++)
 		{
-			curY = AddToLayout(*tgIt, curY, &curIdx) - 12;	// padding
+			curY = AddToLayout(*tgIt, curY) - 12;	// padding
 		}
-		curY = AddToLayout(&Textures::group_unknown, curY, &curIdx);
+		curY = AddToLayout(&Textures::group_unknown, curY);
 
 		length = curY + height;
 		Scroll(0, false);	// snap back to bounds
@@ -252,9 +238,7 @@ void TextureView::Scale(float inscale)
 void TextureView::SetScale(float inscale)
 {
 	char		texscalestring[128];
-	texWndPlacement_t* twp;
 	Texture *firsttexture;
-	int i;
 
 	if (inscale > 8)
 		inscale = 8;
@@ -263,9 +247,9 @@ void TextureView::SetScale(float inscale)
 
 	// Find first visible texture with old scale and determine the y origin
 	// that will place it at the top with the new scale
-	for (i = 0; i < count; i++)
+	auto twp = layout.begin();
+	for (twp; twp != layout.end(); ++twp)
 	{
-		twp = &layout[i];
 		firsttexture = twp->tex;
 
 		if (scale < inscale)
@@ -280,15 +264,13 @@ void TextureView::SetScale(float inscale)
 		}
 	}
 
-	if (i < count)
+	if (twp < layout.end())
 	{
 		scale = inscale;
-		Layout();
+		Arrange();
 
-		for (i = 0; i < count; i++)
+		for (twp = layout.begin(); twp != layout.end(); ++twp)
 		{
-			twp = &layout[i];
-
 			if (twp->tex == firsttexture)
 			{
 				origin[1] = twp->y;
@@ -299,7 +281,7 @@ void TextureView::SetScale(float inscale)
 	sprintf(texscalestring, "Texture scale: %3.0f%%", scale * 100.0f);
 	Sys_Status(texscalestring, 0);
 
-	Layout();
+	Arrange();
 }
 // <---sikk
 
@@ -313,13 +295,10 @@ under the current mouse position.
 */
 Texture* TextureView::TexAtPos(int x, int y)
 {
-	texWndPlacement_t* twp;
-
 	y += origin[1] - height;
 
-	for (int i = 0; i < count; i++)
+	for (auto twp = layout.begin(); twp != layout.end(); ++twp)
 	{
-		twp = &layout[i];
 		if (x > twp->x && x - twp->x < twp->w	&& // sikk - Mouse Zoom Texture Window
 			y < twp->y && twp->y - y < twp->h + FONT_HEIGHT)	// sikk - Mouse Zoom Texture Window
 		{
@@ -359,10 +338,6 @@ TextureView::ChooseTexture
 */
 void TextureView::ChooseTexture(TexDef *texdef)
 {
-	//int			x, y;
-	//qtexture_t *q;
-	texWndPlacement_t* twp;
-
 	if (texdef->name[0] == '#')
 	{
 		Warning("Cannot select an entity texture.");
@@ -372,9 +347,8 @@ void TextureView::ChooseTexture(TexDef *texdef)
 	Sys_UpdateWindows(W_TEXTURE | W_SURF);
 
 	// scroll origin so the texture is completely on screen
-	for (int i = 0; i < count; i++)
+	for (auto twp = layout.begin(); twp != layout.end(); ++twp)
 	{
-		twp = &layout[i];
 		if (!_strcmpi(texdef->name, twp->tex->name))
 		{
 			if (twp->y > origin[1])
@@ -515,13 +489,12 @@ TextureView::Draw
 */
 void TextureView::Draw()
 {
-	texWndPlacement_t* twp;
 	char	   *name;
 	vec3 txavg;
 
 	txavg = 0.5f * (g_colors.texBackground + g_colors.texText);
 
-	if (stale) Layout();
+	if (stale) Arrange();
 	
 	glClearColor(g_colors.texBackground[0],
 		g_colors.texBackground[1],
@@ -538,10 +511,8 @@ void TextureView::Draw()
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	for (int i = 0; i < count; i++)
+	for (auto twp = layout.begin(); twp != layout.end(); ++twp)
 	{
-		twp = &layout[i];
-
 		// Is this texture visible?
 		if ((twp->y - twp->h - FONT_HEIGHT < origin[1]) &&
 			(twp->y > origin[1] - height))	// sikk - Mouse Zoom Texture Window

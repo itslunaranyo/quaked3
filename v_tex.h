@@ -6,12 +6,7 @@
 
 #include "textures.h"
 #include "v_view.h"
-
-typedef struct
-{
-	int x, y, w, h;
-	Texture* tex;
-} texWndPlacement_t;
+#include <vector>
 
 class TextureView : public View
 {
@@ -19,29 +14,38 @@ public:
 	TextureView();
 	~TextureView();
 
-	// lunaran: cached layout
-	int		length;
-	texWndPlacement_t* layout;
-	int		count;
+	void	Arrange();
+	void	Refresh() { stale = true; }
 
-	bool	stale;	// layout is old and should be rebuilt before drawing
-
+	void	ChooseTexture(TexDef *texdef);
 	Texture *TexAtCursorPos(const int cx, const int cy);
 
 	void	MouseDown(const int x, const int y, const int buttons);
 	void	MouseUp(const int x, const int y, const int buttons);
 	void	MouseMoved(const int x, const int y, const int buttons);
 	void	MouseOver(const int x, const int y);
-	void	Draw();
-	int		AddToLayout(TextureGroup * tg, int top, int* curIdx);
-	void	Layout();
-	void	Resize(const int w, const int h);
-	void	Scale(float inscale);
 	void	SetScale(float inscale);
+	void	Scale(float inscale);
 	void	Scroll(int dist, bool fast);
+
+	void	Draw();
+
+private:
+	// lunaran: cached layout
+	struct texWndPlacement_t {
+		texWndPlacement_t(int _x, int _y, int _w, int _h, Texture* _tex) : x(_x), y(_y), w(_w), h(_h), tex(_tex) {};
+		int x, y, w, h;
+		Texture* tex;
+	};
+	int		length;
+	std::vector<texWndPlacement_t> layout;
+
+	bool	stale;	// layout is old and should be rebuilt before drawing
+
+	int		AddToLayout(TextureGroup * tg, int top);
+	void	Resize(const int w, const int h);
 	Texture* TexAtPos(int x, int y);
 	//void	SelectTexture(int x, int y);
-	void	ChooseTexture(TexDef *texdef);
 	void	SortTextures();
 	void	UpdateStatus(TexDef* texdef);
 

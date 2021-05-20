@@ -546,7 +546,7 @@ Face *Brush::RayTest(const vec3 origin, const vec3 dir, float *dist)
 	p1 = origin;
 
 	for (i = 0; i < 3; i++)
-		p2[i] = p1[i] + dir[i] * 16384;
+		p2[i] = p1[i] + dir[i] * (g_cfgEditor.MapSize * 2);// 16384;
 
 	for (f = faces; f; f = f->fnext)
 	{

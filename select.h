@@ -56,19 +56,19 @@ namespace Selection
 	int		NumBrushes();
 	int		NumFaces();
 
-	bool	IsBrushSelected(Brush *bSel);
-	bool	IsEntitySelected(Entity *eSel);
+	bool	IsBrushSelected(const Brush *bSel);
+	bool	IsEntitySelected(const Entity *eSel);
 	void	SelectBrush(Brush *b);
 	void	SelectBrushSorted(Brush *b);
 	void	HandleBrush(Brush *b, bool bComplete);
 
 	bool	DeselectAllFaces();
-	bool	IsFaceSelected(Face *face);
+	bool	IsFaceSelected(const Face *face);
 	void	SelectFace(Face* f);
 	void	SelectFaces(Brush *b);
-	bool	DeselectFace(Face* f);
-	void	DeselectFaces(Brush *b);
-	int		NumBrushFacesSelected(Brush* b);
+	bool	DeselectFace(const Face* f);
+	void	DeselectFaces(const Brush *b);
+	int		NumBrushFacesSelected(const Brush* b);
 	void	FacesToBrushes(bool partial);
 	void	BrushesToFaces();
 
@@ -84,7 +84,7 @@ namespace Selection
 	vec3	GetTrueMid();
 	vec3	GetMid();
 
-	void	MatchingKeyValue(char *szKey, char *szValue);	// sikk - Select Matching Key/Value
+	void	MatchingKeyValue(const char *szKey, const char *szValue);	// sikk - Select Matching Key/Value
 	void	MatchingTextures();	// sikk - Select All Matching Textures
 
 	void	Invert();

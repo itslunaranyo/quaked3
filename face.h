@@ -48,6 +48,7 @@ public:
 	void	BoundsOnAxis(const vec3 a, float* min, float* max);
 	void	AddBounds(vec3 &mins, vec3 &maxs);
 	bool	TestSideSelect(const vec3 origin, const vec3 dir);
+	bool	TestSideSelectAxis(const vec3 origin, const int axis);
 
 	inline bool ClipLine(vec3 &p1, vec3 &p2) { return plane.ClipLine(p1, p2); }
 	inline void MakePlane() { plane.Make(); }

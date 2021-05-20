@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	46
+#define QE_VERSION_BUILD	47
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -47,8 +47,8 @@
 #define	YAW			1	// left / right
 #define	ROLL		2	// fall over
 
-#define QE_TIMER0   1
-#define QE_TIMER1   2
+#define QE_TIMERAUTOSAVE	1
+#define QE_TIMERSPLASH		2
 
 #define	ON_EPSILON	0.01
 /*
@@ -88,7 +88,7 @@
 #define W_TARGETGRAPH	0x0200
 #define	W_ALL			0xFFFF
 
-
+#define WM_MOUSEOVER	(WM_USER + 265)
 #define WM_REALTIME		(WM_USER + 266)
 #define WM_BENCHMARK	(WM_USER + 267)
 

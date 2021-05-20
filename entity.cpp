@@ -272,7 +272,7 @@ void Entity::DeleteKeyValue(const char *key)
 Entity::IsFiltered
 ===============
 */
-bool Entity::IsFiltered()
+bool Entity::IsFiltered() const
 {
 	if (g_cfgUI.ViewFilter & (showflags | eclass->showFlags))
 		return true;
@@ -287,11 +287,11 @@ Entity::GetCenter
 Find visual center of this entity (bmodel bounds center)
 ===============
 */
-vec3 Entity::GetCenter()
+vec3 Entity::GetCenter() const
 {
 	// some entities have wonky origins, ie min corner
-	//if (IsPoint())
-	//	return origin;
+	if (IsPoint())
+		return origin + (eclass->mins + eclass->maxs) / 2.0f;
 
 	vec3 mins, maxs;
 	ClearBounds(mins, maxs);

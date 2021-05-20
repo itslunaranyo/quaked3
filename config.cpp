@@ -24,6 +24,7 @@ ConfigVarInt	cfgv_ViewFilter(g_cfgUI.ViewFilter, "ViewFilter", BFL_HIDDEN);
 ConfigVarInt	cfgv_Stipple(g_cfgUI.Stipple, "Stipple", 1);
 ConfigVarInt	cfgv_RadiantLights(g_cfgUI.RadiantLights, "RadiantLights", 1);
 ConfigVarFloat	cfgv_Gamma(g_cfgUI.Gamma, "Gamma", 1.0f);
+ConfigVarFloat	cfgv_Brightness(g_cfgUI.Brightness, "Brightness", 1.0f);
 ConfigVarInt	cfgv_PathlineMode(g_cfgUI.PathlineMode, "PathMode", 1);
 
 ConfigVarBool	cfgv_ShowAxis(g_cfgUI.ShowAxis, "ShowAxis", 0);
@@ -44,6 +45,7 @@ ConfigVar* const cfgUIVars[] = {
 	&cfgv_Stipple,
 	&cfgv_RadiantLights,
 	&cfgv_Gamma,
+	&cfgv_Brightness,
 	&cfgv_PathlineMode,
 
 	&cfgv_ShowAxis,

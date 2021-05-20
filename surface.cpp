@@ -79,28 +79,24 @@ Surface::ComputeAbsolute
 void Surface::ComputeAbsolute(Plane &p, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3)
 {
 	vec3	ex, ey, ez;	        // local axis base
-	vec3	aux;
+	vec3	rot;
 	vec3	rex, rey;
 
 	// compute first local axis base
 	p.GetTextureAxis(ex, ey);
 	ez = CrossProduct(ex, ey);
 
+	ex *= td.scale[0];
+	ey *= td.scale[1];
+
 	p1 = ex * -td.shift[0] + ey * -td.shift[1];
 	p2 = p1 + ex;
 	p3 = p1 + ey;
-	aux = ez * -td.rotate;
-	VectorRotate(p1, aux, p1);
-	VectorRotate(p2, aux, p2);
-	VectorRotate(p3, aux, p3);
 
-	// computing rotated local axis base
-	VectorRotate(ex, aux, rex);
-	VectorRotate(ey, aux, rey);
-
-	ComputeScale(rex, rey, p1, td);
-	ComputeScale(rex, rey, p2, td);
-	ComputeScale(rex, rey, p3, td);
+	rot = ez * -td.rotate;
+	VectorRotate(p1, rot, p1);
+	VectorRotate(p2, rot, p2);
+	VectorRotate(p3, rot, p3);
 
 	// project on normal plane along ez 
 	// assumes plane normal is normalized
@@ -126,7 +122,7 @@ void Surface::Clamp(float *f, int nClamp)
 Surface::AbsoluteToLocal
 ===============
 */
-void Surface::AbsoluteToLocal(Plane normal2, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3)
+void Surface::AbsoluteToLocal(Plane pl, TexDef &td, vec3 &p1, vec3 &p2, vec3 &p3)
 {
 	vec3	ex, ey, ez;
 	vec3	aux;
@@ -135,7 +131,7 @@ void Surface::AbsoluteToLocal(Plane normal2, TexDef &td, vec3 &p1, vec3 &p2, vec
 	float	y;
 
 	// computing new local axis base
-	normal2.GetTextureAxis(ex, ey);
+	pl.GetTextureAxis(ex, ey);
 	ez = CrossProduct(ex, ey);
 
 	// projecting back on (ex, ey)
@@ -434,7 +430,7 @@ void Surface::RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 	}
 }
 
-void Surface::WrapProjection(Plane &from, Plane &to, TexDef &td)
+void Surface::WrapProjection(Face* from, Face* to, TexDef &td)
 {
 	mat4 trans;
 	vec3 fp1, fp2, fp3;
@@ -442,18 +438,30 @@ void Surface::WrapProjection(Plane &from, Plane &to, TexDef &td)
 	vec3 norm1, norm2;
 	float ang;
 
-	if (from.normal == to.normal)
+	Plane &pfrom = from->plane;
+	Plane &pto = to->plane;
+
+	//if (pfrom.normal == pto.normal)
+	if (pfrom.EqualTo(&pto, false))
 		return;
 
-	// from-plane local texdef to absolute
-	ComputeAbsolute(from, td, fp1, fp2, fp3);
+	// pfrom-plane local texdef pto absolute
+	ComputeAbsolute(pfrom, td, fp1, fp2, fp3);
+
+	//fp1 = ZeroTinyComponents(fp1);
+	//fp2 = ZeroTinyComponents(fp2);
+	//fp3 = ZeroTinyComponents(fp3);
 
 	// find point on intersection line
 	dir = glm::normalize(fp2 - fp1);
-	if (!to.TestRay(fp1, dir, org))
+	if (!pto.TestRay(fp1, dir, org) || 
+		// FIXME: we're hacking around imprecision here - dir might be parallel with 'to' but 
+		// if fp error causes it to intersect anyway, org will be way out in jabumbafuck 
+		glm::any( glm::greaterThan( glm::abs(org), vec3(g_cfgEditor.MapSize)) ) )
 	{
 		dir = glm::normalize(fp3 - fp1);
-		if (!to.TestRay(fp1, dir, org))
+		if (!pto.TestRay(fp1, dir, org) || 
+			glm::any(glm::greaterThan(glm::abs(org), vec3(g_cfgEditor.MapSize))))
 			return;
 	}
 
@@ -462,17 +470,17 @@ void Surface::WrapProjection(Plane &from, Plane &to, TexDef &td)
 	fp2 -= org;
 	fp3 -= org;
 
-	rot = CrossProduct(from.normal, to.normal);
+	rot = CrossProduct(pfrom.normal, pto.normal);
 	if (g_cfgEditor.TexProjectionMode == TEX_PROJECT_AXIAL)
 	{
 		// use dir as junk vector
-		norm1 = from.GetTextureAxis(dir, dir);
-		norm2 = to.GetTextureAxis(dir, dir);
+		norm1 = pfrom.GetTextureAxis(dir, dir);
+		norm2 = pto.GetTextureAxis(dir, dir);
 	}
 	else
 	{
-		norm1 = from.normal;
-		norm2 = to.normal;
+		norm1 = pfrom.normal;
+		norm2 = pto.normal;
 	}
 
 	// rotate absolutes around intersection vector
@@ -488,7 +496,11 @@ void Surface::WrapProjection(Plane &from, Plane &to, TexDef &td)
 	fp2 += org;
 	fp3 += org;
 
+	//fp1 = ZeroTinyComponents(fp1);
+	//fp2 = ZeroTinyComponents(fp2);
+	//fp3 = ZeroTinyComponents(fp3);
+	
 	// convert back to local for to-plane
-	AbsoluteToLocal(to, td, fp1, fp2, fp3);
+	AbsoluteToLocal(pto, td, fp1, fp2, fp3);
 }
 

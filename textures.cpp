@@ -75,7 +75,7 @@ void Textures::Flush()
 	groups.clear();
 	Textures::texMap.clear();
 
-	g_qeglobals.d_vTexture.stale = true;
+	g_qeglobals.d_vTexture.Refresh();
 
 	// if a map is loaded, we must force all brushes to refresh their texture assignments to 
 	// properly populate the unknown wad and redo texture projections for the 64x64 notexture
@@ -110,7 +110,7 @@ void Textures::FlushUnused(bool rebuild)
 	if (!g_qeglobals.d_workTexDef.tex)
 		SelectFirstTexture();
 
-	g_qeglobals.d_vTexture.stale = true;
+	g_qeglobals.d_vTexture.Refresh();
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_CAMERA|W_TEXTURE);
 }
@@ -138,7 +138,7 @@ void Textures::RefreshUsedStatus()
 	for (b = g_map.brRegioned.next; b != &g_map.brRegioned; b = b->next)
 		b->RefreshTexdefs();
 
-	g_qeglobals.d_vTexture.stale = true;
+	g_qeglobals.d_vTexture.Refresh();
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_TEXTURE);
 }
@@ -229,6 +229,8 @@ convenient side effect.
 Texture *Textures::ForName(const char *name)
 {
 	Texture* tx;
+	char nameci[MAX_TEXNAME];
+
 	if (name[0] == '#')
 	{
 		// keep the solid textures out of the main texture space
@@ -240,8 +242,11 @@ Texture *Textures::ForName(const char *name)
 		return tx;
 	}
 
+	strncpy_s(nameci, name, MAX_TEXNAME);
+	StringTolower(nameci);
+
 	// check the global texture name map
-	tx = texMap[label_t(name)];
+	tx = texMap[label_t(nameci)];
 	if (tx)
 	{
 		tx->Use();
@@ -250,13 +255,13 @@ Texture *Textures::ForName(const char *name)
 
 	// still not found, make wrapper for nulltexture and put it in the unknown wad
 	tx = new Texture(*nulltexture);
-	strncpy(tx->name, name, MAX_TEXNAME);
+	strncpy(tx->name, nameci, MAX_TEXNAME);
 	tx->next = nullptr;
 	//tx->used = true;
 
 	group_unknown.Add(tx);
-	texMap[label_t(name)] = tx;
-	g_qeglobals.d_vTexture.stale = true;
+	texMap[label_t(nameci)] = tx;
+	g_qeglobals.d_vTexture.Refresh();
 	return tx;
 }
 
@@ -321,6 +326,8 @@ void Textures::SelectFirstTexture()
 		return;
 
 	g_qeglobals.d_workTexDef.Set(groups.front()->first);
+
+	// FIXME: doesn't go through name map, can try to select a texture that was flushed (on map load)
 	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
 }
 
@@ -371,7 +378,7 @@ void Textures::LoadWad(const char* wadfile)
 		std::sort(groups.begin(),groups.end(),TextureGroup::sortcmp);
 	}
 
-	g_qeglobals.d_vTexture.stale = true;
+	g_qeglobals.d_vTexture.Refresh();
 	g_qeglobals.d_vTexture.origin[1] = 0;
 
 	QE_SetInspectorMode(W_TEXTURE);
@@ -496,6 +503,7 @@ Texture::Texture(int w, int h, const char* n, vec3 c, int gltex) :
 	next(nullptr), width(w), height(h), used(false), texture_number(gltex), color(c)
 {
 	strncpy(name, n, MAX_TEXNAME);
+	StringTolower(name);
 	SetFlags();
 }
 

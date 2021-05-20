@@ -94,6 +94,8 @@
 #define IDC_ABOUT_GLEXTENSIONS          1115
 #define IDC_BUTTON_FIT                  1115
 #define IDC_CHECK_SELECTED              1116
+#define IDC_BUTTON_FIT2                 1116
+#define IDC_BUTTON_FITRESET             1116
 #define IDC_CHECK_FORCE                 1117
 #define IDC_SPIN_SIDES                  1127
 #define IDC_SPIN_ROTY                   1128
@@ -173,6 +175,7 @@
 #define IDC_COMBO_CAMSTYLE              1250
 #define IDC_SLIDER_GAMMA                1251
 #define IDC_CHECK_PARAMSKILL            1252
+#define IDC_SLIDER_BRIGHTNESS           1252
 #define IDC_CHECK_NOSTIPPLE             1253
 #define IDC_CHECK_TESTAFTERBSP          1254
 #define IDC_CHECK_LOADLASTMAP           1255
@@ -230,7 +233,6 @@
 #define IDC_EDIT_SETKVKEY               1320
 #define IDC_EDIT_SETKVVALUE             1321
 #define IDC_CHECK_SETKVINCR             1322
-#define IDC_CHECK1                      1323
 #define IDC_CHECK_EXTTARGETS            1323
 #define IDC_EDIT_SETKVSTART             1324
 #define ID_FILE_EXIT                    40002

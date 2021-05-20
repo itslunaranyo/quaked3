@@ -40,23 +40,28 @@ Plane::EqualTo
 bool Plane::EqualTo(const Plane *b, const int flip)
 {
 	double	tdist;
-	vec3	tnormal;
+	vec3	tnorm;
 
-	if (flip)
+	if (flip == SIDE_ON)	// planes can be equal or inverse
 	{
-		tnormal = -b->normal;
-		tdist = -b->dist;
+		tnorm = glm::abs(normal) - glm::abs(b->normal);
+		tdist = fabs(dist) - fabs(b->dist);
 	}
-	else
+	else if (flip == SIDE_BACK)	// planes must be inverse
 	{
-		tnormal = b->normal;
-		tdist = b->dist;
+		tnorm = normal + b->normal;
+		tdist = dist + b->dist;
+	}
+	else	// SIDE_ON	// planes must be equal
+	{
+		tnorm = normal - b->normal;
+		tdist = dist - b->dist;
 	}
 
-	if (fabs(normal[0] - tnormal[0]) < NORMAL_EPSILON	&&
-		fabs(normal[1] - tnormal[1]) < NORMAL_EPSILON	&&
-		fabs(normal[2] - tnormal[2]) < NORMAL_EPSILON	&&
-		fabs(dist - tdist) < DIST_EPSILON)
+	if (fabs(tnorm[0]) < NORMAL_EPSILON &&
+		fabs(tnorm[1]) < NORMAL_EPSILON &&
+		fabs(tnorm[2]) < NORMAL_EPSILON &&
+		fabs(tdist) < DIST_EPSILON)
 		return true;
 
 	return false;
@@ -135,13 +140,13 @@ bool Plane::TestRay(const vec3 org, const vec3 dir, vec3 &out)
 	float	d1, d2, fr;
 
 	d1 = DotProduct(org, normal) - dist;
-	d2 = DotProduct(org + dir * 1024.0f, normal) - dist;
-	if (d1 == d2)
+	d2 = DotProduct(org + dir * (float)g_cfgEditor.MapSize, normal) - dist;
+	if (d1 == d2)	// FIXME precision
 		return false;	// parallel to plane
 
 	fr = d1 / (d1 - d2);
 
-	out = org + dir * 1024.0f * fr;
+	out = org + dir * (float)g_cfgEditor.MapSize * fr;
 	return true;
 }
 
@@ -241,16 +246,16 @@ void Plane::Snap(int increment)
 /*
 =================
 Plane::BasePoly
-
-lunaran TODO: this could be much better
 =================
 */
 winding_t *Plane::BasePoly()
 {
-	int			i, x;
-	float		max, v;
 	vec3		org, vright, vup;
 	winding_t  *w;
+
+	/*
+	int			i, x;
+	float		max, v;
 
 	// find the major axis
 	max = -BOGUS_RANGE;
@@ -287,8 +292,13 @@ winding_t *Plane::BasePoly()
 	VectorNormalize(vup);
 	org = normal * (float)dist;
 	vright = CrossProduct(vup, normal);
+	*/
 
-	// These are to keep the brush restrained within the Map Size limit
+	// lunaran - this made it shorter and removed all the branches, and made it zero percent faster :(
+	org = normal * (float)dist;
+	vup = VectorPerpendicular(normal);
+	vright = CrossProduct(vup, normal);
+
 	vup = vup * (float)g_cfgEditor.MapSize;
 	vright = vright * (float)g_cfgEditor.MapSize;
 
@@ -338,7 +348,7 @@ vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 Plane::ProjectPointAxial
 ==================
 */
-vec3 Plane::ProjectPointAxial(vec3 &in, vec3 &axis)
+vec3 Plane::ProjectPointAxial(const vec3 &in, const vec3 &axis)
 {
 	vec3 out = in;
 	if (fabs(axis[0]) == 1)
@@ -347,5 +357,22 @@ vec3 Plane::ProjectPointAxial(vec3 &in, vec3 &axis)
 		out[1] = (dist - normal[0] * in[0] - normal[2] * in[2]) / normal[1];
 	else
 		out[2] = (dist - normal[0] * in[0] - normal[1] * in[1]) / normal[2];
+	return out;
+}
+
+/*
+==================
+Plane::ProjectVectorAxial
+==================
+*/
+vec3 Plane::ProjectVectorAxial(const vec3 &in, const vec3 &axis)
+{
+	vec3 out = in;
+	if (fabs(axis[0]) == 1)
+		out[0] = (-normal[1] * in[1] - normal[2] * in[2]) / normal[0];
+	else if (fabs(axis[1]) == 1)
+		out[1] = (-normal[0] * in[0] - normal[2] * in[2]) / normal[1];
+	else
+		out[2] = (-normal[0] * in[0] - normal[1] * in[1]) / normal[2];
 	return out;
 }

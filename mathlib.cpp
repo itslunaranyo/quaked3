@@ -64,6 +64,35 @@ bool LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2s
 	return false;
 }
 
+
+vec3 VectorPerpendicular(const vec3 u)
+{
+	vec3 a = glm::abs(u);
+	unsigned uyx = signbit(a.x - a.y);
+	unsigned uzx = signbit(a.x - a.z);
+	unsigned uzy = signbit(a.y - a.z);
+
+	unsigned xm = uyx & uzx;
+	unsigned ym = (1 ^ xm) & uzy;
+	unsigned zm = 1 ^ (xm | ym);
+
+	vec3 v = glm::cross(u, vec3(xm, ym, zm));
+	return v;
+}
+
+vec3 ZeroTinyComponents(const vec3 v)
+{
+	vec3 out = v;
+	float r;
+	for (int i = 0; i < 3; i++)
+	{
+		r = (float)qround(out[i]);
+		if (fabs(out[i] - r) < EQUAL_EPSILON)
+			out[i] = r;
+	}
+	return out;
+}
+
 void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
 {
 	vec3	vWork, va;
@@ -187,7 +216,7 @@ void rgbToHex(const vec3 vrgb, char *hex)
 {
 	int i, c;
 	unsigned rgb[3];
-	char hx[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+	char hx[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
 
 	c = 0;
 	hex[c++] = '#';
@@ -210,8 +239,8 @@ void hexToRGB(const char *hex, vec3 &vrgb)
 
 	for (i = 0; i < 6; i++)
 	{
-		if (hex[i + 1] >= 'A')
-			rgb[i] = hex[i + 1] - 'A' + 10;
+		if (hex[i + 1] >= 'a')
+			rgb[i] = hex[i + 1] - 'a' + 10;
 		else
 			rgb[i] = hex[i + 1] - '0';
 	}

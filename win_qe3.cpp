@@ -493,7 +493,7 @@ void ExportDialog()
 	strcpy(szDirName, g_project.mapPath);
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_project.mapPath);
+		strcpy(szDirName, g_project.basePath);
 		strcat(szDirName, "/maps");
 	}
 	// Filter string for Map files

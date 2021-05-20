@@ -58,3 +58,104 @@ void ReportError(qe3_exception& ex)
 	Sys_Printf("ERROR: %s\n", ex.what());
 	g_bWarningOrError = true;
 }
+
+/*
+=================
+CrashSave
+
+alert the user and try to save the scene to a crash file if an unrecoverable
+exception makes it all the way to the top
+=================
+*/
+int CrashSave(const char* reason)
+{
+	char crashmap[_MAX_FNAME];
+	char badnews[4096];
+	SYSTEMTIME time;
+	GetSystemTime(&time);
+	sprintf(crashmap, "%s\\crash.%i%i%i%i%i%i.map", g_qePath, time.wHour, time.wMinute, time.wSecond, time.wDay, time.wMonth, time.wYear);
+	try {
+		g_map.SaveToFile(crashmap, false);
+		sprintf(badnews, "%s\r\nMap written to %s.", reason, crashmap);
+	}
+	catch (...)
+	{
+		sprintf(badnews, "%s\r\nMap could not be saved. Sorry.", reason);
+	}
+	QE_Exit(badnews);
+	return 0;
+}
+
+/*
+=================
+SEHCrashSave
+
+scruting the inscrutable
+=================
+*/
+const char* SEHExceptionString(DWORD code)
+{
+	//Sys_Printf("code %i!\n", code);
+
+	switch (code) {
+	case EXCEPTION_ACCESS_VIOLATION:
+		return "Access Violation";
+	case EXCEPTION_DATATYPE_MISALIGNMENT:
+		return "Datatype Misalignment";
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+		return "Array Bounds Exceeded";
+	case EXCEPTION_FLT_DENORMAL_OPERAND:
+		return "FP Denormal Operand";
+	case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+		return "FP Divide by Zero";
+	case EXCEPTION_FLT_INEXACT_RESULT:
+		return "FP Inexact Result";
+	case EXCEPTION_FLT_INVALID_OPERATION:
+		return "FP Invalid Op";
+	case EXCEPTION_FLT_OVERFLOW:
+		return "FP Overflow";
+	case EXCEPTION_FLT_STACK_CHECK:
+		return "FP Stack Check";
+	case EXCEPTION_FLT_UNDERFLOW:
+		return "FP Underflow";
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:
+		return "Int Divide by Zero";
+	case EXCEPTION_INT_OVERFLOW:
+		return "Int Overflow";
+	case EXCEPTION_PRIV_INSTRUCTION:
+		return "Privileged Instruction";
+	case EXCEPTION_IN_PAGE_ERROR:
+		return "In-Page Error";
+	case EXCEPTION_ILLEGAL_INSTRUCTION:
+		return "Illegal Instruction";
+	case EXCEPTION_NONCONTINUABLE_EXCEPTION:
+		return "Noncontinuable Exception";
+	case EXCEPTION_STACK_OVERFLOW:
+		return "Stack Overflow";
+	case EXCEPTION_GUARD_PAGE:
+		return "Guard Page";
+	case EXCEPTION_INVALID_HANDLE:
+		return "Invalid Handle";
+	default:
+		return "Unknown Structured Exception";
+	}
+}
+
+/*
+=================
+QE_Exit
+
+clean up on the way out
+=================
+*/
+void QE_Exit(const char* badnews)
+{
+	MessageBox(g_qeglobals.d_hwndMain, badnews, "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
+
+	// close logging if necessary
+	g_cfgEditor.LogConsole = false;
+	Sys_LogFile();
+
+	exit(1);
+}
+

@@ -23,11 +23,13 @@
 //========================================================================
 
 typedef glm::vec3	vec3;
+typedef glm::dvec3	dvec3;
 typedef glm::mat4	mat4;
 
 //========================================================================
 
 inline int qround(const float i, const int r) { return std::lroundf(i / r) * r; }
+inline int qround(const float i) { return std::lroundf(i); }
 
 // lunaran: glm blows these defines away somehow
 inline int min(int a, int b) { if (a < b) return a; return b; }
@@ -39,6 +41,8 @@ bool	VectorCompareLT(const vec3 &v1, const vec3 &v2);
 bool	VectorCompare(const vec3 &v1, const vec3 &v2);
 inline float VectorLength(const vec3 v) { return glm::length(v); }
 inline float DotProduct(const vec3 x, const vec3 y) { return glm::dot(x, y); }
+vec3	VectorPerpendicular(const vec3 u);
+vec3	ZeroTinyComponents(const vec3 v);
 
 bool	LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2start, const vec3 l2end, vec3 &intersect);
 
