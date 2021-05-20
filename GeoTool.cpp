@@ -657,7 +657,7 @@ void GeoTool::SortHandles()
 
 void GeoTool::DrawSelectionBox()
 {
-	if (mode != GT_BOXSEL)
+	if (state != GT_BOXSEL)
 		return;
 	if (mcDown.pt == mcCurrent.pt)
 		return;

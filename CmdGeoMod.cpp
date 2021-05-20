@@ -769,14 +769,20 @@ void CmdGeoMod::Polygon::Clear()
 
 void CmdGeoMod::Do_Impl()
 {
+	std::vector<Brush*> brUnModified = brMods;
 	for (auto bmIt = brushMeshes.begin(); bmIt != brushMeshes.end(); ++bmIt)
+	{
+		brUnModified.erase(std::find(brUnModified.begin(), brUnModified.end(), bmIt->bOrig));
 		bmIt->Clear();
+	}
 	brushMeshes.clear();
 	if (transTotal == vec3(0) || state == NOOP)
 	{
 		state = NOOP;
 		cmdBM.RevertAll();
 	}
+
+	cmdBM.RevertBrushes(brUnModified);
 	cmdBM.Do();
 }
 

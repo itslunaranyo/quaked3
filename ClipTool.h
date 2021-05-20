@@ -35,6 +35,7 @@ private:
 	//========================================================================
 
 	clippoint_t	points[3];
+	clippoint_t ptHover;
 	clippoint_t *ptMoving;
 	CmdBrushClip *g_pcmdBC;
 	int axis;

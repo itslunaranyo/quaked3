@@ -920,7 +920,7 @@ BEGIN
     LTEXT           "Maps Directory (ie ""$QUAKE/id1/maps/""):",IDC_STATIC,114,33,180,12,SS_CENTERIMAGE
     LTEXT           "Autosave Map:",IDC_STATIC,114,60,180,12,SS_CENTERIMAGE
     LTEXT           "Entity Def File(s) or Progs Source:",IDC_STATIC,114,87,180,12,SS_CENTERIMAGE
-    LTEXT           "Texture Directory:",IDC_STATIC,114,114,180,12,SS_CENTERIMAGE
+    LTEXT           "Texture Wad Directory:",IDC_STATIC,114,114,180,12,SS_CENTERIMAGE
     LTEXT           "Default Wad(s):",IDC_STATIC,114,141,180,12,SS_CENTERIMAGE
     LTEXT           "Current Project:",IDC_STATIC,0,0,96,12,SS_CENTERIMAGE
     GROUPBOX        "",IDC_STATIC,108,0,210,198
@@ -1011,8 +1011,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,38,0
- PRODUCTVERSION 3,2,38,0
+ FILEVERSION 3,2,39,0
+ PRODUCTVERSION 3,2,39,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1029,14 +1029,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 38)"
-            VALUE "FileVersion", "3.2.38.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 38)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 39)"
+            VALUE "FileVersion", "3.2.39.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 39)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.38.0"
+            VALUE "ProductVersion", "3.2.39.0"
         END
     END
     BLOCK "VarFileInfo"

@@ -229,6 +229,8 @@ void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
 				s += 4;
 				while (*s == '\\' || *s == '/')
 					*s++;
+				*d++ = '.';
+				*d++ = '/';
 			}
 			else
 			{
@@ -496,12 +498,16 @@ void qeConfig::StandardColorPresets()
 bool qeConfig::Load()
 {
 	qeBuffer cfgbuf;
-	bool haveProject, haveColors, haveColorPresets;
+	char	cfgpath[MAX_PATH];
+	bool	haveProject, haveColors, haveColorPresets;
+
+	strcpy(cfgpath, g_qePath);
 #ifdef _DEBUG
-	if (IO_LoadFile("qe3d.cfg", cfgbuf) < 1)
+	strcpy(cfgpath + strlen(g_qePath), "\\qe3d.cfg");
 #else
-	if (IO_LoadFile("qe3.cfg", cfgbuf) < 1)
+	strcpy(cfgpath + strlen(g_qePath), "\\qe3.cfg");
 #endif
+	if (IO_LoadFile(cfgpath, cfgbuf) < 1)
 	{
 		// cfg doesn't exist, do first run dialog song and dance
 		projectPresets.emplace_back();	// add one default project
@@ -585,11 +591,16 @@ bool qeConfig::Load()
 
 void qeConfig::Save()
 {
+	char	cfgpath[MAX_PATH];
+
+	strcpy(cfgpath, g_qePath);
 #ifdef _DEBUG
-	std::ofstream fs("qe3d.cfg");
+	strcpy(cfgpath + strlen(g_qePath), "\\qe3d.cfg");
 #else
-	std::ofstream fs("qe3.cfg");
+	strcpy(cfgpath + strlen(g_qePath), "\\qe3.cfg");
 #endif
+
+	std::ofstream fs(cfgpath);
 	fs << "[editor]\n";
 	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Write(fs);

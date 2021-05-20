@@ -18,7 +18,7 @@ void Palette::LoadFromFile(const char* palfile)
 		return;
 
 	Sys_Printf("Warning: Couldn't load palette! Loading local quakepal.lmp as fallback ...\n");
-	if (LoadFromFileImpl("quakepal.lmp"))
+	if (LoadFromFileImpl("./quakepal.lmp"))
 		return;
 
 	Sys_Printf("Warning: Couldn't open QE3 data directory! Are you running it from the directory it's installed in?\n");
@@ -53,6 +53,7 @@ bool Palette::LoadFromFileImpl(const char* file)
 
 		pal[i] = { gammatable[r], gammatable[g], gammatable[b], 255};
 	}
+	Sys_Printf("Palette loaded.\n");
 	return true;
 }
 

@@ -8,6 +8,17 @@
 #include <Shlobj.h>
 
 static HWND hwndCfg, hwndCfgEditor, hwndCfgProject, hwndCfgColor, hwndCfgUI;
+
+struct cfgContext_t
+{
+	qecfgEditor_t &cfgEd;
+	qecfgUI_t &cfgUI;
+	qecfgProject_t &cfgProj;
+	qecfgColors_t &cfgColor;
+	cfgContext_t(qecfgEditor_t &e, qecfgUI_t &u, qecfgProject_t &p, qecfgColors_t &c) :
+		cfgEd(e), cfgUI(u), cfgProj(p), cfgColor(c) {}
+};
+
 /*
 =====================================================================
 
@@ -18,6 +29,7 @@ static HWND hwndCfg, hwndCfgEditor, hwndCfgProject, hwndCfgColor, hwndCfgUI;
 
 static bool g_noProject;
 static bool g_cfgNeedReload;
+static bool g_needApply;
 
 static OPENFILENAME ofn;			// common dialog box structure
 static char szDirName[_MAX_PATH];   // directory string
@@ -42,7 +54,6 @@ void WndCfg_FormatPath(char* dst, char* src)
 		sprintf(dst, "$QUAKE/%s", &szTemp[strlen(g_cfgEditor.QuakePath)]);
 	else
 		strcpy(dst, szTemp);
-	
 }
 
 /*
@@ -94,7 +105,7 @@ bool SelectDir(HWND hwndDlg, int idDlgItem, bool format, char* title)
 WndCfg_GetAutosaveMap
 ==================
 */
-void WndCfg_GetAutosaveMap(HWND hwndDlg)
+bool WndCfg_GetAutosaveMap(HWND hwndDlg)
 {
 	sprintf(szDirName, "%smaps", g_szCurrentDirectory);
 
@@ -119,7 +130,9 @@ void WndCfg_GetAutosaveMap(HWND hwndDlg)
 		char szTemp[512];
 		WndCfg_FormatPath(szTemp, szFile);
 		SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVEMAP, szTemp);
+		return true;
 	}
+	return false;
 }
 
 /*
@@ -127,7 +140,7 @@ void WndCfg_GetAutosaveMap(HWND hwndDlg)
 WndCfg_GetEntityFiles
 ==================
 */
-void WndCfg_GetEntityFiles(HWND hwndDlg)
+bool WndCfg_GetEntityFiles(HWND hwndDlg)
 {
 	szFile[0] = 0;
 
@@ -152,7 +165,9 @@ void WndCfg_GetEntityFiles(HWND hwndDlg)
 		char szTemp[512];
 		WndCfg_FormatPath(szTemp, szFile);
 		SetDlgItemText(hwndDlg, IDC_EDIT_ENTITYFILES, szTemp);
+		return true;
 	}
+	return false;
 }
 
 /*
@@ -160,7 +175,7 @@ void WndCfg_GetEntityFiles(HWND hwndDlg)
 WndCfg_GetDefaultWads
 ==================
 */
-void WndCfg_GetDefaultWads(HWND hwndDlg)
+bool WndCfg_GetDefaultWads(HWND hwndDlg)
 {
 	HWND hwndEdit = GetDlgItem(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY);
 
@@ -208,7 +223,9 @@ void WndCfg_GetDefaultWads(HWND hwndDlg)
 				SetDlgItemText(hwndDlg, IDC_EDIT_DEFAULTWADS, szFile);
 			}
 		}
+		return true;
 	}
+	return false;
 	/*
 	else
 	{
@@ -724,15 +741,79 @@ void WndCfg_ConfigToWnd()
 
 /*
 ============
+WndCfg_WndToConfigEditor
+============
+*/
+void WndCfg_WndToConfigEditor(qecfgEditor_t &cfgEd)
+{
+	char	sz[128];
+
+	GetDlgItemText(hwndCfgEditor, IDC_EDIT_GAMEPATH, cfgEd.QuakePath, 255);
+
+	cfgEd.Autosave = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0) != 0;
+	GetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz, 4);
+	cfgEd.AutosaveTime = atoi(sz);
+
+	GetDlgItemText(hwndCfgEditor, IDC_EDIT_UNDOLEVELS, sz, 4);
+	cfgEd.UndoLevels = atoi(sz);
+	g_cmdQueue.SetSize((int)cfgEd.UndoLevels);
+
+	GetDlgItemText(hwndCfgEditor, IDC_COMBO_MAPSIZE, sz, 8);
+	cfgEd.MapSize = atoi(sz);
+
+	cfgEd.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
+
+	cfgEd.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0) != 0;
+	cfgEd.VFEModesExclusive = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0) != 0;
+	cfgEd.BrushPrecision = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0) != 0;
+	cfgEd.LoadLastMap = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOADLASTMAP, BM_GETCHECK, 0, 0);
+}
+
+/*
+============
+WndCfg_WndToConfigUI
+============
+*/
+void WndCfg_WndToConfigUI(qecfgUI_t &cfgUI)
+{
+	cfgUI.Stipple = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_NOSTIPPLE, BM_GETCHECK, 0, 0);
+	cfgUI.RadiantLights = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_RADIANTLIGHTS, BM_GETCHECK, 0, 0);
+	cfgUI.Gamma = SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0) * 0.1f;
+	cfgUI.TextureMode = min(max(0, SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_GETCURSEL, 0, 0)), 5);
+}
+
+/*
+============
+WndCfg_WndToConfigProject
+============
+*/
+void WndCfg_WndToConfigProject(qecfgProject_t &prj)
+{
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath, _MAX_DIR);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath, _MAX_DIR);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile, _MAX_FNAME);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_ENTITYFILES, prj.entityFiles, _MAX_FNAME);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath, _MAX_DIR);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads, _MAX_FNAME);
+	GetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile, _MAX_FNAME);
+}
+
+/*
+============
 WndCfg_WndToConfig
 ============
 */
-bool WndCfg_WndToConfig()
+void WndCfg_WndToConfig(cfgContext_t cfgCtx)
 {
-	int		nMapSize = g_cfgEditor.MapSize;
+	WndCfg_WndToConfigEditor(cfgCtx.cfgEd);
+	WndCfg_WndToConfigUI(cfgCtx.cfgUI);
+	WndCfg_WndToConfigProject(cfgCtx.cfgProj);
+	WndCfg_WndToColors(cfgCtx.cfgColor);
+}
+
+bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
+{
 	int		nTexMode = g_cfgUI.TextureMode;
-	int		i;
-	char	sz[128];
 	bool	cfgOK;
 	char	szErrors[2048];
 	char*	errCur;
@@ -740,122 +821,95 @@ bool WndCfg_WndToConfig()
 	errCur = szErrors;
 	*errCur = 0;
 	
-	strcpy(errCur, "You must fix the following problems:\n\n");
+	strcpy(errCur, "Unable to apply config for the following reasons:\n\n");
 	errCur += 38;
 
 	cfgOK = true;
 
-	// --------------------------------
 	// Editor
-	if (!SendDlgItemMessage(hwndCfgEditor, IDC_EDIT_GAMEPATH, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgEd.QuakePath))
 	{
 		strcpy(errCur, "No Quake directory specified.\n");
 		errCur += 30;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgEditor, IDC_EDIT_GAMEPATH, g_cfgEditor.QuakePath, 255);
 
-	GetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz, 4);
-	g_cfgEditor.AutosaveTime = atoi(sz);
-
-	GetDlgItemText(hwndCfgEditor, IDC_EDIT_UNDOLEVELS, sz, 4);
-	g_cfgEditor.UndoLevels = atoi(sz);
-	g_cmdQueue.SetSize((int)g_cfgEditor.UndoLevels);
-
-	GetDlgItemText(hwndCfgEditor, IDC_COMBO_MAPSIZE, sz, 8);
-	g_cfgEditor.MapSize = atoi(sz);
-
-	if (nMapSize != g_cfgEditor.MapSize)
-		g_map.RegionOff();
-
-	g_cfgEditor.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
-
-	g_cfgEditor.Autosave = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0) != 0;
-
-	g_cfgEditor.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0) != 0;
-	g_cfgEditor.VFEModesExclusive = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0) != 0;
-	g_cfgEditor.BrushPrecision = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0) != 0;
-	g_cfgEditor.LoadLastMap = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOADLASTMAP, BM_GETCHECK, 0, 0);
-
-	// --------------------------------
 	// UI
-	g_cfgUI.Stipple = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_NOSTIPPLE, BM_GETCHECK, 0, 0);
-	g_cfgUI.RadiantLights = SendDlgItemMessage(hwndCfgUI, IDC_CHECK_RADIANTLIGHTS, BM_GETCHECK, 0, 0);
-	float gamma = SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0) * 0.1f;
-	if (gamma != g_cfgUI.Gamma)
-	{
-		// TODO: gamma is still applied at texture load time :(
-		g_cfgNeedReload = true;
-		g_cfgUI.Gamma = gamma;
-		Textures::LoadPalette();
-	}
 
-	g_cfgUI.TextureMode = min(max(0, SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_GETCURSEL, 0, 0)), 5);
-	if (nTexMode != g_cfgUI.TextureMode)
-		Textures::SetTextureMode(g_cfgUI.TextureMode);
-
-	// --------------------------------
 	// Project
-	i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
-	qecfgProject_t &prj = g_qeconfig.projectPresets[i];
-
-	if (!SendDlgItemMessage(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgProj.basePath))
 	{
 		strcpy(errCur, "No game basepath specified.\n");
 		errCur += 28;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath, _MAX_DIR);
 
-	if (!SendDlgItemMessage(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgProj.mapPath))
 	{
 		strcpy(errCur, "No maps path specified.\n");
 		errCur += 24;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath, _MAX_DIR);
 
-	if (!SendDlgItemMessage(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgProj.autosaveFile))
 	{
 		strcpy(errCur, "No autosave map specified.\n");
 		errCur += 27;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile, _MAX_FNAME);
 
-	if (!SendDlgItemMessage(hwndCfgProject, IDC_EDIT_ENTITYFILES, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgProj.entityFiles))
 	{
 		strcpy(errCur, "No entity definitions specified.\n");
 		errCur += 33;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgProject, IDC_EDIT_ENTITYFILES, prj.entityFiles, _MAX_FNAME);
 
-	if (!SendDlgItemMessage(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, EM_LINELENGTH, 0, 0))
+	if (!strlen(cfgCtx.cfgProj.wadPath))
 	{
 		strcpy(errCur, "No texture path specified.\n");
 		errCur += 27;
 		cfgOK = false;
 	}
-	else
-		GetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath, _MAX_DIR);
 
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads, _MAX_FNAME);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile, _MAX_FNAME);
-
-	// --------------------------------
 	// Color
-	WndCfg_WndToColors();
-	SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_SETCURSEL, 0, 0);
 
 	if (!cfgOK)
 		MessageBox(g_qeglobals.d_hwndMain, szErrors, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
 	return cfgOK;
+}
+
+/*
+============
+WndCfg_ApplyToConfig
+============
+*/
+void WndCfg_ApplyToConfig(cfgContext_t cfgCtx)
+{
+	// Editor
+	if (g_cfgEditor.MapSize != cfgCtx.cfgEd.MapSize)
+		g_map.RegionOff();
+
+	// UI
+	if (cfgCtx.cfgUI.Gamma != g_cfgUI.Gamma)
+	{
+		g_cfgNeedReload = true;	// TODO: gamma is still applied at texture load time :(
+		Textures::LoadPalette();
+	}
+
+	if (cfgCtx.cfgUI.TextureMode != g_cfgUI.TextureMode)
+		Textures::SetTextureMode(g_cfgUI.TextureMode);
+
+	// copy values to the real config
+	g_cfgEditor = cfgCtx.cfgEd;
+	g_cfgUI = cfgCtx.cfgUI;
+	g_colors = cfgCtx.cfgColor;
+	SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_SETCURSEL, 0, 0);
+
+	int i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
+	g_qeconfig.projectPresets[i] = cfgCtx.cfgProj;
+
+	g_needApply = false;
 }
 
 /*
@@ -875,24 +929,53 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_INITDIALOG:
 		return TRUE;
 
+	case WM_HSCROLL:
+		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_SLIDER_GAMMA))
+			g_needApply = true;
+		return TRUE;
+
 	case WM_COMMAND:
+		if (HIWORD(wParam) == EN_CHANGE)
+		{
+			switch (LOWORD(wParam))
+			{
+			case IDC_EDIT_GAMEBASEPATH:
+			case IDC_EDIT_MAPSDIRECTORY:
+			case IDC_EDIT_AUTOSAVEMAP:
+			case IDC_EDIT_ENTITYFILES:
+			case IDC_EDIT_TEXTUREDIRECTORY:
+			case IDC_EDIT_DEFAULTWADS:
+			case IDC_EDIT_PALETTEFILE:
+			case IDC_EDIT_GAMEPATH:
+			case IDC_EDIT_UNDOLEVELS:
+			case IDC_EDIT_AUTOSAVE:
+				g_needApply = true;
+			}
+			return TRUE;
+		}
+
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			switch (LOWORD(wParam))
+			{
+			case IDC_COMBO_RENDERMODE:
+			case IDC_COMBO_MAPSIZE:
+				g_needApply = true;
+				return TRUE;
+			case IDC_COMBO_PROJECT:
+				g_needApply = true;
+				WndCfg_ProjectComboChanged();
+				return TRUE;
+			case IDC_COMBO_COLOR:
+				WndCfg_ColorComboChanged();
+				WndCfg_ListSel(hwndCfg);
+				g_needApply = true;
+				return TRUE;
+			}
+		}
+
 		switch (LOWORD(wParam))
 		{
-		case IDC_COMBO_PROJECT:
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				WndCfg_ProjectComboChanged();
-			}
-			return TRUE;
-		case IDC_COMBO_COLOR:
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				WndCfg_ColorComboChanged();
-				//InvalidateRect(hwndCfg, NULL, TRUE);
-				//UpdateWindow(hwndCfg);
-				WndCfg_ListSel(hwndCfg);
-			}
-			return TRUE;
 		case IDC_BUTTON_GAMEPATH:
 			SelectDir(hwndDlg, IDC_EDIT_GAMEPATH, false, "Select Quake Directory");
 			break;
@@ -902,14 +985,14 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case IDC_BUTTON_MAPSDIRECTORY:
 			SelectDir(hwndDlg, IDC_EDIT_MAPSDIRECTORY, true, "Select Maps Directory");
 			break;
+		case IDC_BUTTON_TEXTUREDIRECTORY:
+			SelectDir(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY, true, "Select Texture Directory");
+			break;
 		case IDC_BUTTON_AUTOSAVEMAP:
 			WndCfg_GetAutosaveMap(hwndDlg);
 			break;
 		case IDC_BUTTON_ENTITYFILES:
 			WndCfg_GetEntityFiles(hwndDlg);
-			break;
-		case IDC_BUTTON_TEXTUREDIRECTORY:
-			SelectDir(hwndDlg, IDC_EDIT_TEXTUREDIRECTORY, true, "Select Texture Directory");
 			break;
 		case IDC_BUTTON_DEFAULTWADS:
 			WndCfg_GetDefaultWads(hwndDlg);
@@ -936,6 +1019,7 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 			//InvalidateRect(hwndCfg, NULL, TRUE);
 			//UpdateWindow(hwndCfg);
 			WndCfg_ListSel(hwndCfg);
+			g_needApply = true;
 			break;
 		case IDC_BUTTON_COLORSAVE:
 			WndCfg_DoSaveColors();
@@ -943,8 +1027,19 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		case IDC_BUTTON_COLORDELETE:
 			WndCfg_DoDeleteColors();
 			break;
+
+		case IDC_CHECK_NOSTIPPLE:
+		case IDC_CHECK_RADIANTLIGHTS:
+		case IDC_CHECK_AUTOSAVE:
+		case IDC_CHECK_LOGCONSOLE:
+		case IDC_CHECK_VFEEXCLUSIVE:
+		case IDC_CHECK_BRUSHPRECISION:
+		case IDC_CHECK_LOADLASTMAP:
+			g_needApply = true;
+			break;
 		}
 		return 0;
+
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code)
 		{
@@ -1090,6 +1185,58 @@ void WndCfg_CreateWnd(HWND hwndDlg)
 		SendDlgItemMessage(hwndCfg, IDC_CONFIG_LIST, LB_SETCURSEL, 0, 0);
 		WndCfg_ListSel(0);
 	}
+
+	g_needApply = false;
+}
+
+
+void WndCfg_OnApply()
+{
+	qecfgEditor_t cfgEd = g_cfgEditor;
+	qecfgUI_t cfgUI = g_cfgUI;
+	qecfgProject_t cfgProj;
+	qecfgColors_t cfgColor;
+	cfgContext_t cfgCtx(cfgEd, cfgUI, cfgProj, cfgColor);
+
+	// copy window values to temp values
+	WndCfg_WndToConfig(cfgCtx);
+
+	// check temp values for errors
+	if (!WndCfg_VerifyConfig(cfgCtx))
+		return;
+
+	// apply to live config
+	WndCfg_ApplyToConfig(cfgCtx);
+}
+
+bool WndCfg_OnClose()
+{
+	qecfgEditor_t cfgEd = g_cfgEditor;
+	qecfgUI_t cfgUI = g_cfgUI;
+	qecfgProject_t cfgProj;
+	qecfgColors_t cfgColor;
+	cfgContext_t cfgCtx(cfgEd, cfgUI, cfgProj, cfgColor);
+
+	// copy window values to temp values
+	WndCfg_WndToConfig(cfgCtx);
+
+	// compare to live config, ask to apply
+	if (g_needApply)
+	{
+		int res = MessageBox(g_qeglobals.d_hwndMain, "Apply changes?", "QuakeEd 3: Confirm Changes", MB_YESNOCANCEL | MB_ICONQUESTION);
+		if (res == IDCANCEL)
+			return false;
+		if (res == IDNO)
+			return true;
+
+		// check temp values for errors
+		if (!WndCfg_VerifyConfig(cfgCtx))
+			return false;
+
+		// apply to live config
+		WndCfg_ApplyToConfig(cfgCtx);
+	}
+	return true;
 }
 
 /*
@@ -1111,10 +1258,12 @@ BOOL CALLBACK ConfigDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		switch (LOWORD(wParam))
 		{
 		case IDAPPLY:
-			WndCfg_WndToConfig();
+			WndCfg_OnApply();
 			Sys_ForceUpdateWindows(W_SCENE);
 			return TRUE;
 		case IDCLOSE:
+			if (!WndCfg_OnClose())
+				return TRUE;
 			EndDialog(hwndDlg, 0);
 			WndCfg_CheckProjectAlteration();
 			g_noProject = false;

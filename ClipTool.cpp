@@ -404,7 +404,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 	vec3		dir, pn, pt;
 	trace_t		t;
 	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
-	t = Selection::TestRay(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED);
+	t = Selection::TestRay(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
 		pn = AxisForVector(t.face->plane.normal);
@@ -505,7 +505,20 @@ void ClipTool::CamMovePoint(int x, int y)
 	{
 		ptMoving = CamGetNearestClipPoint(x, y);
 		if (ptMoving)
+		{
 			bCrossHair = true;
+			ptHover.set = false;
+		}
+		else if (CamPointOnSelection(x, y, ptHover.point, &junk))
+		{
+			ptHover.set = true;
+			Sys_UpdateWindows(W_XY | W_CAMERA);
+			bCrossHair = true;
+		}
+		else
+		{
+			ptHover.set = false;
+		}
 	}
 
 	Crosshair(bCrossHair);
@@ -723,9 +736,9 @@ void ClipTool::EndPoint ()
 
 bool ClipTool::Draw3D(CameraView &v)
 {
-	if (!g_pcmdBC)
-		return false;
-	if (!points[0].set)
+	//if (!g_pcmdBC)
+	//	return false;
+	if (!points[0].set && !ptHover.set)
 		return false;
 
 	if (points[1].set)
@@ -740,13 +753,12 @@ bool ClipTool::Draw3D(CameraView &v)
 
 bool ClipTool::Draw2D(XYZView &v)
 {
-	if (!g_pcmdBC)
-		return false;
-	if (!points[0].set)
+	if (!points[0].set && !ptHover.set)
 		return false;
 	v.DrawSelection();
 	
-	DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);
+	if (g_pcmdBC)
+		DrawClipWire((backside) ? &g_pcmdBC->brBack : &g_pcmdBC->brFront);
 
 	DrawPoints();
 	return true;
@@ -768,6 +780,9 @@ void ClipTool::DrawPoints()
 			break;
 		glVertex3fv(&points[i].point.x);
 	}
+	if (ptHover.set)
+		glVertex3fv(&ptHover.point.x);
+
 	glEnd();
 	glPointSize(1);
 

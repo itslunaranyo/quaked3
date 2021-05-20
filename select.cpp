@@ -22,7 +22,7 @@ void Selection::HandleChange()
 {
 	if (!g_bSelectionChanged) return;
 
-	DeselectFiltered();
+	//DeselectFiltered();
 
 	vec3		vMin, vMax, vSize;
 	char		selectionstring[256];
@@ -118,7 +118,6 @@ void Selection::SelectBrush(Brush* b)
 		b->RemoveFromList();
 
 	b->AddToList(&g_brSelectedBrushes);
-
 	Selection::Changed();
 }
 
@@ -137,7 +136,9 @@ void Selection::SelectBrushSorted(Brush* b)
 	// of the list, so we don't keep looping over them looking for buddies
 	if (b->owner->IsWorld() || b->owner->IsPoint() || b->onext == b)
 	{
-		b->AddToList(g_brSelectedBrushes.prev);
+		//b->AddToList(g_brSelectedBrushes.prev);
+		b->AddToList(&g_brSelectedBrushes); // no, actually, add them up front because selection order matters
+		Selection::Changed();
 		return;
 	}
 
@@ -150,7 +151,6 @@ void Selection::SelectBrushSorted(Brush* b)
 	}
 
 	b->AddToList(bCur);
-
 	Selection::Changed();
 }
 
@@ -187,13 +187,13 @@ void Selection::HandleBrush (Brush *brush, bool bComplete)
 			// current entity is not selected at all, select the whole thing
 			for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
 			{
-				SelectBrush(b);
+				SelectBrushSorted(b);
 			}
 		}
 		else
 		{
 			// select just this brush
-			SelectBrush(brush);
+			SelectBrushSorted(brush);
 		}
 	}
 }

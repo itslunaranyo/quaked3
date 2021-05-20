@@ -232,6 +232,8 @@ extern char		*g_szBSP_Commands[256];
 extern HANDLE	g_hBSP_Process;
 
 extern char		g_qeAppName[64];
+extern char		g_qePath[MAX_PATH];
+
 
 /*
 ** global declarations

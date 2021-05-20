@@ -12,7 +12,7 @@
 #include "CmdCZGCylinder.h"
 #include "CmdCone.h"
 #include "CmdSphere.h"
-
+#include "CmdCompound.h"
 
 
 /*
@@ -265,8 +265,19 @@ void Modify::ConnectEntities()
 		}
 	}
 
-	e1->SetKeyValue("target", newtarg);
-	e2->SetKeyValue("targetname", newtarg);
+	// use a compound cmd, because we need to set two different keyvalues but
+	// they'll be expected to undo as one operation
+	CmdCompound *cmdc = new CmdCompound("Connect Entities");
+	CmdSetKeyvalue *cmdKV1, *cmdKV2;
+
+	cmdKV1 = new CmdSetKeyvalue("target", newtarg);
+	cmdKV1->AddEntity(e1);
+	cmdKV2 = new CmdSetKeyvalue("targetname", newtarg);
+	cmdKV2->AddEntity(e2);
+	cmdc->Complete(cmdKV1);
+	cmdc->Complete(cmdKV2);
+
+	g_cmdQueue.Complete(cmdc);
 
 	Sys_Printf("Entities connected as '%s'.\n", newtarg);
 	Sys_UpdateWindows(W_XY | W_CAMERA);

@@ -21,6 +21,7 @@ HANDLE	g_hBSP_Process;
 HCURSOR	g_hcursorWait;
 
 char	g_qeAppName[64];
+char	g_qePath[MAX_PATH];
 
 //===========================================
 

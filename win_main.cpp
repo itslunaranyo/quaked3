@@ -2049,6 +2049,40 @@ LONG WINAPI CommandHandler (
 	return TRUE;
 }
 
+void WMain_CreateViews()
+{
+	Sys_Printf("Creating windows\n");
+	g_qeglobals.d_wndConsole = new WndConsole();
+	g_qeglobals.d_wndConsole->Initialize();
+
+	g_qeglobals.d_wndCamera = new WndCamera();
+	g_qeglobals.d_wndCamera->Initialize();
+	for (int i = 0; i < 3; i++)
+	{
+		g_qeglobals.d_wndGrid[i] = new WndGrid();
+		g_qeglobals.d_wndGrid[i]->Initialize(i);
+	}
+	g_qeglobals.d_wndZ = new WndZChecker();
+	g_qeglobals.d_wndZ->Initialize();
+
+	g_qeglobals.d_wndTexture = new WndTexture();
+	g_qeglobals.d_wndTexture->Initialize();
+	g_qeglobals.d_wndEntity = new WndEntity();
+	g_qeglobals.d_wndEntity->Initialize();
+
+	/*
+	// this could happen just fine in WndView::OnCreate, but delaying wglShareLists fixes
+	// troubles in some contexts (namely the GLX emulation in WINE)
+	// TODO: write new fantasy renderer that doesn't rely on crufty old stuff like wglShareLists
+	g_qeglobals.d_wndCamera->ShareLists();
+	for (int i = 0; i < 3; i++)
+		g_qeglobals.d_wndGrid[i]->ShareLists();
+	g_qeglobals.d_wndZ->ShareLists();
+	g_qeglobals.d_wndTexture->ShareLists();
+	*/
+	QE_ForceInspectorMode(W_CONSOLE);
+}
+
 /*
 ============
 WMain_HandleMWheel
@@ -2151,6 +2185,12 @@ LONG WINAPI WMain_WndProc (
 
 		time(&lTime);	// sikk - Print current time for logging purposes
 		Sys_Printf("\nSession Stopped: %s", ctime(&lTime));
+		
+		// TODO:
+		// at program quit, the static slab lists are emptied before the global command queue
+		// object is destroyed, so commands can't clean up any of their data
+		g_cmdQueue.Clear();		// so we're doing this for now, until I come back and 
+								// figure out why, ie forever
 
 		DestroyWindow(hWnd);
 		return 0;
@@ -2460,6 +2500,8 @@ int WINAPI WinMain (
 	if (!accelerators)
 		Error("LoadAccelerators: Failed.");
 
+	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
+
 	WMain_Create();
 
 #ifndef _DEBUG
@@ -2469,26 +2511,7 @@ int WINAPI WinMain (
 
 	Sys_LogFile();
 
-	Sys_Printf("Creating windows\n");
-	g_qeglobals.d_wndConsole = new WndConsole();
-	g_qeglobals.d_wndConsole->Initialize();
-
-	g_qeglobals.d_wndCamera = new WndCamera();
-	g_qeglobals.d_wndCamera->Initialize();
-	for (int i = 0; i < 3; i++)
-	{
-		g_qeglobals.d_wndGrid[i] = new WndGrid();
-		g_qeglobals.d_wndGrid[i]->Initialize(i);
-	}
-	g_qeglobals.d_wndZ = new WndZChecker();
-	g_qeglobals.d_wndZ->Initialize();
-
-	g_qeglobals.d_wndTexture = new WndTexture();
-	g_qeglobals.d_wndTexture->Initialize();
-	g_qeglobals.d_wndEntity = new WndEntity();
-	g_qeglobals.d_wndEntity->Initialize();
-
-	QE_ForceInspectorMode(W_CONSOLE);
+	WMain_CreateViews();
 
 	// sikk - Print App name and current time for logging purposes
 	time(&lTime);	

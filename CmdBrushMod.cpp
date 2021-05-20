@@ -29,6 +29,7 @@ CmdBrushMod::brBasis_s::brBasis_s(Brush *bOrig) :
 	for (of = bOrig->faces; of; of = of->fnext)
 	{
 		nf = of->Clone();	// clones texdef and plane, but not winding
+		nf->owner = of->owner;
 		nf->d_color = of->d_color;	// or noops will turn the brush black
 
 		// give the existing windings back, ours will need to be rebuilt on an undo anyway
@@ -188,15 +189,16 @@ void CmdBrushMod::RestoreAll()
 // call if you screwed up a brush and you want things to go back to the way they were
 void CmdBrushMod::RevertBrush(Brush *br)
 {
-	assert(state == LIVE);
+	assert(state == LIVE || state == NOOP);
 
 	for (auto brbIt = brushCache.begin(); brbIt != brushCache.end(); ++brbIt)
 	{
 		if (brbIt->br == br)
 		{
 			Swap(*brbIt);	// switch original geometry back into the scene first
+			brbIt->clear();	// delete swapped garbage
+			brushCache.erase(brbIt);
 			br->FullBuild();
-			brushCache.erase(brbIt);	// deletes entry and takes the swapped garbage with it
 			break;
 		}
 	}
@@ -213,7 +215,7 @@ void CmdBrushMod::RevertBrushes(Brush *brList)
 void CmdBrushMod::RevertBrushes(std::vector<Brush*> brList)
 {
 	for (auto brbIt = brList.begin(); brbIt != brList.end(); ++brbIt)
-		RevertBrushes(*brbIt);
+		RevertBrush(*brbIt);
 }
 
 void CmdBrushMod::RevertAll()
