@@ -202,18 +202,18 @@ private:
 };
 */
 
-class qeConfig
+class QEConfig
 {
 public:
-	qeConfig();
-	~qeConfig();
+	QEConfig();
+	~QEConfig();
 
 	std::vector<qecfgProject_t> projectPresets;	// current project is always moved to the first index
 	std::vector<qecfgColors_t> colorPresets;
 
 	bool Load();
 	void Save();
-	void ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest);
+	void ExpandProjectPaths(qecfgProject_t& src, qecfgProject_t& dest, const char quakePath[] = nullptr);
 	void ExpandProjectPaths();
 	void StandardColorPresets();
 
@@ -221,7 +221,7 @@ private:
 	void Defaults();
 	void WriteColor(std::ofstream &f, qecfgColors_t &col);
 	bool WriteProject(std::ofstream &f, qecfgProject_t &proj);
-	void ExpandProjectPath(char* src, char* dest, bool dir = false);
+	void ExpandProjectPath(char* src, char* dest, const char quakePath[], bool dir = false);
 
 	bool ParseUI();
 	bool ParseEditor();
@@ -230,7 +230,7 @@ private:
 	EPair *ParseCfgPairs();
 };
 
-extern qeConfig g_qeconfig;
+extern QEConfig g_qeconfig;
 extern qecfgUI_t g_cfgUI;
 extern qecfgEditor_t g_cfgEditor;
 extern qecfgProject_t g_project;	// not saved, paths with macros expanded

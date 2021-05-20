@@ -17,8 +17,8 @@ public:
 	void UseBrush(Brush *br);
 	void UseBrushes(Brush *brList);
 
-	void Translate(vec3 tr, const bool relative = false);
-	void TextureLock(bool lock) { textureLock = lock; if (lock) postDrag = true; }
+	void Translate(const vec3 tr, const bool nudge = false);
+	void TextureLock(const bool lock) { textureLock = lock; if (lock) postDrag = true; }
 
 	vec3 trans;
 	bool postDrag;

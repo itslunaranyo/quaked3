@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 
-CmdTranslate::CmdTranslate() : textureLock(false), postDrag(false), Command("Translate")
+CmdTranslate::CmdTranslate() : textureLock(false), postDrag(false), Command("Translate"), mat(mat4(1))
 {
 }
 
@@ -51,6 +51,7 @@ void CmdTranslate::Translate(vec3 tr, const bool relative)
 	{
 		tMod = tr;
 		trans += tr;
+		postDrag = false;
 	}
 	else
 	{
@@ -60,18 +61,18 @@ void CmdTranslate::Translate(vec3 tr, const bool relative)
 
 	mat = glm::translate(mat4(1), trans);
 
-	if (!textureLock && !postDrag)
+	if (relative || (!textureLock && !postDrag))
 	{
 		if (tMod == vec3(0))
 			return;
-		if (cmdFM.state != LIVE && brMoved.size())
+		if (cmdFM.state == NOOP && brMoved.size())
 			doFM = true;
 		mat4 matmod = glm::translate(mat4(1), tMod);
 		for (auto brIt = brMoved.begin(); brIt != brMoved.end(); ++brIt)
 		{
 			if (doFM)
 				cmdFM.ModifyFaces((*brIt)->faces);
-			(*brIt)->Transform(matmod, false);
+			(*brIt)->Transform(matmod, textureLock);
 		}
 		for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
 		{

@@ -464,6 +464,7 @@ void Map::ImportFromFile(const char *filename)
 		g_cmdQueue.Complete(cmdIM);
 
 		Textures::ReloadAll();
+		// TODO: why not just reload them all, dupes could be flushed and require a refresh
 		w = cmdIM->WadsAdded();
 		if (w)
 		{
@@ -817,7 +818,7 @@ void Map::RegionXYZ(int gwin)
 	RegionOff();
 
 	regionMins = g_vGrid[gwin].GetMins();
-	regionMins = g_vGrid[gwin].GetMaxs();
+	regionMaxs = g_vGrid[gwin].GetMaxs();
 
 	regionMins[g_vGrid[gwin].GetAxis()] = -g_cfgEditor.MapSize / 2;
 	regionMaxs[g_vGrid[gwin].GetAxis()] = g_cfgEditor.MapSize / 2;

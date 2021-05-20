@@ -659,7 +659,7 @@ void GeoTool::CollapseHandles()
 	handles.resize(mark - handles.begin());
 
 	for (auto hIt = handles.begin(); hIt != handles.end(); ++hIt)
-		std::unique(hIt->brAffected.begin(), hIt->brAffected.end());
+		hIt->brAffected.erase(std::unique(hIt->brAffected.begin(), hIt->brAffected.end()), hIt->brAffected.end());
 }
 
 bool GeoTool::handlecmp(const handle &a, const handle &b)

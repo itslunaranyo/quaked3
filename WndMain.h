@@ -26,6 +26,9 @@ extern WndTexture	*g_wndTexture;
 extern WndEntity	*g_wndEntity;
 extern WndConsole	*g_wndConsole;
 
+void	WndSplash_Create();
+void	WndSplash_Destroy();
+
 void	WndMain_SwapGridCam();
 void	WndMain_SyncInspectorPlacement();
 void	WndMain_SetInspectorMode(int nType);
@@ -47,7 +50,6 @@ LONG WINAPI WndMain_Command(HWND hWnd, WPARAM wParam, LPARAM lParam);
 void	WndMain_CheckMenuItem(HMENU hMenu, unsigned item, bool check);
 void	WndMain_UpdateMenu();
 void	WndMain_UpdateMenuFilters(HMENU hMenu);
-void	WndMain_UpdateTextureMenu();
 void	WndMain_CreateMRU();
 void	WndMain_DestroyMRU();
 BOOL	WndMain_UpdateMRU(WORD wId);
@@ -55,7 +57,6 @@ void	WndMain_AddMRUItem(LPSTR lpItem);
 void	WndMain_ViewFilterPopup();
 void	WndMain_ToggleViewFilter(int filt);
 int		WndMain_RotForModifiers();
-const char*	WndMain_WadForMenuItem(int mnum);
 
 // WndMain_Status
 void    WndMain_Status(const char *psz, int part);

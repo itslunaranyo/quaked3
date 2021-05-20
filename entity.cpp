@@ -11,6 +11,7 @@
 #include "CmdCreatePointEntity.h"
 #include "parse.h"
 #include "win_dlg.h"
+#include <iostream>
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),

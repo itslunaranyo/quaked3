@@ -577,6 +577,79 @@ void Textures::ReloadAll()
 
 /*
 ==================
+Textures::MergeWadStrings
+==================
+*/
+void Textures::MergeWadStrings(char* wad1, char* wad2, char* out)
+{
+	if (strlen(wad1) <= 1 && strlen(wad2) <= 1)
+		return;
+	if (strlen(wad1) <= 1)
+	{
+		strcpy(out, wad2);
+		return;
+	}
+	if (strlen(wad2) <= 1)
+	{
+		strcpy(out, wad1);
+		return;
+	}
+
+	char scratch1[1024], scratch2[1024];
+	char* outmark;
+	int oldwads = 0;
+	std::vector<char*> wadnames;
+
+	strcpy(scratch1, wad1);
+	strcpy(scratch2, wad2);
+
+	for (char* tempwad = strtok(scratch1, ";"); tempwad; tempwad = strtok(0, ";"))
+	{
+		wadnames.push_back(tempwad);
+		oldwads++;
+	}
+	for (char* tempwad = strtok(scratch2, ";"); tempwad; tempwad = strtok(0, ";"))
+	{
+		bool dupe = false;
+		for (auto wchIt = wadnames.begin(); wchIt != wadnames.end(); ++wchIt)
+		{
+			// TODO: compare relative and absolute pathnames with project wad path?
+			if (!strcmp(tempwad, *wchIt))
+			{
+				dupe = true;
+				break;
+			}
+		}
+		if (!dupe)
+		{
+			wadnames.push_back(tempwad);
+		}
+	}
+
+	if (wadnames.size() == oldwads)
+	{
+		// all new wads are dupes
+		strcpy(out, wad1);
+		return;
+	}
+
+	outmark = scratch1;
+	strcpy(outmark, wad1);
+	outmark += strlen(outmark);
+	if (*(outmark - 1) == ';')
+		outmark--;
+
+	for (int i = oldwads; i < wadnames.size(); i++)
+	{
+		sprintf(outmark, ";%s\0", wadnames[i]);
+		outmark += strlen(wadnames[i]) + 1;
+	}
+
+	strcpy(out, scratch1);
+}
+
+/*
+==================
 Textures::LoadWadsFromWadstring
 ==================
 */
@@ -1094,36 +1167,4 @@ int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return texnum;
-}
-
-//=====================================================
-
-
-/*
-==================
-Textures::ListWadsInDirectory
-==================
-*/
-std::vector<_finddata_t> Textures::ListWadsInDirectory(const char* wadpath)
-{
-	_finddata_t fileinfo;
-	std::vector<_finddata_t> wadlist;
-	int		handle;
-	char	path[1024];
-	char    dirstring[1024];
-
-	sprintf(path, "%s*.wad", wadpath);
-	Sys_ConvertDOSToUnixName(dirstring, wadpath);
-	Sys_Printf("ListWadsInDirectory: %s\n", dirstring);
-
-	handle = _findfirst(path, &fileinfo);
-	if (handle != -1)
-	{
-		do {
-			Sys_Printf("Found wad file: %s%s\n", dirstring, fileinfo.name);
-			wadlist.push_back(fileinfo);
-		} while (_findnext(handle, &fileinfo) != -1);
-		_findclose(handle);
-	}
-	return wadlist;
 }

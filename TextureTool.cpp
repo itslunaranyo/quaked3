@@ -11,9 +11,11 @@
 #include "CmdTextureApply.h"
 #include "CmdTextureFit.h"
 #include "CmdTextureMod.h"
+#include "CmdSetKeyvalue.h"
 #include "CameraView.h"
 #include "TextureView.h"
 #include "surface.h"
+#include "map.h"
 #include "WndCamera.h"
 #include "win_dlg.h"
 
@@ -256,75 +258,8 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case ID_TEXTURES_DEFAULTSCALE:	// sikk - Default Texture Scale Dialog
 			DoDefaultTexScale();
 			break;
-
-		case CMD_TEXTUREWAD:
-		case CMD_TEXTUREWAD + 1:
-		case CMD_TEXTUREWAD + 2:
-		case CMD_TEXTUREWAD + 3:
-		case CMD_TEXTUREWAD + 4:
-		case CMD_TEXTUREWAD + 5:
-		case CMD_TEXTUREWAD + 6:
-		case CMD_TEXTUREWAD + 7:
-		case CMD_TEXTUREWAD + 8:
-		case CMD_TEXTUREWAD + 9:
-		case CMD_TEXTUREWAD + 10:
-		case CMD_TEXTUREWAD + 11:
-		case CMD_TEXTUREWAD + 12:
-		case CMD_TEXTUREWAD + 13:
-		case CMD_TEXTUREWAD + 14:
-		case CMD_TEXTUREWAD + 15:
-		case CMD_TEXTUREWAD + 16:
-		case CMD_TEXTUREWAD + 17:
-		case CMD_TEXTUREWAD + 18:
-		case CMD_TEXTUREWAD + 19:
-		case CMD_TEXTUREWAD + 20:
-		case CMD_TEXTUREWAD + 21:
-		case CMD_TEXTUREWAD + 22:
-		case CMD_TEXTUREWAD + 23:
-		case CMD_TEXTUREWAD + 24:
-		case CMD_TEXTUREWAD + 25:
-		case CMD_TEXTUREWAD + 26:
-		case CMD_TEXTUREWAD + 27:
-		case CMD_TEXTUREWAD + 28:
-		case CMD_TEXTUREWAD + 29:
-		case CMD_TEXTUREWAD + 30:
-		case CMD_TEXTUREWAD + 31:
-		case CMD_TEXTUREWAD + 32:
-		case CMD_TEXTUREWAD + 33:
-		case CMD_TEXTUREWAD + 34:
-		case CMD_TEXTUREWAD + 35:
-		case CMD_TEXTUREWAD + 36:
-		case CMD_TEXTUREWAD + 37:
-		case CMD_TEXTUREWAD + 38:
-		case CMD_TEXTUREWAD + 39:
-		case CMD_TEXTUREWAD + 40:
-		case CMD_TEXTUREWAD + 41:
-		case CMD_TEXTUREWAD + 42:
-		case CMD_TEXTUREWAD + 43:
-		case CMD_TEXTUREWAD + 44:
-		case CMD_TEXTUREWAD + 45:
-		case CMD_TEXTUREWAD + 46:
-		case CMD_TEXTUREWAD + 47:
-		case CMD_TEXTUREWAD + 48:
-		case CMD_TEXTUREWAD + 49:
-		case CMD_TEXTUREWAD + 50:
-		case CMD_TEXTUREWAD + 51:
-		case CMD_TEXTUREWAD + 52:
-		case CMD_TEXTUREWAD + 53:
-		case CMD_TEXTUREWAD + 54:
-		case CMD_TEXTUREWAD + 55:
-		case CMD_TEXTUREWAD + 56:
-		case CMD_TEXTUREWAD + 57:
-		case CMD_TEXTUREWAD + 58:
-		case CMD_TEXTUREWAD + 59:
-		case CMD_TEXTUREWAD + 60:
-		case CMD_TEXTUREWAD + 61:
-		case CMD_TEXTUREWAD + 62:
-		case CMD_TEXTUREWAD + 63:
-			Sys_BeginWait();
-			Textures::MenuLoadWad(WndMain_WadForMenuItem(LOWORD(wParam) - CMD_TEXTUREWAD));
-			WndMain_SetInspectorMode(W_TEXTURE);
-			Sys_EndWait();
+		case ID_TEXTURES_ADDWAD:
+			DoAddWad();
 			break;
 		}
 	}
@@ -543,3 +478,92 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 //		Sys_Printf("combining texmod\n");
 }
 
+
+// ================================================================
+
+
+bool TextureTool::SelectWadDlg(char outFile[])
+{
+	OPENFILENAME ofn;			// common dialog box structure
+	char szFile[_MAX_PATH];		// filename string
+	char szFileTitle[_MAX_FNAME];// file title string
+
+	szFile[0] = 0;
+	ofn = { 0 };
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = g_hwndMain;
+	ofn.lpstrFilter = "QuakeEd Wad File (*.wad)\0*.wad\0\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFileTitle = szFileTitle;
+	ofn.nMaxFileTitle = sizeof(szFileTitle);
+	ofn.lpstrInitialDir = g_project.wadPath;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER;
+	ofn.lpstrTitle = "Select Wad File(s)";
+
+	if (GetOpenFileName(&ofn))
+	{
+		if (strlen(ofn.lpstrFile))
+		{
+			char* rel, * lastSlash;
+			rel = szFile;
+			lastSlash = szFile;
+			for (unsigned i = 0; i < strlen(g_project.wadPath); i++)
+			{
+				if (*rel == '\\') while (*(rel + 1) == '\\')
+					rel++;
+				if (*rel == '\\')
+				{
+					*rel = '/';
+					lastSlash = rel;
+				}
+				if (*rel != g_project.wadPath[i])
+					break;
+				rel++;
+			}
+			lastSlash++;
+			char* outc = outFile;
+			char* srcc = lastSlash;
+			while (*srcc)
+			{
+				if (*srcc == '\\' || * srcc == '/')
+				{
+					*outc = '/';
+					while (*srcc == '\\' || *srcc == '/')
+						srcc++;
+					outc++;
+					continue;
+				}
+				*outc++ = *srcc++;
+			}
+			*outc = 0;
+			return true;
+		}
+	}
+	return false;
+}
+
+void TextureTool::DoAddWad()
+{
+	char wadfile[_MAX_PATH];
+	char wadstr[1024];
+	if (SelectWadDlg(wadfile))
+	{
+		Sys_BeginWait();
+		Textures::LoadWad(wadfile);
+
+		// ask after to add to world wad key
+		if (MessageBox(g_hwndMain, "Add wad to worldspawn key?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDYES)
+		{
+			Textures::MergeWadStrings(g_map.world->GetKeyValue("wad"), wadfile, wadstr);
+
+			CmdSetKeyvalue* cmdKV = new CmdSetKeyvalue("wad", wadstr);
+			cmdKV->AddEntity(g_map.world);
+			g_cmdQueue.Complete(cmdKV);
+		}
+
+		Sys_EndWait();
+		WndMain_SetInspectorMode(W_TEXTURE);
+	}
+}

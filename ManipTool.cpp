@@ -54,8 +54,21 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 
 	switch (uMsg)
 	{
-	//case WM_COMMAND:
-	//	return InputCommand(wParam);
+	case WM_COMMAND:
+		if (hot) return true;
+		switch (LOWORD(wParam)) {
+		case ID_NUDGE_UP:
+		case ID_NUDGE_DOWN:
+		case ID_NUDGE_LEFT:
+		case ID_NUDGE_RIGHT:
+			vWnd.GetMsgXY(lParam, mx, my);
+			mc = v.GetMouseContext(mx, my);
+			Nudge(LOWORD(wParam), mc.right, mc.up);
+			WndMain_UpdateWindows(W_SCENE);
+			return true;
+		default:
+			return false;
+		}
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || AltDown())
 			return false;
@@ -117,7 +130,8 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wn
 		case ID_NUDGE_RIGHT:
 			mc = v.GetMouseContext(0,0);
 			Nudge(LOWORD(wParam), mc.right, mc.up);
-			break;
+			WndMain_UpdateWindows(W_SCENE);
+			return true;
 		default:
 			return false;
 		}
@@ -174,8 +188,19 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZC
 
 	switch (uMsg)
 	{
-	//case WM_COMMAND:
-	//	return InputCommand(wParam);
+	case WM_COMMAND:
+		if (hot) return true;
+		switch (LOWORD(wParam)) {
+		case ID_NUDGE_UP:
+		case ID_NUDGE_DOWN:
+		//case ID_NUDGE_LEFT:
+		//case ID_NUDGE_RIGHT:
+			Nudge(LOWORD(wParam), vec3(0,0,0), vec3(0,0,1));
+			WndMain_UpdateWindows(W_SCENE);
+			return true;
+		default:
+			return false;
+		}
 	case WM_LBUTTONDOWN:
 		if (ShiftDown() || CtrlDown() || AltDown())
 			return false;
@@ -607,30 +632,61 @@ void ManipTool::DragFinish()
 // CmdTranslate needs to be modifiable post-do
 void ManipTool::Nudge(int nudge, vec3 right, vec3 up)
 {
-	/*
 	if (Selection::IsEmpty()) return;
+	bool reuse = true;
 
-	SetupTranslate();
-	StartTranslate();
+	// a clone nudge entails holding down alt and space, but in the wrong order on windows that
+	// activates the titlebar corner icon :/
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+	{
+		assert(!cmdCmpClone);
+		cmdCmpClone = new CmdCompound("Clone Nudge");
+		CmdClone *cmdCl = new CmdClone(&g_brSelectedBrushes);
+		Selection::DeselectAll();
+		cmdCmpClone->Complete(cmdCl);
+	}
+
+	if (!lastNudge || !g_cmdQueue.CanUndo() ||
+		g_cmdQueue.LastUndo() != lastNudge ||
+		lastNudgeTime + CMD_COMBINE_TIME < clock())
+	{
+		lastNudge = new CmdTranslate();
+		lastNudge->UseBrushes(&g_brSelectedBrushes);
+		lastNudge->TextureLock(g_qeglobals.d_bTextureLock);
+		reuse = false;
+	}
+	//else
+	//	Sys_Printf("combining nudge\n");
 
 	switch (nudge)
 	{
 	case ID_NUDGE_UP:
-		cmdTr->Translate(up * (float)g_qeglobals.d_nGridSize);
+		lastNudge->Translate(up * (float)g_qeglobals.d_nGridSize, true);
 		break;
 	case ID_NUDGE_DOWN:
-		cmdTr->Translate(up * -(float)g_qeglobals.d_nGridSize);
+		lastNudge->Translate(up * -(float)g_qeglobals.d_nGridSize, true);
 		break;
 	case ID_NUDGE_LEFT:
-		cmdTr->Translate(right * -(float)g_qeglobals.d_nGridSize);
+		lastNudge->Translate(right * -(float)g_qeglobals.d_nGridSize, true);
 		break;
 	case ID_NUDGE_RIGHT:
-		cmdTr->Translate(right * (float)g_qeglobals.d_nGridSize);
+		lastNudge->Translate(right * (float)g_qeglobals.d_nGridSize, true);
 		break;
 	}
 
-	DragFinish();
-	*/
+	if (cmdCmpClone)
+	{
+		if (!reuse)
+			cmdCmpClone->Complete(lastNudge);
+		g_cmdQueue.Complete(cmdCmpClone);
+	}
+	else
+	{
+		if (!reuse)
+			g_cmdQueue.Complete(lastNudge);
+	}
+	lastNudgeTime = clock();
+	cmdCmpClone = nullptr;
 }
 
 

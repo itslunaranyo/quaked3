@@ -44,6 +44,8 @@ private:
 
 	void GetTexModCommand(texModType_t tm);
 	void UpdateFindReplaceHistories();
+	bool SelectWadDlg(char outFile[]);
+	void DoAddWad();
 };
 
 extern TextureTool* g_texTool;

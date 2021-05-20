@@ -9,10 +9,10 @@ public:
 	Palette();
 	~Palette();
 
-	typedef struct {
+	struct color_t {
 		byte r, g, b, a;
 		unsigned AsInt() { return ((unsigned int)255 << 24) + (b << 16) + (g << 8) + r; }
-	} color_t;
+	};
 
 	void LoadFromFile(const char* palfile);
 

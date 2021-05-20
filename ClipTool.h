@@ -28,12 +28,12 @@ public:
 	void SelectionChanged();
 
 private:
-	typedef struct
+	struct clippoint_t
 	{
 		bool	set;
 		vec3	point;      // the 3d point
 		void Reset() { set = false; point = vec3(0); }
-	} clippoint_t;
+	};
 
 	//========================================================================
 

@@ -23,7 +23,7 @@
 #define	SPEED_TURN	22.5f
 
 qeglobals_t	g_qeglobals;
-qeConfig	g_qeconfig;
+QEConfig	g_qeconfig;
 
 void QE_FixMonFlags()
 {
@@ -109,46 +109,7 @@ void QE_FindKTs()
 	}
 }
 
-void QE_RebarSpew()
-{
-	for (int i = 0; i < REBARBANDCOUNT; i++)
-	{
-		int nBandIndex = SendMessage(g_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-		REBARBANDINFO barf;
-		barf.cbSize = sizeof(REBARBANDINFO);
-		barf.fMask = RBBIM_SIZE;
-		//barf.fMask = RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_IDEALSIZE | RBBIM_ID | RBBIM_SIZE | RBBIM_STYLE;
-		
-		SendMessage(g_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&barf);
 
-		InvalidateRect(g_hwndRebar, NULL, FALSE);
-	}
-
-	/*
-	WINDOWPLACEMENT bleh;
-	for (int i = 0; i < REBARBANDCOUNT; i++)
-	{
-		GetWindowPlacement(g_hwndToolbar[i], &bleh);
-		Sys_Printf("%i:\nvis: %i\nltrb: %i %i %i %i\n", i,
-			IsWindowVisible(g_hwndToolbar[i]),
-			bleh.rcNormalPosition.left,
-			bleh.rcNormalPosition.top,
-			bleh.rcNormalPosition.right,
-			bleh.rcNormalPosition.bottom
-		);
-		RECT rectum;
-		GetWindowRect(g_hwndToolbar[i], &rectum);
-		MapWindowPoints(NULL, g_hwndRebar, (POINT *)&rectum, 2);
-		Sys_Printf("BUT:\nltrb: %i %i %i %i\n", 
-			rectum.left,
-			rectum.top,
-			rectum.right,
-			rectum.bottom
-		);
-	}*/
-}
-
-// it can test aaanything you want just press PEE
 #pragma optimize("", off)
 void QE_TestSomething()
 {
@@ -626,12 +587,6 @@ bool QE_KeyDown (int key)
 	case VK_F4:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_EDIT_PREFERENCES, 0);
 		break;
-	//case VK_F5:
-	//	PostMessage(g_hwndMain, WM_COMMAND, ID_FILE_EDITPROJECT, 0);
-	//	break;
-	case VK_F10:
-		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_BENCHMARK, 0);
-		break;
 	case VK_F12:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_TESTMAP, 0);
 		break;
@@ -790,7 +745,6 @@ bool QE_InitProject()
 	EntClass::InitForSourceDirectory(g_project.entityFiles);
 
 	g_wndEntity->FillClassList();
-	WndMain_UpdateTextureMenu();
 	//FillBSPMenu();
 
 	g_map.New();

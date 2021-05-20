@@ -51,9 +51,14 @@ called when the command object is passed into the queue and completed.
 commands can set up anything they need in advance, but must not *permanently*
 modify the scene before Do() is called. deleting any command before this
 point should leave the scene exactly as it was when that command was first
-instantiated. deleting it after (when state == DONE) happens when the undo
+instantiated*. deleting it after (when state == DONE) happens when the undo
 drops off the far end of the list, so it should clean up all its memory
 but not reverse its changes to the scene.
+
+* commands that are modifiable after Do (like translate or texture shift, for
+purposes of combining little nudges into single steps on the queue) necessarily
+break this rule, in which case they take on the responsibility of reverting
+themselves if deleted before being Done
 ==================
 */
 void Command::Do()

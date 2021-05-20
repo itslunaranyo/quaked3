@@ -34,38 +34,6 @@ void SetWindowRect(HWND hwnd, RECT *rc)
 ==============================================================================
 */
 
-/*
-============
-SplashDlgProc
-============
-*/
-BOOL CALLBACK SplashDlgProc(
-	HWND	hwndDlg,// handle to dialog box
-	UINT	uMsg,	// message
-	WPARAM	wParam,	// first message parameter
-	LPARAM	lParam 	// second message parameter
-	)
-{
-
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
-		ShowWindow(hwndDlg, SW_SHOW);
-		InvalidateRect(hwndDlg, NULL, FALSE);
-		UpdateWindow(hwndDlg);
-		SetTimer(hwndDlg, QE_TIMERSPLASH, 3000, nullptr);
-		return FALSE;
-
-	case WM_TIMER:
-	case WM_LBUTTONDOWN:
-		DestroyWindow(hwndDlg);
-		return FALSE;
-	case WM_CLOSE:
-		KillTimer(hwndDlg, QE_TIMERSPLASH);
-		return FALSE;
-	}
-	return 0;
-}
 
 
 /*
@@ -230,10 +198,8 @@ int WINAPI WinMain (
 	g_qeglobals.d_hInstance = hInstance;
 	g_bWarningOrError = false;
 
-//#ifndef _DEBUG
-	HWND hwndSplash;
-	hwndSplash = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_hwndMain, SplashDlgProc);
-//#endif
+	WndSplash_Create();
+
 	InitCommonControls ();
 
 	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
@@ -250,7 +216,7 @@ int WINAPI WinMain (
 	// catching access violations and stuff at this level only, to try and save work to 
 	// disk before finally crashing out
 	Main_Init();
-	DestroyWindow(hwndSplash);
+	WndSplash_Destroy();
 
 #ifndef _DEBUG
 	__try {

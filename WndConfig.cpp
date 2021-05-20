@@ -834,27 +834,38 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	char*	errCur;
 
 	qecfgProject_t projTest;
-	g_qeconfig.ExpandProjectPaths(cfgCtx.cfgProj, projTest);
+	g_qeconfig.ExpandProjectPaths(cfgCtx.cfgProj, projTest, cfgCtx.cfgEd.QuakePath);
 
 	errCur = szErrors;
 	*errCur = 0;
 	
-	strcpy(errCur, "Unable to apply config for the following reasons:\n\n");
-	errCur += 51;
+	const char ERR_INTRO[] = "The following problems were found with your configuration:\n\n";
+	const char ERR_NOQUAKEDIR[] = "No Quake directory specified.\n";
+	const char ERR_BADQUAKEDIR[] = "Couldn't find '/id1/pak0.pak' in specified Quake directory.\n";
+	const char ERR_NOBASEPATH[] = "No game basepath specified.\n";
+	const char ERR_NOMAPSPATH[] = "No maps path specified.\n";
+	const char ERR_NOAUTOSAVE[] = "Autosaving is enabled, but no autosave map is specified.\n";
+	const char ERR_NODEFS[] = "No entity definitions specified.\n";
+	const char ERR_BADDEFS[] = "Specified entity definitions not found.\n";
+	const char ERR_NOTEX[] = "No texture path specified.\n";
+	const char ERR_BADTEX[] = "No .wad files found at specified texture path.\n";
+	const char ERR_AREYOUSURE[] = "\nDo you want to apply these values and proceed anyway?\n";
+
+#define DLGERRCOPY(x) strcpy(errCur, x); errCur += strlen(x);
+
+	DLGERRCOPY(ERR_INTRO);
 
 	cfgOK = true;
 
 	// Editor
 	if (!strlen(cfgCtx.cfgEd.QuakePath))
 	{
-		strcpy(errCur, "No Quake directory specified.\n");
-		errCur += 30;
+		DLGERRCOPY(ERR_NOQUAKEDIR);
 		cfgOK = false;
 	}
 	else if ( !IO_FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && !IO_FileExists(cfgCtx.cfgEd.QuakePath, "ID1/PAK0.PAK"))
 	{
-		strcpy(errCur, "Couldn't find 'quake.exe' or '/id1/pak0.pak' in specified Quake directory. Is it correct?\n");
-		errCur += 90;
+		DLGERRCOPY(ERR_BADQUAKEDIR);
 		cfgOK = false;
 	}
 
@@ -863,54 +874,55 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	// Project
 	if (!strlen(cfgCtx.cfgProj.basePath))
 	{
-		strcpy(errCur, "No game basepath specified.\n");
-		errCur += 28;
+		DLGERRCOPY(ERR_NOBASEPATH);
 		cfgOK = false;
 	}
 
 	if (!strlen(cfgCtx.cfgProj.mapPath))
 	{
-		strcpy(errCur, "No maps path specified.\n");
-		errCur += 24;
+		DLGERRCOPY(ERR_NOMAPSPATH);
 		cfgOK = false;
 	}
 
-	if (!strlen(cfgCtx.cfgProj.autosaveFile) || IsPathDirectory(projTest.autosaveFile))
+	if (cfgCtx.cfgEd.Autosave)
 	{
-		strcpy(errCur, "No autosave map specified.\n");
-		errCur += 27;
-		cfgOK = false;
+		if (!strlen(cfgCtx.cfgProj.autosaveFile) || IsPathDirectory(projTest.autosaveFile))
+		{
+			DLGERRCOPY(ERR_NOAUTOSAVE);
+			cfgOK = false;
+		}
 	}
 
 	if (!strlen(cfgCtx.cfgProj.entityFiles) || IsPathDirectory(projTest.entityFiles))
 	{
-		strcpy(errCur, "No entity definitions specified.\n");
-		errCur += 33;
+		DLGERRCOPY(ERR_NODEFS);
 		cfgOK = false;
 	}
 	else if (!IO_FileExists(projTest.entityFiles))
 	{
-		strcpy(errCur, "Specified entity definitions not found. Is the path correct?\n");
-		errCur += 61;
+		DLGERRCOPY(ERR_BADDEFS);
 		cfgOK = false;
 	}
 
 	if (!strlen(cfgCtx.cfgProj.wadPath))
 	{
-		strcpy(errCur, "No texture path specified.\n");
-		errCur += 27;
+		DLGERRCOPY(ERR_NOTEX);
 		cfgOK = false;
 	}
 	else if (!IO_FileWithExtensionExists(projTest.wadPath, "wad"))
 	{
-		strcpy(errCur, "No .wad files found at specified texture path. Is it correct?\n");
-		errCur += 62;
+		DLGERRCOPY(ERR_BADTEX);
 		cfgOK = false;
 	}
 
 	if (!cfgOK)
-		MessageBox(g_hwndMain, szErrors, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
+	{
+		DLGERRCOPY(ERR_AREYOUSURE);
+		return (MessageBox(g_hwndMain, szErrors, "QuakeEd 3: Error", MB_YESNO | MB_ICONEXCLAMATION) == IDYES);
+	}
 	return cfgOK;
+
+#undef DLGERRCOPY
 }
 
 /*
@@ -949,6 +961,7 @@ void WndCfg_ApplyToConfig(cfgContext_t cfgCtx)
 	int i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
 	g_qeconfig.projectPresets[i] = cfgCtx.cfgProj;
 
+	g_qeconfig.Save();
 	g_needApply = false;
 }
 
@@ -1257,6 +1270,8 @@ void WndCfg_OnApply()
 
 	// apply to live config
 	WndCfg_ApplyToConfig(cfgCtx);
+
+	WndMain_UpdateWindows(W_SCENE | W_TEXTURE);	// force windows to redraw to catch color changes
 }
 
 bool WndCfg_OnClose()
@@ -1347,6 +1362,7 @@ void DoConfigWindow()
 
 void DoConfigWindowProject()
 {
+	WndSplash_Destroy();
 	g_noProject = true;
 	g_cfgNeedReload = false;
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CONFIG), g_hwndMain, ConfigDlgProc);

@@ -2152,7 +2152,7 @@ BOOL CALLBACK ImportOptionsDlgProc(
 				EndDialog(hwndDlg, out);
 				return TRUE;
 			case IDCANCEL:
-				EndDialog(hwndDlg, out);
+				EndDialog(hwndDlg, -1);
 				return TRUE;
 			}
 		}
@@ -2164,7 +2164,7 @@ bool ImportOptionsDialog(CmdImportMap *cmdIM)
 {
 	int result = DialogBoxParamA(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_IMPORT), g_hwndMain, ImportOptionsDlgProc, 0L);
 
-	if (result <= 0)
+	if (result < 0)
 		return false;
 
 	if (result & 1)
@@ -2181,3 +2181,4 @@ bool ImportOptionsDialog(CmdImportMap *cmdIM)
 
 	return true;
 }
+

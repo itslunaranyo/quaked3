@@ -6,7 +6,7 @@
 #include "qe3.h"
 #include "parse.h"
 #include "winding.h"
-
+#include <iostream>
 
 /*
 =============

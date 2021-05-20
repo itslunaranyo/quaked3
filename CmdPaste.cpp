@@ -35,13 +35,12 @@ void CmdPaste::Do_Impl()
 	}
 
 	cbdata = (char*)GlobalLock(hglb);
-	if (!cbdata || cbdata[0] != '{')	// no opening brace = definitely not map data
+	if (!cbdata)
 	{
 		GlobalUnlock(hglb);
 		CloseClipboard();
 		CmdError("Couldn't paste from clipboard");
 	}
-
 
 	Brush *b, *next;
 	Entity *e, *enext;

@@ -8,8 +8,8 @@
 #include <fstream>
 #include <algorithm>
 
-qeConfig::qeConfig() { /*Defaults();*/ }
-qeConfig::~qeConfig() {}
+QEConfig::QEConfig() { /*Defaults();*/ }
+QEConfig::~QEConfig() {}
 
 qecfgUI_t g_cfgUI;
 qecfgEditor_t g_cfgEditor;
@@ -125,7 +125,7 @@ void ConfigVarFloat::ReadPair(EPair &ep)	{ val = (sscanf((char*)*ep.value, "%f",
 void ConfigVarString::ReadPair(EPair &ep)	{ Set((char*)*ep.value); }
 //void ConfigVarProject::Read(Entity &epc) {}
 
-void qeConfig::Defaults()
+void QEConfig::Defaults()
 {
 	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Reset();
@@ -141,7 +141,7 @@ void qeConfig::Defaults()
 	ExpandProjectPaths();
 }
 
-EPair *qeConfig::ParseCfgPairs()
+EPair *QEConfig::ParseCfgPairs()
 {
 	EPair *epnext, *ep;
 	ep = nullptr;
@@ -159,7 +159,7 @@ EPair *qeConfig::ParseCfgPairs()
 	return ep;
 }
 
-bool qeConfig::ParseUI()
+bool QEConfig::ParseUI()
 {
 	Entity ent;
 	ent.epairs = ParseCfgPairs();
@@ -170,7 +170,7 @@ bool qeConfig::ParseUI()
 	return false;
 }
 
-bool qeConfig::ParseEditor()
+bool QEConfig::ParseEditor()
 {
 	Entity ent;
 	ent.epairs = ParseCfgPairs();
@@ -192,27 +192,29 @@ bool qeConfig::ParseEditor()
 =====================================================================
 */
 
-void qeConfig::ExpandProjectPaths()
+void QEConfig::ExpandProjectPaths()
 {
 	ExpandProjectPaths(*projectPresets.begin(), g_project);
 }
 
-void qeConfig::ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest)
+void QEConfig::ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest, const char quakePath[])
 {
+	if (!quakePath)
+		quakePath = g_cfgEditor.QuakePath;
 	//auto prj = projectPresets.begin();
 	strncpy(dest.name, src.name, MAX_PROJNAME);
-	ExpandProjectPath(src.basePath, dest.basePath, true);
-	ExpandProjectPath(src.mapPath, dest.mapPath, true);
-	ExpandProjectPath(src.autosaveFile, dest.autosaveFile);
-	ExpandProjectPath(src.entityFiles, dest.entityFiles);
-	ExpandProjectPath(src.wadPath, dest.wadPath, true);
-	ExpandProjectPath(src.defaultWads, dest.defaultWads);
-	ExpandProjectPath(src.paletteFile, dest.paletteFile);
+	ExpandProjectPath(src.basePath, dest.basePath, quakePath, true);
+	ExpandProjectPath(src.mapPath, dest.mapPath, quakePath, true);
+	ExpandProjectPath(src.autosaveFile, dest.autosaveFile, quakePath);
+	ExpandProjectPath(src.entityFiles, dest.entityFiles, quakePath);
+	ExpandProjectPath(src.wadPath, dest.wadPath, quakePath, true);
+	ExpandProjectPath(src.defaultWads, dest.defaultWads, quakePath);
+	ExpandProjectPath(src.paletteFile, dest.paletteFile, quakePath);
 
 	dest.extTargets = src.extTargets;
 }
 
-void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
+void QEConfig::ExpandProjectPath(char *src, char *dest, const char quakePath[], bool dir)
 {
 	char *s, *d, *ds;
 	s = src;
@@ -232,8 +234,8 @@ void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
 		{
 			if (!strncmp(s, "$QUAKE", 6))
 			{
-				strcpy(d, g_cfgEditor.QuakePath);
-				d += strlen(g_cfgEditor.QuakePath);
+				strcpy(d, quakePath);
+				d += strlen(quakePath);
 				if (*(d-1) != '/')
 					*d++ = '/';
 				s += 6;
@@ -263,7 +265,7 @@ void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
 	*d = 0;
 }
 
-bool qeConfig::ParseProject()
+bool QEConfig::ParseProject()
 {
 	Entity ent;
 	qecfgProject_t proj;
@@ -293,7 +295,7 @@ bool qeConfig::ParseProject()
 	return false;
 }
 
-bool qeConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
+bool QEConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 {
 	f << "\"name\" \"" << proj.name << "\"\n";
 	f << "\"basePath\" \"" << proj.basePath << "\"\n";
@@ -317,7 +319,7 @@ bool qeConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 =====================================================================
 */
 
-bool qeConfig::ParseColors(qecfgColors_t &colors)
+bool QEConfig::ParseColors(qecfgColors_t &colors)
 {
 	Entity ent;
 	EPair* ep;
@@ -342,7 +344,7 @@ bool qeConfig::ParseColors(qecfgColors_t &colors)
 	return false;
 }
 
-void qeConfig::WriteColor(std::ofstream &f, qecfgColors_t &col)
+void QEConfig::WriteColor(std::ofstream &f, qecfgColors_t &col)
 {
 	char vec[64];
 
@@ -374,7 +376,7 @@ void qeConfig::WriteColor(std::ofstream &f, qecfgColors_t &col)
 	f << "\"texText\" \"" << vec << "\"\n";
 }
 
-void qeConfig::StandardColorPresets()
+void QEConfig::StandardColorPresets()
 {
 	colorPresets.reserve(colorPresets.size() + 10);
 	colorPresets.push_back({ "QE/Radiant",
@@ -514,7 +516,7 @@ void qeConfig::StandardColorPresets()
 =====================================================================
 */
 
-bool qeConfig::Load()
+bool QEConfig::Load()
 {
 	qeBuffer cfgbuf;
 	char	cfgpath[MAX_PATH];
@@ -608,7 +610,7 @@ bool qeConfig::Load()
 	return true;
 }
 
-void qeConfig::Save()
+void QEConfig::Save()
 {
 	char	cfgpath[MAX_PATH];
 

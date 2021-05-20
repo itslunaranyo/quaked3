@@ -261,7 +261,6 @@
 #define ID_GRID_8                       40031
 #define ID_GRID_16                      40032
 #define ID_TEXTURES_SHOWINUSE           40034
-#define ID_MISC_BENCHMARK               40041
 #define ID_REGION_OFF                   40043
 #define ID_REGION_SETXY                 40044
 #define ID_REGION_SETBRUSH              40045
@@ -523,13 +522,14 @@
 #define ID_TEXTURES_RELOAD              40490
 #define ID_CONTEXT_LOADCOMPLETELY       40490
 #define ID_VIEW_FILTER_POPUP            40491
+#define ID_TEXTURES_ADDWAD              40494
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        204
-#define _APS_NEXT_COMMAND_VALUE         40494
+#define _APS_NEXT_COMMAND_VALUE         40495
 #define _APS_NEXT_CONTROL_VALUE         1331
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

@@ -43,9 +43,9 @@
 ==============================================================================
 */
 
-#define	MAX_TEXTUREDIRS	128
-int		g_nTextureNumMenus;
-char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
+//#define	MAX_TEXTUREDIRS	128
+//int		g_nTextureNumMenus;
+//char	g_szTextureMenuNames[MAX_TEXTUREDIRS][64];
 LPMRUMENU   g_lpMruMenu;
 
 /*
@@ -704,12 +704,6 @@ LONG WINAPI WndMain_Command(
 	// Texture menu
 	// more in texturetool.cpp
 	//===================================
-	case ID_TEXTURES_UPDATEMENU:
-		//Sys_BeginWait();
-		WndMain_UpdateTextureMenu();
-		WndMain_SetInspectorMode(W_CONSOLE);
-		break;
-
 	case ID_TEXTURES_INSPECTOR:
 		WndSurf_Create();
 		break;
@@ -737,11 +731,6 @@ LONG WINAPI WndMain_Command(
 	//===================================
 	// Misc menu
 	//===================================
-	case ID_MISC_BENCHMARK:
-		SendMessage(g_hwndCamera, WM_BENCHMARK, 0, 0);
-		WndMain_SetInspectorMode(W_CONSOLE);
-		break;
-
 	case ID_MISC_NEXTLEAKSPOT:
 		Pointfile_Next();
 		break;
@@ -1062,93 +1051,6 @@ int WndMain_RotForModifiers()
 	if (GetKeyState(VK_SHIFT) < 0) return 180;
 	if (GetKeyState(VK_CONTROL) < 0) return -90;
 	return 90;
-}
-
-
-/*
-==================
-WndMain_UpdateTextureMenu
-==================
-*/
-void WndMain_UpdateTextureMenu()
-{
-	HMENU	hmenu;
-	auto wadlist = Textures::ListWadsInDirectory(g_project.wadPath);
-	hmenu = GetSubMenu(GetMenu(g_hwndMain), MENU_TEXTURE);
-
-	// delete everything
-	for (int i = 0; i < g_nTextureNumMenus; i++)
-		DeleteMenu(hmenu, CMD_TEXTUREWAD + i, MF_BYCOMMAND);
-
-	g_nTextureNumMenus = 0;
-
-	for (auto wadIt = wadlist.begin(); wadIt != wadlist.end(); ++wadIt)
-	{
-		const char* wadname = wadIt->name;
-		AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)wadname);
-		strcpy(g_szTextureMenuNames[g_nTextureNumMenus], wadname);
-
-		if (++g_nTextureNumMenus == MAX_TEXTUREDIRS)
-			break;
-	};
-
-
-	/*
-	HMENU	hmenu;
-	int		i;
-	struct _finddata_t fileinfo;
-	int		handle;
-	char    temp[1024];
-	char	path[1024];
-	char    dirstring[1024];
-	char   *s;
-
-	hmenu = GetSubMenu(GetMenu(g_hwndMain), MENU_TEXTURE);
-
-	// delete everything
-	for (i = 0; i < g_nTextureNumMenus; i++)
-		DeleteMenu(hmenu, CMD_TEXTUREWAD + i, MF_BYCOMMAND);
-
-	g_nTextureNumMenus = 0;
-
-	// add everything
-	strcpy(dirstring, g_project.wadPath);
-	sprintf(path, "%s*.wad", dirstring);	// sikk - Wad Loading
-
-	Sys_ConvertDOSToUnixName(temp, dirstring);
-	Sys_Printf("ScanTexturePath: %s\n", temp);
-
-	s = dirstring + strlen(dirstring) - 1;
-	while ((*s != '\\') && (*s != '/') && (s != dirstring))
-		s--;
-	*s = 0;
-
-	handle = _findfirst(path, &fileinfo);
-	if (handle != -1)
-	{
-		do
-		{
-			Sys_Printf("FoundFile: %s/%s\n", dirstring, fileinfo.name);
-
-			AppendMenu(hmenu, MF_ENABLED | MF_STRING, CMD_TEXTUREWAD + g_nTextureNumMenus, (LPCTSTR)fileinfo.name);
-			strcpy(g_szTextureMenuNames[g_nTextureNumMenus], fileinfo.name);
-
-			if (++g_nTextureNumMenus == MAX_TEXTUREDIRS)
-				break;
-		} while (_findnext(handle, &fileinfo) != -1);
-
-		_findclose(handle);
-	}*/
-}
-
-/*
-==============
-WndMain_WadForMenuItem
-==============
-*/
-const char*	WndMain_WadForMenuItem(int mnum)
-{
-	return g_szTextureMenuNames[mnum];
 }
 
 

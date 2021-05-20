@@ -19,7 +19,9 @@
 #include "map.h"
 #include "WndFiles.h"
 
-HWND g_hwndMain;
+HWND	g_hwndMain;
+HWND	g_hwndSplash;
+
 
 WndCamera	*g_wndCamera;
 WndGrid		*g_wndGrid[4];
@@ -28,10 +30,52 @@ WndTexture	*g_wndTexture;
 WndEntity	*g_wndEntity;
 WndConsole	*g_wndConsole;
 
-int		g_nUpdateBits;
+int		g_nUpdateBits = 0;
 int		g_nScreenWidth;
 int		g_nScreenHeight;
 int		g_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
+
+
+/*
+============
+SplashDlgProc
+============
+*/
+BOOL CALLBACK SplashDlgProc(
+	HWND	hwndDlg,// handle to dialog box
+	UINT	uMsg,	// message
+	WPARAM	wParam,	// first message parameter
+	LPARAM	lParam 	// second message parameter
+)
+{
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		ShowWindow(hwndDlg, SW_SHOW);
+		InvalidateRect(hwndDlg, NULL, FALSE);
+		UpdateWindow(hwndDlg);
+		SetTimer(hwndDlg, QE_TIMERSPLASH, 3000, nullptr);
+		return FALSE;
+
+	case WM_TIMER:
+//	case WM_LBUTTONDOWN:
+		DestroyWindow(hwndDlg);
+		return FALSE;
+	case WM_CLOSE:
+		KillTimer(hwndDlg, QE_TIMERSPLASH);
+		return FALSE;
+	}
+	return 0;
+}
+
+void WndSplash_Create()
+{
+	g_hwndSplash = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_hwndMain, SplashDlgProc);
+}
+void WndSplash_Destroy() 
+{
+	DestroyWindow(g_hwndSplash);
+}
 
 /*
 ==============================================================================

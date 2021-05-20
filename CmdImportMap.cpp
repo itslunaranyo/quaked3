@@ -174,51 +174,13 @@ void CmdImportMap::Do_Impl()
 				// merge the wad key somewhat intelligently
 				if (!strcmp(kv->key.c_str(), "wad") && mergewads)
 				{
-					char curwadkey[1024], impwadkey[1024], outwadkey[1024];
-					char *outwad;
-					int oldwads, n;
-					std::vector<char*> wadnames;
+					char outwadkey[1024];
+					char* worldwads = g_map.world->GetKeyValue("wad");
+					int wherethenewwadsstart = strlen(worldwads);
+					Textures::MergeWadStrings(worldwads, kv->value.c_str(), outwadkey);
 
-					oldwads = 0;
-					strcpy(impwadkey, kv->value.c_str());
-					strcpy(curwadkey, g_map.world->GetKeyValue("wad"));
-
-					for (char* tempwad = strtok(curwadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-					{
-						wadnames.push_back(tempwad);
-						oldwads++;
-					}
-					for (char* tempwad = strtok(impwadkey, ";"); tempwad; tempwad = strtok(0, ";"))
-					{
-						bool dupe = false;
-						for (auto wchIt = wadnames.begin(); wchIt != wadnames.end(); ++wchIt)
-						{
-							// TODO: compare relative and absolute pathnames with project wad path?
-							if (!strcmp(tempwad, *wchIt))
-							{
-								dupe = true;
-								break;
-							}
-						}
-						if (!dupe)
-						{
-							wadnames.push_back(tempwad);
-						}
-					}
-
-					outwad = outwadkey;
-					n = 0;
-					char *wherethenewwadsstart;
-					for (auto wchIt = wadnames.begin(); wchIt != wadnames.end(); ++wchIt)
-					{
-						sprintf(outwad, "%s;", *wchIt);
-						outwad += strlen(*wchIt) + 1;
-						if (++n == oldwads)
-						{
-							wherethenewwadsstart = outwad;
-						}
-					}
-					newWads = wherethenewwadsstart;
+					// copy added wads to a buffer so they can be loaded
+					newWads = outwadkey + wherethenewwadsstart;
 					cmdKV = new CmdSetKeyvalue("wad", outwadkey);
 					cmdKV->AddEntity(g_map.world);
 					cmdWorldKVs.push_back(cmdKV);

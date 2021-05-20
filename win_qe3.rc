@@ -266,8 +266,8 @@ BEGIN
         MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD
         MENUITEM SEPARATOR
         MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
-        MENUITEM "Update &Texture Menu",        ID_TEXTURES_UPDATEMENU
         MENUITEM SEPARATOR
+        MENUITEM "Load/&Add Wad...",            ID_TEXTURES_ADDWAD
     END
     POPUP "&Region"
     BEGIN
@@ -427,6 +427,7 @@ BEGIN
         MENUITEM "Flush Unused",                ID_CONTEXT_FLUSHUNUSED
         MENUITEM "Load Completely",             ID_CONTEXT_LOADCOMPLETELY
         MENUITEM SEPARATOR
+        MENUITEM "Load/&Add Wad...",            ID_TEXTURES_ADDWAD
         MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
     END
 END
@@ -979,7 +980,7 @@ BEGIN
     LTEXT           "Autosave Map:",IDC_STATIC,114,60,180,12,SS_CENTERIMAGE
     LTEXT           "Entity Def File(s) or Progs Source:",IDC_STATIC,114,87,180,12,SS_CENTERIMAGE
     LTEXT           "Texture Wad Directory:",IDC_STATIC,114,114,180,12,SS_CENTERIMAGE
-    LTEXT           "Default Wad(s):",IDC_STATIC,114,141,180,12,SS_CENTERIMAGE
+    LTEXT           "Default Wad(s) (blank for none):",IDC_STATIC,114,141,180,12,SS_CENTERIMAGE
     LTEXT           "Current Project:",IDC_STATIC,0,0,96,12,SS_CENTERIMAGE
     GROUPBOX        "",IDC_STATIC,108,0,210,198
     LTEXT           "$QUAKE: Path to quake.exe\n   from Editor preferences",IDC_STATIC,5,144,94,18
@@ -1111,8 +1112,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,52,0
- PRODUCTVERSION 3,2,52,0
+ FILEVERSION 3,2,53,0
+ PRODUCTVERSION 3,2,53,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1129,14 +1130,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 52)"
-            VALUE "FileVersion", "3.2.52.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 52)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 53)"
+            VALUE "FileVersion", "3.2.53.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 53)"
             VALUE "LegalCopyright", "Copyright © 1997-2020"
             VALUE "LegalTrademarks", "Quake™ 1996-2020"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.52.0"
+            VALUE "ProductVersion", "3.2.53.0"
         END
     END
     BLOCK "VarFileInfo"

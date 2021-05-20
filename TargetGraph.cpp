@@ -129,6 +129,9 @@ void TargetGraph::Refresh(const Entity &elist)
 
 	edgeList.clear();
 
+	if (elist.next == nullptr)
+		return;
+
 	for (Entity *es = elist.next; es != &elist; es = es->next)
 	{
 		if (FilterByVisibility(es))
