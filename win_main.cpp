@@ -401,6 +401,12 @@ void SetWindowRect (HWND hwnd, RECT *rc)
 	MoveWindow(hwnd, rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, TRUE);
 }
 
+void QE_ToggleViewFilter(int filt)
+{
+	g_cfgUI.ViewFilter ^= filt;
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+}
+
 void QE_SwapGridCam()
 {
 	g_qeglobals.d_wndCamera->Swap(*g_qeglobals.d_wndGrid[0]);
@@ -1423,83 +1429,89 @@ LONG WINAPI CommandHandler (
 			g_cfgUI.ShowAngles ^= true;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
 			break;
+			/*
 		case ID_VIEW_SHOWPATH:
-			g_cfgUI.ShowPaths ^= true;
+			g_cfgUI.PathlineMode ^= true;
 			Sys_UpdateWindows(W_XY | W_CAMERA);
+			break;
+			*/
+		case ID_TARGETLINES_ALL:
+			g_cfgUI.PathlineMode = TargetGraph::tgm_all;
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_TARGETGRAPH);
+			break;
+		case ID_TARGETLINES_SEL:
+			g_cfgUI.PathlineMode = TargetGraph::tgm_selected;
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_TARGETGRAPH);
+			break;
+		case ID_TARGETLINES_SELPATH:
+			g_cfgUI.PathlineMode = TargetGraph::tgm_selected_path;
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_TARGETGRAPH);
+			break;
+		case ID_TARGETLINES_NONE:
+			g_cfgUI.PathlineMode = TargetGraph::tgm_none;
+			Sys_UpdateWindows(W_XY | W_CAMERA | W_TARGETGRAPH);
 			break;
 
 		case ID_VIEW_SHOWCLIP:
-			g_cfgUI.ViewFilter ^= BFL_CLIP;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(BFL_CLIP);
 			break;
 		case ID_VIEW_SHOWPOINTENTS:
-			g_cfgUI.ViewFilter ^= EFL_POINTENTITY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_POINTENTITY);
 			break;
 		case ID_VIEW_SHOWBRUSHENTS:
-			g_cfgUI.ViewFilter ^= EFL_BRUSHENTITY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_BRUSHENTITY);
 			break;
 		case ID_VIEW_SHOWFUNCWALL:
-			g_cfgUI.ViewFilter ^= EFL_FUNCWALL;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_FUNCWALL);
 			break;
 		case ID_VIEW_SHOWLIGHTS:
-			g_cfgUI.ViewFilter ^= EFL_LIGHT;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_LIGHT);
 			break;
 		case ID_VIEW_SHOWSKY:
-			g_cfgUI.ViewFilter ^= BFL_SKY;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(BFL_SKY);
 			break;
 		case ID_VIEW_SHOWWATER:
-			g_cfgUI.ViewFilter ^= BFL_LIQUID;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(BFL_LIQUID);
 			break;
 		case ID_VIEW_SHOWWORLD:
-			g_cfgUI.ViewFilter ^= EFL_WORLDSPAWN;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_WORLDSPAWN);
 			break;
 		case ID_VIEW_SHOWHINT:
-			g_cfgUI.ViewFilter ^= BFL_HINT;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(BFL_HINT);
 			break;
 		case ID_VIEW_SHOWDETAIL:
-			g_cfgUI.ViewFilter ^= EFL_DETAIL;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_DETAIL);
 			break;
 		case ID_VIEW_SHOWMONSTERS:
-			g_cfgUI.ViewFilter ^= EFL_MONSTER;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_MONSTER);
 			break;
 		case ID_VIEW_SHOWTRIGGERS:
-			g_cfgUI.ViewFilter ^= EFL_TRIGGER;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			QE_ToggleViewFilter(EFL_TRIGGER);
 			break;
 
 		case ID_FILTER_SHOWALLSKILLS:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
-			Sys_UpdateWindows(W_SCENE|W_ENTITY);
+			Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH |W_ENTITY);
 			break;
 		case ID_FILTER_SHOWEASYSKILL:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
 			g_cfgUI.ViewFilter |= EFL_EASY;
-			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH | W_ENTITY);
 			break;
 		case ID_FILTER_SHOWMEDIUMSKILL:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
 			g_cfgUI.ViewFilter |= EFL_MEDIUM;
-			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH | W_ENTITY);
 			break;
 		case ID_FILTER_SHOWHARDSKILL:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
 			g_cfgUI.ViewFilter |= EFL_HARD;
-			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH | W_ENTITY);
 			break;
 		case ID_FILTER_SHOWDEATHMATCH:
 			g_cfgUI.ViewFilter -= g_cfgUI.ViewFilter & (EFL_EASY | EFL_MEDIUM | EFL_HARD | EFL_DEATHMATCH);
 			g_cfgUI.ViewFilter |= EFL_DEATHMATCH;
-			Sys_UpdateWindows(W_SCENE | W_ENTITY);
+			Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH | W_ENTITY);
 			break;
 
 
@@ -2491,23 +2503,27 @@ void WMain_Create ()
 		if (g_qeglobals.d_savedinfo.bScaleLockX)
 		{
 			CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKX, MF_CHECKED);
-			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKX, (g_qeglobals.d_savedinfo.bScaleLockX ? (LPARAM)true : (LPARAM)false));
+			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKX, 
+				(g_qeglobals.d_savedinfo.bScaleLockX ? (LPARAM)true : (LPARAM)false));
 		}
 		if (g_qeglobals.d_savedinfo.bScaleLockY)
 		{
 			CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKY, MF_CHECKED);
-			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKY, (g_qeglobals.d_savedinfo.bScaleLockY ? (LPARAM)true : (LPARAM)false));
+			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKY, 
+				(g_qeglobals.d_savedinfo.bScaleLockY ? (LPARAM)true : (LPARAM)false));
 		}
 		if (g_qeglobals.d_savedinfo.bScaleLockZ)
 		{
 			CheckMenuItem(hMenu, ID_SELECTION_SCALELOCKZ, MF_CHECKED);
-			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKZ, (g_qeglobals.d_savedinfo.bScaleLockZ ? (LPARAM)true : (LPARAM)false));
+			SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_SCALELOCKZ, 
+				(g_qeglobals.d_savedinfo.bScaleLockZ ? (LPARAM)true : (LPARAM)false));
 		}
 
 		if (g_cfgEditor.CubicClip)
 		{
 			CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, MF_CHECKED);
-			SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)true : (LPARAM)false));
+			SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, 
+				(g_cfgEditor.CubicClip ? (LPARAM)true : (LPARAM)false));
 		}
 	}
 
@@ -2708,7 +2724,21 @@ int WINAPI WinMain (
 		}
 		catch (std::exception &ex)
 		{
-			MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
+			// TODO: none of this ever happens because windows decides to snag the exception first
+			char crashmap[_MAX_FNAME];
+			char badnews[4096];
+			SYSTEMTIME time;
+			GetSystemTime(&time);
+			sprintf(crashmap, "%s\\crash.%i%i%i%i%i%i.map", g_qePath, time.wHour, time.wMinute, time.wSecond, time.wDay, time.wMonth, time.wYear);
+			try {
+				g_map.SaveToFile(crashmap, false);
+				sprintf(badnews, "%s\r\nMap written to %s.", ex.what(), crashmap);
+			}
+			catch (...)
+			{
+				sprintf(badnews, "%s\r\nMap could not be saved. Sorry.", ex.what());
+			}
+			MessageBox(g_qeglobals.d_hwndMain, badnews, "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
 
 			// close logging if necessary
 			g_cfgEditor.LogConsole = false;

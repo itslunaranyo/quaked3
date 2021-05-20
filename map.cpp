@@ -753,7 +753,7 @@ void Map::RegionOff()
 		b->AddToList(&brActive);
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionXY()
@@ -876,7 +876,7 @@ void Map::RegionSelectedBrushes()
 	// move the entire g_brSelectedBrushes list to brActive
 	g_brSelectedBrushes.MergeListIntoList(&brActive);
 	Selection::Changed();
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionApply()
@@ -893,7 +893,7 @@ void Map::RegionApply()
 		b->AddToList(&brRegioned);
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionAdd()

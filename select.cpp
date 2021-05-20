@@ -46,8 +46,11 @@ void Selection::HandleChange()
 		(*tIt)->SelectionChanged();
 	}
 
-	//WndSurf_UpdateUI();
 	Sys_UpdateWindows(W_SCENE|W_ENTITY|W_SURF);
+	if (g_cfgUI.PathlineMode == TargetGraph::tgm_selected || 
+		g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path )
+		Sys_UpdateWindows(W_TARGETGRAPH);
+
 	g_bSelectionChanged = false;
 }
 
@@ -115,8 +118,24 @@ bool Selection::IsBrushSelected(Brush* bSel)
 {
 	Brush* b;
 
-	for (b = g_brSelectedBrushes.next; b != NULL && b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.next; (b != nullptr) && (b != &g_brSelectedBrushes); b = b->next)
 		if (b == bSel)
+			return true;
+
+	return false;
+}
+
+/*
+=================
+Selection::IsEntitySelected
+=================
+*/
+bool Selection::IsEntitySelected(Entity* eSel)
+{
+	Brush* b;
+
+	for (b = g_brSelectedBrushes.next; (b != nullptr) && (b != &g_brSelectedBrushes); b = b->next)
+		if (b->owner == eSel)
 			return true;
 
 	return false;

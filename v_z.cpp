@@ -390,6 +390,9 @@ bool ZView::TestBrush(zbr_t &zbr)
 	vec3	org_top, org_bottom;
 	bool	result = true;
 
+	if (zbr.brush->IsFiltered())
+		return false;
+
 	org_top = origin;
 	org_top[2] = g_cfgEditor.MapSize / 2;
 	org_bottom = origin;

@@ -132,7 +132,7 @@ void CmdTranslate::Sel_Impl()
 	for (auto brIt = brMoved.begin(); brIt != brMoved.end(); ++brIt)
 		Selection::SelectBrush((*brIt));
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
-		Selection::SelectBrush((*eIt)->brushes.next);
+		Selection::SelectBrush((*eIt)->brushes.onext);
 }
 
 

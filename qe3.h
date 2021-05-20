@@ -48,6 +48,7 @@
 #include "brush.h"
 #include "entclass.h"
 #include "entity.h"
+#include "TargetGraph.h"
 #include "map.h"
 #include "select.h"
 #include "modify.h"
@@ -309,9 +310,9 @@ void DoWindowPosition (int nStyle);	// sikk - Window Positions
 
 static HWND CreateStatusBar (HWND hWnd);
 static HWND CreateReBar (HWND hWnd, HINSTANCE hInst);	// sikk - Rebar
-static HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButtons, int nSize); // sikk - Toolbars
+static HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButtons); // sikk - Toolbars
 //static HWND CreateToolBar(HWND hWnd, HINSTANCE hInst);
-static HWND CreateTrackBar (HWND hWnd, HINSTANCE hInst, int nIndex);	// sikk - Camera Speed Trackbar
+//static HWND CreateTrackBar (HWND hWnd, HINSTANCE hInst, int nIndex);	// sikk - Camera Speed Trackbar
 
 extern BOOL SaveWindowState (HWND hWnd, const char *pszName);
 extern BOOL LoadWindowState (HWND hWnd, const char *pszName);

@@ -38,10 +38,10 @@ private:
 
 	PolyTool::pointIt XYGetNearestPoint(XYZView * xyz, int x, int y);
 
-	void AddPoint(XYZView * xyz, int x, int y);
+	void AddPoint(XYZView * xyz, int x, int y, bool back = false);
 	void MovePoint(XYZView * xyz, int x, int y);
 	void EndPoint();
-	void DeleteLastPoint();
+	void DeletePoint(bool first = false);
 	bool PointsUpdated();
 
 	void DrawSetColor();

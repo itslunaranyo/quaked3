@@ -165,6 +165,7 @@ void Modify::HideSelected()
 		b->showFlags |= BFL_HIDDEN;
 	}
 
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 	Selection::Changed();
 }
 
@@ -185,7 +186,7 @@ void Modify::HideUnselected()
 		b->showFlags |= BFL_HIDDEN;
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 
@@ -204,7 +205,7 @@ void Modify::ShowHidden()
 	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
 		b->showFlags -= BFL_HIDDEN & b->showFlags;
 	
-	Sys_UpdateWindows(W_SCENE);
+	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 

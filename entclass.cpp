@@ -217,6 +217,8 @@ EntClass *EntClass::InitFromText(char *text)
 				e->showFlags |= EFL_LIGHT;
 			else if (_strnicmp(e->name, "monster", 7) == 0)
 				e->showFlags |= EFL_MONSTER;
+			else if (_strnicmp(e->name, "path", 4) == 0)
+				e->showFlags |= EFL_PATH;
 		}
 	}
 
@@ -224,7 +226,7 @@ EntClass *EntClass::InitFromText(char *text)
 		(_strnicmp(e->name, "info_teleport", 13) == 0) ||
 		(_strnicmp(e->name, "info_intermission", 17) == 0) ||
 		(_strnicmp(e->name, "monster", 7) == 0) ||	// sikk: added monsters
-		(_strnicmp(e->name, "path_corner", 11) == 0) ||
+		(_strnicmp(e->name, "path", 4) == 0) ||
 		(_strnicmp(e->name, "viewthing", 9) == 0))
 		e->form |= ECF_ANGLE;
 	/*

@@ -24,6 +24,7 @@ ConfigVarInt	cfgv_ViewFilter(g_cfgUI.ViewFilter, "ViewFilter", BFL_HIDDEN);
 ConfigVarInt	cfgv_Stipple(g_cfgUI.Stipple, "Stipple", 1);
 ConfigVarInt	cfgv_RadiantLights(g_cfgUI.RadiantLights, "RadiantLights", 1);
 ConfigVarFloat	cfgv_Gamma(g_cfgUI.Gamma, "Gamma", 1.0f);
+ConfigVarInt	cfgv_PathlineMode(g_cfgUI.PathlineMode, "PathMode", 1);
 
 ConfigVarBool	cfgv_ShowAxis(g_cfgUI.ShowAxis, "ShowAxis", 0);
 ConfigVarBool	cfgv_ShowBlocks(g_cfgUI.ShowBlocks, "ShowBlocks", 0);
@@ -35,7 +36,6 @@ ConfigVarBool	cfgv_ShowNames(g_cfgUI.ShowNames, "ShowNames", 0);
 ConfigVarBool	cfgv_ShowSizeInfo(g_cfgUI.ShowSizeInfo, "ShowSizeInfo", 1);
 ConfigVarBool	cfgv_ShowWorkzone(g_cfgUI.ShowWorkzone, "ShowWorkzone", 0);
 ConfigVarBool	cfgv_ShowAngles(g_cfgUI.ShowAngles, "ShowAngles", 1);
-ConfigVarBool	cfgv_ShowPaths(g_cfgUI.ShowPaths, "ShowPaths", 1);
 
 ConfigVar* const cfgUIVars[] = {
 	&cfgv_RenderMode,
@@ -44,6 +44,7 @@ ConfigVar* const cfgUIVars[] = {
 	&cfgv_Stipple,
 	&cfgv_RadiantLights,
 	&cfgv_Gamma,
+	&cfgv_PathlineMode,
 
 	&cfgv_ShowAxis,
 	&cfgv_ShowBlocks,
@@ -54,8 +55,7 @@ ConfigVar* const cfgUIVars[] = {
 	&cfgv_ShowNames,
 	&cfgv_ShowSizeInfo,
 	&cfgv_ShowWorkzone,
-	&cfgv_ShowAngles,
-	&cfgv_ShowPaths
+	&cfgv_ShowAngles
 };
 const int cfgUIVarCount = sizeof(cfgUIVars) / sizeof(ConfigVar*);
 
@@ -200,6 +200,8 @@ void qeConfig::ExpandProjectPaths()
 	ExpandProjectPath(prj->wadPath, g_project.wadPath, true);
 	ExpandProjectPath(prj->defaultWads, g_project.defaultWads);
 	ExpandProjectPath(prj->paletteFile, g_project.paletteFile);
+
+	g_project.extTargets = prj->extTargets;
 }
 
 void qeConfig::ExpandProjectPath(char *src, char *dest, bool dir)
@@ -277,6 +279,8 @@ bool qeConfig::ParseProject()
 	if ((ep = ent.GetEPair("paletteFile")) != nullptr)
 		strncpy(proj.paletteFile, (char*)*ep->value, _MAX_FNAME);
 
+	proj.extTargets = ent.GetKeyValueInt("extTargets") != 0;
+
 	projectPresets.push_back(proj);
 	return false;
 }
@@ -291,6 +295,8 @@ bool qeConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 	f << "\"wadPath\" \"" << proj.wadPath << "\"\n";
 	f << "\"defaultWads\" \"" << proj.defaultWads << "\"\n";
 	f << "\"paletteFile\" \"" << proj.paletteFile << "\"\n";
+
+	f << "\"extTargets\" \"" << (proj.extTargets ? "1" : "0" ) << "\"\n";
 	return true;
 }
 

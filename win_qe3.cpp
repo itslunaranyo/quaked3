@@ -110,9 +110,7 @@ Sys_UpdateWindows
 */
 void Sys_UpdateWindows (int bits)
 {
-//	Sys_Printf("Updating 0x%X\n", bits);
 	g_nUpdateBits |= bits;
-//	g_nUpdateBits = -1;
 }
 
 /*
@@ -122,6 +120,10 @@ Sys_ForceUpdateWindows
 */
 void Sys_ForceUpdateWindows(int bits)
 {
+	// redo target lines first so they're available to draw right away
+	if (g_nUpdateBits & W_TARGETGRAPH)
+		g_map.targetGraph.Refresh(g_map.entities);
+
 	// update any windows now
 	for (auto wvIt = WndView::wndviews.begin(); wvIt != WndView::wndviews.end(); ++wvIt)
 	{
@@ -133,7 +135,6 @@ void Sys_ForceUpdateWindows(int bits)
 		QE_UpdateTitle();
 	if (g_nUpdateBits & W_SURF)
 		WndSurf_UpdateUI();
-
 	g_nUpdateBits = 0;
 }
 

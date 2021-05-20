@@ -71,13 +71,13 @@ bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, Wnd
 		return InputCommand(wParam);
 
 	case WM_LBUTTONDOWN:
-		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
+		if (wParam & MK_CONTROL)
 			return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		SetCapture(vWnd.w_hwnd);
 		hot = true;
 
-		AddPoint(&v, x, y);
+		AddPoint(&v, x, y, (wParam & MK_SHIFT) != 0);
 
 		Sys_UpdateWindows(W_XY | W_CAMERA);
 		return true;
@@ -153,7 +153,7 @@ bool PolyTool::InputCommand(WPARAM w)
 	switch (LOWORD(w))
 	{
 	case ID_SELECTION_DELETE:
-		DeleteLastPoint();
+		DeletePoint(ShiftDown());
 		Sys_UpdateWindows(W_SCENE);
 		return true;
 	case ID_SELECTION_CLIPSELECTED:	// lunaran FIXME: 'enter' ...
@@ -205,7 +205,7 @@ PolyTool::pointIt PolyTool::XYGetNearestPoint(XYZView* xyz, int x, int y)
 PolyTool::AddPoint
 ==============
 */
-void PolyTool::AddPoint(XYZView* xyz, int x, int y)
+void PolyTool::AddPoint(XYZView* xyz, int x, int y, bool back)
 {
 	if (PointMoving())  // new click issued on an existing point
 	{
@@ -230,8 +230,16 @@ void PolyTool::AddPoint(XYZView* xyz, int x, int y)
 				return;
 		}
 
-		pointList.push_back(newpt);
-		ptMoving = pointList.end() - 1;
+		if (back)
+		{
+			pointList.insert(pointList.begin(), newpt);
+			ptMoving = pointList.begin();
+		}
+		else
+		{
+			pointList.push_back(newpt);
+			ptMoving = pointList.end() - 1;
+		}
 	}
 
 	PointsUpdated();
@@ -288,10 +296,15 @@ void PolyTool::EndPoint()
 PolyTool::DeleteLastPoint
 ==============
 */
-void PolyTool::DeleteLastPoint()
+void PolyTool::DeletePoint(bool first)
 {
 	if (!pointList.empty())
-		pointList.pop_back();
+	{
+		if (first)
+			pointList.erase(pointList.begin());
+		else
+			pointList.pop_back();
+	}
 	if (pointList.empty())
 		axis = -1;
 	ptMoving = pointList.end();

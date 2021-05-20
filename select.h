@@ -56,7 +56,8 @@ namespace Selection
 	int		NumBrushes();
 	int		NumFaces();
 
-	bool	IsBrushSelected(Brush* bSel);
+	bool	IsBrushSelected(Brush *bSel);
+	bool	IsEntitySelected(Entity *eSel);
 	void	SelectBrush(Brush *b);
 	void	SelectBrushSorted(Brush *b);
 	void	HandleBrush(Brush *b, bool bComplete);

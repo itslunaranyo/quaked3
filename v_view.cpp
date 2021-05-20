@@ -30,10 +30,47 @@ Draws connections between entities.
 Needs to consider all entities, not just ones on screen,
 because the lines can be visible when neither end is.
 Called for both camera view and xy view.
-
-TODO: cache this for god's sake
 ==================
 */
+void View::DrawPathLines()
+{
+	if (!g_cfgUI.PathlineMode)
+		return;
+
+	TargetGraph::edgeGeo line;
+	while (g_map.targetGraph.YieldEdge(line))
+	{
+		vec3 dir = line.end - line.start;
+		vec3 right = CrossProduct(dir, vec3(0, 0, 1));
+		float len = VectorNormalize(dir);
+		if (VectorNormalize(right) < EQUAL_EPSILON)
+			right = vec3(1, 0, 0);
+		glColor3fv(&line.color.r);
+
+		glBegin(GL_LINES);
+		glVertex3fv(&line.start.x);
+		glVertex3fv(&line.end.x);
+
+		int arrows = (int)(len / 256) + 1;
+		for (int i = 0; i < arrows; i++)
+		{
+			vec3 a, b, c;
+			float f = len * (i + 0.5f) / arrows;
+			b = line.start + f * dir;
+
+			a = b + 5.0f * right - 8.0f * dir;
+			glVertex3fv(&a.x);
+			glVertex3fv(&b.x);
+
+			c = b - 5.0f * right - 8.0f * dir;
+			glVertex3fv(&b.x);
+			glVertex3fv(&c.x);
+
+		}
+		glEnd();
+	}
+}
+/*
 void View::DrawPathLines()
 {
 	int			i, j, k;
@@ -48,7 +85,7 @@ void View::DrawPathLines()
 	char		*ent_target[MAX_MAP_ENTITIES];
 	Entity		*ent_entity[MAX_MAP_ENTITIES];
 
-	if (!g_cfgUI.ShowPaths)
+	if (!g_cfgUI.PathlineMode)
 		return;
 
 	num_entities = 0;
@@ -128,7 +165,7 @@ void View::DrawPathLines()
 		}
 	}
 }
-
+*/
 
 
 void View::GLSelectionColor()
@@ -164,8 +201,5 @@ void View::GLSelectionColorAlpha(float alpha)
 // returns false if the selection hasn't been drawn in a special way by a tool
 bool View::DrawTools()
 {
-	//for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
-	//	if ((*tIt)->Draw())
-	//		return true;
 	return false;
 }

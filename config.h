@@ -21,6 +21,7 @@ struct qecfgUI_t
 	int		RadiantLights;
 
 	int		ViewFilter;
+	int		PathlineMode;
 	bool	ShowAxis;
 	bool	ShowBlocks;
 	bool	ShowCameraGrid;
@@ -31,7 +32,6 @@ struct qecfgUI_t
 	bool	ShowSizeInfo;
 	bool	ShowWorkzone;
 	bool	ShowAngles;
-	bool	ShowPaths;
 };
 
 struct qecfgEditor_t
@@ -82,11 +82,13 @@ struct qecfgProject_t
 			wadPath[_MAX_DIR],
 			defaultWads[_MAX_FNAME],
 			paletteFile[_MAX_FNAME];
-	
+	bool	extTargets;
+
 	qecfgProject_t() :
 		name("Quake"), basePath("$QUAKE/id1/"), mapPath("$QUAKE/id1/maps/"), 
 		autosaveFile("$QUAKE/id1/maps/autosave.map"), entityFiles("$QE3/defs/quake.def"), 
-		wadPath("$QUAKE/gfx/"), defaultWads("common.wad"), paletteFile("")
+		wadPath("$QUAKE/gfx/"), defaultWads("common.wad"), paletteFile(""),
+		extTargets(false)
 	{}
 };
 

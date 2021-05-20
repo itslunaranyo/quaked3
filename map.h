@@ -24,6 +24,8 @@ public:
 	Brush		brActive;		// brushes currently being displayed
 	Brush		brRegioned;		// brushes that are outside the region
 
+	TargetGraph targetGraph;
+
 	vec3		regionMins, regionMaxs;
 	bool		regionActive;
 

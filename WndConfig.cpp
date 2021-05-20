@@ -299,6 +299,8 @@ void WndCfg_ProjectComboChanged()
 	SetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath);
 	SetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads);
 	SetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile);
+
+	SendDlgItemMessage(hwndCfgProject, IDC_CHECK_EXTTARGETS, BM_SETCHECK, (prj.extTargets ? BST_CHECKED : BST_UNCHECKED), 0);	
 }
 
 
@@ -793,6 +795,8 @@ WndCfg_WndToConfigProject
 */
 void WndCfg_WndToConfigProject(qecfgProject_t &prj)
 {
+	GetDlgItemText(hwndCfgProject, IDC_COMBO_PROJECT, prj.name, MAX_PROJNAME);
+
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath, _MAX_DIR);
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath, _MAX_DIR);
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile, _MAX_FNAME);
@@ -800,6 +804,9 @@ void WndCfg_WndToConfigProject(qecfgProject_t &prj)
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath, _MAX_DIR);
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads, _MAX_FNAME);
 	GetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile, _MAX_FNAME);
+
+	prj.extTargets = SendDlgItemMessage(hwndCfgProject, IDC_CHECK_EXTTARGETS, BM_GETCHECK, 0, 0) != 0;
+
 }
 
 /*

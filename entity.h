@@ -15,6 +15,8 @@ public:
 	qeBuffer	key, value;
 
 	static EPair *ParseEpair();
+	bool		IsTarget();
+	bool		IsTargetName();
 };
 
 //==============================
@@ -71,6 +73,9 @@ public:
 	int		GetKeyValueInt(const char *key) const;
 	bool	GetKeyValueVector(const char *key, vec3 &out) const;
 	void 	DeleteKeyValue(const char *key);
+
+	bool	IsFiltered();
+	vec3	GetCenter();
 
 	// sikk---> Undo/Redo
 	int		MemorySize();

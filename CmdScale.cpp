@@ -136,5 +136,5 @@ void CmdScale::Sel_Impl()
 	for (auto brIt = brScaled.begin(); brIt != brScaled.end(); ++brIt)
 		Selection::SelectBrush((*brIt));
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
-		Selection::SelectBrush((*eIt)->brushes.next);
+		Selection::SelectBrush((*eIt)->brushes.onext);
 }

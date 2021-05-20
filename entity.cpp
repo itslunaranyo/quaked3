@@ -267,6 +267,43 @@ void Entity::DeleteKeyValue(const char *key)
 }
 
 
+/*
+===============
+Entity::IsFiltered
+===============
+*/
+bool Entity::IsFiltered()
+{
+	if (g_cfgUI.ViewFilter & (showflags | eclass->showFlags))
+		return true;
+
+	return false;
+}
+
+/*
+===============
+Entity::GetCenter
+
+Find visual center of this entity (bmodel bounds center)
+===============
+*/
+vec3 Entity::GetCenter()
+{
+	// some entities have wonky origins, ie min corner
+	//if (IsPoint())
+	//	return origin;
+
+	vec3 mins, maxs;
+	ClearBounds(mins, maxs);
+	for (Brush *b = brushes.onext; b != &brushes; b = b->onext)
+	{
+		AddPointToBounds(b->mins, mins, maxs);
+		AddPointToBounds(b->maxs, mins, maxs);
+	}
+	return (mins + maxs) / 2.0f;
+}
+
+
 //===================================================================
 
 
@@ -426,6 +463,65 @@ EPair *EPair::ParseEpair ()
 	strcpy((char*)*e->value, g_szToken);
 
 	return e;
+}
+
+/*
+=================
+EPair::IsTarget
+
+check for all the ways an entity can have an outgoing target reference
+(target/target2/3/4/killtarget/whatever silly ones arcadim added)
+=================
+*/
+bool EPair::IsTarget()
+{
+	char *c;
+	c = (char*)*key;
+
+	// in non-extended mode, only 'target' is valid
+	if (!g_project.extTargets)
+		return (strcmp(c, "target") == 0);
+
+	// in extended mode, any kv with 'target' (but not 'targetname') in it is a valid target source
+	while (*c)
+	{
+		if (*c == 't')
+		{
+			if (!strncmp(c, "target", 6))
+			{
+				if (!strncmp(c + 6, "name", 4))
+					return false;
+				return true;
+			}
+		}
+		++c;
+	}
+	return false;
+}
+
+/*
+=================
+EPair::IsTargetName
+
+check for all the ways an entity can have an incoming target reference,
+which so far thankfully all start with 'targetname'
+=================
+*/
+bool EPair::IsTargetName()
+{
+	char *c;
+	c = (char*)*key;
+	if (!strncmp(c, "target", 6))
+	{
+		if (!strncmp(c + 6, "name", 4))
+		{
+			// in extended mode, any 'targetname' w/suffix is a valid target destination
+			if (g_project.extTargets || (*(c + 10) == 0))
+				return true;
+			return false;
+		}
+	}
+	return false;
 }
 
 /*

@@ -3,7 +3,6 @@
 //==============================
 
 #include "qe3.h"
-#include "CmdPolyBrushConcave.h"
 
 #define	SPEED_MOVE	32.0f
 #define	SPEED_TURN	22.5f
@@ -14,17 +13,10 @@ qeConfig	g_qeconfig;
 // it can test aaanything you want just press PEE
 void QE_TestSomething()
 {
-	CmdPolyBrushConcave cmdPBC;
-	std::vector<vec3> plist;
-
-	plist.emplace_back(0, 0, 0);
-	plist.emplace_back(1, 1.5, 0);
-	plist.emplace_back(-1, 1.5, 0);
-	plist.emplace_back(-2, 0, 0);
-	plist.emplace_back(-1, -1.5, 0);
-	plist.emplace_back(1, -1.5, 0);
-
-	cmdPBC.SetPoints(plist);
+	throw new std::exception("don't press p");
+	assert(0);
+	int* crash = nullptr;
+	int i = *crash;
 }
 
 
@@ -821,40 +813,47 @@ char *QE_ExpandRelativePath (char *p)
 }
 
 
-// sikk--->	Update Menu Items & Toolbar Buttons
+void QE_CheckMenuItem(HMENU hMenu, unsigned item, bool check)
+{
+	CheckMenuItem(hMenu, item, (check ? MF_CHECKED : MF_UNCHECKED));
+}
+
 /*
 ==================
 QE_UpdateCommandUI
 ==================
 */
-
+#pragma warning(disable : 4800)     // shutup int to bool conversion warning
 void QE_UpdateCommandUIFilters(HMENU hMenu)
 {
-	CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS, (g_cfgUI.ShowAxis ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS, (g_cfgUI.ShowBlocks ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID, (g_cfgUI.ShowCameraGrid ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, (g_cfgUI.ShowCoordinates ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, (g_cfgUI.ShowLightRadius ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, (g_cfgUI.ShowMapBoundary ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, (g_cfgUI.ShowNames ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO, (g_cfgUI.ShowSizeInfo ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, (g_cfgUI.ShowWorkzone ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, (g_cfgUI.ShowAngles ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWPATH, (g_cfgUI.ShowPaths ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWAXIS, g_cfgUI.ShowAxis);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWBLOCKS, g_cfgUI.ShowBlocks);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWCAMERAGRID, g_cfgUI.ShowCameraGrid);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWCOORDINATES, g_cfgUI.ShowCoordinates);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTRADIUS, g_cfgUI.ShowLightRadius);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWMAPBOUNDARY, g_cfgUI.ShowMapBoundary);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWNAMES, g_cfgUI.ShowNames);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWSIZEINFO, g_cfgUI.ShowSizeInfo);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, g_cfgUI.ShowWorkzone);
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, g_cfgUI.ShowAngles);
 
-	CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, ((g_cfgUI.ViewFilter & BFL_CLIP) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWBRUSHENTS, ((g_cfgUI.ViewFilter & EFL_BRUSHENTITY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWPOINTENTS, ((g_cfgUI.ViewFilter & EFL_POINTENTITY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL, ((g_cfgUI.ViewFilter & EFL_FUNCWALL) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, ((g_cfgUI.ViewFilter & EFL_LIGHT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWSKY, ((g_cfgUI.ViewFilter & BFL_SKY) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, ((g_cfgUI.ViewFilter & BFL_LIQUID) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, ((g_cfgUI.ViewFilter & EFL_WORLDSPAWN) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, ((g_cfgUI.ViewFilter & BFL_HINT) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, ((g_cfgUI.ViewFilter & EFL_DETAIL) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS, ((g_cfgUI.ViewFilter & EFL_MONSTER) ? MF_UNCHECKED : MF_CHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS, ((g_cfgUI.ViewFilter & EFL_TRIGGER) ? MF_UNCHECKED : MF_CHECKED));
+	QE_CheckMenuItem(hMenu, ID_TARGETLINES_ALL, g_cfgUI.PathlineMode == TargetGraph::tgm_all);
+	QE_CheckMenuItem(hMenu, ID_TARGETLINES_SEL, g_cfgUI.PathlineMode == TargetGraph::tgm_selected);
+	QE_CheckMenuItem(hMenu, ID_TARGETLINES_SELPATH, g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path);
+	QE_CheckMenuItem(hMenu, ID_TARGETLINES_NONE, g_cfgUI.PathlineMode == TargetGraph::tgm_none);
 
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWCLIP, !(g_cfgUI.ViewFilter & BFL_CLIP));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWBRUSHENTS, !(g_cfgUI.ViewFilter & EFL_BRUSHENTITY));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWPOINTENTS, !(g_cfgUI.ViewFilter & EFL_POINTENTITY));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWFUNCWALL, !(g_cfgUI.ViewFilter & EFL_FUNCWALL));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWLIGHTS, !(g_cfgUI.ViewFilter & EFL_LIGHT));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWSKY, !(g_cfgUI.ViewFilter & BFL_SKY));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWWATER, !(g_cfgUI.ViewFilter & BFL_LIQUID));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWWORLD, !(g_cfgUI.ViewFilter & EFL_WORLDSPAWN));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWHINT, !(g_cfgUI.ViewFilter & BFL_HINT));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWDETAIL, !(g_cfgUI.ViewFilter & EFL_DETAIL));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWMONSTERS, !(g_cfgUI.ViewFilter & EFL_MONSTER));
+	QE_CheckMenuItem(hMenu, ID_VIEW_SHOWTRIGGERS, !(g_cfgUI.ViewFilter & EFL_TRIGGER));
 
 	CheckMenuItem(hMenu, ID_FILTER_SHOWEASYSKILL, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_FILTER_SHOWMEDIUMSKILL, MF_UNCHECKED);
@@ -902,27 +901,29 @@ void QE_UpdateCommandUI ()
 // View Menu
 //===================================
 	// Toolbar Bands
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_FILEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[0]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDITBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[1]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[2]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[3]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[4]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[5]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[6]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[7]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	(IsWindowVisible(g_qeglobals.d_hwndToolbar[8]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[9]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		(IsWindowVisible(g_qeglobals.d_hwndToolbar[10]) ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_FILEBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[0]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDITBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[1]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_EDIT2BAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[2]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_SELECTBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[3]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_CSGBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[4]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MODEBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[5]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_ENTITYBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[6]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_BRUSHBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[7]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_TEXTUREBAND,	IsWindowVisible(g_qeglobals.d_hwndToolbar[8]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_VIEWBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[9]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOOLBAR_MISCBAND,		IsWindowVisible(g_qeglobals.d_hwndToolbar[10]));
+
 	// Status Bar
-	CheckMenuItem(hMenu, ID_VIEW_STATUSBAR, (IsWindowVisible(g_qeglobals.d_hwndStatus) ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_VIEW_STATUSBAR,	IsWindowVisible(g_qeglobals.d_hwndStatus));
 	// XY Windows
-	CheckMenuItem(hMenu, ID_VIEW_CAMERA,	(IsWindowVisible(g_qeglobals.d_hwndCamera) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY, (IsWindowVisible(g_qeglobals.d_hwndXYZ[0]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	(IsWindowVisible(g_qeglobals.d_hwndXYZ[2]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	(IsWindowVisible(g_qeglobals.d_hwndXYZ[1]) ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	(IsWindowVisible(g_qeglobals.d_hwndZ) ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_VIEW_CAMERA,		IsWindowVisible(g_qeglobals.d_hwndCamera));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XY,	IsWindowVisible(g_qeglobals.d_hwndXYZ[0]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_XZ,	IsWindowVisible(g_qeglobals.d_hwndXYZ[2]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_YZ,	IsWindowVisible(g_qeglobals.d_hwndXYZ[1]));
+	QE_CheckMenuItem(hMenu, ID_VIEW_TOGGLE_Z,	IsWindowVisible(g_qeglobals.d_hwndZ));
+
 	// Cubic Clipping
-	CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_VIEW_CUBICCLIP, g_cfgEditor.CubicClip);
 	SendMessage(g_qeglobals.d_hwndToolbar[6], TB_CHECKBUTTON, (WPARAM)ID_VIEW_CUBICCLIP, (g_cfgEditor.CubicClip ? (LPARAM)TRUE : (LPARAM)FALSE));
 	// Filter Commands
 
@@ -936,28 +937,28 @@ void QE_UpdateCommandUI ()
 
 		// Clipper Mode
 		modeCheck = (dynamic_cast<ClipTool*>(Tool::ModalTool()) != nullptr);
-		CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, (modeCheck ? MF_CHECKED : MF_UNCHECKED));
+		QE_CheckMenuItem(hMenu, ID_SELECTION_CLIPPER, modeCheck);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_CLIPPER, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Edge Mode 
 		GeoTool* gt;
 		gt = dynamic_cast<GeoTool*>(Tool::ModalTool());
 		modeCheck = (gt && (gt->mode & GeoTool::GT_EDGE));
-		CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		QE_CheckMenuItem(hMenu, ID_SELECTION_DRAGEDGES, modeCheck);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGEDGES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Vertex Mode 
 		modeCheck = (gt && (gt->mode & GeoTool::GT_VERTEX));
-		CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		QE_CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, modeCheck);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		// Drag Face Mode 
 		modeCheck = (gt && (gt->mode & GeoTool::GT_FACE));
-		CheckMenuItem(hMenu, ID_SELECTION_DRAGFACES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		QE_CheckMenuItem(hMenu, ID_SELECTION_DRAGFACES, modeCheck);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGFACES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
 		modeCheck = (dynamic_cast<PolyTool*>(Tool::ModalTool()) != nullptr);
-		CheckMenuItem(hMenu, ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? MF_CHECKED : MF_UNCHECKED));
+		QE_CheckMenuItem(hMenu, ID_TOOLS_DRAWBRUSHESTOOL, modeCheck);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 	}
 
@@ -974,13 +975,13 @@ void QE_UpdateCommandUI ()
 //===================================
 // Grid Menu
 //===================================
-	CheckMenuItem(hMenu, ID_GRID_TOGGLE, (g_qeglobals.d_bShowGrid ? MF_CHECKED : MF_UNCHECKED));
-	CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, (g_qeglobals.bGridSnap ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_GRID_TOGGLE, g_qeglobals.d_bShowGrid);
+	QE_CheckMenuItem(hMenu, ID_GRID_SNAPTOGRID, g_qeglobals.bGridSnap);
 
 //===================================
 // Texture Menu
 //===================================
-	CheckMenuItem(hMenu, ID_TEXTURES_LOCK, (g_qeglobals.d_bTextureLock ? MF_CHECKED : MF_UNCHECKED));
+	QE_CheckMenuItem(hMenu, ID_TEXTURES_LOCK, g_qeglobals.d_bTextureLock);
 
 //===================================
 // Region Menu

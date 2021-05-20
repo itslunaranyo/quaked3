@@ -393,11 +393,12 @@ void CmdPolyBrushConcave::InitialRays(std::vector<loopRay_t> &rays, const std::v
 	rays.push_back( InitialRay(loop, rv, vec3(-w, 0, 0)) );
 	rays.push_back( InitialRay(loop, rv, vec3(0, w, 0)) );
 	rays.push_back( InitialRay(loop, rv, vec3(0, -w, 0)) );
-
+	/*
 	rays.push_back( InitialRay(loop, rv, vec3(w, w, 0)) );
 	rays.push_back( InitialRay(loop, rv, vec3(-w, w, 0)) );
 	rays.push_back( InitialRay(loop, rv, vec3(-w, -w, 0)) );
 	rays.push_back( InitialRay(loop, rv, vec3(w, -w, 0)) );
+	*/
 }
 
 /*
@@ -467,6 +468,12 @@ CmdPolyBrushConcave::loopRay_t CmdPolyBrushConcave::BestSplit(const std::vector<
 
 	for (auto rayIt = rays.begin(); rayIt != rays.end(); ++rayIt)
 	{
+		if (rayIt->endv1 == -1)
+		{
+			rayIt->wflags = 0;
+			continue;
+		}
+
 		// weight by position in quadrants formed by the intersection of the two edges
 		// cull entirely (weight 0) if it's in the outside-the-shape quadrant
 		vec3 raydir = rayIt->end - loop[rv];
@@ -508,8 +515,6 @@ CmdPolyBrushConcave::loopRay_t CmdPolyBrushConcave::BestSplit(const std::vector<
 			rayIt->wflags |= diagonal;
 		else
 			rayIt->wflags |= angular;
-
-		assert(rayIt->endv1 != -1);
 
 		// weight by situation at the end of the ray
 		if (rayIt->endv1 == rayIt->endv2)

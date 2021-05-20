@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	45
+#define QE_VERSION_BUILD	46
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -85,6 +85,7 @@
 #define W_ENTITY		0x0040
 #define W_SURF			0x0080
 #define W_TITLE			0x0100
+#define W_TARGETGRAPH	0x0200
 #define	W_ALL			0xFFFF
 
 
@@ -180,10 +181,11 @@ enum entitymask_t
 	EFL_MONSTER		= 1 << 16,
 	EFL_FUNCWALL	= 1 << 17,
 	EFL_DETAIL		= 1 << 18,	// func_detail*, including ericw-tools wall/illusionary detail
-	EFL_CUSTOM1		= 1 << 19,
-	EFL_CUSTOM2		= 1 << 20,
-	EFL_CUSTOM3		= 1 << 21,
-	EFL_CUSTOM4		= 1 << 22,
+	EFL_PATH		= 1 << 19,
+	EFL_CUSTOM1		= 1 << 20,
+	EFL_CUSTOM2		= 1 << 21,
+	EFL_CUSTOM3		= 1 << 22,
+	EFL_CUSTOM4		= 1 << 23,
 };
 
 #endif

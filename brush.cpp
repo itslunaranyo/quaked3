@@ -125,10 +125,10 @@ bool Brush::IsFiltered() const
 	if (!owner)
 		return true;		// during construction
 
-	if (g_cfgUI.ViewFilter & (showFlags | owner->showflags | owner->eclass->showFlags) )
+	if (g_cfgUI.ViewFilter & showFlags)
 		return true;
 
-	return false;
+	return owner->IsFiltered();
 }
 
 

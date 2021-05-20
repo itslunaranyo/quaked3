@@ -99,10 +99,16 @@ BEGIN
             MENUITEM "Show L&ight Radius",          ID_VIEW_SHOWLIGHTRADIUS,MFT_STRING,MFS_ENABLED
             MENUITEM "Show &Map Boundary",          ID_VIEW_SHOWMAPBOUNDARY,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &Names",                 ID_VIEW_SHOWNAMES,MFT_STRING,MFS_CHECKED
-            MENUITEM "Show &Path",                  ID_VIEW_SHOWPATH,MFT_STRING,MFS_CHECKED
             MENUITEM "Show Sizing Info",            ID_VIEW_SHOWSIZEINFO,MFT_STRING,MFS_CHECKED
             MENUITEM "Show &View Name",             ID_VIEW_SHOWVIEWNAME,MFT_STRING,MFS_CHECKED
             MENUITEM "Show Work&zone",              ID_VIEW_SHOWWORKZONE,MFT_STRING,MFS_ENABLED
+        END
+        POPUP "Target Lines",                   65535,MFT_STRING,MFS_ENABLED
+        BEGIN
+            MENUITEM "All",                         ID_TARGETLINES_ALL,MFT_STRING,MFS_ENABLED
+            MENUITEM "Selection",                   ID_TARGETLINES_SEL,MFT_STRING,MFS_ENABLED
+            MENUITEM "Selection + Paths",           ID_TARGETLINES_SELPATH,MFT_STRING,MFS_ENABLED
+            MENUITEM "None",                        ID_TARGETLINES_NONE,MFT_STRING,MFS_ENABLED
         END
         MENUITEM MFT_SEPARATOR
         MENUITEM "&Center\tEnd",                ID_VIEW_CENTER,MFT_STRING,MFS_ENABLED
@@ -941,6 +947,7 @@ BEGIN
     LTEXT           "$QE3: Current working path\n   (directory QuakeEd3 is run\n   from)",IDC_STATIC,5,162,94,27
     GROUPBOX        "Macro Expansion",IDC_STATIC,0,132,102,66
     LTEXT           "Color Palette (blank for Quake default):",IDC_STATIC,114,168,180,12,SS_CENTERIMAGE
+    CONTROL         "Use Extended Targetnames",IDC_CHECK_EXTTARGETS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,114,102,12
 END
 
 IDD_CONFIG_UI DIALOGEX 0, 0, 322, 201
@@ -1042,8 +1049,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,45,0
- PRODUCTVERSION 3,2,45,0
+ FILEVERSION 3,2,46,0
+ PRODUCTVERSION 3,2,46,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1060,14 +1067,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 45)"
-            VALUE "FileVersion", "3.2.45.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 45)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 46)"
+            VALUE "FileVersion", "3.2.46.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 46)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.45.0"
+            VALUE "ProductVersion", "3.2.46.0"
         END
     END
     BLOCK "VarFileInfo"
