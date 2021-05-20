@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "csg.h"
 #include "CmdHollow.h"
 
 CmdHollow::CmdHollow() : Command("CSG Hollow")

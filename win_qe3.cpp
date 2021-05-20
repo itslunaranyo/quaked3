@@ -256,6 +256,9 @@ Sys_DoubleTime
 double Sys_DoubleTime ()
 {
 	return clock() / 1000.0;
+
+	// why does this not yield smooth results?
+	//return clock() / CLOCKS_PER_SEC;
 }
 
 /*

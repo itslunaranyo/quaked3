@@ -6,7 +6,7 @@
 #include "CmdCreateBrushEntity.h"
 #include "CmdCreatePointEntity.h"
 #include "io.h"
-
+#include "parse.h"
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),

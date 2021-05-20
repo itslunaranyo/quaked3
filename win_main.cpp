@@ -5,6 +5,8 @@
 #include "qe3.h"
 #include <process.h>
 #include "io.h"
+#include "points.h"
+#include "csg.h"
 
 
 /*
@@ -2564,6 +2566,10 @@ int WINAPI WinMain (
 	Sys_LogFile();
 
 	WMain_CreateViews();
+
+	GLenum glewerr = glewInit();
+	if (glewerr != GLEW_OK)
+		Error("GLEW init failed! %s", glewGetErrorString(glewerr));
 
 	// sikk - Print App name and current time for logging purposes
 	time(&lTime);	

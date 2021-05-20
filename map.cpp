@@ -3,12 +3,14 @@
 //============================== 
 
 #include "qe3.h"
+#include "parse.h"
 #include <fstream>
 #include <sstream>
 #include <string>
 
 #include "CmdImportMap.h"
 #include "CmdPaste.h"
+#include "points.h"
 
 Map		g_map;
 Brush	*g_pbrRegionSides[4];

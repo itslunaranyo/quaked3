@@ -15,6 +15,7 @@ public:
 	vec3	forward, right, up;	// move matrix
 	vec3	vup, vpn, vright;	// view matrix
 	vec3	mpUp, mpRight;		// mouse manipulation plane
+	glm::mat4 matProj;
 	int		nCamButtonState;
 
 	void MouseDown (const int x, const int y, const int buttons);
@@ -53,8 +54,10 @@ private:
 
 	void Init ();
 	void InitCull();
+	glm::mat4 RotateMatrix(glm::mat4 mat);
 	void BuildMatrix ();
-	void DrawGrid ();	// sikk - Camera Grid
+	void DrawGrid();	// sikk - Camera Grid
+	void DrawAxis();
 	void DrawActive();
 	bool DrawTools();
 };

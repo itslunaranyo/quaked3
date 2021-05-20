@@ -31,13 +31,15 @@ private:
 		float top, bottom;
 		Brush* brush;
 		Texture* tex;
+		zbr_t() {};
+		zbr_t(Brush &br);
 	};
 
 	void	Init();
 	void	DrawGrid();
 	void	DrawCameraIcon();
 	void	DrawCoords();
-	bool	TestBrush(Brush &br, zbr_t &zbr);
+	bool	TestBrush(zbr_t &zbr);
 };
 
 //========================================================================

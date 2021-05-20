@@ -3,7 +3,7 @@
 //==============================
 
 #include "qe3.h"
-
+#include "parse.h"
 
 char	g_szToken[MAXTOKEN];
 bool	g_bUnget;

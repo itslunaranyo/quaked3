@@ -3,7 +3,9 @@
 //==============================
 
 #include "qe3.h"
+#include "points.h"
 
+#include <glm/gtc/matrix_transform.hpp>
 
 // sikk---> Transparent Brushes
 Brush		*g_pbrTransBrushes[MAX_MAP_BRUSHES];
@@ -45,6 +47,24 @@ void CameraView::PositionCenter ()
 }
 // <---sikk
 
+
+/*
+===============
+CameraView::BuildMatrix
+===============
+*/
+glm::mat4 CameraView::RotateMatrix(glm::mat4 mat)
+{
+	glm::mat4 out;
+	// put Z going up
+	out = glm::rotate(mat, (float)(-90 * Q_DEG2RAD), vec3(1, 0, 0));
+	out = glm::rotate(out, (float)(90 * Q_DEG2RAD), vec3(0, 0, 1));
+	out = glm::rotate(out, (float)(angles[0] * Q_DEG2RAD), vec3(0, 1, 0));
+	out = glm::rotate(out, (float)(-angles[1] * Q_DEG2RAD), vec3(0, 0, 1));
+	return out;
+}
+
+
 /*
 ===============
 CameraView::BuildMatrix
@@ -53,10 +73,8 @@ CameraView::BuildMatrix
 void CameraView::BuildMatrix ()
 {
 	int		i;
-	float	xa, ya;
-	float	matrix[4][4];
+	float	ya;
 
-	xa = angles[0] / 180 * Q_PI;
 	ya = angles[1] / 180 * Q_PI;
 
 	// the movement matrix is kept 2d
@@ -65,13 +83,16 @@ void CameraView::BuildMatrix ()
     right[0] = forward[1];
     right[1] = -forward[0];
 
-	glGetFloatv(GL_PROJECTION_MATRIX, &matrix[0][0]);
+	float yfov = atan((float)width / height);
+	matProj = glm::perspective(yfov, (float)width / height, 2.0f, (float)g_cfgEditor.MapSize);
+	matProj = RotateMatrix(matProj);
+	matProj = glm::translate(matProj, -origin);
 
 	for (i = 0; i < 3; i++)
 	{
-		vright[i] = matrix[i][0];
-		vup[i] = matrix[i][1];
-		vpn[i] = matrix[i][2];
+		vright[i] = matProj[i][0];
+		vup[i] = matProj[i][1];
+		vpn[i] = matProj[i][2];
 	}
 
 	VectorNormalize(vright);
@@ -129,7 +150,9 @@ void CameraView::PointAt(vec3 pt)
 	vpn = pt - origin;
 	VectorToAngles(vpn, angles);
 	BoundAngles();
+
 	BuildMatrix();
+	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
 
 void CameraView::LevelView()
@@ -137,6 +160,7 @@ void CameraView::LevelView()
 	g_qeglobals.d_vCamera.angles[ROLL] = g_qeglobals.d_vCamera.angles[PITCH] = 0;
 	g_qeglobals.d_vCamera.angles[YAW] = 22.5f * floor((g_qeglobals.d_vCamera.angles[YAW] + 11) / 22.5f);
 	BoundAngles();
+
 	BuildMatrix();
 	Sys_UpdateWindows(W_CAMERA | W_XY);
 }
@@ -377,12 +401,23 @@ void CameraView::PointToRay(int x, int y, vec3 &rayOut)
 	float	f, r, u;
 
 	// calc ray direction
-	u = (float)(y - height / 2) / (width / 2);
-	r = (float)(x - width / 2) / (width / 2);
-	f = 1;
+	u = (float)(y - height / 2.0f) / (width / 2.0f);
+	r = (float)(x - width / 2.0f) / (width / 2.0f);
+	f = 1.0f;
+
+	// precisely match whatever wonky way GL feels like creating a projection from the 
+	// window size by snatching v_up/v_right scaling directly from an unrotated frustum
+	float yfov = atan((float)width / height);// *180 / Q_PI;
+	glm::mat4 mat = glm::perspectiveFov(yfov, (float)width, (float)height, 2.0f, (float)g_cfgEditor.MapSize);
+
+	u /= mat[0][0];
+	r /= mat[0][0];
 
 	for (int i = 0; i < 3; i++)
+	{
 		rayOut[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
+	}
+	
 	VectorNormalize(rayOut);
 }
 
@@ -709,6 +744,98 @@ void CameraView::DrawGrid ()
 ==============
 CameraView::DrawActive
 
+Display Axis in lower left corner of window and rotate with camera orientation
+==============
+*/
+void CameraView::DrawAxis()
+{
+	if (!g_cfgUI.ShowAxis)
+		return;
+
+	glDisable(GL_DEPTH_TEST);
+
+	glViewport(0, 0, 80, 80);
+	glm::mat4 proj = glm::perspective(0.75f, 1.0f, 1.0f, 256.0f);
+	proj = RotateMatrix(proj);
+	proj = glm::translate(proj, vpn * 64.0f);
+	glLoadMatrixf(&proj[0][0]);
+
+	glLineWidth(3.0);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(16, 0, 0);
+	glEnd();
+
+	glColor3f(0.0, 1.0, 0.0);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 16, 0);
+	glEnd();
+
+	glColor3f(0.0f, 0.3f, 1.0f);
+	glBegin(GL_LINES);
+	glVertex3f(0, 0, 0);
+	glVertex3f(0, 0, 16);
+	glEnd();
+
+	glLineWidth(1);
+
+	// draw an indicator on the axis showing which two axes are mapped to the view plane
+	vec3 vaxis = mpUp + mpRight;
+	if (vaxis[0] == 0)
+	{
+		// y and z
+		glColor3f(0.0f, 0.3f, 1.0f);
+		glBegin(GL_LINES);
+		glVertex3f(0, 0, 8);
+		glVertex3f(0, 8, 8);
+		glEnd();
+
+		glColor3f(0.0, 1.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(0, 8, 0);
+		glVertex3f(0, 8, 8);
+		glEnd();
+	}
+	else if (vaxis[1] == 0)
+	{
+		// x and z
+		glColor3f(0.0f, 0.3f, 1.0f);
+		glBegin(GL_LINES);
+		glVertex3f(0, 0, 8);
+		glVertex3f(8, 0, 8);
+		glEnd();
+
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(8, 0, 0);
+		glVertex3f(8, 0, 8);
+		glEnd();
+	}
+	else
+	{
+		// x and y
+		glColor3f(0.0, 1.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(0, 8, 0);
+		glVertex3f(8, 8, 0);
+		glEnd();
+
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		glVertex3f(8, 0, 0);
+		glVertex3f(8, 8, 0);
+		glEnd();
+	}
+
+	glEnable(GL_DEPTH_TEST);
+}
+
+/*
+==============
+CameraView::DrawActive
+
 draw active (unselected) brushes, sorting out the transparent ones for a separate draw
 ==============
 */
@@ -811,8 +938,8 @@ void CameraView::Draw ()
 {
 	int		bound;
 	double	start, end;
-	float	screenaspect;
-	float	yfov;
+	//float	screenaspect;
+	//float	yfov;
 
 	if (!g_map.brActive.next)
 		return;	// not valid yet
@@ -832,18 +959,8 @@ void CameraView::Draw ()
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-	screenaspect = (float)width / height;
-	yfov = 2 * atan((float)height / width) * 180 / Q_PI;
-    gluPerspective(yfov, screenaspect, 2, g_cfgEditor.MapSize);//8192);
-
-    glRotatef(-90, 1, 0, 0);	// put Z going up
-    glRotatef(90, 0, 0, 1);		// put Z going up
-    glRotatef(angles[0], 0, 1, 0);
-    glRotatef(-angles[1], 0, 0, 1);
-	glPushMatrix();
-    glTranslatef(-origin[0], -origin[1], -origin[2]);
-
 	BuildMatrix();
+	glLoadMatrixf(&matProj[0][0]);
 	InitCull();
 
 	// draw stuff
@@ -962,41 +1079,9 @@ void CameraView::Draw ()
 	if (g_qeglobals.d_nPointfileDisplayList)
 		Pointfile_Draw();
 
-	glPopMatrix();
+	//glPopMatrix();
 
-	// Display Axis in lower left corner of window and rotate with camera orientation
-	if (g_cfgUI.ShowAxis)
-	{
-		glViewport(0, 0, 64, 64);
-		glLoadIdentity();
-		gluPerspective(yfov/3, 1, 2, g_cfgEditor.MapSize);//8192);
-		glRotatef(-90, 1, 0, 0);	// put Z going up
-		glRotatef(90, 0, 0, 1);		// put Z going up
-		glRotatef(angles[0], 0, 1, 0);
-		glRotatef(-angles[1], 0, 0, 1);
-		glTranslatef(vpn[0] * 128, vpn[1] * 128, vpn[2] * 128);
-
-		glLineWidth(2.0);
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3i(0, 0, 0);
-		glVertex3i(16, 0, 0);
-		glEnd();
-
-		glColor3f(0.0, 1.0, 0.0);
-		glBegin(GL_LINES);
-		glVertex3i(0, 0, 0);
-		glVertex3i(0, 16, 0);
-		glEnd();
-
-		glColor3f(0.0f, 0.2f, 1.0f);
-		glBegin(GL_LINES);
-		glVertex3i(0, 0, 0);
-		glVertex3i(0, 0, 16);
-		glEnd();
-		glLineWidth(1);
-	}
-
+	DrawAxis();
 
 	// bind back to the default texture
 	glBindTexture(GL_TEXTURE_2D, 0);

@@ -544,13 +544,51 @@ QE_CheckOpenGLForErrors
 void QE_CheckOpenGLForErrors (void)
 {
     int	i;
-    
     while ((i = glGetError()) != GL_NO_ERROR)
     {
-		char buffer[100];
-		sprintf(buffer, "OpenGL Error: %s", gluErrorString(i));
-		Sys_Printf("***%s***\n", buffer);
+		switch (i)
+		{
+		case GL_INVALID_ENUM:
+			Sys_Printf("OpenGL Error: GL_INVALID_ENUM");
+			break;
+		case GL_INVALID_VALUE:
+			Sys_Printf("OpenGL Error: GL_INVALID_VALUE");
+			break;
+		case GL_INVALID_OPERATION:
+			Sys_Printf("OpenGL Error: GL_INVALID_OPERATION");
+			break;
+		case GL_STACK_OVERFLOW:
+			Sys_Printf("OpenGL Error: GL_STACK_OVERFLOW");
+			break;
+		case GL_STACK_UNDERFLOW:
+			Sys_Printf("OpenGL Error: GL_STACK_UNDERFLOW");
+			break;
+		case GL_OUT_OF_MEMORY:
+			Sys_Printf("OpenGL Error: GL_OUT_OF_MEMORY");
+			break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			Sys_Printf("OpenGL Error: GL_INVALID_FRAMEBUFFER_OPERATION");
+			break;
+		case GL_CONTEXT_LOST:
+			Sys_Printf("OpenGL Error: GL_CONTEXT_LOST");
+			break;
+		case GL_TABLE_TOO_LARGE:
+			Sys_Printf("OpenGL Error: GL_TABLE_TOO_LARGE");
+			break;
+		}
     }
+}
+
+/*
+==================
+QE_OpenGLError
+
+unused; openGL error callback is 4.3+ and we're targeting 2.0 to be fair to quake people
+==================
+*/
+void QE_OpenGLError(int errornum, const char *errorstr)
+{
+	Sys_Printf("*** OpenGL Error %i ***\n%s", errornum, errorstr);
 }
 
 /*
@@ -569,7 +607,7 @@ void QE_SaveMap()
 
 /*
 ==================
-QE_CheckOpenGLForErrors
+QE_UpdateTitle
 ==================
 */
 void QE_UpdateTitle()

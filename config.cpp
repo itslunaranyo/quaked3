@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "parse.h"
 #include <fstream>
 #include <algorithm>
 

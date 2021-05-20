@@ -19,9 +19,12 @@
 #include "afxres.h"
 #include "resource.h"
 
-#include <gl/gl.h>
-#include <gl/glu.h>
-#include <gl/glaux.h>
+//#define GLEW_STATIC 1
+#include <GL\glew.h>
+//#include <GLFW\glfw3.h>
+#include <gl\gl.h>
+//#include <gl\glu.h>
+//#include <gl\glaux.h>
 #include <math.h>
 #include <stdlib.h>
 #include <cassert>	// lunaran - for my own sanity
@@ -32,24 +35,19 @@
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "mathlib.h"
 #include "cmdlib.h"
-//#include "lbmlib.h"
-#include "parse.h"
 
 #include "qedefs.h"
 #include "qfiles.h"
 #include "config.h"
 
-#include "palette.h"
 #include "textures.h"
 #include "texdef.h"
 #include "plane.h"
 #include "face.h"
 #include "brush.h"
-#include "csg.h"
 #include "entclass.h"
 #include "entity.h"
 #include "map.h"
-#include "points.h"
 #include "select.h"
 #include "modify.h"
 #include "transform.h"
@@ -247,7 +245,8 @@ extern bool	g_bSnapCheck;
 void	QE_TestSomething();
 
 void	QE_CheckAutoSave();
-void	QE_CheckOpenGLForErrors (void);
+void	QE_CheckOpenGLForErrors(void);
+void	QE_OpenGLError(int errornum, const char *errorstr);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
 void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
 void	QE_Init();
@@ -371,7 +370,7 @@ void DeleteBspCommand (HWND hwndDlg);
 
 void SaveSettings (HWND hwndDlg);
 */
-bool SelectDir (HWND h, bool format, char* title);
+bool SelectDir(HWND h, bool format, char* title);
 
 
 #endif

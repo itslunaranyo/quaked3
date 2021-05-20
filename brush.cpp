@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "qe3.h"
 #include "io.h"
+#include "parse.h"
 
 /*
 bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when

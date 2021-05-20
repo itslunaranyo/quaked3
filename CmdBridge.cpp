@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "csg.h"
 #include "CmdBridge.h"
 
 CmdBridge::CmdBridge() : Command("CSG Bridge")

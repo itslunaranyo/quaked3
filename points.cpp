@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "points.h"
 
 
 static vec3		s_pointvecs[MAX_POINTFILE];

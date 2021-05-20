@@ -1,4 +1,9 @@
+//==============================
+//	palette.cpp
+//==============================
+
 #include "qe3.h"
+#include "palette.h"
 
 Palette::Palette() {}
 Palette::~Palette() {}

@@ -1,9 +1,10 @@
 //==============================
-//	textures.c
+//	textures.cpp
 //==============================
 
 #include "qe3.h"
 #include "io.h"
+#include "palette.h"
 #include <algorithm>	// for sort
 
 #define	MAX_TEXTUREDIRS	128
@@ -11,7 +12,6 @@
 static unsigned	tex_palette[256];
 static Palette texpal;
 Texture	*Textures::nulltexture;
-static bool		nomips;
 
 static HGLRC s_hglrcTexture;
 static HDC	 s_hdcTexture;
@@ -818,10 +818,8 @@ int WadLoader::MakeGLTexture(int w, int h, qeBuffer &texData)
 	glBindTexture(GL_TEXTURE_2D, texnum);
 	Textures::SetParameters();
 
-	if (nomips)
-		glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
-	else
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 3, w, h, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, *texData);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 
