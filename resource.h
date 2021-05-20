@@ -48,6 +48,7 @@
 #define IDR_MENU2                       202
 #define IDR_CONTEXT_TEX                 202
 #define IDR_CONTEXT_TEXGRP              202
+#define IDR_POPUP_FILTER                203
 #define IDC_E_FLAG1                     1026
 #define IDC_E_FLAG2                     1027
 #define IDC_E_FLAG3                     1028
@@ -411,24 +412,24 @@
 #define ID_COLORS_CAMERAGRID            40308
 #define ID_COLORS_MAPBOUNDARY           40309
 #define ID_VIEW_CAMERA                  40312
-#define ID_SELECTION_SCALE              40322
-#define ID_SELECTION_SCALELOCKX         40323
-#define ID_SELECTION_SCALELOCKZ         40324
-#define ID_SELECTION_SCALELOCKY         40325
-#define ID_VIEW_TOOLBAR_FILEBAND        40327
-#define ID_VIEW_TOOLBAR_EDITBAND        40328
-#define ID_VIEW_TOOLBAR_EDIT2BAND       40329
-#define ID_VIEW_TOOLBAR_SELECTBAND      40330
-#define ID_VIEW_TOOLBAR_CSGBAND         40331
-#define ID_VIEW_TOOLBAR_MODEBAND        40332
+#define ID_SELECTION_SCALE              40313
+#define ID_SELECTION_SCALELOCKX         40314
+#define ID_SELECTION_SCALELOCKZ         40315
+#define ID_SELECTION_SCALELOCKY         40316
+#define ID_VIEW_TOOLBAR_FILEBAND        40325
+#define ID_VIEW_TOOLBAR_EDITBAND        40326
+#define ID_VIEW_TOOLBAR_EDIT2BAND       40327
+#define ID_VIEW_TOOLBAR_SELECTBAND      40328
+#define ID_VIEW_TOOLBAR_CSGBAND         40329
+#define ID_VIEW_TOOLBAR_MODEBAND        40330
+#define ID_VIEW_TOOLBAR_ENTITYBAND      40331
+#define ID_VIEW_TOOLBAR_BRUSHBAND       40332
+#define ID_VIEW_TOOLBAR_TEXTUREBAND     40333
 #define ID_VIEW_TOOLBAR_VIEWBAND        40334
-#define ID_VIEW_TOOLBAR_MISCBAND        40336
-#define ID_VIEW_STATUSBAR               40337
+#define ID_VIEW_TOOLBAR_MISCBAND        40335
+#define ID_VIEW_STATUSBAR               40339
 #define ID_VIEW_CAMSPEED                40340
 #define ID_SELECTION_SELECTMATCHINGTEXTURES 40352
-#define ID_VIEW_TOOLBAR_ENTITYBAND      40387
-#define ID_VIEW_TOOLBAR_BRUSHBAND       40388
-#define ID_VIEW_TOOLBAR_TEXTUREBAND     40389
 #define ID_VIEW_TOGGLE_Z                40391
 #define ID_VIEW_TOGGLE_XZ               40392
 #define ID_VIEW_TOGGLE_YZ               40393
@@ -520,13 +521,14 @@
 #define ID_CONTEXT_FLUSHUNUSED          40489
 #define ID_TEXTURES_RELOAD              40490
 #define ID_CONTEXT_LOADCOMPLETELY       40490
+#define ID_VIEW_FILTER_POPUP            40491
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        203
-#define _APS_NEXT_COMMAND_VALUE         40491
+#define _APS_NEXT_RESOURCE_VALUE        204
+#define _APS_NEXT_COMMAND_VALUE         40492
 #define _APS_NEXT_CONTROL_VALUE         1331
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

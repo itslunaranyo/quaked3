@@ -2,6 +2,7 @@
 //	CmdBrushClip.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "csg.h"
 #include "CmdBrushClip.h"

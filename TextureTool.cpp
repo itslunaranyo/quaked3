@@ -2,25 +2,34 @@
 //	TextureTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "TextureTool.h"
+#include "select.h"
+#include "Command.h"
 #include "CmdCompound.h"
 #include "CmdTextureApply.h"
 #include "CmdTextureFit.h"
 #include "CmdTextureMod.h"
+#include "CameraView.h"
+#include "TextureView.h"
+#include "surface.h"
+#include "WndView.h"
+#include "win_dlg.h"
 
+TextureTool* g_texTool;
 
 TextureTool::TextureTool() : 
 	lastTexMod(nullptr), lastWrap(nullptr), lastWrap2(nullptr), cmdCmp(nullptr),
 	hwndReplaceDlg(NULL), sampleState(TTSS_NONE),
 	Tool("Texturing", false)	// always on (not modal)
 {
-	g_qeglobals.d_texTool = this;
+	g_texTool = this;
 }
 
 TextureTool::~TextureTool()
 {
-	g_qeglobals.d_texTool = nullptr;
+	g_texTool = nullptr;
 }
 
 // ----------------------------------------------------------------
@@ -97,8 +106,8 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 				else
 				{
 					// mmb = sample hit face, apply texture and alignment to to selection
-					UpdateWorkzone(t.brush);
-					g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
+					QE_UpdateWorkzone(t.brush);
+					g_vTexture.ChooseTexture(&t.face->texdef);
 					if (Selection::NumFaces())
 						cmdTA->UseFaces(Selection::faces);
 					else if (Selection::HasBrushes())
@@ -134,7 +143,7 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 				cmdTA->UseFace(t.face);
 				cmdTA->Apply(td);
 				cmdCmp->Complete(cmdTA);
-				Sys_UpdateWindows(W_CAMERA);
+				WndMain_UpdateWindows(W_CAMERA);
 			}
 			lastWrap2 = lastWrap;
 			lastWrap = t.face;
@@ -212,10 +221,111 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_COMMAND)
 	{
-		if (LOWORD(wParam) == ID_TEXTURES_REPLACEALL)
+		switch (LOWORD(wParam))
 		{
+		case ID_TEXTURES_REPLACEALL:
 			FindTextureDialog();
 			return true;
+		case ID_TEXTURES_RELOAD:
+			Sys_BeginWait();
+			WndMain_SetInspectorMode(W_TEXTURE);
+			Textures::MenuReloadAll();
+			WndMain_UpdateWindows(W_TEXTURE);
+			break;
+		case ID_TEXTURES_FLUSH_UNUSED:
+			WndMain_SetInspectorMode(W_TEXTURE);
+			Textures::MenuFlushUnused();
+			WndMain_UpdateWindows(W_TEXTURE);
+			break;
+		case ID_TEXTURES_SHOWINUSE:
+			WndMain_SetInspectorMode(W_TEXTURE);
+			Textures::RefreshUsedStatus();
+			WndMain_UpdateWindows(W_TEXTURE);
+			break;
+
+		case ID_TEXTURES_RESETSCALE:	// sikk - Reset Texture View Scale
+			g_vTexture.SetScale(1.0f);
+			WndMain_UpdateWindows(W_TEXTURE);
+			break;
+
+		case ID_TEXTURES_LOCK:
+			g_qeglobals.d_bTextureLock ^= true;
+			WndMain_UpdateWindows(W_CAMERA);
+			WndMain_UpdateGridStatusBar();
+			break;
+		case ID_TEXTURES_DEFAULTSCALE:	// sikk - Default Texture Scale Dialog
+			DoDefaultTexScale();
+			break;
+
+		case CMD_TEXTUREWAD:
+		case CMD_TEXTUREWAD + 1:
+		case CMD_TEXTUREWAD + 2:
+		case CMD_TEXTUREWAD + 3:
+		case CMD_TEXTUREWAD + 4:
+		case CMD_TEXTUREWAD + 5:
+		case CMD_TEXTUREWAD + 6:
+		case CMD_TEXTUREWAD + 7:
+		case CMD_TEXTUREWAD + 8:
+		case CMD_TEXTUREWAD + 9:
+		case CMD_TEXTUREWAD + 10:
+		case CMD_TEXTUREWAD + 11:
+		case CMD_TEXTUREWAD + 12:
+		case CMD_TEXTUREWAD + 13:
+		case CMD_TEXTUREWAD + 14:
+		case CMD_TEXTUREWAD + 15:
+		case CMD_TEXTUREWAD + 16:
+		case CMD_TEXTUREWAD + 17:
+		case CMD_TEXTUREWAD + 18:
+		case CMD_TEXTUREWAD + 19:
+		case CMD_TEXTUREWAD + 20:
+		case CMD_TEXTUREWAD + 21:
+		case CMD_TEXTUREWAD + 22:
+		case CMD_TEXTUREWAD + 23:
+		case CMD_TEXTUREWAD + 24:
+		case CMD_TEXTUREWAD + 25:
+		case CMD_TEXTUREWAD + 26:
+		case CMD_TEXTUREWAD + 27:
+		case CMD_TEXTUREWAD + 28:
+		case CMD_TEXTUREWAD + 29:
+		case CMD_TEXTUREWAD + 30:
+		case CMD_TEXTUREWAD + 31:
+		case CMD_TEXTUREWAD + 32:
+		case CMD_TEXTUREWAD + 33:
+		case CMD_TEXTUREWAD + 34:
+		case CMD_TEXTUREWAD + 35:
+		case CMD_TEXTUREWAD + 36:
+		case CMD_TEXTUREWAD + 37:
+		case CMD_TEXTUREWAD + 38:
+		case CMD_TEXTUREWAD + 39:
+		case CMD_TEXTUREWAD + 40:
+		case CMD_TEXTUREWAD + 41:
+		case CMD_TEXTUREWAD + 42:
+		case CMD_TEXTUREWAD + 43:
+		case CMD_TEXTUREWAD + 44:
+		case CMD_TEXTUREWAD + 45:
+		case CMD_TEXTUREWAD + 46:
+		case CMD_TEXTUREWAD + 47:
+		case CMD_TEXTUREWAD + 48:
+		case CMD_TEXTUREWAD + 49:
+		case CMD_TEXTUREWAD + 50:
+		case CMD_TEXTUREWAD + 51:
+		case CMD_TEXTUREWAD + 52:
+		case CMD_TEXTUREWAD + 53:
+		case CMD_TEXTUREWAD + 54:
+		case CMD_TEXTUREWAD + 55:
+		case CMD_TEXTUREWAD + 56:
+		case CMD_TEXTUREWAD + 57:
+		case CMD_TEXTUREWAD + 58:
+		case CMD_TEXTUREWAD + 59:
+		case CMD_TEXTUREWAD + 60:
+		case CMD_TEXTUREWAD + 61:
+		case CMD_TEXTUREWAD + 62:
+		case CMD_TEXTUREWAD + 63:
+			Sys_BeginWait();
+			Textures::MenuLoadWad(WndMain_WadForMenuItem(LOWORD(wParam) - CMD_TEXTUREWAD));
+			WndMain_SetInspectorMode(W_TEXTURE);
+			Sys_EndWait();
+			break;
 		}
 	}
 	return false;
@@ -274,8 +384,8 @@ void TextureTool::UpdateFindReplaceHistories()
 
 BOOL CALLBACK FindTextureDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	assert(g_qeglobals.d_texTool);
-	return g_qeglobals.d_texTool->InputReplaceDlg(hwndDlg, uMsg, wParam, lParam);
+	assert(g_texTool);
+	return g_texTool->InputReplaceDlg(hwndDlg, uMsg, wParam, lParam);
 }
 
 bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -312,13 +422,13 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		{
 		case IDC_TEXFIND_SAMPLE:
 			sampleState = TTSS_FIND;
-			Sys_Status("Click a texture or brush to use its name", 0);
+			WndMain_Status("Click a texture or brush to use its name", 0);
 			hot = true;
 			Crosshair(true);
 			return TRUE;
 		case IDC_TEXREPLACE_SAMPLE:
 			sampleState = TTSS_REPLACE;
-			Sys_Status("Click a texture or brush to use its name", 0);
+			WndMain_Status("Click a texture or brush to use its name", 0);
 			hot = true;
 			Crosshair(true);
 			return TRUE;
@@ -327,7 +437,7 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			UpdateFindReplaceHistories();
 			bSelected = SendDlgItemMessage(hwndReplaceDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0) > 0;
 			Surface::FindReplace(findHistory.back().n, replaceHistory.back().n, bSelected);// , false);
-			Sys_UpdateWindows(W_CAMERA);
+			WndMain_UpdateWindows(W_CAMERA);
 			return TRUE;
 
 		case IDCLOSE:
@@ -350,7 +460,7 @@ void TextureTool::FindTextureDialog()
 	}
 
 	// lunaran: modeless f&r dialog
-	hwndReplaceDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDREPLACE), g_qeglobals.d_hwndMain, FindTextureDlgProc);
+	hwndReplaceDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDREPLACE), g_hwndMain, FindTextureDlgProc);
 	ShowWindow(hwndReplaceDlg, SW_SHOW);
 }
 

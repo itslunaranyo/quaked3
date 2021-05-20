@@ -5,6 +5,8 @@
 #ifndef __COMMAND_COMPOUND_H__
 #define __COMMAND_COMPOUND_H__
 
+#include "Command.h"
+
 class CmdCompound : public Command
 {
 public:

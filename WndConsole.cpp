@@ -2,7 +2,11 @@
 //	WndConsole.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndConsole.h"
+
+HWND g_hwndConsole;
 
 WndConsole::WndConsole()
 {
@@ -38,7 +42,7 @@ void WndConsole::Initialize()
 
 	SendMessage(w_hwndCons, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 
-	g_qeglobals.d_hwndConsole = w_hwndCons;
+	g_hwndConsole = w_hwndCons;
 }
 
 #define SCROLLBACK_MAX_LINES	600 // PGM
@@ -46,16 +50,16 @@ void WndConsole::Initialize()
 
 void WndConsole::ScrollToEnd()
 {
-	SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
-	SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
-	SendMessage(g_qeglobals.d_hwndConsole, EM_SCROLLCARET, 0, 0);
+	SendMessage(g_hwndConsole, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	SendMessage(g_hwndConsole, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
+	SendMessage(g_hwndConsole, EM_SCROLLCARET, 0, 0);
 }
 
 void WndConsole::AddText(const char *txt)
 {
 	LRESULT		result;				// PGM
 	DWORD		oldPosS, oldPosE;	// PGM
-	HWND cons = g_qeglobals.d_hwndConsole;
+	HWND cons = g_hwndConsole;
 
 	result = SendMessage(cons, EM_GETLINECOUNT, 0, 0);
 	// sikk - place the caret at the end of Console before text is inserted. 
@@ -81,6 +85,8 @@ void WndConsole::AddText(const char *txt)
 
 	SendMessage(cons, EM_REPLACESEL, 0, (LPARAM)txt);
 	SendMessage(cons, EM_SCROLLCARET, 0, 0); // eerie // sikk - removed comment
+
+	g_wndConsole->ScrollToEnd();
 }
 
 bool WndConsole::TryCopy()

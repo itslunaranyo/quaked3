@@ -2,8 +2,10 @@
 //	CmdPaste.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdPaste.h"
+#include "map.h"
 
 CmdPaste::CmdPaste() : Command("Paste")
 {
@@ -18,7 +20,7 @@ void CmdPaste::Do_Impl()
 {
 	if (!IsClipboardFormatAvailable(CF_TEXT))
 		CmdError("Couldn't paste from clipboard");
-	if (!OpenClipboard(g_qeglobals.d_hwndMain))
+	if (!OpenClipboard(g_hwndMain))
 		CmdError("Couldn't paste from clipboard");
 
 	HGLOBAL hglb;

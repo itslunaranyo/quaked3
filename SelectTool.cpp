@@ -2,8 +2,15 @@
 //	SelectTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "SelectTool.h"
+#include "select.h"
+#include "CameraView.h"
+#include "XYZView.h"
+#include "ZView.h"
+#include "WndView.h"
+#include "win_dlg.h"
 
 SelectTool::SelectTool() : 
 	selecting(true),
@@ -184,10 +191,10 @@ bool SelectTool::TrySelect(int buttons, const vec3 origin, const vec3 dir, int &
 		(flags & SF_FACES && flags & SF_EXCLUSIVE))
 		Selection::DeselectAllFaces();
 
-	if ((flags & SF_FACES) && (g_qeglobals.d_selSelectMode != sel_face))
+	if ((flags & SF_FACES) && (Selection::g_selMode != sel_face))
 	{
 		Selection::DeselectAll();
-		g_qeglobals.d_selSelectMode = sel_face;
+		Selection::g_selMode = sel_face;
 	}
 
 	int newflags;

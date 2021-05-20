@@ -5,6 +5,8 @@
 #ifndef __WND_VIEW_H__
 #define __WND_VIEW_H__
 
+class View;
+
 class WndView
 {
 public:

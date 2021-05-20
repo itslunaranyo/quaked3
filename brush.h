@@ -8,6 +8,8 @@
 #include "SlabAllocator.h"
 
 class Entity;
+class Face;
+
 class Brush : public SlabAllocator<Brush>
 {
 public:
@@ -52,15 +54,8 @@ public:
 	void	RefreshTexdefs();
 
 	Face	*RayTest(const vec3 origin, const vec3 dir, float *dist);
-	//void	SelectFaceForDragging(Face *f, bool shear);
-	//void	SideSelect(const vec3 origin, const vec3 dir, bool shear = false);
 	bool	PointTest(const vec3 origin);
 	vec3	Center() { return (maxs + mins) * 0.5f; }
-
-	// sikk---> Vertex Editing Splits Face
-	//bool	MoveVertex(const vec3 vertex, const vec3 delta, vec3 &end);
-	//void	ResetFaceOriginals();
-	// <---sikk
 
 	// TODO: promote brushlist to its own container class
 	void	RemoveFromList();
@@ -72,7 +67,6 @@ public:
 
 	static Brush *Parse();
 	void	Write(std::ostream &out);
-	//void	Write(FILE *f);
 
 	void	Draw ();
 	void	DrawXY (int nViewType);
@@ -81,15 +75,6 @@ public:
 	void	DrawLight ();
 };
 
-//========================================================================
 
-//extern bool g_bMBCheck;
-//extern int	g_nBrushNumCheck;
-			 
-//========================================================================
-
-
-
-void		FacingVectors (const Brush *b, vec3 &forward, vec3 &right, vec3 &up);
 
 #endif

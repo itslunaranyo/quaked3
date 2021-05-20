@@ -2,11 +2,18 @@
 //	z.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
+#include "select.h"
+#include "CameraView.h"
+#include "ZView.h"
+#include "Tool.h"
 
 #define CAM_HEIGHT	48	// height of main part
 #define CAM_GIZMO	8	// height of the gizmo
 
+ZView g_vZ;
 
 ZView::ZView()
 {
@@ -116,8 +123,8 @@ void ZView::MouseDown(int x, int y, int buttons)
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) || 
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
-		g_qeglobals.d_vCamera.origin[2] = org[2];
-		Sys_UpdateWindows(W_SCENE);
+		g_vCamera.origin[2] = org[2];
+		WndMain_UpdateWindows(W_SCENE);
 	}
 }
 
@@ -147,7 +154,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 		fz = floor(fz / g_qeglobals.d_nGridSize + 0.5) * g_qeglobals.d_nGridSize;
 
 		sprintf(zstring, "z Coordinate: (%d)", (int)fz);
-		Sys_Status(zstring, 0);
+		WndMain_Status(zstring, 0);
 
 		return;
 	}
@@ -155,7 +162,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 	if (buttons == MK_LBUTTON)
 	{
 	//	Drag_MouseMoved(x, y, buttons);
-		Sys_UpdateWindows(W_Z | W_CAMERA);
+		WndMain_UpdateWindows(W_Z | W_CAMERA);
 		return;
 	}
 	// rbutton = drag z origin
@@ -168,10 +175,10 @@ void ZView::MouseMoved(int x, int y, int buttons)
 			origin[2] += (y - cursorY) / scale;
 
 			Sys_SetCursorPos(cursorX, cursorY);
-			Sys_UpdateWindows(W_Z);
+			WndMain_UpdateWindows(W_Z);
 
 			sprintf(zstring, "z Origin: (%d)", (int)origin[2]);
-			Sys_Status(zstring, 0);
+			WndMain_Status(zstring, 0);
 		}
 		return;
 	}
@@ -180,8 +187,8 @@ void ZView::MouseMoved(int x, int y, int buttons)
 	if ((buttons == (MK_CONTROL | MK_MBUTTON)) ||
 		(buttons == (MK_CONTROL | MK_LBUTTON)))
 	{	
-		g_qeglobals.d_vCamera.origin[2] = (y - (height / 2)) / scale;
-		Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
+		g_vCamera.origin[2] = (y - (height / 2)) / scale;
+		WndMain_UpdateWindows(W_CAMERA | W_XY | W_Z);
 	}
 
 // sikk---> Mouse Zoom
@@ -202,7 +209,7 @@ void ZView::MouseMoved(int x, int y, int buttons)
 
 
 			Sys_SetCursorPos(cursorX, cursorY);
-			Sys_UpdateWindows(W_Z);
+			WndMain_UpdateWindows(W_Z);
 		}
 		return;
 	}
@@ -212,17 +219,17 @@ void ZView::MouseMoved(int x, int y, int buttons)
 void ZView::ScaleUp()
 {
 	scale = min(32.0f, scale * 1.25f);
-	Sys_UpdateWindows(W_Z);
+	WndMain_UpdateWindows(W_Z);
 }
 void ZView::ScaleDown()
 {
 	scale = max(0.05f, scale * 0.8f);
-	Sys_UpdateWindows(W_Z);
+	WndMain_UpdateWindows(W_Z);
 }
 void ZView::Scroll(float amt)
 {
 	origin.z += amt / scale;
-	Sys_UpdateWindows(W_Z);
+	WndMain_UpdateWindows(W_Z);
 }
 
 /*
@@ -347,7 +354,7 @@ void ZView::DrawCameraIcon ()
 	int		xCam = width / 4;
 
 	x = 0;
-	y = g_qeglobals.d_vCamera.origin[2];
+	y = g_vCamera.origin[2];
 
 	glColor3f (0.0, 0.0, 1.0);
 	glBegin(GL_LINE_STRIP);
@@ -372,7 +379,7 @@ ZView::DrawTools
 */
 bool ZView::DrawTools()
 {
-	for (auto tIt = g_qeglobals.d_tools.rbegin(); tIt != g_qeglobals.d_tools.rend(); ++tIt)
+	for (auto tIt = Tool::stack.rbegin(); tIt != Tool::stack.rend(); ++tIt)
 	{
 		if ((*tIt)->Draw1D(*this))
 			return true;

@@ -2,7 +2,9 @@
 //	winding.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "winding.h"
 #include <list>
 
 #define WINDINGS_CHUNK 512

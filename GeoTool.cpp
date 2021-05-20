@@ -2,8 +2,16 @@
 //	GeoTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdGeoMod.h"
+#include "GeoTool.h"
+#include "select.h"
+#include "CameraView.h"
+#include "XYZView.h"
+#include "winding.h"
+#include "WndView.h"
+
 #include <algorithm>
 
 #define GT_HANDLE_HITSIZE	7
@@ -109,7 +117,7 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		hot = true;
 		hotView = &v;
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
 		vWnd.GetMsgXY(lParam, mx, my);
@@ -118,7 +126,7 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		{
 			DragMove(mc);
 
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			return true;
 		}
 		mca = v.GetMouseContext(mc.pt[0] - GT_HANDLE_HITSIZE, mc.pt[1] - GT_HANDLE_HITSIZE);
@@ -133,7 +141,7 @@ bool GeoTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		mc = v.GetMouseContext(mx, my);
 		DragFinish(mc);
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
@@ -164,7 +172,7 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 		hot = true;
 		hotView = &v;
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
 		vWnd.GetMsgXY(lParam, mx, my);
@@ -173,7 +181,7 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 		{
 			DragMove(mc);
 
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			return true;
 		}
 		mca = v.GetMouseContext(mc.pt[0] - GT_HANDLE_HITSIZE, mc.pt[1] - GT_HANDLE_HITSIZE);
@@ -187,7 +195,7 @@ bool GeoTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, WndV
 		mc = v.GetMouseContext(mx, my);
 		DragFinish(mc);
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;

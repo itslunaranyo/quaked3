@@ -5,9 +5,12 @@
 #ifndef __NAV_TOOL_H__
 #define __NAV_TOOL_H__
 
+#include "Tool.h"
 // Navigation Tool
 // not a tool as such because it's purely for manipulating views, not constructing commands,
 // but some navigation modes need to be modal in exactly the same way tools are and this Works
+
+class WndView;
 
 class NavTool :
 	public Tool

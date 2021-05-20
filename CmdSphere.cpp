@@ -2,7 +2,9 @@
 //	CmdSphere.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "select.h"
 #include "CmdSphere.h"
 
 CmdSphere::CmdSphere() : sides(0), target(nullptr), Command("Make Sphere") {}

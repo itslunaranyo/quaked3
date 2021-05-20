@@ -438,6 +438,33 @@ BEGIN
     END
 END
 
+IDR_POPUP_FILTER MENU
+BEGIN
+    POPUP "&Filter"
+    BEGIN
+        MENUITEM "Show &Clip",                  ID_VIEW_SHOWCLIP, CHECKED
+        MENUITEM "Show &Hint",                  40422, CHECKED
+        MENUITEM "Show &Sky",                   ID_VIEW_SHOWSKY, CHECKED
+        MENUITEM "Show Li&quid",                ID_VIEW_SHOWWATER, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Show &Detail",                40421, CHECKED
+        MENUITEM "Show &Func Wall",             ID_VIEW_SHOWFUNCWALL, CHECKED
+        MENUITEM "Show &Lights",                ID_VIEW_SHOWLIGHTS, CHECKED
+        MENUITEM "Show &Monsters",              ID_VIEW_SHOWMONSTERS, CHECKED
+        MENUITEM "Show &Triggers",              ID_VIEW_SHOWTRIGGERS, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Show Wo&rld",                 ID_VIEW_SHOWWORLD, CHECKED
+        MENUITEM "Show &Brush Entities",        ID_VIEW_SHOWBRUSHENTS, CHECKED
+        MENUITEM "Show &Point Entities",        ID_VIEW_SHOWPOINTENTS, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Show All Skills",             ID_FILTER_SHOWALLSKILLS, CHECKED
+        MENUITEM "Show Easy Skill",             ID_FILTER_SHOWEASYSKILL
+        MENUITEM "Show Medium Skill",           ID_FILTER_SHOWMEDIUMSKILL
+        MENUITEM "Show Hard Skill",             ID_FILTER_SHOWHARDSKILL
+        MENUITEM "Show Deathmatch",             ID_FILTER_SHOWDEATHMATCH
+    END
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -1090,8 +1117,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,49,0
- PRODUCTVERSION 3,2,49,0
+ FILEVERSION 3,2,50,0
+ PRODUCTVERSION 3,2,50,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1108,14 +1135,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 49)"
-            VALUE "FileVersion", "3.2.49.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 49)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 50)"
+            VALUE "FileVersion", "3.2.50.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 50)"
             VALUE "LegalCopyright", "Copyright © 1997-2019"
             VALUE "LegalTrademarks", "Quake™ 1996-2019"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.49.0"
+            VALUE "ProductVersion", "3.2.50.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1299,8 +1326,8 @@ BEGIN
     BUTTON      ID_SELECTION_CONNECT
     BUTTON      ID_SELECTION_GROUPNEXTBRUSH
     SEPARATOR
-    BUTTON      ID_BRUSH_CYLINDER
-    BUTTON      ID_BRUSH_CONE
+    BUTTON      ID_PRIMITIVES_CZGCYLINDER1
+    BUTTON      ID_PRIMITIVES_CZGCYLINDER2
     BUTTON      ID_BRUSH_SPHERE
     SEPARATOR
     BUTTON      ID_TEXTURES_REPLACEALL
@@ -1322,7 +1349,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_SELECTION_DRAGFACES
     BUTTON      ID_TOOLS_DRAWBRUSHESTOOL
-    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_VIEW_FILTER_POPUP
     BUTTON      ID_SELECTION_ARBITRARYROTATION
     BUTTON      ID_SELECTION_ARBITRARYROTATION
     BUTTON      ID_SELECTION_SCALE
@@ -1928,6 +1955,17 @@ END
 STRINGTABLE
 BEGIN
     ID_TOOLS_DRAWBRUSHESTOOL "Draw Brush Tool (B)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_FILTER_POPUP    "Set View Filters"
+END
+
+STRINGTABLE
+BEGIN
+    ID_PRIMITIVES_CZGCYLINDER1 "Create 12-sided CZG Cylinder"
+    ID_PRIMITIVES_CZGCYLINDER2 "Create 24-sided CZG Cylinder"
 END
 
 #endif    // English (United States) resources

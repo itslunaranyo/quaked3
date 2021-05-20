@@ -14,24 +14,24 @@
 
 //====================================================================
 
-typedef struct windingpoint_s
+struct windingpoint_t
 {
 	vec3 point;
 	float s, t;
-} windingpoint_t;
+};
 
-typedef struct winding_s
+struct winding_t
 {
 	int		numpoints;
 	int		maxpoints;
 	windingpoint_t 	points[6];	// variable sized
-} winding_t;
+};
 
-typedef struct free_winding_s {
+struct free_winding_t {
 	int maxWindings;	// winding points / 6
-	free_winding_s* next;
-	free_winding_s* prev;
-} free_winding_t;
+	free_winding_t* next;
+	free_winding_t* prev;
+};
 
 namespace Winding
 {

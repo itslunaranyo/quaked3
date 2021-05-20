@@ -2,8 +2,10 @@
 //	CmdTranslate.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdTranslate.h"
+#include "select.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 

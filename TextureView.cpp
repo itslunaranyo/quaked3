@@ -2,10 +2,15 @@
 //	v_tex.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "TextureView.h"
+#include "Tool.h"
 
 #define	FONT_HEIGHT	10
 #define MARGIN_X 8
+
+TextureView g_vTexture;
 
 TextureView::TextureView() : stale(true)
 {
@@ -72,7 +77,7 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 			cursorY = y;
 			SetScale(scale);
 
-			Sys_UpdateWindows(W_TEXTURE);
+			WndMain_UpdateWindows(W_TEXTURE);
 		}
 		return;
 	}
@@ -88,11 +93,11 @@ void TextureView::MouseMoved(int x, int y, int buttons)
 			Scroll(y - cursorY, (buttons & MK_SHIFT) > 0);
 			Sys_SetCursorPos(cursorX, cursorY);
 
-			Sys_UpdateWindows(W_TEXTURE);
+			WndMain_UpdateWindows(W_TEXTURE);
 		}
 	}
 	else
-		MouseOver(x, height - 1 - y);
+		MouseOver(x, y);
 }
 
 /*
@@ -105,15 +110,15 @@ void TextureView::MouseOver(int x, int y)
 	char		texstring[256];
 	Texture*	tex;
 
-	tex = TexAtPos(x, y);
+	tex = TexAtCursorPos(x, y);
 	if (tex)
 	{
 		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
-		Sys_Status(texstring, 0);
+		WndMain_Status(texstring, 0);
 		return;
 	}
 	sprintf(texstring, "");
-	Sys_Status(texstring, 0);
+	WndMain_Status(texstring, 0);
 }
 
 void TextureView::ResetScroll()
@@ -353,7 +358,7 @@ void TextureView::SetScale(float inscale)
 		}
 	}
 	sprintf(texscalestring, "Texture scale: %3.0f%%", scale * 100.0f);
-	Sys_Status(texscalestring, 0);
+	WndMain_Status(texscalestring, 0);
 
 	stale = true;
 	Arrange();
@@ -371,15 +376,17 @@ Texture* TextureView::TexAtPos(int x, int y)
 {
 	Arrange();
 	y += origin[1];
+	int cy;
 
 	for (auto twgIt = layoutGroups.begin(); twgIt != layoutGroups.end(); ++twgIt)
 	{
-		y -= twgIt->top;
+		if (twgIt->top - twgIt->height > y) continue;
+		cy = y - twgIt->top + 4;
 		if (twgIt->folded) continue;
 		for (auto twpIt = twgIt->layout.begin(); twpIt != twgIt->layout.end(); ++twpIt)
 		{
 			if (x > twpIt->x && x - twpIt->x < twpIt->w	&&
-				y < twpIt->y && twpIt->y - y < twpIt->h + FONT_HEIGHT)
+				cy < twpIt->y && twpIt->y - cy < twpIt->h + FONT_HEIGHT)
 			{
 				return twpIt->tex;
 			}
@@ -402,7 +409,7 @@ bool TextureView::FoldTextureGroup(texWndGroup_t* grp)
 	VertAlignGroups();
 	Scroll(0, false);	// snap back to bounds
 
-	Sys_UpdateWindows(W_TEXTURE);
+	WndMain_UpdateWindows(W_TEXTURE);
 	return true;
 }
 
@@ -470,7 +477,7 @@ void TextureView::UpdateStatus(TexDef* texdef)
 {
 	char		sz[256];
 	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, texdef->tex->width, texdef->tex->height);
-	Sys_Status(sz, 3);
+	WndMain_Status(sz, 3);
 }
 
 
@@ -524,7 +531,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 		return;
 	}
 	g_qeglobals.d_workTexDef = *texdef;
-	Sys_UpdateWindows(W_TEXTURE | W_SURF);
+	WndMain_UpdateWindows(W_TEXTURE | W_SURF);
 
 	// scroll origin so the texture is completely on screen
 	Texture* tx = Textures::ForName(texdef->name);
@@ -545,12 +552,12 @@ void TextureView::ChooseTexture(TexDef *texdef)
 				if (twi->y + twgIt->top > origin[1])
 				{
 					origin[1] = twi->y + twgIt->top;
-					Sys_UpdateWindows(W_TEXTURE);
+					WndMain_UpdateWindows(W_TEXTURE);
 				}
 				else if (twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT < origin[1] - height)
 				{
 					origin[1] = twi->y + twgIt->top - twi->h - 2 * FONT_HEIGHT + height;
-					Sys_UpdateWindows(W_TEXTURE);
+					WndMain_UpdateWindows(W_TEXTURE);
 				}
 				UpdateStatus(texdef);
 				return;
@@ -571,64 +578,6 @@ int texcmp(Texture* a, Texture* b)
 	return strcmp(a->name, b->name);
 }
 
-/*
-==============
-TextureView::SortTextures
-==============
-*/
-void TextureView::SortTextures()
-{
-	Texture	*q, *qtemp, *qhead, *qcur, *qprev;
-
-	Sys_Printf("Sorting active textures...\n");
-
-	// standard insertion sort
-	// Take the first texture from the list and
-	// add it to our new list
-	if (g_qeglobals.d_qtextures == NULL)
-		return;
-
-	qhead = g_qeglobals.d_qtextures;
-	q = g_qeglobals.d_qtextures->next;
-	qhead->next = NULL;
-
-	// while there are still things on the old
-	// list, keep adding them to the new list
-	while (q)
-	{
-		qtemp = q;
-		q = q->next;
-
-		qprev = NULL;
-		qcur = qhead;
-
-		while (qcur)
-		{
-			// Insert it here?
-			if (texcmp(qtemp, qcur) < 0)
-			{
-				qtemp->next = qcur;
-				if (qprev)
-					qprev->next = qtemp;
-				else
-					qhead = qtemp;
-				break;
-			}
-
-			// Move on
-			qprev = qcur;
-			qcur = qcur->next;
-
-			// is this one at the end?
-			if (qcur == NULL)
-			{
-				qprev->next = qtemp;
-				qtemp->next = NULL;
-			}
-		}
-	}
-	g_qeglobals.d_qtextures = qhead;
-}
 
 
 

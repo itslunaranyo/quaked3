@@ -2,8 +2,18 @@
 //	WndEntity.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndEntity.h"
+#include "WndCamera.h"
+#include "win_dlg.h"
 #include "CmdSetSpawnflag.h"
+#include "CameraView.h"
+#include "select.h"
+#include "modify.h"
+
+HWND g_hwndEntity;
+vec3 g_lastColor;
 
 #define DLGBORDER_X		2
 #define DLGBORDER_Y		2
@@ -71,7 +81,7 @@ void WndEntity::Initialize()
 {
 	CreateWnd();
 	SetTitle("Entity Editor");
-	g_qeglobals.d_hwndEntity = w_hwnd;
+	g_hwndEntity = w_hwnd;
 	CreateControls();
 	RestorePosition();	// something in ResizeControls forces the window to visible
 }
@@ -88,11 +98,11 @@ void WndEntity::Initialize()
 
 void WndEntity::SelectEntityColor()
 {
-	QE_SetInspectorMode(W_ENTITY);
+	WndMain_SetInspectorMode(W_ENTITY);
 
 	vec3 color;
 	if (!g_eEditEntity.GetKeyValueVector("_color", color))
-		color = g_qeglobals.d_lastColor;
+		color = g_lastColor;
 	if (color == vec3(0))
 		color = vec3(1);
 	if (DoColorSelect(color, color))
@@ -104,7 +114,8 @@ void WndEntity::SelectEntityColor()
 		SetWindowText(w_hwndCtrls[ENT_VALUEFIELD], buffer);
 		SetKeyValue();
 	}
-	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+	g_lastColor = color;
+	WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
 /*
@@ -116,7 +127,7 @@ handle tab and enter
 */
 BOOL CALLBACK WndFieldProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-	return g_qeglobals.d_wndEntity->FieldProc(hWnd, uMsg, wParam, lParam);
+	return g_wndEntity->FieldProc(hWnd, uMsg, wParam, lParam);
 }
 
 BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -130,7 +141,7 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return FALSE;
 		if (LOWORD(wParam) == VK_ESCAPE)
 		{
-			g_qeglobals.d_wndCamera->Focus();
+			g_wndCamera->Focus();
 			return FALSE;
 		}
 		break;
@@ -166,7 +177,7 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_LBUTTONDOWN:
-		g_qeglobals.d_wndEntity->BringToTop();
+		g_wndEntity->BringToTop();
 		SetFocus(w_hwnd);
 		break;
 	}
@@ -182,7 +193,7 @@ handle enter
 */
 BOOL CALLBACK WndEntityListProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	return g_qeglobals.d_wndEntity->EntityListProc(hWnd, uMsg, wParam, lParam);
+	return g_wndEntity->EntityListProc(hWnd, uMsg, wParam, lParam);
 }
 
 BOOL WndEntity::EntityListProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -212,10 +223,10 @@ EntityWndProc
 
 BOOL CALLBACK WndEntityProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	//assert(hwndDlg == g_qeglobals.d_wndEntity->w_hwndEntDialog);
-	if (!g_qeglobals.d_wndEntity->w_hwndEntDialog)
-		g_qeglobals.d_wndEntity->w_hwndEntDialog = hWnd;
-	return g_qeglobals.d_wndEntity->EntityDlgProc(uMsg, wParam, lParam);
+	//assert(hwndDlg == g_wndEntity->w_hwndEntDialog);
+	if (!g_wndEntity->w_hwndEntDialog)
+		g_wndEntity->w_hwndEntDialog = hWnd;
+	return g_wndEntity->EntityDlgProc(uMsg, wParam, lParam);
 }
 
 // FIXME: htf do you keep the entity window bar focus-blue when the dialog controls are focused?
@@ -324,7 +335,7 @@ BOOL CALLBACK WndEntity::EntityDlgProc(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			case LBN_DBLCLK:
 				CreateEntity();
-				g_qeglobals.d_wndCamera->Focus();
+				g_wndCamera->Focus();
 				break;
 			}
 			break;
@@ -366,6 +377,7 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		GetClientRect(w_hwnd, &clientRect);
 		ResizeControls();
+		// resize texbrowser and console here
 		return 0;
 
 	case WM_SIZING:
@@ -501,7 +513,7 @@ void WndEntity::UpdateListSel()
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, iIndex, 0);
 
 	if (pec)
-		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString((char*)*pec->comments));
+		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)Sys_TranslateString((char*)*pec->comments));
 }
 
 /*
@@ -515,7 +527,7 @@ void WndEntity::UpdateUI()
 {
 	int i;
 
-	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
+	SendMessage(g_hwndEntity, WM_SETREDRAW, 0, 0);
 	RefreshEditEntity();
 
 	if (!Selection::HasBrushes())
@@ -538,7 +550,7 @@ void WndEntity::UpdateUI()
 			SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
 
 		// Set up the description
-		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)TranslateString((char*)*pec->comments));
+		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)Sys_TranslateString((char*)*pec->comments));
 
 		for (i = 0; i < MAX_FLAGS; i++)
 		{
@@ -560,8 +572,8 @@ void WndEntity::UpdateUI()
 	FlagsFromEnt();
 	RefreshKeyValues();
 
-	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
-	RedrawWindow(g_qeglobals.d_hwndEntity, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	SendMessage(g_hwndEntity, WM_SETREDRAW, 1, 0);
+	RedrawWindow(g_hwndEntity, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
 void WndEntity::ForceUpdate()
@@ -626,7 +638,7 @@ void WndEntity::ResizeControls()
 	RECT	rectClasses, rectComment, rectProps, rectFlags, rectKV, rectAngle;
 	int		flagRows, flagCols, flagOffset;
 
-	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 0, 0);
+	SendMessage(g_hwndEntity, WM_SETREDRAW, 0, 0);
 	MoveRect(w_hwndEntDialog, clientRect);
 
 	yCheck = 20;	// distance from top of one check to the next
@@ -724,8 +736,8 @@ void WndEntity::ResizeControls()
 
 	MoveRect(w_hwndCtrls[ENT_CREATE], rectAngle.left + 7 * x, rectAngle.top + y * 0.5, x * 2, y * 2);	// sikk - Entity Window Addition
 
-	SendMessage(g_qeglobals.d_hwndEntity, WM_SETREDRAW, 1, 0);
-	RedrawWindow(g_qeglobals.d_hwndEntity, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	SendMessage(g_hwndEntity, WM_SETREDRAW, 1, 0);
+	RedrawWindow(g_hwndEntity, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_FRAME | RDW_ERASENOW | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
 
@@ -756,7 +768,7 @@ void WndEntity::ApplyAngle(int ang)
 	sprintf(sz, "%d", ang);
 	SetKeyValue("angle", sz);
 
-	Sys_UpdateWindows(W_CAMERA);
+	WndMain_UpdateWindows(W_CAMERA);
 }
 
 /*
@@ -788,7 +800,7 @@ void WndEntity::FlagChecked(int flag)
 	}
 	if (!g_cmdQueue.Complete(cmd)) return;
 
-	Sys_UpdateWindows(W_SCENE|W_ENTITY);
+	WndMain_UpdateWindows(W_SCENE|W_ENTITY);
 }
 
 /*
@@ -889,7 +901,7 @@ void WndEntity::CreateEntity()
 
 	if (i < 0)
 	{
-		MessageBox(g_qeglobals.d_hwndMain, "You must have a class selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
+		MessageBox(g_hwndMain, "You must have a class selected to create an entity.", "QuakeEd 3: Entity Creation Info", MB_OK | MB_ICONINFORMATION);
 		return;
 	}
 
@@ -898,7 +910,7 @@ void WndEntity::CreateEntity()
 
 	if (!Selection::HasBrushes())
 	{
-		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum
+		g_vCamera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum
 	}
 	else if (Selection::OnlyPointEntities() && ec->IsPointClass())
 	{

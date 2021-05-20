@@ -2,7 +2,11 @@
 //	command.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "Command.h"
+#include "map.h"
+#include "select.h"
 
 /*
 ========================================================================
@@ -19,8 +23,8 @@ progress (such as during mouse drags), and only make it 'official' by
 submitting a command for it when finished.
 
 the Commands remain extant in the CommandQueue to serve as undos/redos.
-the back of each queue is the end closest to the 'present', and the
-front is farthest in the past (for undos) or the future (for redos).
+the back() of each queue is the end closest to the 'present', and the
+front() is farthest in the past (for undos) or the future (for redos).
 
 changes to selection, changes to visibility, loading and unloading of 
 wads, or other events which are map data agnostic (ie do not alter what
@@ -224,8 +228,8 @@ bool CommandQueue::Complete(Command *cmd)
 	if (cmd->modifiesSelection)
 		Selection::Changed();
 
-	Sys_UpdateBrushStatusBar();
-	Sys_UpdateWindows(W_ALL);
+	WndMain_UpdateBrushStatusBar();
+	WndMain_UpdateWindows(W_ALL);
 	return true;
 }
 
@@ -270,8 +274,8 @@ void CommandQueue::Undo()
 	redoQueue.push_back(cmd);
 	Selection::Changed();
 
-	Sys_UpdateBrushStatusBar();
-	Sys_UpdateWindows(W_ALL);
+	WndMain_UpdateBrushStatusBar();
+	WndMain_UpdateWindows(W_ALL);
 }
 
 /*
@@ -298,8 +302,8 @@ void CommandQueue::Redo()
 	undoQueue.push_back(cmd);
 	Selection::Changed();
 
-	Sys_UpdateBrushStatusBar();
-	Sys_UpdateWindows(W_ALL);
+	WndMain_UpdateBrushStatusBar();
+	WndMain_UpdateWindows(W_ALL);
 }
 
 /*

@@ -2,8 +2,11 @@
 //	CmdCreatePointEntity.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdCreatePointEntity.h"
+#include "map.h"
+#include "select.h"
 
 // classname hack confirmation is done by the UI before creating this command,
 // which assumes that whatever classname it is asked to create as a point entity

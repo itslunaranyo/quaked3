@@ -2,7 +2,9 @@
 //	errors.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
 
 bool g_bWarningOrError;
 bool g_CrashSaving = false;
@@ -162,7 +164,7 @@ clean up on the way out
 */
 void QE_Exit(const char* badnews)
 {
-	MessageBox(g_qeglobals.d_hwndMain, badnews, "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
+	MessageBox(g_hwndMain, badnews, "QuakeEd 3: Unhandled Exception", MB_OK | MB_ICONEXCLAMATION);
 
 	// close logging if necessary
 	g_cfgEditor.LogConsole = false;

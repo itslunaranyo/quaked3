@@ -2,6 +2,7 @@
 //	cmdlib.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 
 #define PATHSEPERATOR   '/'

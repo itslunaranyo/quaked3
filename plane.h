@@ -5,8 +5,7 @@
 //	plane.h
 //==============================
 
-struct winding_s;
-typedef winding_s winding_t;
+struct winding_t;
 
 extern const vec3 g_v3BaseAxis[18];
 

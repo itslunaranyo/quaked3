@@ -23,6 +23,8 @@ public:
 
 //==============================
 
+class EntClass;
+
 class Entity
 {
 public:

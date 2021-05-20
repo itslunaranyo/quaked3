@@ -5,8 +5,10 @@
 #ifndef __TEXTURE_TOOL_H__
 #define __TEXTURE_TOOL_H__
 
+#include "Tool.h"
 class CmdTextureMod;
 class CmdCompound;
+class WndView;
 
 class TextureTool :	public Tool
 {
@@ -44,5 +46,7 @@ private:
 	void GetTexModCommand(texModType_t tm);
 	void UpdateFindReplaceHistories();
 };
+
+extern TextureTool* g_texTool;
 
 #endif

@@ -2,7 +2,10 @@
 //	Tool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "Tool.h"
+#include "WndView.h"
 
 /*
 ================================================================
@@ -42,25 +45,27 @@ drag planes, but in clip mode it places and moves clip points instead.)
 ================================================================
 */
 
+std::vector<Tool*> Tool::stack;
+
 Tool::Tool(const char* n, bool isModal = false) : name(n), modal(isModal), hot(false)
 {
 	// only one modal tool is allowed at a time
-	if (modal && g_qeglobals.d_tools.size() && g_qeglobals.d_tools.back()->modal)
-		delete g_qeglobals.d_tools.back();
+	if (modal && stack.size() && stack.back()->modal)
+		delete stack.back();
 
-	g_qeglobals.d_tools.push_back(this);
-	Sys_UpdateGridStatusBar();
+	stack.push_back(this);
+	WndMain_UpdateGridStatusBar();
 }
 
 Tool::~Tool()
 {
 	// enforce tools removed in reverse order
-	assert(g_qeglobals.d_tools.back() == this);
+	assert(stack.back() == this);
 
 	if (hot) ReleaseCapture();	// jic
 
-	g_qeglobals.d_tools.pop_back();
-	Sys_UpdateGridStatusBar();
+	stack.pop_back();
+	WndMain_UpdateGridStatusBar();
 }
 
 bool Tool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd) { return hot; }
@@ -82,7 +87,7 @@ int Tool::HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 		return ht->Input3D(uMsg, wParam, lParam, v, vWnd);
 	}
 
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
 		//if (uMsg == WM_LBUTTONDOWN) Sys_Printf("sending lbtndn input to %s\n", (*rtIt)->name);
 		//if (uMsg == WM_LBUTTONUP) Sys_Printf("sending lbtnup input to %s\n", (*rtIt)->name);
@@ -106,7 +111,7 @@ int Tool::HandleInput2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 	if (ht)
 		return ht->Input2D(uMsg, wParam, lParam, v, vWnd);
 
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
 		out = (*rtIt)->Input2D(uMsg, wParam, lParam, v, vWnd);
 		if (out) return out;
@@ -124,7 +129,7 @@ int Tool::HandleInput1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 	if (ht)
 		return ht->Input1D(uMsg, wParam, lParam, v, vWnd);
 
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
 		out = (*rtIt)->Input1D(uMsg, wParam, lParam, v, vWnd);
 		if (out) return out;
@@ -142,7 +147,7 @@ int Tool::HandleInputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v
 	if (ht)
 		return ht->InputTex(uMsg, wParam, lParam, v, vWnd);
 
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
 		out = (*rtIt)->InputTex(uMsg, wParam, lParam, v, vWnd);
 		if (out) return out;
@@ -160,7 +165,7 @@ int Tool::HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (ht)
 		return ht->Input(uMsg, wParam, lParam);
 
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
 		out = (*rtIt)->Input(uMsg, wParam, lParam);
 		if (out) return out;
@@ -171,16 +176,16 @@ int Tool::HandleInput(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 Tool* Tool::ModalTool()
 {
-	if (g_qeglobals.d_tools.empty())
+	if (stack.empty())
 		return nullptr;
-	if (g_qeglobals.d_tools.back()->modal)
-		return g_qeglobals.d_tools.back();
+	if (stack.back()->modal)
+		return stack.back();
 	return nullptr;
 }
 
 Tool* Tool::HotTool()
 {
-	for (auto rtIt = g_qeglobals.d_tools.rbegin(); rtIt != g_qeglobals.d_tools.rend(); ++rtIt)
+	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 		if ((*rtIt)->hot)
 			return (*rtIt);
 	return nullptr;

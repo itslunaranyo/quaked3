@@ -16,9 +16,7 @@
 //========================================================================
 
 class Brush;
-
-struct winding_s;
-typedef winding_s winding_t;
+struct winding_t;
 
 //========================================================================
 
@@ -65,15 +63,6 @@ private:
 	void	SetColor();
 	float	ShadeForPlane();
 };
-
-//========================================================================
-
-typedef struct
-{
-	int		p1, p2;
-	Face	*f1, *f2;
-} pedge_t;
-
 
 
 #endif

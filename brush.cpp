@@ -2,24 +2,12 @@
 //	brush.cpp
 //==============================
 
-#include <assert.h>
+#include "pre.h"
 #include "qe3.h"
 #include "io.h"
 #include "parse.h"
+#include "winding.h"
 
-/*
-bool g_bMBCheck;	// sikk - This is to control the MessageBox displayed when
-					// a bad inTexDef is found during saving map so it doesn't
-					// continuously popup with each bad face. It's reset to 
-					// "false" after saving is complete.
-
-int	g_nBrushNumCheck;	// sikk - This is to keep multiple listings of the same
-						// brush from spamming the console from bad texture name 
-						// warnings when saving.
-*/
-
-
-//=========================================================================
 
 /*
 =============
@@ -471,7 +459,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 		if (!g_bMBCheck)
 		{
 			sprintf(szMB, "Bad texture name was found.\nSaving will continue and the brush(es)\ncontaining bad faces will be listed in the console.");
-			MessageBox(g_qeglobals.d_hwndMain, szMB, "QuakeEd 3: Warning", MB_OK | MB_ICONEXCLAMATION);
+			MessageBox(g_hwndMain, szMB, "QuakeEd 3: Warning", MB_OK | MB_ICONEXCLAMATION);
 			g_bMBCheck = true;
 		}
 
@@ -923,14 +911,25 @@ void Brush::DrawFacingAngle ()
 	vec3	forward, right, up;
 	vec3	endpoint, tip1, tip2;
 	vec3	start;
+	int		angleVal;
+	vec3	angles;
+
+	angleVal = this->owner->GetKeyValueInt("angle");
+
+	if (angleVal == -1)
+		angles = vec3(270, 0, 0);
+	else if (angleVal == -2)
+		angles = vec3(90, 0, 0);
+	else
+		angles = vec3(0, angleVal, 0);
+
+	AngleVectors(angles, forward, right, up);
 
 	start = owner->brushes.onext->mins + owner->brushes.onext->maxs;
 	start = start * 0.5f;
 	dist = (maxs[0] - start[0]) * 2.5f;
 
-	FacingVectors(this, forward, right, up);
 	endpoint = start + dist * forward;
-
 	dist = (maxs[0] - start[0]) * 0.5f;
 	tip1 = endpoint + -dist * forward;
 	tip1 = tip1 + -dist * up;
@@ -1257,34 +1256,3 @@ void Brush::Write(std::ostream& out)
 	out << "}\n";
 }
 
-
-//==========================================================================
-
-
-/*
-==================
-FacingVectors
-==================
-*/
-void FacingVectors(const Brush *b, vec3 &forward, vec3 &right, vec3 &up)
-{
-	int		angleVal;
-	vec3	angles;
-
-	angleVal = b->owner->GetKeyValueInt("angle");
-
-	if (angleVal == -1)
-	{
-		angles = vec3(270, 0, 0);
-	}
-	else if (angleVal == -2)
-	{
-		angles = vec3(90, 0, 0);
-	}
-	else
-	{
-		angles = vec3(0, angleVal, 0);
-	}
-
-	AngleVectors(angles, forward, right, up);
-}

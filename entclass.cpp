@@ -2,6 +2,7 @@
 //	entclass.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "io.h"
 #include <algorithm>
@@ -341,7 +342,7 @@ void EntClass::ScanFile(const char *filename)
 	char		temp[1024];
 	qeBuffer	fdata;
 
-	QE_ConvertDOSToUnixName(temp, filename);
+	Sys_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("ScanFile: %s\n", temp);
 
 	size = IO_LoadFile(filename, fdata);
@@ -371,7 +372,7 @@ void EntClass::InitForSourceDirectory(const char *path)
 	char	ext[8];
 	char	fname[_MAX_FNAME];
 
-	QE_ConvertDOSToUnixName(temp, path);
+	Sys_ConvertDOSToUnixName(temp, path);
 	Sys_Printf("ScanEntityPath: %s\n", temp);
 
 	Clear();

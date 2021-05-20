@@ -2,8 +2,10 @@
 //	CmdCylinder.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdCylinder.h"
+#include "select.h"
 
 CmdCylinder::CmdCylinder() : sides(0), target(nullptr), axis(2), Command("Make Cylinder") {}
 CmdCylinder::~CmdCylinder() {}

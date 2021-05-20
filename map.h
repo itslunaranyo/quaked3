@@ -1,8 +1,13 @@
-#ifndef __MAP_H__
-#define __MAP_H__
 //==============================
 //	map.h
 //==============================
+
+#ifndef __MAP_H__
+#define __MAP_H__
+
+#include "Brush.h"
+#include "Entity.h"
+#include "TargetGraph.h"
 
 // the state of the current world that all views are displaying
 
@@ -27,7 +32,7 @@ public:
 	bool		regionActive;
 
 	// WHOLE SCENE
-	clock_t		autosaveTime;
+	clock_t		autosaveTime; // why is this here
 	TargetGraph targetGraph;
 
 

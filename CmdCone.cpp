@@ -2,8 +2,10 @@
 //	CmdCone.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdCone.h"
+#include "select.h"
 
 CmdCone::CmdCone() : sides(0), target(nullptr), axis(2), Command("Make Cone") {}
 CmdCone::~CmdCone() {}

@@ -5,6 +5,7 @@
 #ifndef __TOOL_H__
 #define __TOOL_H__
 
+class WndView;
 class CameraView;
 class XYZView;
 class ZView;
@@ -21,6 +22,8 @@ public:
 	virtual ~Tool();
 
 	const char* name;
+
+	static std::vector<Tool*> stack;
 
 	bool hot;	// true during drags or other actions that must capture all input
 	const bool modal;	// modal tools are mutually exclusive, and delete each other from the stack

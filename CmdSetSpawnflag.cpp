@@ -2,8 +2,10 @@
 //	CmdSetSpawnflag.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdSetSpawnflag.h"
+#include "select.h"
 
 CmdSetSpawnflag::CmdSetSpawnflag(int flag, bool val) : newval(val), Command("Set Spawnflag")
 {

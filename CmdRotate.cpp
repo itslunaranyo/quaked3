@@ -2,8 +2,10 @@
 //	CmdRotate.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdRotate.h"
+#include "select.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 

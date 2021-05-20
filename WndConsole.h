@@ -5,6 +5,10 @@
 #ifndef __WND_CONSOLE_H__
 #define __WND_CONSOLE_H__
 
+#include "WndView.h"
+
+extern HWND g_hwndConsole;
+extern WndConsole	*g_wndConsole;
 
 class WndConsole : public WndView
 {

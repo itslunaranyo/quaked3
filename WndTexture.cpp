@@ -2,7 +2,13 @@
 //	WndTexture.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndTexture.h"
+#include "TextureView.h"
+#include "Tool.h"
+
+HWND g_hwndTexture;
 
 WndTexture::WndTexture()
 {
@@ -16,11 +22,11 @@ WndTexture::~WndTexture()
 
 void WndTexture::Initialize()
 {
-	texv = &g_qeglobals.d_vTexture;
+	texv = &g_vTexture;
 	v = texv;
 	CreateWnd();
 	SetTitle("Textures");
-	g_qeglobals.d_hwndTexture = w_hwnd;
+	g_hwndTexture = w_hwnd;
 }
 
 
@@ -36,8 +42,8 @@ void WndTexture::DoPopupMenu(int x, int y)
 	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), 0);
 
 	//bool flushed = twg->tg->flushed;
-	//QE_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
-	//QE_CheckMenuItem(hMenu, ID_CONTEXT_LOADCOMPLETELY, !flushed);
+	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
+	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_LOADCOMPLETELY, !flushed);
 
 	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, w_hwnd, NULL);
 
@@ -53,7 +59,7 @@ void WndTexture::DoPopupMenu(int x, int y)
 		Textures::MenuLoadWad(twg->tg->name);
 		break;
 	default:
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, retval, 0);
+		PostMessage(g_hwndMain, WM_COMMAND, retval, 0);
 	}
 
 	DestroyMenu(hMenu);
@@ -92,7 +98,7 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			texv->Scroll(((short)HIWORD(wParam) < 0) ? -64.0f : 64.0f, (fwKeys & MK_SHIFT) > 0);
 		}
-		Sys_UpdateWindows(W_TEXTURE);
+		WndMain_UpdateWindows(W_TEXTURE);
 		return 0;
 
 	case WM_MBUTTONDOWN:

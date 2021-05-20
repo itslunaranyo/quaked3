@@ -2,10 +2,60 @@
 //	win_dlg.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "win_dlg.h"
+#include "select.h"
+#include "map.h"
+#include "CameraView.h"
+#include "XYZView.h"
 #include "CmdImportMap.h"
+#include "WndEntity.h"
+#include "modify.h"
+#include "transform.h"
 
 #pragma warning(disable: 4800)	// 'LRESULT': forcing value to bool 'true' or 'false' (performance warning)
+
+HWND g_hwndSetKeyvalsDlg;
+
+
+/*
+=====================================================================
+
+	COLOR
+
+=====================================================================
+*/
+
+/*
+============
+DoColorSelect
+============
+*/
+bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut)
+{
+	CHOOSECOLOR		cc;
+	static COLORREF	custom[16];
+
+	cc.lStructSize = sizeof(cc);
+	cc.hwndOwner = g_hwndMain;
+	cc.lpCustColors = custom;
+	cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+
+	cc.rgbResult = (int)(rgbIn.r * 255) +
+		(((int)(rgbIn.g * 255)) << 8) +
+		(((int)(rgbIn.b * 255)) << 16);
+
+	if (!ChooseColor(&cc))
+		return false;
+
+	rgbOut.r = (cc.rgbResult & 255);
+	rgbOut.g = ((cc.rgbResult >> 8) & 255);
+	rgbOut.b = ((cc.rgbResult >> 16) & 255);
+	rgbOut /= 255.0f;
+	return true;
+}
+
 
 /*
 =====================================================================
@@ -85,7 +135,7 @@ DoAbout
 */
 void DoAbout ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ABOUT), g_qeglobals.d_hwndMain, AboutDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ABOUT), g_hwndMain, AboutDlgProc);
 }
 
 
@@ -144,7 +194,7 @@ void FindBrush (int entitynum, int brushnum)
 	Selection::SelectBrush(b);
 
 	for (i = 0; i < 3; i++)
-		g_qeglobals.d_vXYZ[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
+		g_vXYZ[0].origin[i] = (b->mins[i] + b->maxs[i]) / 2;
 
 	Sys_Printf("Selected.\n");
 }
@@ -232,7 +282,7 @@ DoFindBrush
 */
 void DoFindBrush ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDBRUSH), g_qeglobals.d_hwndMain, FindBrushDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDBRUSH), g_hwndMain, FindBrushDlgProc);
 }	
 
 
@@ -327,7 +377,7 @@ BOOL CALLBACK RotateDlgProc (
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
 			
-			Sys_ForceUpdateWindows(W_SCENE);
+			WndMain_ForceUpdateWindows(W_SCENE);
 
 			return TRUE;
 // <---sikk
@@ -467,7 +517,7 @@ DoRotate
 */
 void DoRotate ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ROTATE), g_qeglobals.d_hwndMain, RotateDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ROTATE), g_hwndMain, RotateDlgProc);
 }
 
 		
@@ -609,7 +659,7 @@ DoSides
 void DoSides (int nType)	// sikk - Brush Primitives (previously took no arguments)
 {
 	g_nType = nType;	// sikk - Brush Primitives
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SIDES), g_qeglobals.d_hwndMain, SidesDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SIDES), g_hwndMain, SidesDlgProc);
 }		
 
 
@@ -747,7 +797,7 @@ BOOL CALLBACK MouselistDlgProc(
 
 void DoMouselist()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_MOUSELIST), g_qeglobals.d_hwndMain, MouselistDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_MOUSELIST), g_hwndMain, MouselistDlgProc);
 }
 
 /*
@@ -908,7 +958,7 @@ DoKeylist
 */
 void DoKeylist ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_KEYLIST), g_qeglobals.d_hwndMain, KeylistDlgProc );
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_KEYLIST), g_hwndMain, KeylistDlgProc );
 }
 // <---sikk
 
@@ -976,7 +1026,7 @@ bool ConfirmClassnameHack(EntClass *desired)
 	else
 		sprintf(text, "%s is a brush-based entity. Are you sure you want to create one with no brushes?", desired->name);
 
-	return (MessageBox(g_qeglobals.d_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
+	return (MessageBox(g_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
 }
 
 /*
@@ -1061,7 +1111,7 @@ void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 o
 	//if (!bSel)
 		g_brSelectedBrushes.mins = origin;
 
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CREATEENTITY), g_qeglobals.d_hwndMain, CreateEntityDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CREATEENTITY), g_hwndMain, CreateEntityDlgProc);
 }
 // <---sikk
 
@@ -1190,7 +1240,7 @@ DoMapInfo
 */
 void DoMapInfo ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_MAPINFO), g_qeglobals.d_hwndMain, MapInfoDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_MAPINFO), g_hwndMain, MapInfoDlgProc);
 }
 // <---sikk
 
@@ -1333,8 +1383,8 @@ void OnSelect (HWND hTree)
 
 	// Center on selected entity and update the windows
 	XYZView::PositionAllViews();
-	g_qeglobals.d_vCamera.PositionCenter();
-	Sys_ForceUpdateWindows(W_SCENE);
+	g_vCamera.PositionCenter();
+	WndMain_ForceUpdateWindows(W_SCENE);
 }
 
 /*
@@ -1368,7 +1418,7 @@ void OnDelete (HWND hTree, HWND hList)
 		ListView_DeleteAllItems(hList);
 	}
 
-	Sys_ForceUpdateWindows(W_SCENE); 
+	WndMain_ForceUpdateWindows(W_SCENE); 
 }
 
 /*
@@ -1485,7 +1535,7 @@ DoEntityInfo
 */
 void DoEntityInfo ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ENTITYINFO), g_qeglobals.d_hwndMain, EntityInfoDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_ENTITYINFO), g_hwndMain, EntityInfoDlgProc);
 }
 // <---sikk
 
@@ -1556,7 +1606,7 @@ BOOL CALLBACK ScaleDlgProc (
 				g_bSnapCheck = false;
 			}
 			EndDialog(hwndDlg, 1);
-			Sys_UpdateWindows(W_XY | W_Z | W_CAMERA);
+			WndMain_UpdateWindows(W_XY | W_Z | W_CAMERA);
 			return TRUE;
 
 		case IDAPPLY:
@@ -1570,7 +1620,7 @@ BOOL CALLBACK ScaleDlgProc (
 			Transform_Scale(x, y, z);
 
 			SetDlgItemText(hwndDlg, IDCANCEL, "Close");
-			Sys_ForceUpdateWindows(W_SCENE);			
+			WndMain_ForceUpdateWindows(W_SCENE);			
 			return TRUE;
 
 		case IDCANCEL:
@@ -1700,7 +1750,7 @@ DoScale
 */
 void DoScale ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SCALE), g_qeglobals.d_hwndMain, ScaleDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SCALE), g_hwndMain, ScaleDlgProc);
 }
 // <---sikk 
 
@@ -1780,7 +1830,7 @@ DoCamSpeed
 */
 void DoCamSpeed ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CAMSPEED), g_qeglobals.d_hwndMain, CamSpeedDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CAMSPEED), g_hwndMain, CamSpeedDlgProc);
 }
 // <---sikk
 
@@ -1875,7 +1925,7 @@ DoDefaultTexScale
 */
 void DoDefaultTexScale ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_TEXTURESCALE), g_qeglobals.d_hwndMain, DefaultTexScaleDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_TEXTURESCALE), g_hwndMain, DefaultTexScaleDlgProc);
 }
 // <---sikk
 
@@ -1911,8 +1961,8 @@ BOOL CALLBACK FindKeyValueDlgProc (
 		HWND	h;
 		h = GetDlgItem(hwndDlg, IDC_EDIT_FINDKEY);
 
-		GetDlgItemText(g_qeglobals.d_wndEntity->w_hwndEntDialog, IDC_E_KEY_FIELD, szKey, 255);
-		GetDlgItemText(g_qeglobals.d_wndEntity->w_hwndEntDialog, IDC_E_VALUE_FIELD, szValue, 255);
+		GetDlgItemText(g_wndEntity->w_hwndEntDialog, IDC_E_KEY_FIELD, szKey, 255);
+		GetDlgItemText(g_wndEntity->w_hwndEntDialog, IDC_E_VALUE_FIELD, szValue, 255);
 		SetDlgItemText(hwndDlg, IDC_EDIT_FINDKEY, szKey);
 		SetDlgItemText(hwndDlg, IDC_EDIT_FINDVALUE, szValue);
 		SetFocus(h);
@@ -1945,7 +1995,7 @@ DoFindKeyValue
 */
 void DoFindKeyValue ()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDKEYVALUE), g_qeglobals.d_hwndMain, FindKeyValueDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDKEYVALUE), g_hwndMain, FindKeyValueDlgProc);
 }
 // <---sikk
 
@@ -2016,7 +2066,7 @@ BOOL CALLBACK SetKeyvalsDlgProc(
 
 		case IDCLOSE:
 			EndDialog(hwndDlg, 0);
-			g_qeglobals.d_hwndSetKeyvalsDlg = NULL;
+			g_hwndSetKeyvalsDlg = NULL;
 			return TRUE;
 
 		case IDC_EDIT_SETKVSTART:
@@ -2041,14 +2091,14 @@ DoSetKeyValues
 */
 void DoSetKeyValues()
 {
-	if (g_qeglobals.d_hwndSetKeyvalsDlg)
+	if (g_hwndSetKeyvalsDlg)
 	{
-		SetFocus(g_qeglobals.d_hwndSetKeyvalsDlg);
+		SetFocus(g_hwndSetKeyvalsDlg);
 		return;
 	}
 
-	g_qeglobals.d_hwndSetKeyvalsDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SETKEYVALUES), g_qeglobals.d_hwndMain, SetKeyvalsDlgProc);
-	ShowWindow(g_qeglobals.d_hwndSetKeyvalsDlg, SW_SHOW);
+	g_hwndSetKeyvalsDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SETKEYVALUES), g_hwndMain, SetKeyvalsDlgProc);
+	ShowWindow(g_hwndSetKeyvalsDlg, SW_SHOW);
 }
 
 
@@ -2105,7 +2155,7 @@ BOOL CALLBACK ImportOptionsDlgProc(
 
 bool ImportOptionsDialog(CmdImportMap *cmdIM)
 {
-	int result = DialogBoxParamA(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_IMPORT), g_qeglobals.d_hwndMain, ImportOptionsDlgProc, 0L);
+	int result = DialogBoxParamA(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_IMPORT), g_hwndMain, ImportOptionsDlgProc, 0L);
 
 	if (result <= 0)
 		return false;

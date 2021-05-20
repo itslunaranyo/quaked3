@@ -5,7 +5,7 @@
 //==============================
 
 // window system independent camera view code
-#include "v_view.h"
+#include "View.h"
 
 class CameraView : public View
 {
@@ -64,7 +64,7 @@ private:
 
 //========================================================================
 
-
+extern CameraView g_vCamera;
 
 
 #endif

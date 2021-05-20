@@ -2,8 +2,16 @@
 //	NavTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "NavTool.h"
+#include "WndGrid.h"
+#include "WndZChecker.h"
+#include "WndTexture.h"
+#include "CameraView.h"
+#include "XYZView.h"
+#include "ZView.h"
+#include "TextureView.h"
 
 NavTool::NavTool() :
 	Tool("Navigation", false)	// always on (not modal)
@@ -45,7 +53,7 @@ bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		//Focus();
 		MsgToXY(lParam, vWnd, xPos, yPos);
 		v.MouseWheel(xPos, yPos, (short)HIWORD(wParam) > 0, wParam);
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 
 	case WM_MBUTTONDOWN:
@@ -168,7 +176,7 @@ bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndView
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
-		SetCapture(g_qeglobals.d_hwndZ);
+		SetCapture(g_hwndZ);
 		MsgToXY(lParam, vWnd, xPos, yPos);
 		v.MouseDown(xPos, yPos, wParam);
 		return true;
@@ -212,7 +220,7 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 		{
 			v.Scroll(((short)HIWORD(wParam) < 0) ? -64.0f : 64.0f, (wParam & MK_SHIFT) > 0);
 		}
-		Sys_UpdateWindows(W_TEXTURE);
+		WndMain_UpdateWindows(W_TEXTURE);
 		return true;
 
 	case WM_MBUTTONDOWN:

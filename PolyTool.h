@@ -5,9 +5,11 @@
 #ifndef __POLY_TOOL_H__
 #define __POLY_TOOL_H__
 
+#include "Tool.h"
 // Draw Polygonal Brushes Tool
 
 class CmdPolyBrushConcave;
+class WndView;
 
 class PolyTool : public Tool
 {

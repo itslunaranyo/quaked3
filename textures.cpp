@@ -2,9 +2,13 @@
 //	textures.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "io.h"
 #include "palette.h"
+#include "map.h"
+#include "select.h"
+#include "TextureView.h"
 //#include <algorithm>	// for sort
 
 
@@ -43,7 +47,7 @@ void Textures::Init()
 	strcpy(group_solid.name, "*solid");
 	// * is invalid as a filename character, so a theoretical wad named "solid" can't collide
 	
-	g_qeglobals.d_qtextures = nullptr;
+	//g_qeglobals.d_qtextures = nullptr;
 }
 
 
@@ -73,14 +77,14 @@ void Textures::HandleChange()
 	// 1) remove dead unknown textures that may have been replaced by real textures
 	Textures::CleanUnknowns();
 	// 2) remove any dead icons in the texture browser
-	g_qeglobals.d_vTexture.Refresh();
+	g_vTexture.Refresh();
 	// 3) sort out what texture is selected/bound
 	Textures::FixWorkTexDef();
 	// 2 comes before 3 because FWTD may select the first texture in the browser as a
 	// default, but if the map is new and all textures are flushed, that first texture
 	// is a null reference
 
-	Sys_UpdateWindows(W_CAMERA | W_TEXTURE | W_SURF);
+	WndMain_UpdateWindows(W_CAMERA | W_TEXTURE | W_SURF);
 
 	g_bTexturesChanged = false;
 }
@@ -135,14 +139,14 @@ void Textures::FixWorkTexDef()
 	{
 		// desired workdef texture was bad but is now in the name map, select it
 		g_qeglobals.d_workTexDef.Set(g_qeglobals.d_workTexDef.name);
-		g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
+		g_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
 	}
 	else if (g_qeglobals.d_workTexDef.name[0] == 0 || !texMap[label_t(g_qeglobals.d_workTexDef.name)])
 	{
 		// no texture is named or selected, default to the first one in the list
 		g_qeglobals.d_workTexDef.tex = nullptr;
-		g_qeglobals.d_vTexture.ChooseFirstTexture();
-		g_qeglobals.d_vTexture.ResetScroll();
+		g_vTexture.ChooseFirstTexture();
+		g_vTexture.ResetScroll();
 	}
 }
 
@@ -299,7 +303,7 @@ void Textures::RefreshUsedStatus()
 	for (b = g_map.brRegioned.next; b != &g_map.brRegioned; b = b->next)
 		b->RefreshTexdefs();
 
-	g_qeglobals.d_vTexture.Refresh();
+	g_vTexture.Refresh();
 }
 
 
@@ -498,7 +502,7 @@ void Textures::SelectFirstTexture()
 	if (!tex) return;
 
 	g_qeglobals.d_workTexDef.Set(tex);
-	g_qeglobals.d_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
+	g_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
 }
 
 
@@ -677,7 +681,7 @@ Textures::SetDrawMode
 void Textures::SetDrawMode(const int mode)
 {
 	HMENU	hMenu;
-	hMenu = GetMenu(g_qeglobals.d_hwndMain);
+	hMenu = GetMenu(g_hwndMain);
 
 	CheckMenuItem(hMenu, ID_DRAWMODE_WIREFRAME, MF_UNCHECKED);
 	CheckMenuItem(hMenu, ID_DRAWMODE_FLATSHADE, MF_UNCHECKED);

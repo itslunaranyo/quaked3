@@ -2,15 +2,24 @@
 //	map.cpp
 //============================== 
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
+#include "select.h"
+#include "modify.h"
+#include "points.h"
+#include "winding.h"
 #include "parse.h"
+
+#include "CameraView.h"
+#include "XYZView.h"
+#include "CmdImportMap.h"
+#include "CmdPaste.h"
+#include "win_dlg.h"
+
 #include <fstream>
 #include <sstream>
 #include <string>
-
-#include "CmdImportMap.h"
-#include "CmdPaste.h"
-#include "points.h"
 
 Map		g_map;
 Brush	*g_pbrRegionSides[4];
@@ -69,16 +78,16 @@ void Map::New()
 
 	world->eclass = EntClass::ForName("worldspawn", true, true);
 
-	g_qeglobals.d_vCamera.angles[YAW] = 0;
-	g_qeglobals.d_vCamera.origin = vec3(0);
-	g_qeglobals.d_vCamera.origin[2] = 48;
-	g_qeglobals.d_vXYZ[0].origin = vec3(0);
+	g_vCamera.angles[YAW] = 0;
+	g_vCamera.origin = vec3(0);
+	g_vCamera.origin[2] = 48;
+	g_vXYZ[0].origin = vec3(0);
 
 	if (LoadBetween(between))
 		BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
 
-	QE_SetInspectorMode(W_TEXTURE);
-	Sys_UpdateWindows(W_ALL);
+	WndMain_SetInspectorMode(W_TEXTURE);
+	WndMain_UpdateWindows(W_ALL);
 }
 
 /*
@@ -138,7 +147,7 @@ void Map::Free()
 	// brush geometry that might point into the winding pages is already destroyed
 	Winding::Clear();
 
-	Sys_UpdateWindows(W_ALL);
+	WndMain_UpdateWindows(W_ALL);
 }
 
 /*
@@ -186,7 +195,7 @@ void Map::BuildBrushData()
 	BuildBrushData(brActive);
 	BuildBrushData(g_brSelectedBrushes);
 	BuildBrushData(brRegioned);
-	Sys_UpdateBrushStatusBar();
+	WndMain_UpdateBrushStatusBar();
 
 	time = Sys_DoubleTime() - time;
 	if (time)
@@ -343,9 +352,9 @@ void Map::LoadFromFile(const char *filename)
 	}
 	// <---sikk
 
-	QE_SetInspectorMode(W_CONSOLE);
+	WndMain_SetInspectorMode(W_CONSOLE);
 
-	QE_ConvertDOSToUnixName(temp, filename);
+	Sys_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("Map::LoadFromFile: %s\n", temp);
 
 	SaveBetween(between);
@@ -395,30 +404,30 @@ void Map::LoadFromFile(const char *filename)
 		if (!ent)
 			ent = g_map.FindEntity("classname", "info_player_deathmatch");
 
-		g_qeglobals.d_vCamera.angles[PITCH] = 0;
+		g_vCamera.angles[PITCH] = 0;
 
 		if (ent)
 		{
-			ent->GetKeyValueVector("origin", g_qeglobals.d_vCamera.origin);
-			ent->GetKeyValueVector("origin", g_qeglobals.d_vXYZ[0].origin);
-			g_qeglobals.d_vCamera.angles[YAW] = ent->GetKeyValueFloat("angle");
+			ent->GetKeyValueVector("origin", g_vCamera.origin);
+			ent->GetKeyValueVector("origin", g_vXYZ[0].origin);
+			g_vCamera.angles[YAW] = ent->GetKeyValueFloat("angle");
 		}
 		else
 		{
-			g_qeglobals.d_vCamera.angles[YAW] = 0;
-			g_qeglobals.d_vCamera.origin = vec3(0);
-			g_qeglobals.d_vXYZ[0].origin = vec3(0);
+			g_vCamera.angles[YAW] = 0;
+			g_vCamera.origin = vec3(0);
+			g_vXYZ[0].origin = vec3(0);
 		}
 
 		Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
 
-		QE_UpdateTitle();
+		WndMain_UpdateTitle();
 		RegionOff();
 	}
 
-	Sys_UpdateBrushStatusBar();
-	QE_SetInspectorMode(W_TEXTURE);
-	Sys_UpdateWindows(W_ALL);
+	WndMain_UpdateBrushStatusBar();
+	WndMain_SetInspectorMode(W_TEXTURE);
+	WndMain_UpdateWindows(W_ALL);
 
 	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
 		g_qeglobals.bGridSnap = true;
@@ -446,9 +455,9 @@ void Map::ImportFromFile(const char *filename)
 
 	Sys_BeginWait();
 
-	QE_SetInspectorMode(W_CONSOLE);
+	WndMain_SetInspectorMode(W_CONSOLE);
 
-	QE_ConvertDOSToUnixName(temp, filename);
+	Sys_ConvertDOSToUnixName(temp, filename);
 	Sys_Printf("Map::ImportFromFile: %s\n", temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();
@@ -468,7 +477,7 @@ void Map::ImportFromFile(const char *filename)
 		}
 		g_map.BuildBrushData();
 
-		Sys_UpdateWindows(W_ALL);
+		WndMain_UpdateWindows(W_ALL);
 	}
 	else
 	{
@@ -491,7 +500,7 @@ void Map::SaveToFile(const char *filename, bool use_region)
 	std::ofstream	   *f;
 	char        temp[1024];
 
-	QE_ConvertDOSToUnixName(temp, filename);
+	Sys_ConvertDOSToUnixName(temp, filename);
 
 	if (!use_region)
 	{
@@ -525,7 +534,7 @@ void Map::SaveToFile(const char *filename, bool use_region)
 		RegionRemove();
 
 	Sys_Printf("Saved.\n");
-	Sys_Status("Saved.", 0);
+	WndMain_Status("Saved.", 0);
 }
 
 /*
@@ -580,7 +589,7 @@ void Map::Copy()
 
 	if (!Selection::HasBrushes())
 		return;
-	if (!OpenClipboard(g_qeglobals.d_hwndMain))
+	if (!OpenClipboard(g_hwndMain))
 		return;
 
 	std::stringstream sstr;
@@ -747,7 +756,7 @@ void Map::SaveBetween(qeBuffer &buf)
 
 	if (!Selection::HasBrushes())
 		return;
-	if (MessageBox(g_qeglobals.d_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
+	if (MessageBox(g_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
 		return;
 
 	std::stringstream sstr;
@@ -804,7 +813,7 @@ void Map::RegionOff()
 		b->AddToList(&brActive);
 	}
 
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionXY()
@@ -813,37 +822,37 @@ void Map::RegionXY()
 
 	float w, h;
 
-	w = 0.5 * g_qeglobals.d_vXYZ[0].width / g_qeglobals.d_vXYZ[0].scale;
-	h = 0.5 * g_qeglobals.d_vXYZ[0].height / g_qeglobals.d_vXYZ[0].scale;
+	w = 0.5 * g_vXYZ[0].width / g_vXYZ[0].scale;
+	h = 0.5 * g_vXYZ[0].height / g_vXYZ[0].scale;
 
 	// sikk---> Proper Regioning for XZ & YZ Views
 
-	if (g_qeglobals.d_vXYZ[0].GetAxis() == XY)
+	if (g_vXYZ[0].GetAxis() == XY)
 	{
-		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
-		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
-		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - h;
-		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + h;
+		regionMins[0] = g_vXYZ[0].origin[0] - w;
+		regionMaxs[0] = g_vXYZ[0].origin[0] + w;
+		regionMins[1] = g_vXYZ[0].origin[1] - h;
+		regionMaxs[1] = g_vXYZ[0].origin[1] + h;
 		regionMins[2] = -g_cfgEditor.MapSize / 2;
 		regionMaxs[2] = g_cfgEditor.MapSize / 2;
 	}
-	else if (g_qeglobals.d_vXYZ[0].GetAxis() == XZ)
+	else if (g_vXYZ[0].GetAxis() == XZ)
 	{
-		regionMins[0] = g_qeglobals.d_vXYZ[0].origin[0] - w;
-		regionMaxs[0] = g_qeglobals.d_vXYZ[0].origin[0] + w;
+		regionMins[0] = g_vXYZ[0].origin[0] - w;
+		regionMaxs[0] = g_vXYZ[0].origin[0] + w;
 		regionMins[1] = -g_cfgEditor.MapSize / 2;
 		regionMaxs[1] = g_cfgEditor.MapSize / 2;
-		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
-		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
+		regionMins[2] = g_vXYZ[0].origin[2] - h;
+		regionMaxs[2] = g_vXYZ[0].origin[2] + h;
 	}
-	else if (g_qeglobals.d_vXYZ[0].GetAxis() == YZ)
+	else if (g_vXYZ[0].GetAxis() == YZ)
 	{
 		regionMins[0] = -g_cfgEditor.MapSize / 2;
 		regionMaxs[0] = g_cfgEditor.MapSize / 2;
-		regionMins[1] = g_qeglobals.d_vXYZ[0].origin[1] - w;
-		regionMaxs[1] = g_qeglobals.d_vXYZ[0].origin[1] + w;
-		regionMins[2] = g_qeglobals.d_vXYZ[0].origin[2] - h;
-		regionMaxs[2] = g_qeglobals.d_vXYZ[0].origin[2] + h;
+		regionMins[1] = g_vXYZ[0].origin[1] - w;
+		regionMaxs[1] = g_vXYZ[0].origin[1] + w;
+		regionMins[2] = g_vXYZ[0].origin[2] - h;
+		regionMaxs[2] = g_vXYZ[0].origin[2] + h;
 	}
 	// <---sikk
 	RegionApply();
@@ -852,12 +861,12 @@ void Map::RegionXY()
 void Map::RegionXZ()
 {
 	RegionOff();
-	regionMins[0] = g_qeglobals.d_vXYZ[2].origin[0] - 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
-	regionMaxs[0] = g_qeglobals.d_vXYZ[2].origin[0] + 0.5 * g_qeglobals.d_vXYZ[2].width / g_qeglobals.d_vXYZ[2].scale;
+	regionMins[0] = g_vXYZ[2].origin[0] - 0.5 * g_vXYZ[2].width / g_vXYZ[2].scale;
+	regionMaxs[0] = g_vXYZ[2].origin[0] + 0.5 * g_vXYZ[2].width / g_vXYZ[2].scale;
 	regionMins[1] = -g_cfgEditor.MapSize / 2;
 	regionMaxs[1] = g_cfgEditor.MapSize / 2;
-	regionMins[2] = g_qeglobals.d_vXYZ[2].origin[2] - 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
-	regionMaxs[2] = g_qeglobals.d_vXYZ[2].origin[2] + 0.5 * g_qeglobals.d_vXYZ[2].height / g_qeglobals.d_vXYZ[2].scale;
+	regionMins[2] = g_vXYZ[2].origin[2] - 0.5 * g_vXYZ[2].height / g_vXYZ[2].scale;
+	regionMaxs[2] = g_vXYZ[2].origin[2] + 0.5 * g_vXYZ[2].height / g_vXYZ[2].scale;
 	RegionApply();
 }
 
@@ -866,10 +875,10 @@ void Map::RegionYZ()
 	RegionOff();
 	regionMins[0] = -g_cfgEditor.MapSize / 2;
 	regionMaxs[0] = g_cfgEditor.MapSize / 2;
-	regionMins[1] = g_qeglobals.d_vXYZ[1].origin[1] - 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
-	regionMaxs[1] = g_qeglobals.d_vXYZ[1].origin[1] + 0.5 * g_qeglobals.d_vXYZ[1].width / g_qeglobals.d_vXYZ[1].scale;
-	regionMins[2] = g_qeglobals.d_vXYZ[1].origin[2] - 0.5 * g_qeglobals.d_vXYZ[1].height / g_qeglobals.d_vXYZ[1].scale;
-	regionMaxs[2] = g_qeglobals.d_vXYZ[1].origin[2] + 0.5 * g_qeglobals.d_vXYZ[1].height / g_qeglobals.d_vXYZ[1].scale;
+	regionMins[1] = g_vXYZ[1].origin[1] - 0.5 * g_vXYZ[1].width / g_vXYZ[1].scale;
+	regionMaxs[1] = g_vXYZ[1].origin[1] + 0.5 * g_vXYZ[1].width / g_vXYZ[1].scale;
+	regionMins[2] = g_vXYZ[1].origin[2] - 0.5 * g_vXYZ[1].height / g_vXYZ[1].scale;
+	regionMaxs[2] = g_vXYZ[1].origin[2] + 0.5 * g_vXYZ[1].height / g_vXYZ[1].scale;
 	RegionApply();
 }
 
@@ -927,7 +936,7 @@ void Map::RegionSelectedBrushes()
 	// move the entire g_brSelectedBrushes list to brActive
 	g_brSelectedBrushes.MergeListIntoList(&brActive);
 	Selection::Changed();
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionApply()
@@ -944,7 +953,7 @@ void Map::RegionApply()
 		b->AddToList(&brRegioned);
 	}
 
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 void Map::RegionAdd()

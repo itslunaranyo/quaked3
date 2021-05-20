@@ -7,10 +7,8 @@
 //
 //*************************************************************
 
-#include <windows.h>
+#include "pre.h"
 #include <windowsx.h>
-#include <string.h>
-
 #include "mru.h"
 
 // CreateMruMenu		: MRUMENU constructor

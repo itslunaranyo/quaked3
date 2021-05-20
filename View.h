@@ -6,15 +6,15 @@
 
 // window system independent view code
 
-typedef struct mouseContext_s {
-	mouseContext_s() : pt(vec3(0)), up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), dims(0) {}
+struct mouseContext_t {
+	mouseContext_t() : pt(vec3(0)), up(vec3(0)), right(vec3(0)), ray(vec3(0)), org(vec3(0)), dims(0) {}
 	vec3 pt;
 	vec3 up;
 	vec3 right;
 	vec3 ray;
 	vec3 org;
 	int dims;
-} mouseContext_t;
+};
 
 class View
 {

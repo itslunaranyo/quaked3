@@ -5,6 +5,8 @@
 #ifndef __WND_ENTITY_H__
 #define __WND_ENTITY_H__
 
+#include "WndView.h"
+
 // win_ent.c ID's
 #define ENT_CLASSLIST	0
 #define ENT_COMMENT		1
@@ -45,6 +47,8 @@
 #define ENT_COLOR		36
 #define ENT_LAST		37
 
+extern HWND g_hwndEntity;
+extern WndEntity	*g_wndEntity;
 
 class WndEntity : public WndView
 {

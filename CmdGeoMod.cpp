@@ -2,8 +2,10 @@
 //	CmdGeoMod.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdGeoMod.h"
+#include "winding.h"
 #include <algorithm>
 
 /*

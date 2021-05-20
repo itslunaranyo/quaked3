@@ -2,7 +2,13 @@
 //	modify.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
+#include "select.h"
+#include "modify.h"
+#include "WndGrid.h"
+#include "XYZView.h"
 
 #include "CmdDelete.h"
 #include "CmdReparentBrush.h"
@@ -27,7 +33,7 @@ void Modify::Delete()
 
 	Selection::DeselectAllFaces();
 	
-	g_qeglobals.d_selSelectMode = sel_brush;
+	Selection::g_selMode = sel_brush;
 
 	CmdDelete *cmd = new CmdDelete(&g_brSelectedBrushes);
 	g_cmdQueue.Complete(cmd);
@@ -47,11 +53,11 @@ void Modify::Clone()
 		return;
 	vec3	delta(g_qeglobals.d_nGridSize);
 
-	if (g_qeglobals.d_selSelectMode != sel_brush) return;
+	if (Selection::g_selMode != sel_brush) return;
 	if (!Selection::HasBrushes()) return;
 
 	// move cloned brushes based on active XY view
-	delta[g_qeglobals.d_wndGrid[0]->xyzv->GetAxis()] = 0;
+	delta[g_wndGrid[0]->xyzv->GetAxis()] = 0;
 
 	CmdClone *cmd;
 	if (g_cfgEditor.CloneStyle == CLONE_OFFSET)
@@ -98,7 +104,7 @@ void Modify::Ungroup()
 		return;
 	}
 	g_cmdQueue.Complete(cmd);
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 // sikk---> Insert Brush into Entity
@@ -144,7 +150,7 @@ void Modify::InsertBrush()
 	}
 
 	g_cmdQueue.Complete(cmd);
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 // <---sikk
 
@@ -165,7 +171,7 @@ void Modify::HideSelected()
 		b->showFlags |= BFL_HIDDEN;
 	}
 
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 	Selection::Changed();
 }
 
@@ -186,7 +192,7 @@ void Modify::HideUnselected()
 		b->showFlags |= BFL_HIDDEN;
 	}
 
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 
@@ -205,7 +211,7 @@ void Modify::ShowHidden()
 	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
 		b->showFlags -= BFL_HIDDEN & b->showFlags;
 	
-	Sys_UpdateWindows(W_SCENE | W_TARGETGRAPH);
+	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
 
 
@@ -291,7 +297,7 @@ void Modify::ConnectEntities()
 	g_cmdQueue.Complete(cmdc);
 
 	Sys_Printf("Entities connected as '%s'.\n", newtarg);
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 
 	Selection::DeselectAll();
 	Selection::HandleBrush(b, true);
@@ -328,7 +334,7 @@ void Modify::SetKeyValue(const char *key, const char *value)
 	}
 
 	g_cmdQueue.Complete(cmd);
-	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+	WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
 
@@ -381,7 +387,7 @@ void Modify::SetKeyValueSeriesNum(const char *key, const char *value, const int 
 
 	g_cmdQueue.Complete(cmdCmp);
 
-	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+	WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
 /*
@@ -444,7 +450,7 @@ void Modify::SetKeyValueSeriesAlpha(const char *key, const char *value, const ch
 
 	g_cmdQueue.Complete(cmdCmp);
 
-	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+	WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
 /*
@@ -494,7 +500,7 @@ void Modify::MakeCzgCylinder(int degree)
 
 	g_cmdQueue.Complete(cmdCzgC);
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 
@@ -528,7 +534,7 @@ void Modify::MakeSided(int sides)
 
 	g_cmdQueue.Complete(cmdCyl);
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 
@@ -563,7 +569,7 @@ void Modify::MakeSidedCone(int sides)
 
 	g_cmdQueue.Complete(cmdCone);
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -591,7 +597,7 @@ void Modify::MakeSidedSphere(int sides)
 
 	g_cmdQueue.Complete(cmdSph);
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 
 }
 // <---sikk

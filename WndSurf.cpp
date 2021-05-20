@@ -1,8 +1,14 @@
 //==============================
-//	win_surf.c
+//	WndSurf.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndSurf.h"
+#include "TextureTool.h"
+#include "select.h"
+#include "surface.h"
+
 
 /*
 =====================================================================
@@ -12,6 +18,8 @@ SURFACE INSPECTOR
 =====================================================================
 */
 
+HWND		g_hwndSurfaceDlg;
+float		g_fTexFitW = 1.0f, g_fTexFitH = 1.0f;
 TexDef		g_texdefEdit;
 unsigned	g_nEditSurfMixed;
 
@@ -60,7 +68,7 @@ Union the texdefs of every face in the selection
 */
 void WndSurf_RefreshEditTexdef()
 {
-	if (!g_qeglobals.d_hwndSurfaceDlg)
+	if (!g_hwndSurfaceDlg)
 		return;
 
 	WndSurf_ClearEditTexdef();
@@ -118,12 +126,12 @@ void WndSurf_FromEditTexdef()
 	texdef = &g_texdefEdit;
 	texdef->name[MAX_TEXNAME - 1] = 0;
 
-	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
+	SendMessage(g_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
 	if (g_nEditSurfMixed & SFI_NAME)
-		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
 	else
-		SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
 
 	// lunaran: trunc safety
 	//shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
@@ -134,34 +142,34 @@ void WndSurf_FromEditTexdef()
 		sz[0] = 0;
 	else
 		FloatToString(texdef->shift[0], sz);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
 
 	if (g_nEditSurfMixed & SFI_SHIFTY)
 		sz[0] = 0;
 	else
 		FloatToString(texdef->shift[1], sz);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
 
 	if (g_nEditSurfMixed & SFI_SCALEX)
 		sz[0] = 0;
 	else
 		FloatToString(texdef->scale[0], sz, 5);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_SCALEY)
 		sz[0] = 0;
 	else
 		FloatToString(texdef->scale[1], sz, 5);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
 
 	if (g_nEditSurfMixed & SFI_ROTATE)
 		sz[0] = 0;
 	else
 		FloatToString(texdef->rotate, sz);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
 
-	SendMessage(g_qeglobals.d_hwndSurfaceDlg, WM_SETREDRAW, 1, 0);
-	InvalidateRect(g_qeglobals.d_hwndSurfaceDlg, NULL, TRUE);
+	SendMessage(g_hwndSurfaceDlg, WM_SETREDRAW, 1, 0);
+	InvalidateRect(g_hwndSurfaceDlg, NULL, TRUE);
 }
 
 
@@ -178,7 +186,7 @@ void WndSurf_Apply()
 	TexDef		texdef;
 	unsigned		mixed = 0;
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
 	strncpy(texdef.name, sz, MAX_TEXNAME);// -1);
 	texdef.name[MAX_TEXNAME - 1] = 0;
 	if (texdef.name[0] <= ' ')
@@ -191,29 +199,29 @@ void WndSurf_Apply()
 		texdef.tex = Textures::ForName(texdef.name);
 	}
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
 	if (sz[0] <= ' ')
 		mixed |= SFI_SHIFTX;
 	texdef.shift[0] = atof(sz);
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz, 64);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz, 64);
 	if (sz[0] <= ' ')
 		mixed |= SFI_SHIFTY;
 	texdef.shift[1] = atof(sz);
 
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz, 64);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz, 64);
 	if (sz[0] <= ' ')
 		mixed |= SFI_SCALEX;
 	texdef.scale[0] = atof(sz);
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz, 127);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz, 127);
 	if (sz[0] <= ' ')
 		mixed |= SFI_SCALEX;
 	texdef.scale[1] = atof(sz);
 
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz, 64);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz, 64);
 	if (sz[0] <= ' ')
 		mixed |= SFI_ROTATE;
 	texdef.rotate = atof(sz);
@@ -226,25 +234,6 @@ void WndSurf_Apply()
 }
 
 /*
-==============
-WndSurf_UpdateUI
-===============
-*/
-void WndSurf_UpdateUI()
-{
-	if (!g_qeglobals.d_hwndSurfaceDlg)
-		return;
-
-	if (g_cfgEditor.TexProjectionMode == TEX_PROJECT_FACE)
-		SendDlgItemMessage(g_qeglobals.d_hwndSurfaceDlg, IDC_RADIO_TEXFACE, BM_SETCHECK, 1, 0);
-	else
-		SendDlgItemMessage(g_qeglobals.d_hwndSurfaceDlg, IDC_RADIO_TEXAXIAL, BM_SETCHECK, 1, 0);
-
-	WndSurf_RefreshEditTexdef();
-	WndSurf_FromEditTexdef();
-}
-
-/*
 =================
 WndSurf_UpdateFit
 =================
@@ -254,10 +243,10 @@ void WndSurf_UpdateFit(int idc, float dif)
 	char sz[8];
 	float num;
 
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, idc, sz, 8);
+	GetDlgItemText(g_hwndSurfaceDlg, idc, sz, 8);
 	num = atof(sz) + dif;
 	FloatToString(num, sz);
-	SetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, idc, sz);
+	SetDlgItemText(g_hwndSurfaceDlg, idc, sz);
 }
 
 /*
@@ -287,7 +276,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 				i *= -1;
 		
 			//Surf_ShiftTexture(i, 0);
-			g_qeglobals.d_texTool->ShiftTexture(i, 0);
+			g_texTool->ShiftTexture(i, 0);
 			break;
 
 		case IDC_SPIN_VSHIFT:
@@ -301,7 +290,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 				i *= -1;
 
 			//Surf_ShiftTexture(0, i);
-			g_qeglobals.d_texTool->ShiftTexture(0, i);
+			g_texTool->ShiftTexture(0, i);
 			break;
 
 		case IDC_SPIN_HSCALE:
@@ -315,7 +304,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 				f *= -1.0f;
 
 			//Surf_ScaleTexture(i, 0);
-			g_qeglobals.d_texTool->ScaleTexture(f, 0);
+			g_texTool->ScaleTexture(f, 0);
 			break;
 
 		case IDC_SPIN_VSCALE:
@@ -329,7 +318,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 				f *= -1.0f;
 
 			//Surf_ScaleTexture(0,i);
-			g_qeglobals.d_texTool->ScaleTexture(0, f);
+			g_texTool->ScaleTexture(0, f);
 			break;
 
 		case IDC_SPIN_ROTATE:
@@ -343,7 +332,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 				i *= -1;
 
 			//Surf_RotateTexture(i);
-			g_qeglobals.d_texTool->RotateTexture(i);
+			g_texTool->RotateTexture(i);
 			break;
 
 		case IDC_SPIN_HFIT:
@@ -390,12 +379,12 @@ BOOL CALLBACK SurfaceDlgProc(
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
-		g_qeglobals.d_hwndSurfaceDlg = hwndDlg;
+		g_hwndSurfaceDlg = hwndDlg;
 		{
 			char sz[8];
-			FloatToString(g_qeglobals.d_fTexFitH, sz);
+			FloatToString(g_fTexFitH, sz);
 			SetDlgItemText(hwndDlg, IDC_EDIT_HFIT, sz);
-			FloatToString(g_qeglobals.d_fTexFitW, sz);
+			FloatToString(g_fTexFitW, sz);
 			SetDlgItemText(hwndDlg, IDC_EDIT_WFIT, sz);
 			WndSurf_UpdateUI();
 		}
@@ -410,7 +399,7 @@ BOOL CALLBACK SurfaceDlgProc(
 		{
 		case IDAPPLY:
 			WndSurf_Apply();
-			Sys_UpdateWindows(W_CAMERA);
+			WndMain_UpdateWindows(W_CAMERA);
 			return TRUE;
 
 		case IDCLOSE:
@@ -429,13 +418,13 @@ BOOL CALLBACK SurfaceDlgProc(
 			{
 				char sz[8];
 				GetDlgItemText(hwndDlg, IDC_EDIT_HFIT, sz, 8);
-				g_qeglobals.d_fTexFitH = atof(sz);
+				g_fTexFitH = atof(sz);
 				GetDlgItemText(hwndDlg, IDC_EDIT_WFIT, sz, 8);
-				g_qeglobals.d_fTexFitW = atof(sz);
+				g_fTexFitW = atof(sz);
 
-				g_qeglobals.d_texTool->FitTexture(g_qeglobals.d_fTexFitH, g_qeglobals.d_fTexFitW);
+				g_texTool->FitTexture(g_fTexFitH, g_fTexFitW);
 				//WndSurf_UpdateUI();
-				Sys_UpdateWindows(W_CAMERA|W_SURF);
+				WndMain_UpdateWindows(W_CAMERA|W_SURF);
 			}
 			break;
 		case IDC_BUTTON_FITRESET:
@@ -448,10 +437,33 @@ BOOL CALLBACK SurfaceDlgProc(
 	case WM_NOTIFY:
 		WndSurf_UpdateSpinners(wParam, lParam);
 		//WndSurf_UpdateUI();
-		Sys_UpdateWindows(W_CAMERA | W_SURF);
+		WndMain_UpdateWindows(W_CAMERA | W_SURF);
 		return 0;
 	}
 	return FALSE; // eerie
+}
+
+
+// ========================================================
+
+
+/*
+==============
+WndSurf_UpdateUI
+===============
+*/
+void WndSurf_UpdateUI()
+{
+	if (!g_hwndSurfaceDlg)
+		return;
+
+	if (g_cfgEditor.TexProjectionMode == TEX_PROJECT_FACE)
+		SendDlgItemMessage(g_hwndSurfaceDlg, IDC_RADIO_TEXFACE, BM_SETCHECK, 1, 0);
+	else
+		SendDlgItemMessage(g_hwndSurfaceDlg, IDC_RADIO_TEXAXIAL, BM_SETCHECK, 1, 0);
+
+	WndSurf_RefreshEditTexdef();
+	WndSurf_FromEditTexdef();
 }
 
 /*
@@ -462,13 +474,13 @@ WndSurf_Create
 void WndSurf_Close()
 {
 	char sz[8];
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HFIT, sz, 8);
-	g_qeglobals.d_fTexFitH = atof(sz);
-	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_WFIT, sz, 8);
-	g_qeglobals.d_fTexFitW = atof(sz);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HFIT, sz, 8);
+	g_fTexFitH = atof(sz);
+	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_WFIT, sz, 8);
+	g_fTexFitW = atof(sz);
 
-	EndDialog(g_qeglobals.d_hwndSurfaceDlg, 0);
-	g_qeglobals.d_hwndSurfaceDlg = NULL;
+	EndDialog(g_hwndSurfaceDlg, 0);
+	g_hwndSurfaceDlg = NULL;
 }
 
 /*
@@ -478,12 +490,12 @@ WndSurf_Create
 */
 void WndSurf_Create()
 {
-	if (g_qeglobals.d_hwndSurfaceDlg)
+	if (g_hwndSurfaceDlg)
 	{
-		SetFocus(g_qeglobals.d_hwndSurfaceDlg);
+		SetFocus(g_hwndSurfaceDlg);
 		return;
 	}
 
 	// lunaran: modeless surface editor
-	CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SURFACE), g_qeglobals.d_hwndMain, SurfaceDlgProc);
+	CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SURFACE), g_hwndMain, SurfaceDlgProc);
 }

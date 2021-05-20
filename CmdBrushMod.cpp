@@ -2,8 +2,10 @@
 //	cmdbrushmod.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdBrushMod.h"
+#include "select.h"
 
 CmdBrushMod::CmdBrushMod() : Command("Brush Mod")
 {

@@ -5,6 +5,8 @@
 #ifndef __SELECT_TOOL_H__
 #define __SELECT_TOOL_H__
 
+#include "Tool.h"
+class WndView;
 class SelectTool : public Tool
 {
 public:

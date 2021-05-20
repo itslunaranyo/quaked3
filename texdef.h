@@ -5,6 +5,8 @@
 #ifndef __TEXDEF_H__
 #define __TEXDEF_H__
 
+class Texture;
+
 class TexDef
 {
 public:

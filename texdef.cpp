@@ -2,6 +2,7 @@
 //	TexDef.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 
 

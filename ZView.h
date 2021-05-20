@@ -5,6 +5,7 @@
 #define __ZVIEW_H__
 
 // window system independent z view code
+#include "View.h"
 
 class ZView : public View
 {
@@ -43,5 +44,7 @@ private:
 };
 
 //========================================================================
+
+extern 	ZView g_vZ;
 
 #endif

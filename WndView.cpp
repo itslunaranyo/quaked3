@@ -2,7 +2,10 @@
 //	WndView.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndView.h"
+#include "View.h"
 
 std::vector<WndView*> WndView::wndviews;
 
@@ -53,7 +56,7 @@ WndView::IsOnTop
 */
 bool WndView::IsOnTop()
 {
-	return (GetTopWindow(g_qeglobals.d_hwndMain) == w_hwnd);
+	return (GetTopWindow(g_hwndMain) == w_hwnd);
 }
 
 /*
@@ -69,7 +72,7 @@ void WndView::SavePosition()
 	sprintf(lpszName, "%s%i", name, instance);
 	pos.vis = IsWindowVisible(w_hwnd);
 	GetWindowRect(w_hwnd, &pos.rc);
-	MapWindowPoints(NULL, g_qeglobals.d_hwndMain, (POINT *)&pos.rc, 2);
+	MapWindowPoints(NULL, g_hwndMain, (POINT *)&pos.rc, 2);
 	SaveRegistryInfo(lpszName, &pos, sizeof(pos));
 }
 
@@ -405,11 +408,11 @@ WndView::TryDocking
 bool WndView::TryDocking(long side, LPRECT rect)
 {
 	RECT	field, statusrect, toolbarrect;
-	GetWindowRect(g_qeglobals.d_hwndRebar, &toolbarrect);
-	GetWindowRect(g_qeglobals.d_hwndStatus, &statusrect);
+	GetWindowRect(g_hwndRebar, &toolbarrect);
+	GetWindowRect(g_hwndStatus, &statusrect);
 
 	// FIXME: assumes toolbar is at the top of the screen
-	GetClientRect(g_qeglobals.d_hwndMain, &field);
+	GetClientRect(g_hwndMain, &field);
 	field.top = toolbarrect.bottom;
 	field.bottom = statusrect.top;
 
@@ -814,7 +817,7 @@ void WndView::CreateWnd()
 		QE3_CHILD_STYLE,		// window style
 		64, 64,					// position of window	
 		384, 256,				// window size
-		g_qeglobals.d_hwndMain,	// parent or owner window
+		g_hwndMain,	// parent or owner window
 		NULL,					// menu or child-window identifier
 		g_qeglobals.d_hInstance,// application instance
 		NULL );					// window-creation data

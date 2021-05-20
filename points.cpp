@@ -2,8 +2,12 @@
 //	points.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "points.h"
+#include "map.h"
+#include "CameraView.h"
+#include "XYZView.h"
 
 
 static vec3		s_pointvecs[MAX_POINTFILE];
@@ -42,18 +46,18 @@ void Pointfile_Next ()
 		return;
 	}
 	s_check_point++;
-	g_qeglobals.d_vCamera.origin = s_pointvecs[s_check_point];
+	g_vCamera.origin = s_pointvecs[s_check_point];
 	// lunaran - grid view reunification
 	for (int i = 0; i < 4; i++)
 	{
-		g_qeglobals.d_vXYZ[i].origin = s_pointvecs[s_check_point];
+		g_vXYZ[i].origin = s_pointvecs[s_check_point];
 	}
-	dir = s_pointvecs[s_check_point + 1] - g_qeglobals.d_vCamera.origin;
+	dir = s_pointvecs[s_check_point + 1] - g_vCamera.origin;
 	VectorNormalize(dir);
-	g_qeglobals.d_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	g_qeglobals.d_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
+	g_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
+	g_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -73,18 +77,18 @@ void Pointfile_Prev ()
 		return;
 	}
 	s_check_point--;
-	g_qeglobals.d_vCamera.origin = s_pointvecs[s_check_point];
+	g_vCamera.origin = s_pointvecs[s_check_point];
 	// lunaran - grid view reunification
 	for (int i = 0; i < 4; i++)
 	{
-		g_qeglobals.d_vXYZ[i].origin = s_pointvecs[s_check_point];
+		g_vXYZ[i].origin = s_pointvecs[s_check_point];
 	}
-	dir = s_pointvecs[s_check_point + 1] - g_qeglobals.d_vCamera.origin;
+	dir = s_pointvecs[s_check_point + 1] - g_vCamera.origin;
 	VectorNormalize(dir);
-	g_qeglobals.d_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	g_qeglobals.d_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
+	g_vCamera.angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
+	g_vCamera.angles[0] = asin(dir[2]) * 180 / Q_PI;
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -175,5 +179,5 @@ void Pointfile_Clear ()
 	glDeleteLists(g_qeglobals.d_nPointfileDisplayList, 1);
 	g_qeglobals.d_nPointfileDisplayList = 0;
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }

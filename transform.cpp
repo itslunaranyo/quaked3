@@ -2,7 +2,10 @@
 //	transform.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "select.h"
+#include "transform.h"
 #include "CmdClone.h"
 #include "CmdCompound.h"
 #include "CmdRotate.h"

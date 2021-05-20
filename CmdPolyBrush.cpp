@@ -2,7 +2,9 @@
 //	CmdPolyBrush.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
 #include "CmdPolyBrush.h"
 
 

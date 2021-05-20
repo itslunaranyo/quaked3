@@ -2,8 +2,10 @@
 //	CmdCreateBrushEntity.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdCreateBrushEntity.h"
+#include "map.h"
 
 CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Create Brush Entity")
 {

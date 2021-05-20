@@ -2,11 +2,16 @@
 //	entity.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "map.h"
+#include "select.h"
+#include "CameraView.h"
 #include "CmdCreateBrushEntity.h"
 #include "CmdCreatePointEntity.h"
 #include "io.h"
 #include "parse.h"
+#include "win_dlg.h"
 
 Entity::Entity() :
 	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
@@ -678,10 +683,10 @@ void Entity::Write(std::ostream &out, bool use_region)
 		{
 			out << "{\n";
 			out << "\"classname\" \"info_player_start\"\n";
-			out << "\"origin\" \"" << (int)g_qeglobals.d_vCamera.origin[0] << " " << 
-									(int)g_qeglobals.d_vCamera.origin[1] << " " << 
-									(int)g_qeglobals.d_vCamera.origin[2] << "\"\n";
-			out << "\"angle\" \"" << (int)g_qeglobals.d_vCamera.angles[YAW] << "\"\n";
+			out << "\"origin\" \"" << (int)g_vCamera.origin[0] << " " << 
+									(int)g_vCamera.origin[1] << " " << 
+									(int)g_vCamera.origin[2] << "\"\n";
+			out << "\"angle\" \"" << (int)g_vCamera.angles[YAW] << "\"\n";
 			out << "}\n";
 			return;
 		}
@@ -877,7 +882,7 @@ bool Entity::Create (EntClass *ecIn)
 	{
 		e = g_brSelectedBrushes.next->owner;
 		e->ChangeClassname(ecIn);
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		Selection::Changed();
 		return true;
 	}
@@ -894,7 +899,7 @@ bool Entity::Create (EntClass *ecIn)
 		if (Selection::OneBrushEntity())
 		{
 			g_brSelectedBrushes.next->owner->ChangeClassname(ecIn);
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			Selection::Changed();
 			return true;
 		}

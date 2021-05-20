@@ -2,7 +2,15 @@
 //	WndGrid.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "win_dlg.h"
+#include "WndGrid.h"
+#include "select.h"
+#include "XYZView.h"
+#include "Tool.h"
+
+HWND g_hwndXYZ[4];
 
 WndGrid::WndGrid()
 {
@@ -17,12 +25,12 @@ WndGrid::~WndGrid()
 
 void WndGrid::Initialize(int winNum)
 {
-	xyzv = &g_qeglobals.d_vXYZ[winNum];
+	xyzv = &g_vXYZ[winNum];
 	v = xyzv;
 	instance = winNum;
 
 	CreateWnd();
-	g_qeglobals.d_hwndXYZ[winNum] = w_hwnd;
+	g_hwndXYZ[winNum] = w_hwnd;
 
 	// set the axis after creating the window so the title can be changed
 	SetAxis((winNum + 2) % 3);
@@ -73,18 +81,6 @@ int GetSelectionInfo()
 	}
 
 	return retval;
-}
-
-// only used by clip tool ATM
-XYZView* XYZWnd_WinFromHandle(HWND xyzwin)
-{
-	for (int i = 0; i < 4; i++)
-	{
-		if (g_qeglobals.d_hwndXYZ[i] == xyzwin)
-			return &g_qeglobals.d_vXYZ[i];
-	}
-
-	return nullptr;
 }
 
 void WndGrid::DoPopupMenu(int x, int y)
@@ -166,8 +162,8 @@ void WndGrid::DoPopupMenu(int x, int y)
 		break;
 	}
 
-	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_qeglobals.d_wndGrid[2]->Open() ? MF_ENABLED : MF_GRAYED));
-	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_qeglobals.d_wndGrid[1]->Open() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETXZ, (g_wndGrid[2]->Open() ? MF_ENABLED : MF_GRAYED));
+	EnableMenuItem(hMenu, ID_REGION_SETYZ, (g_wndGrid[1]->Open() ? MF_ENABLED : MF_GRAYED));
 
 	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, w_hwnd, NULL);
 
@@ -185,7 +181,7 @@ void WndGrid::DoPopupMenu(int x, int y)
 		DoCreateEntity(true, false, false, org);
 		break;
 	default:
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, retval, 0);
+		PostMessage(g_hwndMain, WM_COMMAND, retval, 0);
 	}
 
 	DestroyMenu(hMenu);

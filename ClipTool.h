@@ -5,9 +5,11 @@
 #ifndef __CLIP_TOOL_H__
 #define __CLIP_TOOL_H__
 
+#include "Tool.h"
 // 3-Point Clipping Tool
 
 class CmdBrushClip;
+class WndView;
 
 class ClipTool : public Tool
 {

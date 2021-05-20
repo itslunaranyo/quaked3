@@ -2,8 +2,14 @@
 //	ClipTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdBrushClip.h"
+#include "select.h"
+#include "CameraView.h"
+#include "XYZView.h"
+#include "WndCamera.h"
+#include "ClipTool.h"
 
 #define CLIP_CAMDOT 0.9997f
 
@@ -19,7 +25,7 @@ ClipTool::ClipTool() :
 ClipTool::~ClipTool()
 {
 	Reset();
-	Sys_UpdateGridStatusBar();
+	WndMain_UpdateGridStatusBar();
 }
 
 /*
@@ -53,7 +59,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 			CamStartQuickClip(x, y);
 		else
 			CamDropPoint(x, y);
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		return true;
 
 	case WM_LBUTTONUP:
@@ -65,7 +71,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 			CamEndQuickClip();
 		else
 			CamEndPoint();
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return true;
@@ -80,7 +86,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 		return false;
 	case WM_MOUSELEAVE:
 		ptHover.set = false;
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		return false;
 	}
 	return hot;
@@ -113,7 +119,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 			StartQuickClip(&v, x, y);
 		else
 			DropPoint(&v, x, y);
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		return true;
 
 	case WM_LBUTTONUP:
@@ -125,7 +131,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, WndV
 			EndQuickClip();
 		else
 			EndPoint();
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return true;
@@ -240,7 +246,7 @@ void ClipTool::Reset ()
 		g_pcmdBC = nullptr;
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -286,7 +292,7 @@ void ClipTool::Clip ()
 	g_pcmdBC = nullptr;
 	Reset();
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -303,7 +309,7 @@ void ClipTool::Split ()
 	g_cmdQueue.Complete(g_pcmdBC);
 	g_pcmdBC = nullptr;
 	Reset();
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -319,7 +325,7 @@ void ClipTool::Flip ()
 	backside = !backside;
 	g_pcmdBC->SetSide(backside ? CmdBrushClip::clipside::CLIP_BACK : CmdBrushClip::clipside::CLIP_FRONT);
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -407,8 +413,8 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 {
 	vec3		dir, pn, pt;
 	trace_t		t;
-	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
-	t = Selection::TestRay(g_qeglobals.d_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
+	g_vCamera.PointToRay(x, y, dir);
+	t = Selection::TestRay(g_vCamera.origin, dir, SF_NOFIXEDSIZE | SF_SELECTED_ONLY);
 	if (t.brush && t.face)
 	{
 		pn = AxisForVector(t.face->plane.normal);
@@ -420,7 +426,7 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 		else
 			*outAxis = XY;
 
-		pt = g_qeglobals.d_vCamera.origin + t.dist * dir;
+		pt = g_vCamera.origin + t.dist * dir;
 		//ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pointOnGrid(pt));
 		pt = t.face->plane.ProjectPointAxial(pointOnGrid(pt), pn);
 
@@ -443,7 +449,7 @@ void ClipTool::CamDropPoint(int x, int y)
 	if (!CamPointOnSelection(x, y, pt, &nAxis))
 		return;
 
-	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_hwndCamera)
 	{
 		ptMoving->point = pt;
 	}
@@ -457,7 +463,7 @@ void ClipTool::CamDropPoint(int x, int y)
 		pPt->point = pt;
 	}
 	PointsUpdated();
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
 
 /*
@@ -468,13 +474,13 @@ ClipTool::CamGetNearestClipPoint
 ClipTool::clippoint_t *ClipTool::CamGetNearestClipPoint(int x, int y)
 {
 	vec3 dir, cPt;
-	g_qeglobals.d_vCamera.PointToRay(x, y, dir);
+	g_vCamera.PointToRay(x, y, dir);
 
 	for (int i = 0; i < 3; i++)
 	{
 		if (points[i].set)
 		{
-			cPt = points[i].point - g_qeglobals.d_vCamera.origin;
+			cPt = points[i].point - g_vCamera.origin;
 			VectorNormalize(cPt);
 
 			if (DotProduct(cPt, dir) > CLIP_CAMDOT)
@@ -496,13 +502,13 @@ void ClipTool::CamMovePoint(int x, int y)
 	bool	bCrossHair = false;
 
 	// lunaran TODO: don't use windows mouse capture status for control flow maybe
-	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_hwndCamera)
 	{
 		// lunaran - grid view reunification
 		if (CamPointOnSelection(x, y, ptMoving->point, &junk))
 		{
 			PointsUpdated();
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			WndMain_UpdateWindows(W_XY | W_CAMERA);
 			bCrossHair = true;
 		}
 	}
@@ -517,7 +523,7 @@ void ClipTool::CamMovePoint(int x, int y)
 		else if (CamPointOnSelection(x, y, ptHover.point, &junk))
 		{
 			ptHover.set = true;
-			Sys_UpdateWindows(W_XY | W_CAMERA);
+			WndMain_UpdateWindows(W_XY | W_CAMERA);
 			bCrossHair = true;
 		}
 		else
@@ -525,7 +531,7 @@ void ClipTool::CamMovePoint(int x, int y)
 			if (ptHover.set)
 			{
 				ptHover.set = false;
-				Sys_UpdateWindows(W_XY | W_CAMERA);
+				WndMain_UpdateWindows(W_XY | W_CAMERA);
 			}
 		}
 	}
@@ -540,13 +546,13 @@ ClipTool::CamEndPoint
 */
 void ClipTool::CamEndPoint()
 {
-	if (ptMoving && GetCapture() == g_qeglobals.d_hwndCamera)
+	if (ptMoving && GetCapture() == g_hwndCamera)
 	{
 		ptMoving = NULL;
 		ReleaseCapture();
 		PointsUpdated();
 	}
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
 
 /*
@@ -624,7 +630,7 @@ void ClipTool::DropPoint (XYZView* xyz, int x, int y)
 			(pPt->point)[nDim] = g_qeglobals.d_v3WorkMax[nDim];
 	}
 	PointsUpdated();
-	Sys_UpdateWindows(W_XY| W_CAMERA);
+	WndMain_UpdateWindows(W_XY| W_CAMERA);
 }
 
 /*
@@ -707,7 +713,7 @@ void ClipTool::MovePoint (XYZView* xyz, int x, int y)
 			xyz->SnapToPoint(x, y, ptMoving->point);
 		bCrossHair = true;
 		PointsUpdated();
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 	}
 	else
 	{
@@ -734,7 +740,7 @@ void ClipTool::EndPoint ()
 		ptMoving = nullptr;
 		ReleaseCapture();
 	}
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
 
 

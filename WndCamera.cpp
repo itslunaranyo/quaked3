@@ -2,7 +2,13 @@
 //	WndCamera.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "CameraView.h"
+#include "WndCamera.h"
+#include "Tool.h"
+
+HWND g_hwndCamera;
 
 WndCamera::WndCamera()
 {
@@ -16,11 +22,11 @@ WndCamera::~WndCamera()
 
 void WndCamera::Initialize()
 {
-	cv = &g_qeglobals.d_vCamera;
+	cv = &g_vCamera;
 	v = cv;
 	CreateWnd();
 	SetTitle("Camera View");
-	g_qeglobals.d_hwndCamera = w_hwnd;
+	g_hwndCamera = w_hwnd;
 }
 
 int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -69,7 +75,7 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if ((short)HIWORD(wParam) < 0) fwd *= -1;
 			cv->origin += fwd * 64.0f;
 		}
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return 0;
 
 	case WM_MBUTTONDOWN:

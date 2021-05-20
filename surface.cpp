@@ -2,7 +2,11 @@
 //	surface.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "surface.h"
+#include "map.h"
+#include "select.h"
 #include "CmdTextureApply.h"
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -237,7 +241,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 		}
 		else
 		{
-			if (MessageBox(g_qeglobals.d_hwndMain,
+			if (MessageBox(g_hwndMain,
 				"This will indiscriminately apply the chosen texture to every visible brush face in the entire map.\n\nAre you sure you want to do this?\n",
 				"QuakeEd 3: Really?", MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
 			{
@@ -302,7 +306,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 	cmdTA->Apply(tdRepl, SFI_ALL - SFI_NAME);
 	g_cmdQueue.Complete(cmdTA);
 
-	Sys_UpdateWindows(W_CAMERA);
+	WndMain_UpdateWindows(W_CAMERA);
 }
 
 /*
@@ -381,7 +385,7 @@ void Surface::SetTexdef(TexDef &texdef, unsigned flags)
 		}
 	}
 	//WndSurf_UpdateUI();
-	Sys_UpdateWindows(W_SCENE|W_TEXTURE|W_SURF);
+	WndMain_UpdateWindows(W_SCENE|W_TEXTURE|W_SURF);
 	*/
 }
 

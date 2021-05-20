@@ -2,6 +2,7 @@
 //	CmdFaceMod.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdFaceMod.h"
 #include <algorithm>

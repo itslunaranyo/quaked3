@@ -1,9 +1,14 @@
 //==============================
-//	camera.c
+//	v_camera.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "CameraView.h"
+#include "map.h"
 #include "points.h"
+#include "select.h"
+#include "Tool.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -12,6 +17,7 @@ Brush		*g_pbrTransBrushes[MAX_MAP_BRUSHES];
 int			g_nNumTransBrushes;
 // <---sikk
 
+CameraView g_vCamera;
 
 /*
 ============
@@ -141,7 +147,7 @@ void CameraView::ChangeFloor (bool up)
 
 	origin[2] += current - bestd;
 
-	Sys_UpdateWindows(W_CAMERA | W_Z);
+	WndMain_UpdateWindows(W_CAMERA | W_Z);
 }
 
 void CameraView::PointAt(vec3 pt)
@@ -152,17 +158,17 @@ void CameraView::PointAt(vec3 pt)
 	BoundAngles();
 
 	BuildMatrix();
-	Sys_UpdateWindows(W_CAMERA | W_XY);
+	WndMain_UpdateWindows(W_CAMERA | W_XY);
 }
 
 void CameraView::LevelView()
 {
-	g_qeglobals.d_vCamera.angles[ROLL] = g_qeglobals.d_vCamera.angles[PITCH] = 0;
-	g_qeglobals.d_vCamera.angles[YAW] = 22.5f * floor((g_qeglobals.d_vCamera.angles[YAW] + 11) / 22.5f);
+	g_vCamera.angles[ROLL] = g_vCamera.angles[PITCH] = 0;
+	g_vCamera.angles[YAW] = 22.5f * floor((g_vCamera.angles[YAW] + 11) / 22.5f);
 	BoundAngles();
 
 	BuildMatrix();
-	Sys_UpdateWindows(W_CAMERA | W_XY);
+	WndMain_UpdateWindows(W_CAMERA | W_XY);
 }
 
 
@@ -188,7 +194,7 @@ void CameraView::Strafe ()
 		origin[2] -= y;
 
 		Sys_SetCursorPos(cursorX, cursorY);
-		Sys_UpdateWindows(W_CAMERA | W_XY);
+		WndMain_UpdateWindows(W_CAMERA | W_XY);
 	}
 }
 
@@ -228,7 +234,7 @@ void CameraView::Orbit(float pitch, float yaw)
 	BuildMatrix();
 
 	Sys_SetCursorPos(cursorX, cursorY);
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -304,7 +310,7 @@ void CameraView::FreeLook ()
 	BoundAngles();
 
 	Sys_SetCursorPos(cursorX, cursorY);
-	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
+	WndMain_UpdateWindows(W_XY | W_CAMERA | W_Z);
 }
 
 
@@ -388,7 +394,7 @@ void CameraView::RealtimeControl (float dtime)
 		origin += move * dtime * (float)g_cfgEditor.CameraSpeed;
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -462,7 +468,7 @@ void CameraView::MouseDown (int x, int y, int buttons)
 	if (buttons == (MK_RBUTTON | MK_SHIFT))
 	{
 		SetOrbit(x, y);
-		Sys_UpdateWindows(W_CAMERA);
+		WndMain_UpdateWindows(W_CAMERA);
 	}
 }
 
@@ -476,7 +482,7 @@ CameraView::MouseUp
 void CameraView::MouseUp (int x, int y, int buttons)
 {
 	//Drag_MouseUp();
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 	nCamButtonState = 0;
 }
 
@@ -526,7 +532,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		else
 			sprintf(camstring, "");
 
-		Sys_Status(camstring, 0);
+		WndMain_Status(camstring, 0);
 
 		return;
 	}
@@ -549,7 +555,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		{
 			FreeLook();
 		}
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return;
 	}
 
@@ -580,7 +586,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 		{
 			Sys_GetCursorPos(&cursorX, &cursorY);
 			//Drag_MouseMoved(x, y, buttons);
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 		}
 	}
 }
@@ -921,7 +927,7 @@ CameraView::DrawTools
 */
 bool CameraView::DrawTools()
 {
-	for (auto tIt = g_qeglobals.d_tools.rbegin(); tIt != g_qeglobals.d_tools.rend(); ++tIt)
+	for (auto tIt = Tool::stack.rbegin(); tIt != Tool::stack.rend(); ++tIt)
 	{
 		if ((*tIt)->Draw3D(*this))
 			return true;

@@ -2,7 +2,9 @@
 //	plane.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "winding.h"
 
 const vec3 g_v3BaseAxis[18] =
 {

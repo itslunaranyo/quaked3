@@ -2,7 +2,9 @@
 //	CmdPlaneShift.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "select.h"
 #include "CmdPlaneShift.h"
 
 CmdPlaneShift::CmdPlaneShift() : Command("Plane Shift") {}

@@ -2,13 +2,19 @@
 //	csg.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
-#include <algorithm>
 #include "csg.h"
+#include "map.h"
+#include "select.h"
+#include "winding.h"
+
 #include "CmdAddRemove.h"
 #include "CmdHollow.h"
 #include "CmdMerge.h"
 #include "CmdBridge.h"
+
+#include <algorithm>
 
 /*
 ====================
@@ -667,7 +673,7 @@ void CSG::Subtract ()
 	Sys_Printf("Done. (created %d fragment%s out of %d brush%s)\n", 
 				numfragments, (numfragments == 1) ? "" : "s",
 				numbrushes, (numbrushes == 1) ? "" : "es");
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -690,7 +696,7 @@ void CSG::Hollow()
 	g_cmdQueue.Complete(cmdH);
 	//cmdH->Select();
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -717,7 +723,7 @@ void CSG::Merge ()
 	//cmdM->Select();
 
 	Sys_Printf("Merge done.\n");
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -737,5 +743,5 @@ void CSG::Bridge()
 	g_cmdQueue.Complete(cmdB);
 
 	Sys_Printf("Bridge done.\n");
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }

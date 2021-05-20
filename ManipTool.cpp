@@ -2,7 +2,17 @@
 //	ManipTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "ManipTool.h"
+#include "map.h"
+#include "select.h"
+#include "winding.h"
+#include "modify.h"
+#include "CameraView.h"
+#include "XYZView.h"
+#include "ZView.h"
+#include "WndView.h"
 
 #include "CmdGeoMod.h"
 #include "CmdClone.h"
@@ -48,7 +58,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 		mc = v.GetMouseContext(mx, my);
 		DragStart3D(mc);
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
 		if (keys & MK_LBUTTON)
@@ -59,7 +69,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 			mousePlane.TestRay(mc.org, mc.ray, pt);
 			DragMove(mc, pt);
 
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			return true;
 		}
 		return false;
@@ -70,7 +80,7 @@ bool ManipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 		mc = v.GetMouseContext(mx, my);
 		DragFinish();
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
@@ -113,7 +123,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 		v.ToPoint(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
 		DragStart2D(mc, v.dViewType);
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 
 	case WM_MOUSEMOVE:
@@ -124,7 +134,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 			v.ToPoint(mx, my, x, y);
 			mc = v.GetMouseContext(mx, my);
 			DragMove(mc, mc.org);
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			return true;
 		}
 		return false;
@@ -136,7 +146,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView &v, Wnd
 		mc = v.GetMouseContext(mx, my);
 		DragFinish();
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
@@ -169,7 +179,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 		mc = v.GetMouseContext(mx, my);
 		DragStart1D(mc);
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 	case WM_MOUSEMOVE:
 		if (keys & MK_LBUTTON)
@@ -178,7 +188,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 			mc = v.GetMouseContext(mx, my);
 			DragMove(mc, mc.org);
 
-			Sys_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE);
 			return true;
 		}
 		return false;
@@ -190,7 +200,7 @@ bool ManipTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndVi
 		mc = v.GetMouseContext(mx, my);
 		DragFinish();
 
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		hot = false;
@@ -218,7 +228,7 @@ bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (g_cfgEditor.CloneStyle == CLONE_DRAG)
 			{
 				cloneReady = false;
-				Sys_UpdateWindows(W_SCENE);
+				WndMain_UpdateWindows(W_SCENE);
 			}
 			return true;
 		}
@@ -233,10 +243,10 @@ bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (g_cfgEditor.CloneStyle == CLONE_DRAG)
 			{
 				cloneReady = true;
-				Sys_UpdateWindows(W_SCENE);
+				WndMain_UpdateWindows(W_SCENE);
 			}
 			else
-				PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
+				PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
 			return true;
 		}
 		return false;

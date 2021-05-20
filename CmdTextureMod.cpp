@@ -2,6 +2,7 @@
 //	CmdTextureMod.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdTextureMod.h"
 

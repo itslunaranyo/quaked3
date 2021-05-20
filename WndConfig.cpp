@@ -2,8 +2,12 @@
 //	WndEntity.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "io.h"
+#include "map.h"
+#include "win_dlg.h"
+#include "Command.h"
 #include <algorithm>
 #include <Shlobj.h>
 
@@ -48,7 +52,7 @@ void WndCfg_FormatPath(char* dst, char* src)
 	assert(src != dst);
 	char szTemp[512];
 
-	QE_ConvertDOSToUnixName(szTemp, src);
+	Sys_ConvertDOSToUnixName(szTemp, src);
 
 	if (!_strnicmp(szTemp, g_cfgEditor.QuakePath, strlen(g_cfgEditor.QuakePath)))
 		sprintf(dst, "$QUAKE/%s", &szTemp[strlen(g_cfgEditor.QuakePath)]);
@@ -80,7 +84,7 @@ bool SelectDir(HWND h, bool format, char* title)
 			if (format)
 				WndCfg_FormatPath(DirName, szDirName);
 			else
-				QE_ConvertDOSToUnixName(DirName, szDirName);
+				Sys_ConvertDOSToUnixName(DirName, szDirName);
 			SetWindowText(h, DirName);
 		}
 
@@ -144,7 +148,7 @@ bool WndCfg_GetEntityFiles(HWND hwndDlg)
 {
 	szFile[0] = 0;
 
-	//MessageBox(g_qeglobals.d_hwndMain, "To load multiple entity definition files,\nuse the wildcard expression (EG: *.def or *.qc)", "Quake Ed 3: Info", MB_OK | MB_ICONINFORMATION);
+	//MessageBox(g_hwndMain, "To load multiple entity definition files,\nuse the wildcard expression (EG: *.def or *.qc)", "Quake Ed 3: Info", MB_OK | MB_ICONINFORMATION);
 
 	GetCurrentDirectory(MAX_PATH - 1, szDirName);
 
@@ -232,49 +236,49 @@ bool WndCfg_GetDefaultWads(HWND hwndDlg)
 		switch (CommDlgExtendedError())
 		{
 		case CDERR_DIALOGFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_DIALOGFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_DIALOGFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_FINDRESFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_FINDRESFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_FINDRESFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_NOHINSTANCE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOHINSTANCE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_NOHINSTANCE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_INITIALIZATION:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_INITIALIZATION", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_INITIALIZATION", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_NOHOOK:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOHOOK", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_NOHOOK", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_LOCKRESFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOCKRESFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_LOCKRESFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_NOTEMPLATE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_NOTEMPLATE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_NOTEMPLATE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_LOADRESFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOADRESFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_LOADRESFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_STRUCTSIZE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_STRUCTSIZE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_STRUCTSIZE", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_LOADSTRFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_LOADSTRFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_LOADSTRFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case FNERR_BUFFERTOOSMALL:
-			MessageBox(g_qeglobals.d_hwndMain, "FNERR_BUFFERTOOSMALL", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "FNERR_BUFFERTOOSMALL", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_MEMALLOCFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_MEMALLOCFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_MEMALLOCFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case FNERR_INVALIDFILENAME:
-			MessageBox(g_qeglobals.d_hwndMain, "FNERR_INVALIDFILENAME", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "FNERR_INVALIDFILENAME", "Common Dialog Error", MB_OK);
 			break;
 		case CDERR_MEMLOCKFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "CDERR_MEMLOCKFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "CDERR_MEMLOCKFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		case FNERR_SUBCLASSFAILURE:
-			MessageBox(g_qeglobals.d_hwndMain, "FNERR_SUBCLASSFAILURE", "Common Dialog Error", MB_OK);
+			MessageBox(g_hwndMain, "FNERR_SUBCLASSFAILURE", "Common Dialog Error", MB_OK);
 			break;
 		}
 	}
@@ -341,13 +345,13 @@ void WndCfg_CheckProjectAlteration()
 	{
 		if (g_cmdQueue.IsModified())
 		{
-			if (MessageBox(g_qeglobals.d_hwndMain,
+			if (MessageBox(g_hwndMain,
 				"Changes to the configuration require the current map to be reloaded.\nWould you like to do this now? (Map will be saved first.)",
 				"QuakeEd 3: Confirm Project Change", MB_YESNO | MB_ICONQUESTION) == IDNO)
 			{
 				return;
 			}
-			SendMessage(g_qeglobals.d_hwndMain, WM_COMMAND, 0, ID_FILE_SAVE);
+			SendMessage(g_hwndMain, WM_COMMAND, 0, ID_FILE_SAVE);
 		}
 		char szMapTemp[_MAX_FNAME];
 		szMapTemp[0] = 0;
@@ -426,7 +430,7 @@ WndCfg_DoNewProject
 */
 void WndCfg_DoNewProject()
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_NEWNAME), g_qeglobals.d_hwndMain, ConfigNewProjDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_NEWNAME), g_hwndMain, ConfigNewProjDlgProc);
 }
 
 /*
@@ -441,7 +445,7 @@ void WndCfg_DoDeleteProject()
 	if (i == -1)
 		return;
 	sprintf(szMsg, "Are you sure you want to delete project %s?", g_qeconfig.projectPresets[i].name);
-	if (MessageBox(g_qeglobals.d_hwndMain, szMsg, "QuakeEd 3: Confirm Project Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
+	if (MessageBox(g_hwndMain, szMsg, "QuakeEd 3: Confirm Project Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
 		return;
 
 	g_qeconfig.projectPresets.erase(g_qeconfig.projectPresets.begin() + i);
@@ -613,7 +617,7 @@ BOOL CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 
 void WndCfg_DoSaveColors() 
 {
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_NEWNAME), g_qeglobals.d_hwndMain, ConfigSaveColorsDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_NEWNAME), g_hwndMain, ConfigSaveColorsDlgProc);
 }
 
 void WndCfg_DoDeleteColors() 
@@ -624,7 +628,7 @@ void WndCfg_DoDeleteColors()
 	if (i < 1)
 		return;
 	sprintf(szMsg, "Are you sure you want to delete color preset %s?", g_qeconfig.colorPresets[i-1].name);
-	if (MessageBox(g_qeglobals.d_hwndMain, szMsg, "QuakeEd 3: Confirm Preset Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
+	if (MessageBox(g_hwndMain, szMsg, "QuakeEd 3: Confirm Preset Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
 		return;
 
 	g_qeconfig.colorPresets.erase(g_qeconfig.colorPresets.begin() + i - 1);
@@ -884,10 +888,10 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 		cfgOK = false;
 	}
 
-	// Color
+	// TODO: verify these paths more deeply by checking their destinations for quake.exe/wads/etc
 
 	if (!cfgOK)
-		MessageBox(g_qeglobals.d_hwndMain, szErrors, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(g_hwndMain, szErrors, "QuakeEd 3: Error", MB_OK | MB_ICONEXCLAMATION);
 	return cfgOK;
 }
 
@@ -1251,7 +1255,7 @@ bool WndCfg_OnClose()
 	// compare to live config, ask to apply
 	if (g_needApply)
 	{
-		int res = MessageBox(g_qeglobals.d_hwndMain, "Apply changes?", "QuakeEd 3: Confirm Changes", MB_YESNOCANCEL | MB_ICONQUESTION);
+		int res = MessageBox(g_hwndMain, "Apply changes?", "QuakeEd 3: Confirm Changes", MB_YESNOCANCEL | MB_ICONQUESTION);
 		if (res == IDCANCEL)
 			return false;
 		if (res == IDNO)
@@ -1287,7 +1291,7 @@ BOOL CALLBACK ConfigDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 		case IDAPPLY:
 			WndCfg_OnApply();
-			Sys_ForceUpdateWindows(W_SCENE);
+			WndMain_ForceUpdateWindows(W_SCENE);
 			return TRUE;
 		case IDCLOSE:
 			if (!WndCfg_OnClose())
@@ -1320,12 +1324,12 @@ void DoConfigWindow()
 {
 	g_noProject = false;
 	g_cfgNeedReload = false;
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CONFIG), g_qeglobals.d_hwndMain, ConfigDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CONFIG), g_hwndMain, ConfigDlgProc);
 }
 
 void DoConfigWindowProject()
 {
 	g_noProject = true;
 	g_cfgNeedReload = false;
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CONFIG), g_qeglobals.d_hwndMain, ConfigDlgProc);
+	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_CONFIG), g_hwndMain, ConfigDlgProc);
 }

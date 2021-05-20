@@ -2,6 +2,7 @@
 //	CmdClone.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdClone.h"
 #include <glm/gtc/matrix_transform.hpp>

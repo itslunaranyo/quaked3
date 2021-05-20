@@ -2,6 +2,7 @@
 //	CmdCzgCylinder.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdCzgCylinder.h"
 

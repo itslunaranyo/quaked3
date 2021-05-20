@@ -2,10 +2,18 @@
 //	select.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "select.h"
+#include "map.h"
+#include "TextureView.h"
+#include "Tool.h"
+#include "winding.h"
+#include "modify.h"
 
 Brush	g_brSelectedBrushes;	// highlighted
 bool	g_bSelectionChanged;
+select_t	Selection::g_selMode;
 std::vector<Face*> Selection::faces;
 
 void Selection::Changed() { g_bSelectionChanged = true;  }
@@ -34,22 +42,22 @@ void Selection::HandleChange()
 		vSize = vMax - vMin;
 		name = g_brSelectedBrushes.next->owner->GetKeyValue("classname");
 		sprintf(selectionstring, "Selected: %s (%d %d %d)", name, (int)vSize[0], (int)vSize[1], (int)vSize[2]);
-		Sys_Status(selectionstring, 3);
+		WndMain_Status(selectionstring, 3);
 	}
 	else
 	{
-		Sys_Status("", 3);
+		WndMain_Status("", 3);
 	}
 
-	for (auto tIt = g_qeglobals.d_tools.begin(); tIt != g_qeglobals.d_tools.end(); ++tIt)
+	for (auto tIt = Tool::stack.begin(); tIt != Tool::stack.end(); ++tIt)
 	{
 		(*tIt)->SelectionChanged();
 	}
 
-	Sys_UpdateWindows(W_SCENE|W_ENTITY|W_SURF);
+	WndMain_UpdateWindows(W_SCENE|W_ENTITY|W_SURF);
 	if (g_cfgUI.PathlineMode == TargetGraph::tgm_selected || 
 		g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path )
-		Sys_UpdateWindows(W_TARGETGRAPH);
+		WndMain_UpdateWindows(W_TARGETGRAPH);
 
 	g_bSelectionChanged = false;
 }
@@ -244,7 +252,7 @@ bool Selection::DeselectAllFaces()
 	faces.clear();
 	//g_vfSelectedFaces[0] = NULL;
 	//g_nSelFaceCount = 0;
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	Selection::Changed();
 	return true;
@@ -408,7 +416,7 @@ void Selection::FacesToBrushes(bool partial)
 	}
 	DeselectAllFaces();
 	Selection::Changed();
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 }
 
 /*
@@ -431,7 +439,7 @@ void Selection::BrushesToFaces()
 			SelectFace(f);
 		}
 	}
-	g_qeglobals.d_selSelectMode = sel_face;
+	g_selMode = sel_face;
 	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
 	Selection::Changed();
 }
@@ -604,7 +612,7 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 	out = flags;
 	if (flags & SF_FACES)
 	{
-		g_qeglobals.d_selSelectMode = sel_face;
+		g_selMode = sel_face;
 		if (IsFaceSelected(t.face))
 		{
 			if (flags & SF_UNSELECTED) return 0;
@@ -621,12 +629,12 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_EXPAND)
 				DeselectFaces(t.brush);
 			else
-				g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
+				g_vTexture.ChooseTexture(&t.face->texdef);
 		}
 	}
 	else
 	{
-		g_qeglobals.d_selSelectMode = sel_brush;
+		g_selMode = sel_brush;
 		if (flags & SF_CYCLE || flags & SF_EXCLUSIVE)
 		{
 			DeselectAll();
@@ -725,7 +733,7 @@ void Selection::Point(const vec3 origin, int flags)
 	if (!t.brush)
 		return;
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 	// move the brush to the other list
 	if (t.selected)
 	{
@@ -807,12 +815,12 @@ void Selection::DeselectAll()
 {
 	DeselectAllFaces();
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	if (!HasBrushes())
 		return;
 
-	UpdateWorkzone(g_brSelectedBrushes.next);
+	QE_UpdateWorkzone(g_brSelectedBrushes.next);
 
 	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
 	Selection::Changed();
@@ -1096,7 +1104,7 @@ void Selection::CompleteTall()
 	if (!QE_SingleBrush())
 		return;
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
@@ -1140,7 +1148,7 @@ void Selection::PartialTall()
 	if (!QE_SingleBrush())
 		return;
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
@@ -1183,7 +1191,7 @@ void Selection::Touching()
 	if (!QE_SingleBrush())
 		return;
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
@@ -1218,7 +1226,7 @@ void Selection::Inside()
 	if (!QE_SingleBrush())
 		return;
 
-	g_qeglobals.d_selSelectMode = sel_brush;
+	g_selMode = sel_brush;
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
@@ -1282,40 +1290,4 @@ void Selection::NextBrushInGroup()
 
 // ================================================================
 
-
-
-/*
-===============
-OnBrushList
-
-returns true if pFind is in pList
-===============
-*/
-bool OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize)
-{
-	while (nSize-- > 0)
-		if (pList[nSize] == pFind)
-			return true;
-
-	return false;
-}
-
-
-
-/*
-===============
-UpdateWorkzone
-
-update the workzone to a given brush
-===============
-*/
-void UpdateWorkzone(Brush* b)
-{
-	if (!b) return;
-	assert(b != &g_brSelectedBrushes);
-
-	// will update the workzone to the given brush
-	g_qeglobals.d_v3WorkMin = b->mins;
-	g_qeglobals.d_v3WorkMax = b->maxs;
-}
 

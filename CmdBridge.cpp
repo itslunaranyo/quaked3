@@ -2,9 +2,11 @@
 //	CmdBridge.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "csg.h"
 #include "CmdBridge.h"
+#include "select.h"
 
 CmdBridge::CmdBridge() : Command("CSG Bridge")
 {

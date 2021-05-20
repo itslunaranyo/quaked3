@@ -6,7 +6,7 @@
 #ifndef __XYZVIEW_H__
 #define __XYZVIEW_H__
 
-#include "v_view.h"
+#include "View.h"
 
 class XYZView : public View
 {
@@ -68,14 +68,12 @@ private:
 	void	DrawRotateIcon ();	// sikk - Free Rotate: Pivot Icon
 	void	DrawZIcon ();
 	bool	DrawTools();
-
-	//bool	DragDelta(int x, int y, vec3 move);
-	//void	DragNewBrush(int x, int y);
 };
 
 
 //========================================================================
 
-
+extern XYZView	g_vXYZ[4];
+XYZView*	XYZWnd_WinFromHandle(HWND xyzwin);
 
 #endif

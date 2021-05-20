@@ -2,7 +2,13 @@
 //	WndZChecker.c
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "WndZChecker.h"
+#include "ZView.h"
+#include "Tool.h"
+
+HWND g_hwndZ;
 
 WndZChecker::WndZChecker()
 {
@@ -17,12 +23,12 @@ WndZChecker::~WndZChecker()
 
 void WndZChecker::Initialize()
 {
-	zv = &g_qeglobals.d_vZ;
+	zv = &g_vZ;
 	v = zv;
 
 	CreateWnd();
 	SetTitle("Z Checker");
-	g_qeglobals.d_hwndZ = w_hwnd;
+	g_hwndZ = w_hwnd;
 }
 
 int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -64,14 +70,14 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (fwKeys & MK_SHIFT) fwd *= 4;
 			v->origin.z += fwd / v->scale;
 		}
-		Sys_UpdateWindows(W_Z);
+		WndMain_UpdateWindows(W_Z);
 		return 0;
 
 	case WM_MBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONDOWN:
 		Focus();
-		SetCapture(g_qeglobals.d_hwndZ);
+		SetCapture(g_hwndZ);
 		fwKeys = wParam;				// key flags 
 		xPos = (short)LOWORD(lParam);	// horizontal position of cursor 
 		yPos = (short)HIWORD(lParam);	// vertical position of cursor 

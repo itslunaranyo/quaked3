@@ -5,13 +5,17 @@
 #ifndef __MANIP_TOOL_H__
 #define __MANIP_TOOL_H__
 
+#include "Tool.h"
+
 // General Manipulation Tool
 // translates, plane slides, new brush draws, quick skews
 
+class WndView;
 class CmdGeoMod;
 class CmdPlaneShift;
 class CmdTranslate;
 class CmdCompound;
+struct mouseContext_t;
 
 class ManipTool : public Tool
 {

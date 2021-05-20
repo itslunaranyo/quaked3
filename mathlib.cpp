@@ -4,10 +4,10 @@
 
 // math primitives
 
+#include "pre.h"
 #include "cmdlib.h"
 #include "mathlib.h"
 #include "qedefs.h"
-#include <assert.h>
 
 // for sorting arrays/lists of vectors with intent to strip duplicates
 bool VectorCompareLT(const vec3 &v1, const vec3 &v2)

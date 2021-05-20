@@ -5,6 +5,7 @@
 #ifndef __COMMAND_POLY_BRUSH_CONCAVE_H__
 #define __COMMAND_POLY_BRUSH_CONCAVE_H__
 
+#include "Command.h"
 #include <list>
 
 class CmdPolyBrush;

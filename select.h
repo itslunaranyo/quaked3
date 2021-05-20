@@ -43,6 +43,7 @@ extern Brush		g_brSelectedBrushes;
 
 namespace Selection
 {
+	extern select_t		g_selMode;
 	extern std::vector<Face*> faces;
 
 	void	Changed();
@@ -97,14 +98,6 @@ namespace Selection
 
 	void	NextBrushInGroup();
 }
-// ================================
-
-
-// sikk - Multiple Face Selection: returns true if pFind is in pList
-bool	OnBrushList(Brush *pFind, Brush *pList[MAX_MAP_BRUSHES], int nSize);
-
-// updating workzone to a given brush(depends on current view)
-void	UpdateWorkzone(Brush *b);
 
 
 #endif

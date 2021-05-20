@@ -2,9 +2,11 @@
 //	CmdImportMap.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdImportMap.h"
 #include "CmdSetKeyvalue.h"
+#include "map.h"
 
 CmdImportMap::CmdImportMap() : Command("Import Map")
 {

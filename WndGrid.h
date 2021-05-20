@@ -7,6 +7,10 @@
 
 #include "WndView.h"
 
+extern HWND		g_hwndXYZ[4];		// lunaran - grid view reunification
+extern WndGrid	*g_wndGrid[4];
+class XYZView;
+
 class WndGrid : public WndView
 {
 public:
@@ -22,5 +26,6 @@ public:
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 };
+
 
 #endif

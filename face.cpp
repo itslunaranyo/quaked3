@@ -2,7 +2,10 @@
 //	face.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "winding.h"
+#include "surface.h"
 
 
 /*
@@ -405,7 +408,13 @@ Face::ColorAndTexture
 */
 void Face::ColorAndTexture()
 {
-	if (!texdef.tex) return;
+	if (!texdef.tex)
+	{
+		if (!texdef.name[0])
+			strcpy_s(texdef.name, "none");
+
+		texdef.tex = Textures::ForName(texdef.name);
+	}
 
 	SetColor();
 	Winding::TextureCoordinates(face_winding, texdef.tex, this);

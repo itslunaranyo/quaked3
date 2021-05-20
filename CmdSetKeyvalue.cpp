@@ -2,8 +2,10 @@
 //	CmdSetKeyvalue.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdSetKeyvalue.h"
+#include "select.h"
 
 CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value) : Command("Set Keyvalue")
 {

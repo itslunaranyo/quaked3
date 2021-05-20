@@ -7,6 +7,9 @@
 
 #include "WndView.h"
 
+extern HWND g_hwndCamera;
+class CameraView;
+
 class WndCamera : public WndView
 {
 public:

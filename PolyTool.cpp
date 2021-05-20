@@ -2,8 +2,13 @@
 //	PolyTool.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
+#include "PolyTool.h"
+#include "select.h"
 #include "CmdPolyBrushConcave.h"
+#include "XYZView.h"
+#include "WndView.h"
 
 
 PolyTool::PolyTool() : 
@@ -42,7 +47,7 @@ void PolyTool::Reset()
 		pcmdPBC = nullptr;
 	}
 
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 }
 
 /*
@@ -79,13 +84,13 @@ bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, Wnd
 
 		AddPoint(&v, x, y, (wParam & MK_SHIFT) != 0);
 
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		return true;
 
 	case WM_LBUTTONDBLCLK:
 		Commit();
 
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		return true;
 
 	case WM_LBUTTONUP:
@@ -95,7 +100,7 @@ bool PolyTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, XYZView & v, Wnd
 		
 		EndPoint();
 
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 		if (!(keys & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return true;
@@ -139,7 +144,7 @@ bool PolyTool::Commit()
 	g_cmdQueue.Complete(pcmdPBC);
 	pcmdPBC = nullptr;
 	Reset();
-	Sys_UpdateWindows(W_SCENE);
+	WndMain_UpdateWindows(W_SCENE);
 	return true;
 }
 
@@ -154,7 +159,7 @@ bool PolyTool::InputCommand(WPARAM w)
 	{
 	case ID_SELECTION_DELETE:
 		DeletePoint(ShiftDown());
-		Sys_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE);
 		return true;
 	case ID_SELECTION_CLIPSELECTED:	// lunaran FIXME: 'enter' ...
 		return Commit();
@@ -243,7 +248,7 @@ void PolyTool::AddPoint(XYZView* xyz, int x, int y, bool back)
 	}
 
 	PointsUpdated();
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
 
 /*
@@ -263,7 +268,7 @@ void PolyTool::MovePoint(XYZView* xyz, int x, int y)
 		bCrossHair = true;
 
 		PointsUpdated();
-		Sys_UpdateWindows(W_XY | W_CAMERA);
+		WndMain_UpdateWindows(W_XY | W_CAMERA);
 	}
 	else
 	{
@@ -288,7 +293,7 @@ void PolyTool::EndPoint()
 		ReleaseCapture();
 	}
 	PointsUpdated();
-	Sys_UpdateWindows(W_XY | W_CAMERA);
+	WndMain_UpdateWindows(W_XY | W_CAMERA);
 }
 
 /*

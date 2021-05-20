@@ -2,6 +2,7 @@
 //	CmdTextureFit.cpp
 //==============================
 
+#include "pre.h"
 #include "qe3.h"
 #include "CmdTextureFit.h"
 

@@ -5,6 +5,11 @@
 #ifndef __WND_TEXTURE_H__
 #define __WND_TEXTURE_H__
 
+#include "WndView.h"
+extern HWND g_hwndTexture;
+extern WndTexture	*g_wndTexture;
+class TextureView;
+
 class WndTexture : public WndView
 {
 public:

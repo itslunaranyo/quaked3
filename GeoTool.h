@@ -5,10 +5,14 @@
 #ifndef __GEO_TOOL_H__
 #define __GEO_TOOL_H__
 
+#include "Tool.h"
+#include "View.h"
+
 // Geometry Modification Tool
 // vertex/edge/face editing
 
 class CmdGeoMod;
+class WndView;
 
 class GeoTool :	public Tool
 {

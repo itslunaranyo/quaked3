@@ -5,7 +5,7 @@
 #define __TEXTUREVIEW_H__
 
 #include "textures.h"
-#include "v_view.h"
+#include "View.h"
 #include <vector>
 
 class TextureView : public View
@@ -36,8 +36,9 @@ public:
 private:
 	// lunaran: cached layout
 	struct texWndItem_t {
-		texWndItem_t(int _x, int _y, int _w, int _h, Texture* _tex) : x(_x), y(_y), w(_w), h(_h), tex(_tex) {};
-		int x, y, w, h;
+		texWndItem_t(int _x, int _y, float _w, float _h, Texture* _tex) : x(_x), y(_y), w(_w), h(_h), tex(_tex) {};
+		int x, y;
+		float w, h;
 		Texture* tex;
 	};
 
@@ -62,7 +63,6 @@ private:
 	texWndItem_t* GetItemForTexture(const Texture *tex);
 	void	Resize(const int w, const int h);
 	Texture* TexAtPos(int x, int y);
-	void	SortTextures();
 	bool	FoldTextureGroup(texWndGroup_t *grp);
 	TextureView::texWndGroup_t *TexGroupAtPos(int x, int y);
 
@@ -73,6 +73,7 @@ private:
 
 //========================================================================
 
+extern TextureView g_vTexture;
 
 
 #endif
