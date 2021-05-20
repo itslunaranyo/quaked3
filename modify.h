@@ -19,6 +19,9 @@ void	ShowHidden();
 
 void	ConnectEntities();
 void	SetKeyValue(const char *key, const char *value);
+void	SetKeyValueSeries(const char *key, const char *value, const char *firstSuffix);
+void	SetKeyValueSeriesAlpha(const char *key, const char *value, const char *firstSuffix);
+void	SetKeyValueSeriesNum(const char *key, const char *value, const int firstSuffix);
 void	SetColor(const vec3 color);
 
 void	MakeCzgCylinder(int degree);

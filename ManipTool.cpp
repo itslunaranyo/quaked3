@@ -722,7 +722,14 @@ bool ManipTool::Draw3D(CameraView &v)
 {
 	if (cloneReady)
 	{
-		v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
+		if (cmdTr && cmdTr->postDrag)
+		{
+			glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
+			v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
+			glTranslatef(-cmdTr->trans[0], -cmdTr->trans[1], -cmdTr->trans[2]);
+		}
+		else
+			v.DrawSelected(&g_brSelectedBrushes, g_colors.tool);
 		return true;
 	}
 
@@ -826,7 +833,14 @@ bool ManipTool::Draw1D(ZView &v)
 {
 	if (cloneReady)
 	{
-		v.DrawSelection(g_colors.tool);
+		if (cmdTr && cmdTr->postDrag)
+		{
+			glTranslatef(0, cmdTr->trans[2], 0);
+			v.DrawSelection(g_colors.tool);
+			glTranslatef(0, -cmdTr->trans[2], 0);
+		}
+		else
+			v.DrawSelection(g_colors.tool);
 		return true;
 	}
 	switch (state)
@@ -834,9 +848,7 @@ bool ManipTool::Draw1D(ZView &v)
 	// lunaran TODO: draw the MT_NEW brush if it intersects the z-core
 	case MT_TRANSLATE:
 	case MT_CLONE:
-		if (!cmdTr)
-			return false;
-		if (!cmdTr->postDrag)
+		if (!cmdTr || !cmdTr->postDrag)
 			return false;
 		glTranslatef(0, cmdTr->trans[2], 0);
 		v.DrawSelection(g_colors.selection);

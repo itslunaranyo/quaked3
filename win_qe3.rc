@@ -184,6 +184,7 @@ BEGIN
         END
         MENUITEM MFT_SEPARATOR
         MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR,MFT_STRING,MFS_ENABLED
+        MENUITEM "Se&t Entity Key/Values...",   ID_TOOLS_SETENTITYKEYS,MFT_STRING,MFS_ENABLED
         MENUITEM "C&onnect Entities\tCtrl+K",   ID_SELECTION_CONNECT,MFT_STRING,MFS_ENABLED
         MENUITEM "Move to &World\tCtrl+U",      ID_SELECTION_UNGROUPENTITY,MFT_STRING,MFS_ENABLED
         MENUITEM "Move to E&ntity\tCtrl+I",     ID_SELECTION_INSERTBRUSH,MFT_STRING,MFS_ENABLED
@@ -1014,6 +1015,24 @@ BEGIN
     EDITTEXT        IDC_EDIT_MOUSELIST,4,4,233,267,ES_MULTILINE | ES_READONLY | NOT WS_BORDER | WS_VSCROLL,WS_EX_CLIENTEDGE
 END
 
+IDD_SETKEYVALUES DIALOGEX 0, 0, 239, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Set Key/Value Pairs"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    EDITTEXT        IDC_EDIT_SETKVKEY,42,12,132,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_SETKVVALUE,42,30,132,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_SETKVSTART,129,52,27,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "Apply",IDAPPLY,186,6,48,14
+    PUSHBUTTON      "Close",IDCLOSE,186,24,48,14
+    RTEXT           "Key:",IDC_STATIC,12,12,24,12,SS_CENTERIMAGE
+    RTEXT           "Value:",IDC_STATIC,12,30,27,12,SS_CENTERIMAGE
+    GROUPBOX        "",IDC_STATIC,5,0,175,84
+    CONTROL         "Incremental suffix, starting at:",IDC_CHECK_SETKVINCR,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,24,52,102,12
+    CTEXT           "(integer or single character)",IDC_STATIC,30,66,96,12,SS_CENTERIMAGE
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1021,8 +1040,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,41,0
- PRODUCTVERSION 3,2,41,0
+ FILEVERSION 3,2,42,0
+ PRODUCTVERSION 3,2,42,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1039,14 +1058,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 41)"
-            VALUE "FileVersion", "3.2.41.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 41)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 42)"
+            VALUE "FileVersion", "3.2.42.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 42)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.41.0"
+            VALUE "ProductVersion", "3.2.42.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1488,6 +1507,14 @@ BEGIN
         TOPMARGIN, 4
         BOTTOMMARGIN, 290
     END
+
+    IDD_SETKEYVALUES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 84
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -1668,6 +1695,11 @@ BEGIN
 END
 
 IDD_MOUSELIST AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETKEYVALUES AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

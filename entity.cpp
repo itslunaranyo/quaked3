@@ -760,6 +760,14 @@ bool Entity::Create (EntClass *ecIn)
 
 	if (Selection::HasBrushes())
 	{
+		if (Selection::OneBrushEntity())
+		{
+			g_brSelectedBrushes.next->owner->ChangeClassname(ecIn);
+			Sys_UpdateWindows(W_SCENE);
+			Selection::Changed();
+			return true;
+		}
+
 		try
 		{
 			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);

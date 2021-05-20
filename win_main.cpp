@@ -1679,6 +1679,10 @@ LONG WINAPI CommandHandler (
 			CSG::Merge();
 			break;
 
+		case ID_TOOLS_SETENTITYKEYS:
+			DoSetKeyValues();
+			break;
+
 		case ID_SELECTION_CLIPPER:
 			if (g_qeglobals.d_selSelectMode != sel_brush)
 			{
@@ -2608,7 +2612,9 @@ int WINAPI WinMain (
 				// lunaran - send keys to dialogs first before trying accelerators, so we can tab through
 				// the surface dialog and such
 				if (!IsDialogMessage(g_qeglobals.d_hwndSurfaceDlg, &msg) &&
-					!IsDialogMessage(g_qeglobals.d_texTool->hwndReplaceDlg, &msg))
+					!IsDialogMessage(g_qeglobals.d_texTool->hwndReplaceDlg, &msg) &&
+					!IsDialogMessage(g_qeglobals.d_hwndSetKeyvalsDlg, &msg)
+					)
 				{
 					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
 					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg))

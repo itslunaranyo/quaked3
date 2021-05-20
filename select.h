@@ -52,6 +52,7 @@ namespace Selection
 	bool	IsEmpty();
 	bool	OnlyPointEntities();
 	bool	OnlyBrushEntities();
+	bool	OneBrushEntity();
 	int		NumBrushes();
 	int		NumFaces();
 

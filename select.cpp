@@ -90,6 +90,21 @@ int Selection::NumBrushes()
 	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next) i++;
 	return i;
 }
+bool Selection::OneBrushEntity()
+{
+	Entity *first = nullptr;
+	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	{
+		if (b->owner->IsPoint() || b->owner->IsWorld())
+			return false;
+		if (!first)
+			first = b->owner;
+		else if (first != b->owner)
+			return false;
+	}
+
+	return true;
+}
 
 /*
 =================

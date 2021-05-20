@@ -155,7 +155,8 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				SetKeyValue();
-				SetFocus(w_hwndCtrls[ENT_PROPS]);	// sikk - Made sense to keep focus 
+				SetFocus(w_hwndCtrls[ENT_KEYFIELD]);	// sikk - Made sense to keep focus 
+				SendMessage(w_hwndCtrls[ENT_KEYFIELD], EM_SETSEL, 0, 1024);
 			}
 		}
 		break;
@@ -910,7 +911,7 @@ void WndEntity::CreateEntity()
 	{
 		g_qeglobals.d_vCamera.GetAimPoint(g_brSelectedBrushes.mins);	// FIXME: dum
 	}
-	else if (Selection::OnlyPointEntities())
+	else if (Selection::OnlyPointEntities() && ec->IsPointClass())
 	{
 		SetKeyValue("classname", ec->name);
 	}

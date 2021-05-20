@@ -179,7 +179,8 @@ typedef struct
 				d_hwndStatus,
 				d_hwndToolbar[11],
 				d_hwndRebar,			// sikk - Rebar 
-				d_hwndSurfaceDlg;		// lunaran - moved here from outer global
+				d_hwndSurfaceDlg,		// lunaran - moved here from outer global
+				d_hwndSetKeyvalsDlg;
 
 	WndCamera	*d_wndCamera;
 	WndGrid		*d_wndGrid[4];
@@ -337,6 +338,7 @@ void DoScale();	// sikk - Brush Scaling Dialog
 void DoCamSpeed();	// sikk - Camera Speed Dialog
 void DoDefaultTexScale();	// sikk - Default Texture Scale Dialog
 void DoFindKeyValue();	// sikk - Find Key/Value Dialog
+void DoSetKeyValues();
 
 // win_surf.c
 void WndSurf_UpdateUI();

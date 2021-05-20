@@ -323,6 +323,126 @@ void Modify::SetKeyValue(const char *key, const char *value)
 	Sys_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
+
+/*
+===============
+Modify::SetKeyValueSeries
+===============
+*/
+void Modify::SetKeyValueSeries(const char *key, const char *value, const char *firstSuffix)
+{
+	if (firstSuffix[0] >= '0' && firstSuffix[0] <= '9')
+		Modify::SetKeyValueSeriesNum(key, value, atoi(firstSuffix));
+	else if ((firstSuffix[0] >= 'a' && firstSuffix[0] <= 'z') ||
+			 (firstSuffix[0] >= 'A' && firstSuffix[0] <= 'Z'))
+		Modify::SetKeyValueSeriesAlpha(key, value, firstSuffix);
+	else
+		Error("Bad suffix specified for keyvalue series");
+}
+
+/*
+===============
+Modify::SetKeyValueSeriesNum
+===============
+*/
+void Modify::SetKeyValueSeriesNum(const char *key, const char *value, const int firstSuffix)
+{
+	Entity *last;
+	char valuesfx[260];
+	int sfx = firstSuffix;
+
+	last = nullptr;
+	CmdCompound *cmdCmp = new CmdCompound("Set Sequential Keyvalues");
+
+	for (Brush *b = g_brSelectedBrushes.prev; b != &g_brSelectedBrushes; b = b->prev)
+	{
+		// skip entity brushes in sequence
+		if (b->owner == last)
+			continue;
+		last = b->owner;
+		sprintf(valuesfx, "%s%i", value, sfx++);
+		try
+		{
+			CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
+			cmd->AddEntity(last);
+			cmdCmp->Complete(cmd);
+		}
+		catch (...)
+		{
+			return;
+		}
+	}
+
+	g_cmdQueue.Complete(cmdCmp);
+
+	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+}
+
+/*
+===============
+Modify::SetKeyValueSeriesNum
+===============
+*/
+void Modify::SetKeyValueSeriesAlpha(const char *key, const char *value, const char *firstSuffix)
+{
+	Entity *last;
+	char valuesfx[260];
+	char szSfx[4];
+	char cap;
+	int sfx;
+
+	if (firstSuffix[0] >= 'a' && firstSuffix[0] <= 'z')
+	{
+		cap = 'a';
+	}
+	else if (firstSuffix[0] >= 'A' && firstSuffix[0] <= 'Z')
+	{
+		cap = 'A';
+	}
+	else
+		assert(0);
+
+	sfx = firstSuffix[0] - cap;
+	last = nullptr;
+	CmdCompound *cmdCmp = new CmdCompound("Set Sequential Keyvalues");
+	
+	for (Brush *b = g_brSelectedBrushes.prev; b != &g_brSelectedBrushes; b = b->prev)
+	{
+		// skip entity brushes in sequence
+		if (b->owner == last)
+			continue;
+		last = b->owner;
+
+		if (sfx >= 26)
+		{
+			szSfx[0] = cap + sfx / 26 - 1;
+			szSfx[1] = cap + (sfx % 26);
+			szSfx[2] = 0;
+		}
+		else
+		{
+			szSfx[0] = cap + sfx;
+			szSfx[1] = 0;
+		}
+		sprintf(valuesfx, "%s%s", value, szSfx);
+		sfx++;
+		try
+		{
+			CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
+			cmd->AddEntity(last);
+			cmdCmp->Complete(cmd);
+		}
+		catch (...)
+		{
+			return;
+		}
+	}
+
+	g_cmdQueue.Complete(cmdCmp);
+
+	Sys_UpdateWindows(W_SCENE | W_ENTITY);
+}
+
 /*
 ===============
 Modify::SetColor

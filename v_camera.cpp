@@ -302,6 +302,9 @@ void CameraView::RealtimeControl (float dtime)
 
 	if (g_cfgEditor.CameraMoveStyle == CAMERA_CLASSIC)
 	{
+		if (nCamButtonState != MK_RBUTTON)
+			return;
+		
 		xf = (float)(buttonX - width / 2) / (width / 2);
 		yf = (float)(buttonY - height / 2) / (height / 2);
 

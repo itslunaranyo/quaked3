@@ -914,93 +914,6 @@ void DoKeylist ()
 
 
 
-/*
-=====================================================================
-
-	FIND TEXTURE
-
-=====================================================================
-*/
-/*
-============
-FindTextureDlgProc
-============
-*/
-/*
-BOOL CALLBACK FindTextureDlgProc (
-    HWND	hwndDlg,// handle to dialog box
-    UINT	uMsg,	// message
-    WPARAM	wParam,	// first message parameter
-    LPARAM	lParam 	// second message parameter
-   )
-{
-	char	szFind[64];
-	char	szReplace[64];
-	bool	bSelected, bForce;
-	TexDef	*texdef;
-	//Texture	*txFind, *txRepl;
-
-	texdef = &g_qeglobals.d_workTexDef;
-
-	switch (uMsg)
-    {
-	case WM_INITDIALOG:
-		SendMessage(hwndDlg, WM_SETREDRAW, 0, 0);
-		SetFocus(GetDlgItem(hwndDlg, IDC_EDIT_FIND));
-		strcpy(szFind, texdef->name);
-		strcpy(szReplace, texdef->name);
-		SetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind);
-		SetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace);
-		bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
-		bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
-		return FALSE;
-
-	case WM_COMMAND: 
-		switch (LOWORD(wParam)) 
-		{ 
-		case IDAPPLY:
-			GetDlgItemText(hwndDlg, IDC_EDIT_FIND, szFind, 64);
-			strncpy (texdef->name, szFind, sizeof(texdef->name) - 1);
-			if (texdef->name[0] <= ' ')
-				strcpy(texdef->name, "none");
-			
-			GetDlgItemText(hwndDlg, IDC_EDIT_REPLACE, szReplace, 64);
-			strncpy(texdef->name, szReplace, sizeof(texdef->name) - 1);
-			if (texdef->name[0] <= ' ')
-				strcpy(texdef->name, "none");
-
-			bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
-			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
-
-			Surface::FindReplace(szFind, szReplace, bSelected, bForce);
-
-			// because F&R dialog is modal, the camera window never gets a normal redraw message
-			// and apply appears to do nothing until the dialog is closed, so force update here
-			Sys_ForceUpdateWindows(W_CAMERA);
-
-			return TRUE;
-
-		case IDCLOSE:
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-		}
-		return 0;
-	}
-	return FALSE;
-}
-*/
-/*
-============
-DoFindTexture
-============
-*/
-/*
-void DoFindTexture ()
-{
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDREPLACE), g_qeglobals.d_hwndMain, FindTextureDlgProc);
-}
-*/
-
 
 // sikk---> Create Entity Dialog (*ripped from QE5)
 /*
@@ -1074,19 +987,11 @@ bool CreateEntityDlg_Make (HWND h)
 {
 	int			index;
 	EntClass	*pec;
-//	Entity*		out;
 
 	index = SendMessage(h, LB_GETCURSEL, 0, 0);
 	pec = (EntClass *)SendMessage(h, LB_GETITEMDATA, index, 0);
 
-//	Undo::Start("Create Entity");
-//	Undo::AddBrushList(&g_brSelectedBrushes);
 	return Entity::Create(pec);
-//	Undo::EndBrushList(&g_brSelectedBrushes);
-//	Undo::End();
-
-//	return out;
-//	Sys_UpdateWindows(W_CAMERA | W_XY | W_Z);
 }
 
 /*
@@ -1584,302 +1489,6 @@ void DoEntityInfo ()
 // <---sikk
 
 
-// sikk---> Preferences Dialog
-/*
-=====================================================================
-
-	PREFERENCES
-
-=====================================================================
-*/
-/*
-static OPENFILENAME ofn;			// common dialog box structure
-static char szDirName[_MAX_PATH];   // directory string
-static char szFile[_MAX_PATH];		// filename string
-static char szFileTitle[_MAX_FNAME];// file title string
-static char szFilter[64] = "Quake Executables (*.exe)\0*.exe\0\0";	// filter string
-*/
-/*
-==================
-OnGamePath
-==================
-void OnGamePath (HWND h)
-{
-	szFile[0] = 0;
-
-	GetCurrentDirectory(_MAX_PATH - 1, szDirName);
-
-	ofn.lStructSize		= sizeof(OPENFILENAME);
-	ofn.hwndOwner		= h;
-	ofn.lpstrFilter		= szFilter;
-	ofn.nFilterIndex	= 1;
-	ofn.lpstrFile		= szFile;
-	ofn.nMaxFile		= sizeof(szFile);
-	ofn.lpstrFileTitle	= szFileTitle;
-	ofn.nMaxFileTitle	= sizeof(szFileTitle);
-	ofn.lpstrInitialDir	= szDirName;
-	ofn.Flags			= OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-	ofn.lpstrTitle		= "Select Quake Executable File";
-
-	if (GetOpenFileName(&ofn))
-	{
-			SetDlgItemText(h, IDC_EDIT_GAMEPATH, szFile);
-			sprintf(g_qeglobals.d_savedinfo.szGameName, "%s", szFileTitle);
-	}
-}
-*/
-
-/*
-==================
-OnPrefabPath
-==================
-void OnPrefabPath (HWND h)
-{
-	//HWND hwndEdit = GetDlgItem(h, IDC_EDIT_PREFABPATH);
-	//SelectDir(hwndEdit, false);
-}
-*/
-
-/*
-============
-PreferencesDlgProc
-============
-BOOL CALLBACK PreferencesDlgProc (
-    HWND	hwndDlg,// handle to dialog box
-    UINT	uMsg,	// message
-    WPARAM	wParam,	// first message parameter
-    LPARAM	lParam 	// second message parameter
-   )
-{
-//	HWND	hwndTrack = GetDlgItem(hwndDlg, IDC_SLIDER_GAMMA);
-	HBITMAP	hb;
-	int		nUndoLevel;
-	int		nAutosave;
-	int		nMapSize = g_cfgEditor.MapSize;
-	int		nGamma = (float)g_cfgUI.Gamma * 10;
-	int		nMBCheck;
-	char	sz[256];
-	bool	bGammaCheck = false;
-	bool	bLogCheck = (bool)g_cfgEditor.LogConsole;
-
-	switch (uMsg)
-    {
-	case WM_INITDIALOG:
-		// Initialize TrackBar 
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETRANGE, (WPARAM)TRUE, (LPARAM)MAKELONG(0, 20));
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETTICFREQ, (WPARAM)2, (LPARAM)0);
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETLINESIZE, (WPARAM)0, (LPARAM)1);
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETPAGESIZE, (WPARAM)0, (LPARAM)2);
-		SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)nGamma); 
-
-		// Set Button Bitmaps
-		hb = (HBITMAP)LoadImage(g_qeglobals.d_hInstance, (LPCTSTR)IDB_FIND, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
-		SendDlgItemMessage(hwndDlg, IDC_BUTTON_GAMEPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
-		SendDlgItemMessage(hwndDlg, IDC_BUTTON_PREFABPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
-
-		// Initialize Edit Boxes 
-		SetDlgItemText(hwndDlg, IDC_EDIT_GAMEPATH, g_qeglobals.d_savedinfo.szGamePath);
-		SetDlgItemText(hwndDlg, IDC_EDIT_PREFABPATH, g_qeglobals.d_savedinfo.szPrefabPath);
-		SetDlgItemText(hwndDlg, IDC_EDIT_PARAMGAME, g_qeglobals.d_savedinfo.szModName);
-		sprintf(sz, "%d", (int)g_cfgEditor.AutosaveTime);
-		SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
-		sprintf(sz, "%d", (int)g_cfgEditor.UndoLevels);
-		SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
-
-		// Initialize Check Boxes 
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE,		BM_SETCHECK, (g_cfgUI.Stipple			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS,	BM_SETCHECK, (g_cfgUI.RadiantLights		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE,		BM_SETCHECK, (g_cfgEditor.LogConsole		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP,		BM_SETCHECK, (g_cfgEditor.LoadLastMap		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE,			BM_SETCHECK, (g_cfgEditor.Autosave			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION,	BM_SETCHECK, (g_cfgEditor.BrushPrecision	? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE,		BM_SETCHECK, (g_cfgEditor.VFEModesExclusive	? BST_CHECKED : BST_UNCHECKED), 0);
-
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bTestAfterBSP		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bLoadLastProject	? BST_CHECKED : BST_UNCHECKED), 0);
-	//	SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSortTexByWad		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bModName			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bHeapsize			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bSkill			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMDEATHMATCH,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bDeathmatch		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMDEVELOPER,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bDeveloper		? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMRSPEEDS,		BM_SETCHECK, (g_qeglobals.d_savedinfo.bRSpeeds			? BST_CHECKED : BST_UNCHECKED), 0);
-		SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMPOINTFILE,	BM_SETCHECK, (g_qeglobals.d_savedinfo.bPointfile		? BST_CHECKED : BST_UNCHECKED), 0);
-
-		// Initialize Combo Boxes 
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"8192 (default)");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"16384");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"32768");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"65536");
-		sprintf(sz, "%d", g_cfgEditor.MapSize);
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_MAPSIZE, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)sz);
-
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"16384");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"32768");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"65536");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"131072");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_ADDSTRING, (WPARAM)0, (LPARAM)"262144");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)g_qeglobals.d_savedinfo.szHeapsize);
-
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMSKILL, CB_ADDSTRING, (WPARAM)0, (LPARAM)"0");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMSKILL, CB_ADDSTRING, (WPARAM)0, (LPARAM)"1");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMSKILL, CB_ADDSTRING, (WPARAM)0, (LPARAM)"2");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMSKILL, CB_ADDSTRING, (WPARAM)0, (LPARAM)"3");
-		SendDlgItemMessage(hwndDlg, IDC_COMBO_PARAMSKILL, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)g_qeglobals.d_savedinfo.szSkill);
-		return TRUE;
-
-	case WM_COMMAND: 
-		switch (LOWORD(wParam)) 
-		{ 
-		case IDOK:
-			nGamma = SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0);
-			if (nGamma != (float)g_cfgUI.Gamma * 10)
-				bGammaCheck = true;
-			g_cfgUI.Gamma = nGamma * 0.1;
-
-			g_cfgUI.Stipple = SendDlgItemMessage(hwndDlg, IDC_CHECK_NOSTIPPLE, BM_GETCHECK, 0, 0);
-			g_cfgUI.RadiantLights = SendDlgItemMessage(hwndDlg, IDC_CHECK_RADIANTLIGHTS, BM_GETCHECK, 0, 0);
-			g_cfgEditor.LogConsole = SendDlgItemMessage(hwndDlg, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0);
-			g_cfgEditor.LoadLastMap = SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTMAP, BM_GETCHECK, 0, 0);
-			g_cfgEditor.Autosave = SendDlgItemMessage(hwndDlg, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0);
-			g_cfgEditor.BrushPrecision = SendDlgItemMessage(hwndDlg, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0);
-			g_cfgEditor.VFEModesExclusive = SendDlgItemMessage(hwndDlg, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0);
-
-			g_qeglobals.d_savedinfo.bTestAfterBSP		= SendDlgItemMessage(hwndDlg, IDC_CHECK_TESTAFTERBSP,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bLoadLastProject	= SendDlgItemMessage(hwndDlg, IDC_CHECK_LOADLASTPROJECT,	BM_GETCHECK, 0, 0);
-		//	g_qeglobals.d_savedinfo.bSortTexByWad		= SendDlgItemMessage(hwndDlg, IDC_CHECK_SORTTEXBYWAD,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bModName			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMGAME,			BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bHeapsize			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMHEAPSIZE,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bSkill				= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMSKILL,			BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bDeathmatch			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMDEATHMATCH,	BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bDeveloper			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMDEVELOPER,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bRSpeeds			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMRSPEEDS,		BM_GETCHECK, 0, 0);
-			g_qeglobals.d_savedinfo.bPointfile			= SendDlgItemMessage(hwndDlg, IDC_CHECK_PARAMPOINTFILE,		BM_GETCHECK, 0, 0);
-
-			GetDlgItemText(hwndDlg, IDC_EDIT_GAMEPATH, g_qeglobals.d_savedinfo.szGamePath, 255);
-			GetDlgItemText(hwndDlg, IDC_EDIT_PREFABPATH, g_qeglobals.d_savedinfo.szPrefabPath, 255);
-			GetDlgItemText(hwndDlg, IDC_EDIT_PARAMGAME, g_qeglobals.d_savedinfo.szModName, 255);
-
-			GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 2);
-			g_cfgEditor.AutosaveTime = atoi(sz);
-
-			GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 2);
-			g_cfgEditor.UndoLevels = atoi(sz);
-			g_cmdQueue.SetSize((int)g_cfgEditor.UndoLevels);
-
-			GetDlgItemText(hwndDlg, IDC_COMBO_MAPSIZE, sz, 8);
-			g_cfgEditor.MapSize = atoi(sz);
-
-			if (nMapSize != g_cfgEditor.MapSize)
-				g_map.RegionOff();
-			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMHEAPSIZE, g_qeglobals.d_savedinfo.szHeapsize, 8);
-			GetDlgItemText(hwndDlg, IDC_COMBO_PARAMSKILL, g_qeglobals.d_savedinfo.szSkill, 2);
-
-			if (bGammaCheck)
-				MessageBox(hwndDlg, "New Gamma setting requires a restart to take effect.", "QuakeEd 3: Preferences Info", MB_OK | MB_ICONINFORMATION);
-			if (bLogCheck != (bool)g_cfgEditor.LogConsole)
-				Sys_LogFile();
-			EndDialog(hwndDlg, 1);
-			Sys_UpdateWindows(W_ALL);
-			return TRUE;
-
-		case IDCANCEL:
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-
-		case IDC_BUTTON_RESETREGISTRY:
-			nMBCheck = MessageBox(hwndDlg, "Registry will be reset to QuakeEd's default settings.\n\tDo you wish to continue?", "QuakeEd 3: Reset Registry?", MB_YESNO | MB_ICONQUESTION);
-			if (nMBCheck == IDYES)
-				g_qeglobals.d_bResetRegistry = true;
-			return TRUE;
-
-		case IDC_BUTTON_GAMEPATH:
-			OnGamePath(hwndDlg);
-			break;
-		case IDC_BUTTON_PREFABPATH:
-			OnPrefabPath(hwndDlg);
-			break;
-		}
-		return 0;
-
-	case WM_HSCROLL:
-		nGamma = SendDlgItemMessage(hwndDlg, IDC_SLIDER_GAMMA, TBM_GETPOS, 0, 0);
-		return 0;
-
-	case WM_NOTIFY:
-		switch (((LPNMHDR)lParam)->code)
-		{
-		case UDN_DELTAPOS:
-			switch ((int)wParam)
-			{
-			case IDC_SPIN_UNDOLEVELS:
-				if (((LPNMUPDOWN)lParam)->iDelta < 0) 
-				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 255);
-					nUndoLevel = atoi(sz);
-					if (nUndoLevel < 64)
-						nUndoLevel++;
-					else
-						nUndoLevel = 1;
-					sprintf(sz, "%d", nUndoLevel);
-					SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
-				}
-				else
-				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 255);
-					nUndoLevel = atoi(sz);
-					if (nUndoLevel > 1)
-						nUndoLevel--;
-					else
-						nUndoLevel = 64;
-					sprintf(sz, "%d", nUndoLevel);
-					SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
-				}
-				break;
-			case IDC_SPIN_AUTOSAVE:
-				if (((LPNMUPDOWN)lParam)->iDelta < 0) 
-				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 255);
-					nAutosave = atoi(sz);
-					if (nAutosave < 60)
-						nAutosave++;
-					else
-						nAutosave = 1;
-					sprintf(sz, "%d", nAutosave);
-					SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
-				}
-				else
-				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 255);
-					nAutosave = atoi(sz);
-					if (nAutosave > 1)
-						nAutosave--;
-					else
-						nAutosave = 60;
-					sprintf(sz, "%d", nAutosave);
-					SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
-				}
-				break;
-			}
-			return 0;
-		}
-		return 0;
-	}
-	return FALSE;
-}
-*/
-
-/*
-============
-DoPreferences
-============
-void DoPreferences ()
-{
-	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_PREFERENCES), g_qeglobals.d_hwndMain, PreferencesDlgProc);
-}
-// <---sikk
-*/
-
 
 // sikk---> Brush Scaling Dialog
 /*
@@ -2293,15 +1902,21 @@ BOOL CALLBACK FindKeyValueDlgProc (
 {
 	char	szKey[256];
 	char	szValue[256];
-	HWND	h;
 
 	switch (uMsg)
     {
 	case WM_INITDIALOG:
+	{
+		HWND	h;
 		h = GetDlgItem(hwndDlg, IDC_EDIT_FINDKEY);
+
+		GetDlgItemText(g_qeglobals.d_wndEntity->w_hwndEntDialog, IDC_E_KEY_FIELD, szKey, 255);
+		GetDlgItemText(g_qeglobals.d_wndEntity->w_hwndEntDialog, IDC_E_VALUE_FIELD, szValue, 255);
+		SetDlgItemText(hwndDlg, IDC_EDIT_FINDKEY, szKey);
+		SetDlgItemText(hwndDlg, IDC_EDIT_FINDVALUE, szValue);
 		SetFocus(h);
 		return FALSE;
-
+	}
 	case WM_COMMAND: 
 		switch (LOWORD(wParam)) 
 		{ 
@@ -2332,3 +1947,107 @@ void DoFindKeyValue ()
 	DialogBox(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDKEYVALUE), g_qeglobals.d_hwndMain, FindKeyValueDlgProc);
 }
 // <---sikk
+
+
+
+
+
+
+
+/*
+=====================================================================
+
+	SET KEY/VALUES
+
+=====================================================================
+*/
+
+
+/*
+============
+SetKeyvalsDlgProc
+============
+*/
+BOOL CALLBACK SetKeyvalsDlgProc(
+	HWND	hwndDlg,// handle to dialog box
+	UINT	uMsg,	// message
+	WPARAM	wParam,	// first message parameter
+	LPARAM	lParam 	// second message parameter
+)
+{
+	char	szKey[256];
+	char	szValue[256];
+	char	szStart[4];
+	int		prefix;
+	HWND	h;
+
+	switch (uMsg)
+	{
+	case WM_INITDIALOG:
+		h = GetDlgItem(hwndDlg, IDC_EDIT_SETKVKEY);
+		SetFocus(h);
+		return FALSE;
+
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+
+		case IDAPPLY:
+			GetDlgItemText(hwndDlg, IDC_EDIT_SETKVKEY, szKey, 256);
+			GetDlgItemText(hwndDlg, IDC_EDIT_SETKVVALUE, szValue, 256);
+			prefix = SendDlgItemMessage(hwndDlg, IDC_CHECK_SETKVINCR, BM_GETCHECK, 0, 0);
+			GetDlgItemText(hwndDlg, IDC_EDIT_SETKVSTART, szStart, 4);
+
+			if (prefix)
+			{
+				if (!szStart[0])
+				{
+					MessageBox(hwndDlg, "No starting number or letter specified", "QuakeEd 3: Error", MB_ICONERROR | MB_OK);
+					return TRUE;
+				}
+				Modify::SetKeyValueSeries(szKey, szValue, szStart);
+			}
+			else
+			{
+				Modify::SetKeyValue(szKey, szValue);
+			}
+			return TRUE;
+
+		case IDCLOSE:
+			EndDialog(hwndDlg, 0);
+			g_qeglobals.d_hwndSetKeyvalsDlg = NULL;
+			return TRUE;
+
+		case IDC_EDIT_SETKVSTART:
+		{
+			int farts = HIWORD(wParam);
+			if (farts == EN_CHANGE)
+			{
+				GetDlgItemText(hwndDlg, IDC_EDIT_SETKVSTART, szStart, 4);
+				if (szStart[0])
+					SendDlgItemMessage(hwndDlg, IDC_CHECK_SETKVINCR, BM_SETCHECK, 1, 0);
+			}
+			return FALSE;
+		}
+		}
+	}
+	return FALSE;
+}
+/*
+============
+DoSetKeyValues
+============
+*/
+void DoSetKeyValues()
+{
+	if (g_qeglobals.d_hwndSetKeyvalsDlg)
+	{
+		SetFocus(g_qeglobals.d_hwndSetKeyvalsDlg);
+		return;
+	}
+
+	g_qeglobals.d_hwndSetKeyvalsDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SETKEYVALUES), g_qeglobals.d_hwndMain, SetKeyvalsDlgProc);
+	ShowWindow(g_qeglobals.d_hwndSetKeyvalsDlg, SW_SHOW);
+}
+
+
