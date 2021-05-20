@@ -6,14 +6,15 @@
 
 #define	DIST_START	999999
 
-#define	SF_SELECTED_ONLY	0x01
-#define	SF_ENTITIES_FIRST	0x02
-#define	SF_FACES			0x04
-#define SF_CYCLE			0x08	// sikk - Single Selection Cycle(Shift+Alt+LMB)
-#define SF_NOFIXEDSIZE		0x10	// lunaran - avoid selecting the 'faces' on entity brushes
-#define SF_MULTIFACE		0x20
-#define SF_SELECTED			0x40
-#define SF_UNSELECTED		0x80
+#define	SF_SELECTED_ONLY	0x0001
+#define	SF_ENTITIES_FIRST	0x0002
+#define	SF_FACES			0x0004
+#define SF_CYCLE			0x0008	// sikk - Single Selection Cycle(Shift+Alt+LMB)
+#define SF_NOFIXEDSIZE		0x0010	// lunaran - avoid selecting the 'faces' on entity brushes
+#define SF_EXCLUSIVE		0x0020	// always deselect all first
+#define SF_SELECTED			0x0040
+#define SF_UNSELECTED		0x0080
+#define SF_EXPAND			0x0100	// lunaran - gtkr style doubleclick select
 
 //========================================================================
 
@@ -62,7 +63,9 @@ namespace Selection
 	bool	DeselectAllFaces();
 	bool	IsFaceSelected(Face *face);
 	void	SelectFace(Face* f);
+	void	SelectFaces(Brush *b);
 	bool	DeselectFace(Face* f);
+	void	DeselectFaces(Brush *b);
 	int		NumBrushFacesSelected(Brush* b);
 	void	FacesToBrushes(bool partial);
 	void	BrushesToFaces();

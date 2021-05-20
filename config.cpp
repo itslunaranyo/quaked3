@@ -56,24 +56,26 @@ ConfigVar* const cfgUIVars[] = {
 	&cfgv_ShowAngles,
 	&cfgv_ShowPaths
 };
+const int cfgUIVarCount = sizeof(cfgUIVars) / sizeof(ConfigVar*);
 
 // editor/env vars:
 ConfigVarString	cfgv_QuakePath(g_cfgEditor.QuakePath, "QuakePath", "c:/quake/");
 #ifdef _DEBUG
-ConfigVarInt	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 1);
+ConfigVarBool	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 1);
 #else
-ConfigVarInt	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 0);
+ConfigVarBool	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 0);
 #endif
 ConfigVarInt	cfgv_LoadLastMap(g_cfgEditor.LoadLastMap, "LoadLastMap", 0);
 ConfigVarInt	cfgv_AutosaveTime(g_cfgEditor.AutosaveTime, "AutosaveTime", 5);
-ConfigVarInt	cfgv_Autosave(g_cfgEditor.Autosave, "Autosave", 1);
+ConfigVarBool	cfgv_Autosave(g_cfgEditor.Autosave, "Autosave", 1);
 
 ConfigVarInt	cfgv_MapSize(g_cfgEditor.MapSize, "MapSize", 8192);
 ConfigVarInt	cfgv_UndoLevels(g_cfgEditor.UndoLevels, "UndoLevels", 32);
-ConfigVarInt	cfgv_BrushPrecision(g_cfgEditor.BrushPrecision, "BrushPrecision", 0);
-ConfigVarInt	cfgv_VFEModesExclusive(g_cfgEditor.VFEModesExclusive, "VFEModesExclusive", 1);
+ConfigVarBool	cfgv_BrushPrecision(g_cfgEditor.BrushPrecision, "BrushPrecision", 0);
+ConfigVarBool	cfgv_VFEModesExclusive(g_cfgEditor.VFEModesExclusive, "VFEModesExclusive", 1);
+ConfigVarInt	cfgv_CloneStyle(g_cfgEditor.CloneStyle, "CloneStyle", CLONE_OFFSET);
 
-ConfigVarInt	cfgv_CubicClip(g_cfgEditor.CubicClip, "CubicClip", 1);
+ConfigVarBool	cfgv_CubicClip(g_cfgEditor.CubicClip, "CubicClip", 1);
 ConfigVarInt	cfgv_CubicScale(g_cfgEditor.CubicScale, "CubicScale", 32);
 ConfigVarInt	cfgv_CameraSpeed(g_cfgEditor.CameraSpeed, "CameraSpeed", 1024);
 
@@ -88,11 +90,13 @@ ConfigVar* const cfgEditorVars[] = {
 	&cfgv_UndoLevels,
 	&cfgv_BrushPrecision,
 	&cfgv_VFEModesExclusive,
+	&cfgv_CloneStyle,
 
 	&cfgv_CubicClip,
 	&cfgv_CubicScale,
 	&cfgv_CameraSpeed
 };
+const int cfgEditorVarCount = sizeof(cfgEditorVars) / sizeof(ConfigVar*);
 
 void ConfigVar::Read(Entity &epc)
 {
@@ -115,9 +119,9 @@ void ConfigVarString::ReadPair(EPair &ep)	{ Set((char*)*ep.value); }
 
 void qeConfig::Defaults()
 {
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Reset();
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < cfgUIVarCount; i++)
 		cfgUIVars[i]->Reset();
 
 	colorPresets.clear();
@@ -587,11 +591,11 @@ void qeConfig::Save()
 	std::ofstream fs("qe3.cfg");
 #endif
 	fs << "[editor]\n";
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Write(fs);
 
 	fs << "\n[ui]\n";
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < cfgUIVarCount; i++)
 		cfgUIVars[i]->Write(fs);
 
 	for (auto prjIt = projectPresets.begin(); prjIt != projectPresets.end(); ++prjIt)

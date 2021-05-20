@@ -23,11 +23,11 @@ the back of each queue is the end closest to the 'present', and the
 front is farthest in the past (for undos) or the future (for redos).
 
 changes to selection, changes to visibility, loading and unloading of 
-wads, or other events which do not alter what gets saved to disk are 
-map data agnostic, are not Commands, and cannot be undone.
+wads, or other events which are map data agnostic (ie do not alter what
+gets saved to disk) are not Commands and cannot be undone.
 
-all commands are free to store brush and face pointers, but they must
-also avoid moving brushes or faces in memory under all circumstances,
+all commands are free to store brush and face pointers, but in exchange
+they must avoid moving brushes or faces in memory under all circumstances,
 to maintain integrity across the entire length of the queue. 
 
 ========================================================================
@@ -136,6 +136,15 @@ void Command::Select()
 
 // ========================================================================
 
+/*
+==================
+CommandQueue::~CommandQueue
+==================
+*/
+CommandQueue::~CommandQueue()
+{
+	Clear();
+}
 
 /*
 ==================
@@ -144,7 +153,7 @@ CommandQueue::Complete
 the UI is done finalizing this command, seal it off and make it an undo
 ==================
 */
-void CommandQueue::Complete(Command *cmd)
+bool CommandQueue::Complete(Command *cmd)
 {
 	if (cmd->state == Command::NOOP)
 	{
@@ -153,7 +162,7 @@ void CommandQueue::Complete(Command *cmd)
 		Sys_Printf("command already a noop, deleting\n");
 #endif
 		delete cmd;
-		return;
+		return true;
 	}
 
 	ClearAllRedos();
@@ -162,7 +171,7 @@ void CommandQueue::Complete(Command *cmd)
 	}
 	catch (...)	{
 		delete cmd;
-		return;
+		return false;
 	}
 
 	if (cmd->state == Command::NOOP)
@@ -171,7 +180,7 @@ void CommandQueue::Complete(Command *cmd)
 		Sys_Printf("noop command after do, deleting\n");
 #endif
 		delete cmd;
-		return;
+		return true;
 	}
 
 	// commands are individually responsible for enumerating brushes and
@@ -185,13 +194,14 @@ void CommandQueue::Complete(Command *cmd)
 	if (!idFirstAfterSave)
 		idFirstAfterSave = cmd->id;
 
-	if ((int)undoQueue.size() > (int)g_cfgEditor.UndoLevels)
+	if (size && undoQueue.size() > size)
 		ClearOldestUndo();
 
 	Selection::Changed();
 
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);
+	return true;
 }
 
 /*
@@ -201,9 +211,11 @@ CommandQueue::SetSize
 if the user changes the undo queue size in preferences, shrink it immediately
 ==================
 */
-void CommandQueue::SetSize(int size)
+void CommandQueue::SetSize(int s)
 {
-	while ((unsigned)size < undoQueue.size())
+	size = (unsigned)s;
+	if (!size) return;	// 0 == unlimited
+	while (size < undoQueue.size())
 	{
 		ClearOldestUndo();
 	}

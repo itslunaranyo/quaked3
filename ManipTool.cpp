@@ -5,13 +5,15 @@
 #include "qe3.h"
 
 #include "CmdGeoMod.h"
+#include "CmdClone.h"
+#include "CmdCompound.h"
 #include "CmdPlaneShift.h"
 #include "CmdTranslate.h"
 #include "CmdAddRemove.h"
 
 ManipTool::ManipTool() :
 	state(MT_OFF),
-	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr),
+	brDragNew(nullptr), cmdPS(nullptr), cmdTr(nullptr), cmdGM(nullptr), cmdCmpClone(nullptr),
 	Tool("Manipulate", false)	// not modal
 {
 }
@@ -197,7 +199,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 	{
 		if (!Selection::OnlyBrushEntities())
 		{
-			StartTranslate();
+			SetupTranslate();
 			return;
 		}
 		vec3 ray;
@@ -211,7 +213,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 			ray.z = mc.org.z;
 			if (b->PointTest(ray))
 			{
-				StartTranslate();
+				SetupTranslate();
 				return;
 			}
 
@@ -278,6 +280,7 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 			ptDown[vDim] = mc.org[vDim];
 			ptDelta = ptDown - pointOnGrid(mc.org);
 
+			SetupTranslate();
 			StartTranslate();
 			cmdTr->Translate(ptDelta);
 			return;
@@ -287,14 +290,14 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 
 		if (!Selection::OnlyBrushEntities())
 		{
-			StartTranslate();
+			SetupTranslate();
 			return;
 		}
 		// translate if click hit the selection, side-detect for auto plane drag otherwise
 		trace_t t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);	
 		if (t.selected)
 		{
-			StartTranslate();
+			SetupTranslate();
 			return;
 		}
 		else
@@ -338,7 +341,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 		{
 			mousePlane.dist = DotProduct(Selection::GetMid(), mousePlane.normal);
 			mousePlane.TestRay(mc.org, mc.ray, ptDown);
-			StartTranslate();
+			SetupTranslate();
 			return;
 		}
 		std::vector<Face*> fSides;
@@ -356,7 +359,7 @@ void ManipTool::DragStart3D(const mouseContext_t &mc)
 				StartQuickShear(fSides);
 			}
 			else
-				StartTranslate();
+				SetupTranslate();
 		}
 		else
 		{
@@ -440,7 +443,9 @@ void ManipTool::DragMove(const mouseContext_t &mc, vec3 point)
 		return;
 	}
 	case MT_TRANSLATE:
-		assert(cmdTr);
+	case MT_CLONE:
+		if (!cmdTr)
+			StartTranslate();
 		ptDelta = pointOnGrid(point - ptDown);
 		cmdTr->Translate(ptDelta);
 		return;
@@ -475,8 +480,18 @@ void ManipTool::DragFinish(const mouseContext_t &vc)
 		brDragNew = nullptr;
 		break;
 	}
+	case MT_CLONE:
+		assert(!!cmdCmpClone == !!cmdTr);
+		if (!cmdCmpClone && !cmdTr)
+			break;
+		cmdCmpClone->Complete(cmdTr);
+		g_cmdQueue.Complete(cmdCmpClone);
+		cmdTr = nullptr;
+		cmdCmpClone = nullptr;
+		break;
 	case MT_TRANSLATE:
-		assert(cmdTr);
+		if(!cmdTr)
+			break;
 		g_cmdQueue.Complete(cmdTr);
 		cmdTr = nullptr;
 		break;
@@ -553,13 +568,28 @@ void ManipTool::StartPlaneShift(std::vector<Face*> &fSides)
 	state = MT_PLANESHIFT;
 }
 
-void ManipTool::StartTranslate()
+void ManipTool::SetupTranslate()
 {
 	assert(!cmdTr);
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+		state = MT_CLONE;
+	else
+		state = MT_TRANSLATE;
+}
+
+void ManipTool::StartTranslate()
+{
+	if (state == MT_CLONE)
+	{
+		assert(!cmdCmpClone);
+		cmdCmpClone = new CmdCompound("Clone Drag");
+		CmdClone *cmdCl = new CmdClone(&g_brSelectedBrushes);
+		Selection::DeselectAll();
+		cmdCmpClone->Complete(cmdCl);
+	}
 	cmdTr = new CmdTranslate();
 	cmdTr->UseBrushes(&g_brSelectedBrushes);
 	cmdTr->TextureLock(g_qeglobals.d_bTextureLock);
-	state = MT_TRANSLATE;
 }
 
 void ManipTool::SideSelectFaces(const vec3 org, const vec3 ray, std::vector<Face*> &fSides)
@@ -668,7 +698,9 @@ bool ManipTool::Draw3D(CameraView &v)
 		return true;
 
 	case MT_TRANSLATE:
-		assert(cmdTr);
+	case MT_CLONE:
+		if (!cmdTr)
+			return false;
 		if (!cmdTr->postDrag)
 			return false;
 		glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
@@ -698,8 +730,8 @@ bool ManipTool::Draw2D(XYZView &v)
 		return true;
 
 	case MT_TRANSLATE:
-		assert(cmdTr);
-		if (!cmdTr->postDrag)
+	case MT_CLONE:
+		if (!cmdTr || !cmdTr->postDrag)
 			return false;
 		glTranslatef(cmdTr->trans[0], cmdTr->trans[1], cmdTr->trans[2]);
 		v.DrawSelection();
@@ -719,7 +751,9 @@ bool ManipTool::Draw1D(ZView &v)
 	{
 	// lunaran TODO: draw the MT_NEW brush if it intersects the z-core
 	case MT_TRANSLATE:
-		assert(cmdTr);
+	case MT_CLONE:
+		if (!cmdTr)
+			return false;
 		if (!cmdTr->postDrag)
 			return false;
 		glTranslatef(0, cmdTr->trans[2], 0);

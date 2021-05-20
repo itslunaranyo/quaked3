@@ -806,7 +806,7 @@ WndEntity::SetKeyValue
 */
 void WndEntity::SetKeyValue(const char* key, const char* value)
 {
-	Modify_SetKeyValue(key,value);
+	Modify::SetKeyValue(key,value);
 }
 
 void WndEntity::SetKeyValue()
@@ -819,7 +819,7 @@ void WndEntity::SetKeyValue()
 	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_GETTEXT, sizeof(key) - 1, (LPARAM)key);
 	SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_GETTEXT, sizeof(value) - 1, (LPARAM)value);
 
-	Modify_SetKeyValue(key, value);
+	Modify::SetKeyValue(key, value);
 }
 
 /*

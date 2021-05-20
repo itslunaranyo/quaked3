@@ -17,10 +17,10 @@
 
 /*
 ===============
-Modify_Delete
+Modify::Delete
 ===============
 */
-void Modify_Delete()
+void Modify::Delete()
 {
 	if (!Selection::HasBrushes())
 		return;
@@ -35,14 +35,16 @@ void Modify_Delete()
 
 /*
 ================
-Modify_Clone
+Modify::Clone
 
 Creates an exact duplicate of the selection in place, then moves
 the selected brushes off of their old positions
 ================
 */
-void Modify_Clone()
+void Modify::Clone()
 {
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+		return;
 	vec3	delta(g_qeglobals.d_nGridSize);
 
 	if (g_qeglobals.d_selSelectMode != sel_brush) return;
@@ -51,7 +53,11 @@ void Modify_Clone()
 	// move cloned brushes based on active XY view
 	delta[g_qeglobals.d_wndGrid[0]->xyzv->GetAxis()] = 0;
 
-	CmdClone *cmd = new CmdClone(&g_brSelectedBrushes, delta);
+	CmdClone *cmd;
+	if (g_cfgEditor.CloneStyle == CLONE_OFFSET)
+		cmd = new CmdClone(&g_brSelectedBrushes, delta);
+	else //if (g_cfgEditor.CloneStyle == CLONE_INPLACE)
+		cmd = new CmdClone(&g_brSelectedBrushes);
 	Selection::DeselectAll();
 	g_cmdQueue.Complete(cmd);
 }
@@ -69,12 +75,12 @@ GROUP SELECTIONS
 
 /*
 =================
-Modify_Ungroup
+Modify::Ungroup
 
 Turn the currently selected entity back into normal brushes
 =================
 */
-void Modify_Ungroup()
+void Modify::Ungroup()
 {
 	try
 	{
@@ -96,10 +102,10 @@ void Modify_Ungroup()
 // sikk---> Insert Brush into Entity
 /*
 ===============
-Modify_InsertBrush
+Modify::InsertBrush
 ===============
 */
-void Modify_InsertBrush()
+void Modify::InsertBrush()
 {
 	Brush *br;
 	Entity *dest;
@@ -142,10 +148,10 @@ void Modify_InsertBrush()
 
 /*
 ===============
-Modify_HideSelected
+Modify::HideSelected
 ===============
 */
-void Modify_HideSelected()
+void Modify::HideSelected()
 {
 	Brush *b;
 
@@ -159,10 +165,10 @@ void Modify_HideSelected()
 
 /*
 ===============
-Modify_HideUnselected
+Modify::HideUnselected
 ===============
 */
-void Modify_HideUnselected()
+void Modify::HideUnselected()
 {
 	Brush *b;
 
@@ -175,10 +181,10 @@ void Modify_HideUnselected()
 
 /*
 ===============
-Modify_ShowHidden
+Modify::ShowHidden
 ===============
 */
-void Modify_ShowHidden()
+void Modify::ShowHidden()
 {
 	Brush *b;
 
@@ -197,13 +203,13 @@ void Modify_ShowHidden()
 
 /*
 ===============
-Modify_ConnectEntities
+Modify::ConnectEntities
 
 Sets target/targetname on the first two entities selected in order
 lunaran TODO: confirmation box if target & targetname already clash before overwriting
 ===============
 */
-void Modify_ConnectEntities()
+void Modify::ConnectEntities()
 {
 	Entity	*e1, *e2, *e;
 	char		*target, *tn;
@@ -272,10 +278,10 @@ void Modify_ConnectEntities()
 
 /*
 ===============
-Modify_SetKeyValue
+Modify::SetKeyValue
 ===============
 */
-void Modify_SetKeyValue(const char *key, const char *value)
+void Modify::SetKeyValue(const char *key, const char *value)
 {
 	Entity *last;
 
@@ -303,15 +309,15 @@ void Modify_SetKeyValue(const char *key, const char *value)
 
 /*
 ===============
-Modify_SetColor
+Modify::SetColor
 ===============
 */
-void Modify_SetColor(const vec3 color)
+void Modify::SetColor(const vec3 color)
 {
 	char szColor[128];
 
 	VecToString(color, szColor);
-	Modify_SetKeyValue("_color", szColor);
+	Modify::SetKeyValue("_color", szColor);
 }
 
 
@@ -320,12 +326,12 @@ void Modify_SetColor(const vec3 color)
 
 /*
 =============
-Modify_MakeCzgCylinder
+Modify::MakeCzgCylinder
 
 Makes the current brush into a czg-pattern cylinder because czg is the best
 =============
 */
-void Modify_MakeCzgCylinder(int degree)
+void Modify::MakeCzgCylinder(int degree)
 {
 	int axis;
 	Brush* b;
@@ -354,12 +360,12 @@ void Modify_MakeCzgCylinder(int degree)
 
 /*
 =============
-Modify_MakeSided
+Modify::MakeSided
 
 Makes the current brush have the given number of 2d sides
 =============
 */
-void Modify_MakeSided(int sides)
+void Modify::MakeSided(int sides)
 {
 	int axis;
 	Brush* b;
@@ -389,12 +395,12 @@ void Modify_MakeSided(int sides)
 // sikk---> Brush Primitives
 /*
 =============
-Modify_MakeSidedCone
+Modify::MakeSidedCone
 
 Makes the current brush have the given number of 2D sides and turns it into a cone
 =============
 */
-void Modify_MakeSidedCone(int sides)
+void Modify::MakeSidedCone(int sides)
 {
 	int axis;
 	Brush* b;
@@ -422,12 +428,12 @@ void Modify_MakeSidedCone(int sides)
 
 /*
 =============
-Modify_MakeSidedSphere
+Modify::MakeSidedSphere
 
 Makes the current brush have the given number of 2d sides and turns it into a sphere
 =============
 */
-void Modify_MakeSidedSphere(int sides)
+void Modify::MakeSidedSphere(int sides)
 {
 	Brush* b;
 

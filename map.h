@@ -48,6 +48,9 @@ public:
 	void	RegionSelectedBrushes();
 	void	RegionApply();
 
+	Entity* FindEntity(char *pszKey, char *pszValue);
+	Entity* FindEntity(char *pszKey, int iValue);
+
 	bool	IsBrushFiltered(Brush *b);
 	void	Read(const char* data, Brush& blist, Entity& elist);
 private:
@@ -62,13 +65,9 @@ private:
 	bool	ParseBufferReplace(const char *data);
 	void	WriteSelected(std::ostream &out);
 	void	WriteAll(std::ostream &out, bool use_region);
-
 };
 
 extern Map	g_map;
-
-Entity *Map_FindClass (char *cname);
-
 
 
 #endif

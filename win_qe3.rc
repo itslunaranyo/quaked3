@@ -873,22 +873,24 @@ BEGIN
     EDITTEXT        IDC_EDIT_GAMEPATH,6,12,174,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BUTTON_GAMEPATH,186,12,13,12,BS_BITMAP
     COMBOBOX        IDC_COMBO_MAPSIZE,48,36,60,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_EDIT_UNDOLEVELS,48,54,36,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_SPIN_UNDOLEVELS,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,84,54,11,14
-    CONTROL         "Autosave",IDC_CHECK_AUTOSAVE,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,0,72,42,12
-    EDITTEXT        IDC_EDIT_AUTOSAVE,48,72,30,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_SPIN_AUTOSAVE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,78,72,11,14
-    CONTROL         "Log Console to qe3.log",IDC_CHECK_LOGCONSOLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,90,132,12
+    EDITTEXT        IDC_EDIT_UNDOLEVELS,48,72,36,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN_UNDOLEVELS,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,84,72,11,14
+    CONTROL         "Autosave",IDC_CHECK_AUTOSAVE,"Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,0,90,42,12
+    EDITTEXT        IDC_EDIT_AUTOSAVE,48,90,30,12,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN_AUTOSAVE,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,78,90,11,14
+    CONTROL         "Log Console to qe3.log",IDC_CHECK_LOGCONSOLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,108,132,12
     CONTROL         "Exclusive Component Edit Modes",IDC_CHECK_VFEEXCLUSIVE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,102,132,12
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,120,132,12
     CONTROL         "Use Brush Float Precision",IDC_CHECK_BRUSHPRECISION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,114,132,12
-    CONTROL         "Load Last Map on Start",IDC_CHECK_LOADLASTMAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,126,132,12
-    LTEXT           "Map Size:",IDC_STATIC,0,36,36,12,SS_CENTERIMAGE
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,132,132,12
+    CONTROL         "Load Last Map on Start",IDC_CHECK_LOADLASTMAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,0,144,132,12
+    LTEXT           "Map Size:",IDC_STATIC,0,35,42,13,SS_CENTERIMAGE
     LTEXT           " Units",IDC_STATIC,108,36,24,12,SS_CENTERIMAGE
-    LTEXT           " Minutes",IDC_STATIC,78,72,30,12,SS_CENTERIMAGE
-    LTEXT           "Undo Levels:",IDC_STATIC,0,54,42,12,SS_CENTERIMAGE
+    LTEXT           " Minutes",IDC_STATIC,78,91,30,12,SS_CENTERIMAGE
+    LTEXT           "Undo Levels:",IDC_STATIC,0,72,42,12,SS_CENTERIMAGE
     GROUPBOX        "Quake Path (location of quake.exe):",IDC_STATIC,0,0,204,30
+    LTEXT           "Clone Style:",IDC_STATIC,0,54,42,13,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBO_CLONESTYLE,48,54,90,55,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_CONFIG_PROJECT DIALOGEX 0, 0, 323, 200
@@ -998,8 +1000,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,36,0
- PRODUCTVERSION 3,2,36,0
+ FILEVERSION 3,2,38,0
+ PRODUCTVERSION 3,2,38,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1016,14 +1018,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 36)"
-            VALUE "FileVersion", "3.2.36.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 36)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 38)"
+            VALUE "FileVersion", "3.2.38.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 38)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.36.0"
+            VALUE "ProductVersion", "3.2.38.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1502,6 +1504,15 @@ BEGIN
 0x3233, 0x3637, 0x0038, 
     IDC_COMBO_MAPSIZE, 0x403, 6, 0
 0x3536, 0x3335, 0x0036, 
+    IDC_COMBO_CLONESTYLE, 0x403, 24, 0
+0x7250, 0x7365, 0x2073, 0x6f74, 0x6320, 0x6f6c, 0x656e, 0x2620, 0x6f20, 
+0x6666, 0x6573, 0x0074, 
+    IDC_COMBO_CLONESTYLE, 0x403, 24, 0
+0x7250, 0x7365, 0x2073, 0x6f74, 0x6320, 0x6f6c, 0x656e, 0x6920, 0x206e, 
+0x6c70, 0x6361, 0x0065, 
+    IDC_COMBO_CLONESTYLE, 0x403, 23, 0
+0x6f48, 0x646c, 0x6120, 0x646e, 0x6420, 0x6172, 0x2067, 0x6f74, 0x6320, 
+0x6f6c, 0x656e, "\000" 
     0
 END
 

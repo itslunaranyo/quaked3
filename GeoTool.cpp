@@ -259,6 +259,7 @@ void GeoTool::DragStart(const mouseContext_t &mca, const mouseContext_t &mcb, co
 	}
 	mousePlane.FromNormPoint(glm::cross(mca.up, mca.right), closest);
 	ptDownWorld = closest;
+	snapTrans = (pointOnGrid(ptDownWorld) - ptDownWorld) * (mca.up + mca.right);
 
 	if (!AnySelected(handlesHit))
 	{
@@ -291,7 +292,7 @@ void GeoTool::DragMove(const mouseContext_t &mc)
 	}
 	else if (state == GT_MOVE)
 	{
-		ptDelta = pointOnGrid(pt - ptDownWorld);
+		ptDelta = pointOnGrid(pt - ptDownWorld) + snapTrans;
 		if (!cmdGM && !glm::all(glm::equal(ptDelta, vec3(0))))
 		{
 			cmdGM = new CmdGeoMod();
@@ -370,6 +371,7 @@ void GeoTool::DragFinish(const mouseContext_t &mc)
 	assert(!cmdGM);
 	ptDownWorld = vec3(0);
 	trans = vec3(0);
+	snapTrans = vec3(0);
 	state = GT_NONE;
 }
 

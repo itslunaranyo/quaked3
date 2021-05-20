@@ -530,16 +530,16 @@ BOOL CALLBACK SidesDlgProc (
 			switch (g_nType)
 			{
 			case (1):
-				Modify_MakeSidedCone(atoi(sz));
+				Modify::MakeSidedCone(atoi(sz));
 				break;
 			case (2):
-				Modify_MakeSidedSphere(atoi(sz));
+				Modify::MakeSidedSphere(atoi(sz));
 				break;
 //			case (3):
 //				Brush_MakeSidedTorus(atoi(sz));
 //				break;
 			default:
-				Modify_MakeSided(atoi(sz));
+				Modify::MakeSided(atoi(sz));
 			}
 // <---sikk
 // sikk--->	For more precision
@@ -1345,7 +1345,7 @@ void OnDelete (HWND hTree, HWND hList)
 	if (hItem)
 	{
 		OnSelect(hTree);
-		Modify_Delete();
+		Modify::Delete();
 		TreeView_DeleteItem(hTree, hItem);
 		ListView_DeleteAllItems(hList);
 	}

@@ -11,6 +11,7 @@
 class CmdGeoMod;
 class CmdPlaneShift;
 class CmdTranslate;
+class CmdCompound;
 
 class ManipTool : public Tool
 {
@@ -31,6 +32,7 @@ private:
 		MT_OFF,
 		MT_NEW,
 		MT_TRANSLATE,
+		MT_CLONE,
 		MT_PLANESHIFT,
 		MT_SHEAR
 	} state;
@@ -41,6 +43,7 @@ private:
 	CmdGeoMod *cmdGM;
 	CmdPlaneShift *cmdPS;
 	CmdTranslate *cmdTr;
+	CmdCompound *cmdCmpClone;
 
 	void DragStart3D(const mouseContext_t &mc);
 	void DragStart2D(const mouseContext_t &mc, int vDim);
@@ -48,6 +51,7 @@ private:
 	void DragMove(const mouseContext_t &mc, vec3 point);
 	void DragFinish(const mouseContext_t &mc);
 
+	void SetupTranslate();
 	void StartTranslate();
 	void StartQuickShear(std::vector<Face*>& fSides);
 	void StartPlaneShift(std::vector<Face*>& fSides);

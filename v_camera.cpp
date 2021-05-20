@@ -748,11 +748,7 @@ void CameraView::DrawSelected(Brush	*pList)
 
 	// Draw selected brushes
 	glMatrixMode(GL_PROJECTION);
-	/*
-	glTranslatef(g_qeglobals.d_v3SelectTranslate[0], 
-				 g_qeglobals.d_v3SelectTranslate[1], 
-				 g_qeglobals.d_v3SelectTranslate[2]);
-				 */
+
 	// draw brushes first normally
 	for (brush = pList->next; brush != pList; brush = brush->next)
 		brush->Draw();

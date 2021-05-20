@@ -18,9 +18,9 @@ SelectTool::~SelectTool()
 
 /*
 Shift - brush select/deselect
-Shift + Ctrl - single face select/deselect
-Shift + Alt - brush drill select
-Shift + Ctrl + Alt - multiface select/deselect
+Shift + Ctrl - face select/deselect
+Shift + Alt - brush drill select (exclusive by nature)
+Shift + Ctrl + Alt - exclusive select/deselect
 */
 
 bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView &vWnd)
@@ -34,16 +34,18 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 	//case WM_COMMAND:
 	//	return InputCommand(wParam);
 	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDBLCLK:
 		if (!(wParam & MK_SHIFT)) return false;
-		hot = true;
+		if (uMsg == WM_LBUTTONDOWN)
+			hot = true;
 		SetCapture(vWnd.w_hwnd);
 		v.PointToRay(x, y, ray);
 
 		if (wParam & MK_CONTROL)
 		{
 			selFlags = SF_FACES;
-		if (AltDown())
-			selFlags |= SF_MULTIFACE;
+			if (AltDown())
+				selFlags |= SF_EXCLUSIVE;
 		}
 		else
 		{
@@ -51,6 +53,8 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 			if (AltDown())
 				selFlags |= SF_CYCLE;
 		}
+		if (uMsg == WM_LBUTTONDBLCLK)
+			selFlags |= SF_EXPAND;
 
 		TrySelect(wParam, v.origin, ray, selFlags);
 		return true;
@@ -59,7 +63,7 @@ bool SelectTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v,
 		if (!hot) return false;
 		if (!(wParam & MK_LBUTTON)) return false;
 		if (selFlags & SF_CYCLE) return false;
-		if (selFlags & SF_FACES && !(selFlags & SF_MULTIFACE)) return false;
+		if (selFlags & SF_FACES && selFlags & SF_EXCLUSIVE) return false;
 		v.PointToRay(x, y, ray);
 		TrySelect(wParam, v.origin, ray, selFlags);
 		return true;
@@ -171,7 +175,7 @@ buttons == wParam
 bool SelectTool::TrySelect(int buttons, const vec3 origin, const vec3 dir, int &flags)
 {
 	if (!(flags & SF_FACES) || 
-		(flags & SF_FACES) && !(flags & SF_MULTIFACE))
+		(flags & SF_FACES && flags & SF_EXCLUSIVE))
 		Selection::DeselectAllFaces();
 
 	if ((flags & SF_FACES) && (g_qeglobals.d_selSelectMode != sel_face))

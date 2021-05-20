@@ -360,9 +360,9 @@ void Map::LoadFromFile(const char *filename)
 		g_map.BuildBrushData();
 
 		// move the view to a start position
-		ent = Map_FindClass("info_player_start");
+		ent = g_map.FindEntity("classname", "info_player_start");
 		if (!ent)
-			ent = Map_FindClass("info_player_deathmatch");
+			ent = g_map.FindEntity("classname", "info_player_deathmatch");
 
 		g_qeglobals.d_vCamera.angles[PITCH] = 0;
 
@@ -505,7 +505,7 @@ write selected brushes and entities to the windows clipboard and delete them
 void Map::Cut()
 {
 	Copy();
-	Modify_Delete();
+	Modify::Delete();
 }
 
 /*
@@ -831,7 +831,7 @@ void Map::RegionTallBrush()
 	regionMins[2] = -g_cfgEditor.MapSize / 2;
 	regionMaxs[2] = g_cfgEditor.MapSize / 2;
 
-	Modify_Delete();
+	Modify::Delete();
 	RegionApply();
 }
 
@@ -849,7 +849,7 @@ void Map::RegionBrush()
 	regionMins = b->mins;
 	regionMaxs = b->maxs;
 
-	Modify_Delete();
+	Modify::Delete();
 	RegionApply();
 }
 
@@ -956,18 +956,34 @@ bool Map::IsBrushFiltered(Brush *b)
 
 //================================================================
 
+
 /*
-==================
-Map_FindClass
-==================
+==============
+Map::FindEntity
+==============
 */
-Entity *Map_FindClass (char *cname)
+Entity *Map::FindEntity(char *pszKey, char *pszValue)
 {
-	Entity *ent;
+	Entity *pe;
 
-	for (ent = g_map.entities.next; ent != &g_map.entities; ent = ent->next)
-		if (!strcmp(ent->GetKeyValue("classname"), cname))
-			return ent;
+	pe = entities.next;
 
-	return NULL;
+	for (; pe != nullptr && pe != &entities; pe = pe->next)
+		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
+			return pe;
+
+	return nullptr;
+}
+
+Entity *Map::FindEntity(char *pszKey, int iValue)
+{
+	Entity *pe;
+
+	pe = entities.next;
+
+	for (; pe != nullptr && pe != &entities; pe = pe->next)
+		if (pe->GetKeyValueInt(pszKey) == iValue)
+			return pe;
+
+	return nullptr;
 }

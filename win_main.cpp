@@ -1558,15 +1558,15 @@ LONG WINAPI CommandHandler (
 
 
 		case ID_VIEW_HIDESHOW_HIDESELECTED:
-			Modify_HideSelected();
+			Modify::HideSelected();
 			Selection::DeselectAll();
 			break;
 		case ID_VIEW_HIDESHOW_HIDEUNSELECTED:
-			Modify_HideUnselected();
+			Modify::HideUnselected();
 			Selection::DeselectAll();
 			break;
 		case ID_VIEW_HIDESHOW_SHOWHIDDEN:
-			Modify_ShowHidden();
+			Modify::ShowHidden();
 			break;
 
 //===================================
@@ -1586,7 +1586,7 @@ LONG WINAPI CommandHandler (
 			break;
 			
 		case ID_SELECTION_CLONE:
-			Modify_Clone();
+			Modify::Clone();
 			break;
 		case ID_SELECTION_DESELECT:
 			if (!Tool::HotTool())
@@ -1602,7 +1602,7 @@ LONG WINAPI CommandHandler (
 			}
 			break;
 		case ID_SELECTION_DELETE:
-			Modify_Delete();
+			Modify::Delete();
 			break;
 
 		case ID_SELECTION_FLIPX:
@@ -1668,16 +1668,16 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_SELECTION_CONNECT:
-			Modify_ConnectEntities();
+			Modify::ConnectEntities();
 			break;
 		case ID_SELECTION_UNGROUPENTITY:
-			Modify_Ungroup();
+			Modify::Ungroup();
 			break;
 		case ID_SELECTION_GROUPNEXTBRUSH:
 			Selection::NextBrushInGroup();
 			break;
 		case ID_SELECTION_INSERTBRUSH:	// sikk - Insert Brush into Entity
-			Modify_InsertBrush();
+			Modify::InsertBrush();
 			break;
 
 		case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog
@@ -1979,10 +1979,10 @@ LONG WINAPI CommandHandler (
 			break;
 // <---sikk
 		case ID_PRIMITIVES_CZGCYLINDER1:
-			Modify_MakeCzgCylinder(1);
+			Modify::MakeCzgCylinder(1);
 			break;
 		case ID_PRIMITIVES_CZGCYLINDER2:
-			Modify_MakeCzgCylinder(2);
+			Modify::MakeCzgCylinder(2);
 			break;
 
 

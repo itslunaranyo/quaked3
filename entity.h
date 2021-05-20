@@ -79,10 +79,6 @@ public:
 	void	FreeEpairs();
 	// <---sikk
 
-	// TODO: move to Map class
-	static Entity* Find (char *pszKey, char *pszValue);
-	static Entity* Find (char *pszKey, int iValue);
-
 	static Entity* Parse (bool onlypairs);
 	void	CheckOrigin();
 	void	Write(std::ostream & stream, bool use_region);

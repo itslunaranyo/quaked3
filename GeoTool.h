@@ -43,7 +43,7 @@ private:
 
 	CmdGeoMod *cmdGM;
 	Plane mousePlane;	// implied plane for intersecting 3D view mouse events
-	vec3 ptDownWorld, trans;
+	vec3 ptDownWorld, trans, snapTrans;
 	mouseContext_t mcDown;
 
 	enum {

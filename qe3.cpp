@@ -108,6 +108,8 @@ void QE_Init ()
 	g_qeglobals.d_v3WorkMax = vec3(8);
 	g_cfgUI.ViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
 
+	g_cmdQueue.SetSize(g_cfgEditor.UndoLevels);
+
 	// create tools - creation order determines which tools get first chance to handle inputs
 	Sys_Printf("Creating base tools\n");
 	new SelectTool();

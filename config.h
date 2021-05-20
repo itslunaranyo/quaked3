@@ -10,6 +10,11 @@ class Entity;
 #define MAX_PROJNAME	64
 #define MAX_CVARSTR		256
 
+#define CLONE_OFFSET	0
+#define CLONE_INPLACE	1
+#define CLONE_DRAG		2
+
+
 struct qecfgUI_t
 {
 	int		TextureMode;	// filtering
@@ -36,17 +41,18 @@ struct qecfgUI_t
 struct qecfgEditor_t
 {
 	char QuakePath[_MAX_DIR];
-	int	LogConsole;
+	bool LogConsole;
 	int	LoadLastMap;
 	int	AutosaveTime;
-	int	Autosave;
+	bool Autosave;
 
 	int	MapSize;
 	int	UndoLevels;
-	int	BrushPrecision;
-	int	VFEModesExclusive;
+	bool BrushPrecision;
+	bool VFEModesExclusive;
+	int CloneStyle;
 
-	int	CubicClip;
+	bool CubicClip;
 	int	CubicScale;
 	int	CameraSpeed;
 };

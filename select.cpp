@@ -251,6 +251,20 @@ void Selection::SelectFace(Face* f)
 
 /*
 ================
+Selection::SelectFaces
+================
+*/
+void Selection::SelectFaces(Brush *b)
+{
+	for (Face *f = b->faces; f; f = f->fnext)
+		if (!IsFaceSelected(f))
+			faces.push_back(f);
+
+	Selection::Changed();
+}
+
+/*
+================
 Selection::DeselectFace
 
 returns true or false if face could be deselected or not
@@ -286,6 +300,27 @@ bool Selection::DeselectFace(Face* f)
 	}
 	return false;
 	*/
+}
+
+/*
+================
+Selection::DeselectFace
+
+returns true or false if face could be deselected or not
+================
+*/
+void Selection::DeselectFaces(Brush *b)
+{
+	std::vector<Face*>::iterator fIdx;
+	for (Face *f = b->faces; f; f = f->fnext)
+	{
+		fIdx = std::find(faces.begin(), faces.end(), f);
+		if (fIdx == faces.end())
+			continue;
+
+		faces.erase(fIdx);
+	}
+	Selection::Changed();
 }
 
 /*
@@ -502,6 +537,9 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 	if (!t.brush)
 		return 0;
 
+	// the EXPAND flag behaves in reverse, because it's only passed on a doubleclick, *after*
+	// the first click has changed the selection status of what's now being doubleclicked
+
 	out = flags;
 	if (flags & SF_FACES)
 	{
@@ -511,19 +549,24 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_UNSELECTED) return 0;
 			out |= SF_SELECTED;
 			DeselectFace(t.face);
+			if (flags & SF_EXPAND)
+				SelectFaces(t.brush);
 		}
 		else
 		{
 			if (flags & SF_SELECTED) return 0;
 			out |= SF_UNSELECTED;
 			SelectFace(t.face);
-			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
+			if (flags & SF_EXPAND)
+				DeselectFaces(t.brush);
+			else
+				g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
 		}
 	}
 	else
 	{
 		g_qeglobals.d_selSelectMode = sel_brush;
-		if (flags & SF_CYCLE)
+		if (flags & SF_CYCLE || flags & SF_EXCLUSIVE)
 		{
 			DeselectAll();
 			HandleBrush(t.brush, false);
@@ -537,12 +580,27 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			t.brush->RemoveFromList();
 			t.brush->AddToList(&g_map.brActive);
 			Selection::Changed();
+			if (flags & SF_EXPAND)
+				HandleBrush(t.brush, true);	
 		}
 		else
 		{
 			if (flags & SF_SELECTED) return 0;
 			out |= SF_UNSELECTED;
-			HandleBrush(t.brush, true);
+			if (flags & SF_EXPAND)
+			{
+				Brush *brNext;
+				for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = brNext)
+				{
+					brNext = b->next;
+					if (b->owner != t.brush->owner) continue;
+					b->RemoveFromList();
+					b->AddToList(&g_map.brActive);
+					Selection::Changed();
+				}
+			}
+			else
+				HandleBrush(t.brush, false);
 		}
 	}
 	return out;
@@ -963,7 +1021,7 @@ void Selection::CompleteTall()
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
-	Modify_Delete();
+	Modify::Delete();
 
 	// lunaran - grid view reunification
 	{
@@ -1007,7 +1065,7 @@ void Selection::PartialTall()
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
-	Modify_Delete();
+	Modify::Delete();
 
 	// lunaran - grid view reunification
 	{
@@ -1082,7 +1140,7 @@ void Selection::Inside()
 
 	mins = g_brSelectedBrushes.next->mins;
 	maxs = g_brSelectedBrushes.next->maxs;
-	Modify_Delete();
+	Modify::Delete();
 
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{

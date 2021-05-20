@@ -47,14 +47,18 @@ void CmdClone::Clone(Brush *brList, const vec3 offset)
 
 		if (e->IsPoint())
 		{
-			e->Transform(mat);
+			if (offset == vec3(0))
+				e->MakeBrush();
+			else
+				e->Transform(mat);
 		}
 		else
 		{
 			n = b->Clone();
 			n->Build();		// must have geo before the move for texture lock
 			n->owner = e;
-			n->Transform(mat, g_qeglobals.d_bTextureLock);
+			if (offset != vec3(0))
+				n->Transform(mat, g_qeglobals.d_bTextureLock);
 			cmdAR.AddedBrush(n);
 		}
 	}

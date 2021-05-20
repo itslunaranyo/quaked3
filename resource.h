@@ -39,7 +39,6 @@
 #define IDD_CONFIG_EDITOR               192
 #define IDD_CONFIG_PROJECT              193
 #define IDD_CONFIG_UI                   194
-#define IDD_NEWPROJNAME                 195
 #define IDD_NEWNAME                     195
 #define IDD_CONFIG_COLOR                196
 #define IDC_E_FLAG1                     1026
@@ -166,6 +165,8 @@
 #define IDC_COMBO_PARAMSKILL            1247
 #define IDC_COMBO_MAPSIZE               1248
 #define IDC_CHECK_PARAMGAME             1249
+#define IDC_COMBO_MAPSIZE2              1249
+#define IDC_COMBO_CLONESTYLE            1249
 #define IDC_EDIT_PARAMGAME              1250
 #define IDC_SLIDER_GAMMA                1251
 #define IDC_CHECK_PARAMSKILL            1252

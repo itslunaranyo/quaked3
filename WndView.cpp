@@ -768,7 +768,7 @@ void WndView::CreateWnd()
 {
 	if (w_wcView.hInstance != g_qeglobals.d_hInstance)
 	{
-		w_wcView.style = CS_OWNDC;
+		w_wcView.style = CS_OWNDC | CS_DBLCLKS;
 		w_wcView.lpfnWndProc = (WNDPROC)WndView::WndProc;
 		w_wcView.cbClsExtra = 0;
 		w_wcView.cbWndExtra = 0;

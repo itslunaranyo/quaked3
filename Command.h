@@ -48,11 +48,11 @@ protected:
 class CommandQueue
 {
 public:
-	CommandQueue() : gId(0), idLastBeforeSave(0), idFirstAfterSave(0) {}
-	~CommandQueue() {}
+	CommandQueue() : gId(0), idLastBeforeSave(0), idFirstAfterSave(0), size(0) {}
+	~CommandQueue();
 
-	void Complete(Command* cmd);
-	void SetSize(int size);
+	bool Complete(Command* cmd);
+	void SetSize(int s);
 	void Undo();
 	void Redo();
 	void Clear();
@@ -64,6 +64,7 @@ public:
 	bool CanRedo() { return (redoQueue.size() != 0); }
 
 private:
+	unsigned size;
 	void ClearOldestUndo();
 	void ClearAllRedos();
 	void ClearAllUndos();

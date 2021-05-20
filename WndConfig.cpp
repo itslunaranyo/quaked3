@@ -695,15 +695,13 @@ void WndCfg_ConfigToWnd()
 	sprintf(sz, "%d", (int)g_cfgEditor.AutosaveTime);
 	SetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz);
 
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_SETCURSEL, g_cfgEditor.CloneStyle, 0);
+
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_SETCHECK, (g_cfgEditor.LogConsole ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_SETCHECK, (g_cfgEditor.VFEModesExclusive ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_BRUSHPRECISION, BM_SETCHECK, (g_cfgEditor.BrushPrecision ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOADLASTMAP, BM_SETCHECK, (g_cfgEditor.LoadLastMap ? BST_CHECKED : BST_UNCHECKED), 0);
 
-	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"8192 (default)");
-	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"16384");
-	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"32768");
-	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"65536");
 	sprintf(sz, "%d", g_cfgEditor.MapSize);
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_SELECTSTRING, (WPARAM)-1, (LPARAM)sz);
 
@@ -712,12 +710,6 @@ void WndCfg_ConfigToWnd()
 	SendDlgItemMessage(hwndCfgUI, IDC_CHECK_NOSTIPPLE, BM_SETCHECK, (g_cfgUI.Stipple ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendDlgItemMessage(hwndCfgUI, IDC_CHECK_RADIANTLIGHTS, BM_SETCHECK, (g_cfgUI.RadiantLights ? BST_CHECKED : BST_UNCHECKED), 0);
 
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest");
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest Mipmap");
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Linear");
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Bilinear");
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Bilinear Mipmap");
-	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Trilinear");
 	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_SETCURSEL, g_cfgUI.TextureMode, 0);
 		
 	// --------------------------------
@@ -777,11 +769,13 @@ bool WndCfg_WndToConfig()
 	if (nMapSize != g_cfgEditor.MapSize)
 		g_map.RegionOff();
 
-	g_cfgEditor.Autosave = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0);
+	g_cfgEditor.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
 
-	g_cfgEditor.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0);
-	g_cfgEditor.VFEModesExclusive = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0);
-	g_cfgEditor.BrushPrecision = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0);
+	g_cfgEditor.Autosave = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0) != 0;
+
+	g_cfgEditor.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0) != 0;
+	g_cfgEditor.VFEModesExclusive = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0) != 0;
+	g_cfgEditor.BrushPrecision = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_BRUSHPRECISION, BM_GETCHECK, 0, 0) != 0;
 	g_cfgEditor.LoadLastMap = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOADLASTMAP, BM_GETCHECK, 0, 0);
 
 	// --------------------------------
@@ -885,22 +879,18 @@ BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		switch (LOWORD(wParam))
 		{
 		case IDC_COMBO_PROJECT:
-			switch (HIWORD(wParam))
+			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
-			case CBN_SELCHANGE:
 				WndCfg_ProjectComboChanged();
-				return TRUE;
 			}
 			return TRUE;
 		case IDC_COMBO_COLOR:
-			switch (HIWORD(wParam))
+			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
-			case CBN_SELCHANGE:
 				WndCfg_ColorComboChanged();
 				//InvalidateRect(hwndCfg, NULL, TRUE);
 				//UpdateWindow(hwndCfg);
 				WndCfg_ListSel(hwndCfg);
-				return TRUE;
 			}
 			return TRUE;
 		case IDC_BUTTON_GAMEPATH:
@@ -1031,6 +1021,15 @@ void WndCfg_CreateWnd(HWND hwndDlg)
 	ShowWindow(hwndCfgEditor, SW_HIDE);
 	//UpdateWindow(hwndCfgEditor);
 
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"8192 (default)");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"16384");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"32768");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_MAPSIZE, CB_ADDSTRING, 0, (LPARAM)"65536");
+
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Press, w/ offset");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Press, in place");
+	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_ADDSTRING, 0, (LPARAM)"Hold and drag");
+
 	SendDlgItemMessage(hwndCfgEditor, IDC_BUTTON_GAMEPATH, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
 
 	// --------------------------------
@@ -1043,6 +1042,14 @@ void WndCfg_CreateWnd(HWND hwndDlg)
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETLINESIZE, 0, (LPARAM)1);
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETPAGESIZE, 0, (LPARAM)2);
 	SendDlgItemMessage(hwndCfgUI, IDC_SLIDER_GAMMA, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)(g_cfgUI.Gamma * 10));
+
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest");
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Nearest Mipmap");
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Linear");
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Bilinear");
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Bilinear Mipmap");
+	SendDlgItemMessage(hwndCfgUI, IDC_COMBO_RENDERMODE, CB_ADDSTRING, 0, (LPARAM)"Trilinear");
+
 	ShowWindow(hwndCfgUI, SW_HIDE);
 
 	// --------------------------------
