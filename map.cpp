@@ -158,8 +158,10 @@ void Map::BuildBrushData(Brush &blist)
 		// wads are also not loaded until after worldspawn is parsed during a map load
 		if (!b->FullBuild() || !b->faces)
 		{
+			Warning("Removed degenerate brush with mins (%f %f %f) maxs (%f %f %f).",
+				b->mins[0], b->mins[1], b->mins[2],
+				b->maxs[0], b->maxs[1], b->maxs[2]);
 			delete b;
-			Sys_Printf("WARNING: Removed degenerate brush.\n");
 		}
 	}
 }
@@ -326,7 +328,7 @@ void Map::LoadFromFile(const char *filename)
 
 		if (!world)
 		{
-			Sys_Printf("WARNING: No worldspawn in map! Creating new empty worldspawn ...\n");
+			Warning("No worldspawn in map! Creating new empty worldspawn ...");
 
 			world = new Entity();
 			world->SetKeyValue("classname", "worldspawn");
@@ -334,7 +336,7 @@ void Map::LoadFromFile(const char *filename)
 		world->CloseLinks();
 
 		if (!*world->GetKeyValue("wad"))
-			Sys_Printf("WARNING: No \"wad\" key.\n");
+			Warning("No \"wad\" key.");
 		else
 		{
 			strcpy(wadkey, world->GetKeyValue("wad"));
@@ -589,7 +591,7 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
 		{
 			if (foundWorld)
-				Sys_Printf("WARNING: Multiple worldspawn.\n");
+				Warning("Multiple worldspawn.");
 			foundWorld = true;
 
 			// add the worldspawn to the beginning of the entity list so it's easy to find

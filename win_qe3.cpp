@@ -22,6 +22,7 @@ HCURSOR	g_hcursorWait;
 
 char	g_qeAppName[64];
 char	g_qePath[MAX_PATH];
+bool	g_bWarningOrError;
 
 //===========================================
 
@@ -262,6 +263,7 @@ double Sys_DoubleTime ()
 PrintPixels
 ==================
 */
+/*
 void PrintPixels (HDC hDC)
 {
 	int		i;
@@ -276,10 +278,29 @@ void PrintPixels (HDC hDC)
 	}
 	printf("%d modes\n", i - 1);
 }
+*/
 
 //==========================================================================
 
 
+
+/*
+=================
+Warning
+=================
+*/
+void Warning(char *warning, ...)
+{
+	va_list argptr;
+	char	text[1024];
+
+	va_start(argptr, warning);
+	vsprintf(text, warning, argptr);
+	va_end(argptr);
+
+	Sys_Printf("WARNING: %s\n", text);
+	g_bWarningOrError = true;
+}
 
 /*
 =================
@@ -296,10 +317,11 @@ void Error (char *error, ...)
 //	int		err;
 
 	va_start(argptr,error);
-	vsprintf(text, error,argptr);
+	vsprintf(text, error, argptr);
 	va_end(argptr);
 
 	Sys_Printf("ERROR: %s\n", text);
+	g_bWarningOrError = true;
 	throw std::exception(text);
 }
 

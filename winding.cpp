@@ -624,3 +624,16 @@ int Winding::MemorySize(winding_t * w)
 {
 	return sizeof(winding_t);
 }
+
+vec3 Winding::Centroid(winding_t * w)
+{
+	vec3 a, b, c;
+	c = vec3(0);
+	for (int i = 0; i < w->numpoints; i++)
+	{
+		a = w->points[i].point;
+		b = w->points[(i+1)%w->numpoints].point;
+		c += (a + b) * 0.5f;
+	}
+	return c / (float)w->numpoints;
+}

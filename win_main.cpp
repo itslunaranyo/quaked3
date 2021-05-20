@@ -950,6 +950,7 @@ HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButto
 		{ 31, ID_SELECTION_CLIPPER, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 32, ID_SELECTION_DRAGEDGES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 33, ID_SELECTION_DRAGVERTICES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
+		{ 57, ID_SELECTION_DRAGFACES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
 
 		{ 34, ID_SELECTION_SCALELOCKX, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
@@ -1133,8 +1134,6 @@ MAIN WINDOW
 
 =============================================================
 */
-
-bool	g_bHaveQuit;
 
 
 /*
@@ -2356,12 +2355,13 @@ void WMain_Create ()
 	g_qeglobals.d_hwndToolbar[2]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 2, 23, 6, 144);
 	g_qeglobals.d_hwndToolbar[3]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 3, 29, 4, 96);
 	g_qeglobals.d_hwndToolbar[4]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 4, 33, 3, 72);
-	g_qeglobals.d_hwndToolbar[5]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 5, 36, 7, 148);
-	g_qeglobals.d_hwndToolbar[6]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 6, 43, 3, 72);
-	g_qeglobals.d_hwndToolbar[7]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 7, 46, 3, 72);
-	g_qeglobals.d_hwndToolbar[8]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 8, 49, 2, 48);
-	g_qeglobals.d_hwndToolbar[9]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 9, 51, 13, 256);
-	g_qeglobals.d_hwndToolbar[10]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 10, 64, 2, 48);
+	g_qeglobals.d_hwndToolbar[5]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 5, 36, 4, 90);
+	//g_qeglobals.d_hwndToolbar[5]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 5, 36, 7, 148);
+	g_qeglobals.d_hwndToolbar[6]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 6, 44, 3, 72);
+	g_qeglobals.d_hwndToolbar[7]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 7, 47, 3, 72);
+	g_qeglobals.d_hwndToolbar[8]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 8, 50, 2, 48);
+	g_qeglobals.d_hwndToolbar[9]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 9, 52, 13, 256);
+	g_qeglobals.d_hwndToolbar[10]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 10, 65, 2, 48);
 	/*
 	g_qeglobals.d_hwndRebar = CreateToolBar(g_qeglobals.d_hwndMain, hInstance, 0, 0, 0, 0);
 	*/
@@ -2530,6 +2530,7 @@ int WINAPI WinMain (
     MSG		msg;
 	HACCEL	accelerators;
     time_t	lTime;
+	bool	haveQuit = false;
 
 	g_qeglobals.d_hInstance = hInstance;
 // sikk - Quickly made Splash Screen
@@ -2541,6 +2542,7 @@ int WINAPI WinMain (
 
 	g_nScreenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
 	g_nScreenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
+	g_bWarningOrError = false;
 
 	// hack for broken NT 4.0 dual screen
 	if (g_nScreenWidth > 2 * g_nScreenHeight)
@@ -2595,7 +2597,7 @@ int WINAPI WinMain (
 	}
 #endif
 
-	while (!g_bHaveQuit)
+	while (!haveQuit)
 	{
 		Sys_EndWait();	// remove wait cursor if active
 		
@@ -2625,11 +2627,19 @@ int WINAPI WinMain (
 				}
 
 				if (msg.message == WM_QUIT)
-					g_bHaveQuit = true;
+					haveQuit = true;
 			}
 
 			// lunaran - all consequences of selection alteration put in one place for consistent behavior
 			Selection::HandleChange();
+
+			if (g_bWarningOrError)
+			{
+				QE_SetInspectorMode(W_CONSOLE);
+				g_qeglobals.d_wndConsole->ScrollToEnd();
+				Sys_Status("There were problems: see console for details", 1);
+				g_bWarningOrError = false;
+			}
 
 			Sys_CheckBspProcess();
 			// sikk---> Quickly made Splash Screen
@@ -2648,8 +2658,8 @@ int WINAPI WinMain (
 			Sys_ForceUpdateWindows(g_nUpdateBits);
 
 			// if not driving in the camera view, block
-			//if (!g_qeglobals.d_vCamera.nCamButtonState && !g_bHaveQuit)
-			if (!Tool::HotTool() && !g_bHaveQuit)
+			//if (!g_qeglobals.d_vCamera.nCamButtonState && !haveQuit)
+			if (!Tool::HotTool() && !haveQuit)
 				WaitMessage();
 #ifndef _DEBUG
 		}

@@ -54,5 +54,7 @@ namespace Winding
 	bool		WindingsEqual(winding_t *w1, winding_t *w2, bool flip);
 	bool		PlanesConcave(winding_t *w1, winding_t *w2, const vec3 normal1, const vec3 normal2, float dist1, float dist2);	// returns true if the planes are concave
 	int			MemorySize(winding_t *w);	//dum
+
+	vec3		Centroid(winding_t *w);
 }
 #endif

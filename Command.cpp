@@ -35,7 +35,7 @@ to maintain integrity across the entire length of the queue.
 
 CommandQueue g_cmdQueue;
 
-Command::Command(const char* nameIn) : name(nameIn), selectOnDo(false), selectOnUndo(false), state(NOOP) {}
+Command::Command(const char* nameIn) : name(nameIn), selectOnDo(false), selectOnUndo(false), modifiesSelection(false), state(NOOP) {}
 Command::~Command() {}
 
 /*
@@ -67,7 +67,9 @@ void Command::Do()
 
 	state = DONE;
 	if (selectOnDo)
+	{
 		Select();
+	}
 }
 
 /*
@@ -197,7 +199,8 @@ bool CommandQueue::Complete(Command *cmd)
 	if (size && undoQueue.size() > size)
 		ClearOldestUndo();
 
-	Selection::Changed();
+	if (cmd->modifiesSelection)
+		Selection::Changed();
 
 	Sys_UpdateBrushStatusBar();
 	Sys_UpdateWindows(W_ALL);

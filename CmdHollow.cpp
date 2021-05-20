@@ -9,6 +9,7 @@ CmdHollow::CmdHollow() : Command("CSG Hollow")
 {
 	selectOnDo = true;
 	selectOnUndo = true;
+	modifiesSelection = true;
 }
 
 void CmdHollow::UseBrush(Brush *br)

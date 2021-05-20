@@ -51,7 +51,8 @@ int		IO_FileLength (FILE *f);
 
 double	I_FloatTime (void);
 
-void	Error (char *error, ...);
+void	Warning(char *warning, ...);
+void	Error(char *error, ...);
 int		CheckParm (char *check);
 void	ParseCommandLine (char *lpCmdLine);
 

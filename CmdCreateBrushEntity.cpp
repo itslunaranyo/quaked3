@@ -9,6 +9,7 @@ CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Cre
 {
 	selectOnDo = true;
 	selectOnUndo = true;
+	modifiesSelection = true;
 	if (!strcmp(classname, "worldspawn"))
 		Error("Cannot create a new worldspawn entity.");
 

@@ -234,7 +234,7 @@ extern HANDLE	g_hBSP_Process;
 
 extern char		g_qeAppName[64];
 extern char		g_qePath[MAX_PATH];
-
+extern bool		g_bWarningOrError;
 
 /*
 ** global declarations

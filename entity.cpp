@@ -248,7 +248,7 @@ void Entity::DeleteKeyValue(const char *key)
 
 	if (!strcmp(key, "origin") && IsPoint())
 	{
-		Sys_Printf("WARNING: Point entities must have an origin\n");
+		Warning("Point entities must have an origin");
 		Sys_Beep();
 		return;
 	}
@@ -357,13 +357,13 @@ void Entity::MergeListIntoList(Entity *dest, bool tail)
 	// properly doubly-linked lists only
 	if (!next || !prev)
 	{
-		Error("Tried to merge a list with NULL links!\n");
+		Error("Tried to merge a list with NULL links!");
 		return;
 	}
 
 	if (next == this || prev == this)
 	{
-		Sys_Printf("WARNING: Tried to merge an empty list.\n");
+		Warning("Tried to merge an empty list.");
 		return;
 	}
 	if (tail)
@@ -524,7 +524,7 @@ void Entity::CheckOrigin()
 	if (!VectorCompare(origin, testorg))
 	{
 		SetOriginFromBrush();
-		Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
+		Warning("Entity origins out of sync on %s at (%f %f %f)", eclass->name, org[0], org[1], org[2]);
 	}
 #endif
 }

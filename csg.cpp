@@ -7,6 +7,7 @@
 #include "CmdAddRemove.h"
 #include "CmdHollow.h"
 #include "CmdMerge.h"
+#include "CmdBridge.h"
 
 /*
 ====================
@@ -137,6 +138,31 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 	return out;
 }
 
+Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
+{
+	Brush	*b;
+	Face	*bf;
+	std::vector<Face*> fList;
+
+	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+	{
+		b = *brIt;
+		for (bf = b->faces; bf; bf = bf->fnext)
+		{
+			if (!bf->face_winding)
+				continue;
+			fList.push_back(bf);
+		}
+	}
+
+	return DoMerge(fList, notexmerge);
+}
+
+Brush* CSG::DoBridge(std::vector<Face*> &fList)
+{
+	return DoMerge(fList, false);
+}
+
 /*
 ==============
 CSG::DoMerge
@@ -149,11 +175,10 @@ notexmerge: if true, don't combine coincident planes if they have different text
 		if false, coincident planes' texdefs are overwritten with first one found
 ==============
 */
-Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
+Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 {
 	Brush	*result;
-	Brush	*b;
-	Face	*f, *bf;
+	Face	*f;
 	vec3	*pointBuf;
 	Plane	*planeBuf;
 	int		numPoints, numPlanes;
@@ -162,37 +187,31 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 
 	// put all input points in a buffer
 	pointBufSize = 0;
-	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+	for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 	{
-		b = *brIt;
-		for (bf = b->faces; bf; bf = bf->fnext)
-			pointBufSize += bf->face_winding->numpoints;	// buffer size is very greedy
+		pointBufSize += (*fIt)->face_winding->numpoints;	// buffer size is very greedy
 	}
 	pointBuf = new vec3[pointBufSize]();
 
 	numPoints = 0;
 	nextPoint = pointBuf;
-	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+	for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 	{
-		b = *brIt;
-		for (bf = b->faces; bf; bf = bf->fnext)
+		for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
 		{
-			for (int i = 0; i < bf->face_winding->numpoints; i++)
+			curPoint = pointBuf;
+			// avoid duplicates in point buffer
+			while (curPoint != nextPoint)
 			{
-				curPoint = pointBuf;
-				// avoid duplicates in point buffer
-				while (curPoint != nextPoint)
-				{
-					if (VectorCompare(bf->face_winding->points[i].point, *curPoint))	// skip xyzst
-						break;
-					curPoint++;
-				}
-				if (curPoint == nextPoint)
-				{
-					*nextPoint = bf->face_winding->points[i].point;
-					nextPoint++;
-					numPoints++;
-				}
+				if (VectorCompare((*fIt)->face_winding->points[i].point, *curPoint))	// skip xyzst
+					break;
+				curPoint++;
+			}
+			if (curPoint == nextPoint)
+			{
+				*nextPoint = (*fIt)->face_winding->points[i].point;
+				nextPoint++;
+				numPoints++;
 			}
 		}
 	}
@@ -227,8 +246,8 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 			pT = &pointBuf[t];
 			dot = DotProduct(*pT, p.normal) - p.dist;
 			// skip coplanar points
-			if (dot < 0) lCount++;
-			if (dot > 0) rCount++;
+			if (dot < -ON_EPSILON) lCount++;
+			if (dot > ON_EPSILON) rCount++;
 		}
 		// if all are on one side or the other, put plane in result buffer
 		if (!lCount)
@@ -241,10 +260,12 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		if (!rCount || !lCount)
 		{
 			// avoid duplicates in plane buffer now since many collinear plane points could lead to a ton of duplicate planes
+			// FIXME: EqualTo is not precise enough, leads to refusal to merge
 			int pN;
 			for (pN = 0; pN < pl; pN++)
 				if (p.EqualTo(&planeBuf[pN], false))
 					break;
+			assert(!p.EqualTo(&planeBuf[pN], true));	// there should be no equal opposite planes
 
 			if (pN == pl)
 			{
@@ -259,7 +280,12 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 	}
 	numPlanes = pl;
 
-	assert(numPlanes > 3);
+	if (numPlanes <= 3)
+	{
+		// input faces might have all been coplanar
+		delete result;
+		return nullptr;
+	}
 
 	delete[] pointBuf;
 	delete[] planeBuf;
@@ -269,26 +295,23 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		// compare result planes to original brush planes, preserve texdefs from matching planes
 		bool match = false;
 		Texture* ftx = nullptr;
-		for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
+		for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 		{
-			b = *brIt;
-			for (bf = b->faces; bf; bf = bf->fnext)
+			if ((*fIt)->plane.EqualTo(&f->plane, false) || (*fIt)->plane.EqualTo(&f->plane, true))
 			{
-				if (bf->plane.EqualTo(&f->plane, false))
+				if (match && ftx != (*fIt)->texdef.tex)
 				{
-					if (match && ftx != bf->texdef.tex)
-					{
-						// clashing textures on this plane when notexmerge was specified, abort merge
-						delete result;
-						return nullptr;
-					}
-					f->texdef = bf->texdef;
-					ftx = f->texdef.tex = bf->texdef.tex;
-					match = true;
-					if (!notexmerge)
-						break;
+					// clashing textures on this plane when notexmerge was specified, abort merge
+					delete result;
+					return nullptr;
 				}
+				f->texdef = (*fIt)->texdef;
+				ftx = f->texdef.tex = (*fIt)->texdef.tex;
+				match = true;
+				if (!notexmerge)
+					break;
 			}
+
 			if (match && !notexmerge)
 				break;
 		}
@@ -299,8 +322,13 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		}
 	}
 
-	result->owner = brList.front()->owner;
+	result->owner = fList.front()->owner->owner;
 	result->Build();
+
+	for (Face *ft = result->faces; ft; ft = ft->fnext)
+	{
+		assert(ft->face_winding);
+	}
 
 	return result;
 }
@@ -317,13 +345,13 @@ bool CSG_CanMerge()
 
 	if (!Selection::HasBrushes())
 	{
-		Sys_Printf("WARNING: No brushes selected.\n");
+		Warning("No brushes selected.");
 		return false;
 	}
 
 	if (g_brSelectedBrushes.next->next == &g_brSelectedBrushes)
 	{
-		Sys_Printf("WARNING: At least two brushes must be selected.\n");
+		Warning("At least two brushes must be selected.");
 		return false;
 	}
 
@@ -333,13 +361,37 @@ bool CSG_CanMerge()
 	{
 		if (b->owner->IsPoint())
 		{
-			Sys_Printf("WARNING: Cannot add fixed size entities.\n");
+			Warning("Cannot merge fixed size entities.");
 			return false;
 		}
 
 		if (b->owner != owner)
 		{
-			Sys_Printf("WARNING: Cannot add brushes from different entities.\n");
+			Warning("Cannot merge brushes from different entities.");
+			return false;
+		}
+	}
+	return true;
+}
+
+/*
+=============
+CSG_CanBridge
+=============
+*/
+bool CSG_CanBridge()
+{
+	if (!Selection::NumFaces())
+	{
+		Warning("No faces selected.");
+		return false;
+	}
+
+	for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
+	{
+		if ((*fIt)->owner->owner->IsPoint())
+		{
+			Warning("Cannot bridge fixed size entities.");
 			return false;
 		}
 	}
@@ -490,7 +542,7 @@ void CSG::Subtract ()
 
 	if (!Selection::HasBrushes())
 	{
-		Sys_Printf("WARNING: No brushes selected.\n");
+		Warning("No brushes selected.");
 		return;
 	}
 
@@ -586,7 +638,7 @@ void CSG::Subtract ()
 
 	if (numfragments == 0)
 	{
-		Sys_Printf("WARNING: Selected brush%s did not intersect with any other brushes.\n",
+		Warning("Selected brush%s did not intersect with any other brushes.",
 				   (g_brSelectedBrushes.next->next == &g_brSelectedBrushes) ? "":"es");
 		delete cmdAR;
 		return;
@@ -611,7 +663,7 @@ void CSG::Hollow()
 
 	if (!Selection::HasBrushes())
 	{
-		Sys_Printf("WARNING: No brushes selected.\n");
+		Warning("No brushes selected.");
 		return;
 	}
 
@@ -630,6 +682,12 @@ CSG::Merge
 */
 void CSG::Merge ()
 {
+	if (Selection::NumFaces() > 0)
+	{
+		Bridge();
+		return;
+	}
+
 	Sys_Printf("CSG Merging...\n");
 
 	if (!CSG_CanMerge())
@@ -641,5 +699,25 @@ void CSG::Merge ()
 	//cmdM->Select();
 
 	Sys_Printf("Merge done.\n");
+	Sys_UpdateWindows(W_SCENE);
+}
+
+/*
+=============
+CSG::Bridge
+=============
+*/
+void CSG::Bridge()
+{
+	Sys_Printf("CSG Bridging...\n");
+
+	if (!CSG_CanBridge())
+		return;
+
+	CmdBridge *cmdB = new CmdBridge();
+	cmdB->UseFaces(Selection::faces);
+	g_cmdQueue.Complete(cmdB);
+
+	Sys_Printf("Bridge done.\n");
 	Sys_UpdateWindows(W_SCENE);
 }

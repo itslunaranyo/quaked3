@@ -339,7 +339,7 @@ void EntClass::ScanFile(const char *filename)
 		if (!strncmp((char*)&fdata[i], "/*QUAKED", 8))
 		{
 			if (!EntClass::InitFromTextAndAdd((char*)&fdata[i]))
-				Sys_Printf("Warning: couldn't scan %s for entity definitions\n", filename);
+				Warning("couldn't scan %s for entity definitions", filename);
 		}
 	}
 }
@@ -413,7 +413,7 @@ void EntClass::InitForSourceDirectory(const char *path)
 	worldspawn = ForName("worldspawn", true, true);
 	if (!worldspawn)
 	{
-		Sys_Printf("WARNING: No worldspawn definition found in source! Creating a default worldspawn ...\n");
+		Warning("No worldspawn definition found in source! Creating a default worldspawn ...");
 		worldspawn = EntClass::InitFromTextAndAdd("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
 	}
 

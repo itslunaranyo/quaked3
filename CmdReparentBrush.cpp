@@ -5,7 +5,10 @@
 #include "qe3.h"
 #include "CmdReparentBrush.h"
 
-CmdReparentBrush::CmdReparentBrush() : newowner(nullptr), Command("Reparent Brush") {}
+CmdReparentBrush::CmdReparentBrush() : newowner(nullptr), Command("Reparent Brush")
+{
+	modifiesSelection = true;
+}
 
 CmdReparentBrush::~CmdReparentBrush()
 {
@@ -58,7 +61,7 @@ void CmdReparentBrush::Do_Impl()
 		{
 			Entity* own = rpIt->br->owner;
 			entRemoved.push_back(own);
-			Sys_Printf("WARNING: %s lost all its brushes and will be deleted\n", own->eclass->name);
+			Warning("%s lost all its brushes and will be deleted", own->eclass->name);
 		}
 
 		Entity::UnlinkBrush(rpIt->br);

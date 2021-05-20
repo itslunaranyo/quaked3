@@ -17,11 +17,11 @@ void Palette::LoadFromFile(const char* palfile)
 	if (LoadFromFileImpl(pfname))
 		return;
 
-	Sys_Printf("Warning: Couldn't load palette! Loading local quakepal.lmp as fallback ...\n");
+	Warning("Couldn't load palette! Loading local quakepal.lmp as fallback ...");
 	if (LoadFromFileImpl("./quakepal.lmp"))
 		return;
 
-	Sys_Printf("Warning: Couldn't open QE3 data directory! Are you running it from the directory it's installed in?\n");
+	Warning("Couldn't open QE3 data directory! Are you running it from the directory it's installed in?");
 	GenerateErrorPalette();
 }
 
@@ -34,10 +34,8 @@ bool Palette::LoadFromFileImpl(const char* file)
 	lenf = IO_LoadFile(file, lmp);
 	if (lenf != 768)
 	{
-		if (lenf <= 0)
-			Sys_Printf("Warning: Couldn't open!\n");
-		else
-			Sys_Printf("Warning: Problem loading palette! (bad length)\n");
+		if (lenf > 0)
+			Warning("Problem loading palette! (bad length)");
 		return false;
 	}
 
@@ -59,7 +57,7 @@ bool Palette::LoadFromFileImpl(const char* file)
 
 void Palette::GenerateErrorPalette()
 {
-	Sys_Printf("Warning: Generating hideous error-colored palette ...\n");
+	Warning("Generating hideous error-colored palette ...");
 	int i;
 	for (i = 0; i < 256; i++)
 	{

@@ -8,6 +8,7 @@
 CmdPaste::CmdPaste() : Command("Paste")
 {
 	selectOnDo = true;
+	modifiesSelection = true;
 	state = LIVE;
 }
 

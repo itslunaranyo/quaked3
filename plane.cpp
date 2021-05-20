@@ -34,7 +34,7 @@ Plane::EqualTo
 */
 bool Plane::EqualTo(const Plane *b, const int flip)
 {
-	float	tdist;
+	double	tdist;
 	vec3	tnormal;
 
 	if (flip)
@@ -180,7 +180,7 @@ bool Plane::Make()
 
 	if (VectorCompare(norm, vec3(0)) || VectorNormalize(norm) < 0.05f)
 	{
-		printf("WARNING: Brush plane with no normal\n");
+		Warning("Brush plane with no normal");
 		return false;
 	}
 

@@ -675,12 +675,12 @@ bool QE_SingleBrush ()
 	if ((!Selection::HasBrushes()) ||
 		(g_brSelectedBrushes.next->next != &g_brSelectedBrushes))
 	{
-		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		Warning("Must have a single brush selected.");
 		return false;
 	}
 	if (g_brSelectedBrushes.next->owner->IsPoint())
 	{
-		Sys_Printf("WARNING: Cannot manipulate fixed size entities.\n");
+		Warning("Cannot manipulate fixed size entities.");
 		return false;
 	}
 
@@ -902,7 +902,10 @@ void QE_UpdateCommandUI ()
 		CheckMenuItem(hMenu, ID_SELECTION_DRAGVERTICES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGVERTICES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 
-		// TODO: add a button for drag face mode also
+		// Drag Face Mode 
+		modeCheck = (gt && (gt->mode & GeoTool::GT_FACE));
+		CheckMenuItem(hMenu, ID_SELECTION_DRAGFACES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
+		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGFACES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 	}
 
 	// Scale Lock X

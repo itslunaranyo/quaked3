@@ -435,7 +435,7 @@ void Brush::CheckTexdef (Face *f, char *pszName)
 /*	if (!strlen(f->inTexDef.name))
 	{
 #ifdef _DEBUG
-		Sys_Printf("WARNING: Unexpected inTexDef.name is empty in Brush.cpp Brush_CheckTexdef()\n");
+		Warning("Unexpected inTexDef.name is empty in Brush.cpp Brush_CheckTexdef()");
 #endif
 //		fa->inTexDef.SetName("unnamed");
 		strcpy(pszName, "unnamed");
@@ -681,7 +681,7 @@ void Brush::MergeListIntoList(Brush *dest, bool tail)
 
 	if (next == this || prev == this)
 	{
-		Sys_Printf("WARNING: Tried to merge an empty list.\n");
+		Warning("Tried to merge an empty list.");
 		return;
 	}
 	if (tail)

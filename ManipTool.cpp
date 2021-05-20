@@ -845,7 +845,12 @@ bool ManipTool::Draw1D(ZView &v)
 	}
 	switch (state)
 	{
-	// lunaran TODO: draw the MT_NEW brush if it intersects the z-core
+	case MT_NEW:
+		if (!brDragNew)
+			break;
+
+		v.DrawBrush(brDragNew, g_colors.selection);
+		return true;
 	case MT_TRANSLATE:
 	case MT_CLONE:
 		if (!cmdTr || !cmdTr->postDrag)

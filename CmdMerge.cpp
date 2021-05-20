@@ -5,10 +5,11 @@
 #include "qe3.h"
 #include "CmdMerge.h"
 
-CmdMerge::CmdMerge() : convex(false), Command("CSG Merge")
+CmdMerge::CmdMerge() : /*convex(false),*/ Command("CSG Merge")
 {
 	selectOnDo = true;
 	selectOnUndo = true;
+	modifiesSelection = true;
 }
 
 void CmdMerge::UseBrush(Brush *br)

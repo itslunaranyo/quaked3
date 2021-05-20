@@ -680,8 +680,7 @@ int WndView::SetupPixelFormat(HDC hDC, bool zbuffer)
 
 	if ((pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0)
 	{
-		printf("%d", GetLastError());
-		Error("ChoosePixelFormat: Failed");
+		Error("ChoosePixelFormat: Failed (error %d)", GetLastError());
 	}
 
 	if (!SetPixelFormat(hDC, pixelformat, &pfd))

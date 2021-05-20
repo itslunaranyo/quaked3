@@ -163,8 +163,8 @@ winding_t *Face::MakeWinding()
 		w = nullptr;
 	}
 
-	if (!w)
-		printf("unused plane\n");
+	//if (!w)
+	//	printf("unused plane\n");
 
 	return w;
 }

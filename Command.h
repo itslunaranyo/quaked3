@@ -28,6 +28,7 @@ public:
 
 	unsigned id;
 	const char *name;
+	bool modifiesSelection;
 
 	// net change in brushcount and entitycount on do or redo as a result of 
 	// this command (the same numbers are used and negated for undo)

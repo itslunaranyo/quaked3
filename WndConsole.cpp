@@ -44,6 +44,12 @@ void WndConsole::Initialize()
 #define SCROLLBACK_MAX_LINES	600 // PGM
 #define SCROLLBACK_DEL_CHARS	500 // PGM
 
+void WndConsole::ScrollToEnd()
+{
+	SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	SendMessage(g_qeglobals.d_hwndConsole, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
+	SendMessage(g_qeglobals.d_hwndConsole, EM_SCROLLCARET, 0, 0);
+}
 
 void WndConsole::AddText(const char *txt)
 {
@@ -55,7 +61,8 @@ void WndConsole::AddText(const char *txt)
 	// sikk - place the caret at the end of Console before text is inserted. 
 	// This is necessary for RichEdit Console to function correctly when text 
 	// is selected or caret position moved
-	SendMessage(cons, EM_SETSEL, -1, -1);
+	SendMessage(cons, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	SendMessage(cons, EM_SETSEL, (WPARAM)-1, (LPARAM)-1);
 
 	if (result >= SCROLLBACK_MAX_LINES)
 	{

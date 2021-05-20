@@ -382,6 +382,40 @@ bool ZView::DrawTools()
 
 /*
 ==============
+ZView::TestBrush
+==============
+*/
+bool ZView::TestBrush(Brush &br, zbr_t &zbr)
+{
+	vec3	org_top, org_bottom;
+
+	org_top = origin;
+	org_top[2] = g_cfgEditor.MapSize / 2;
+	org_bottom = origin;
+	org_bottom[2] = -g_cfgEditor.MapSize / 2;
+
+	if (br.mins[0] >= origin[0] ||
+		br.maxs[0] <= origin[0] ||
+		br.mins[1] >= origin[1] ||
+		br.maxs[1] <= origin[1])
+		return false;
+
+	if (!br.RayTest(org_top, vec3(0, 0, -1), &zbr.top))
+		return false;
+
+	if (!br.RayTest(org_bottom, vec3(0, 0, 1), &zbr.bottom))
+		return false;
+
+	zbr.brush = &br;
+	zbr.top = org_top[2] - zbr.top;
+	zbr.bottom = org_bottom[2] + zbr.bottom;
+	zbr.tex = Textures::ForName(br.faces->texdef.name);
+
+	return true;
+}
+
+/*
+==============
 ZView::DrawSelection
 ==============
 */
@@ -393,50 +427,69 @@ void ZView::DrawSelection(vec3 selColor)
 	Texture *q;
 	int xCam = width / 3;
 
-	org_top = origin;
-	org_top[2] = g_cfgEditor.MapSize / 2;
-	org_bottom = origin;
-	org_bottom[2] = -g_cfgEditor.MapSize / 2;
+	zbr_t zbtemp;
+	std::vector<zbr_t> brDraw;
 
-	// draw selected brushes as quads filled with the brush color
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
-		if (brush->mins[0] >= origin[0] ||
-			brush->maxs[0] <= origin[0] ||
-			brush->mins[1] >= origin[1] ||
-			brush->maxs[1] <= origin[1])
+		if (!TestBrush(*brush, zbtemp))
 			continue;
+		brDraw.push_back(zbtemp);
+	}
 
-		if (!brush->RayTest(org_top, vec3(0, 0, -1), &top))
-			continue;
-
-		top = org_top[2] - top;
-		if (brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
-		{
-			bottom = org_bottom[2] + bottom;
-			q = Textures::ForName(brush->faces->texdef.name);
-
-			glColor3f(q->color[0], q->color[1], q->color[2]);
-			glBegin(GL_QUADS);
-			glVertex2f(-xCam, bottom);
-			glVertex2f(xCam, bottom);
-			glVertex2f(xCam, top);
-			glVertex2f(-xCam, top);
-			glEnd();
-		}
+	// draw selected brushes as quads filled with the brush color
+	for (auto zbIt = brDraw.begin(); zbIt != brDraw.end(); ++zbIt)
+	{
+		glColor3f(zbIt->tex->color[0], zbIt->tex->color[1], zbIt->tex->color[2]);
+		glBegin(GL_QUADS);
+		glVertex2f(-xCam, zbIt->bottom);
+		glVertex2f(xCam, zbIt->bottom);
+		glVertex2f(xCam, zbIt->top);
+		glVertex2f(-xCam, zbIt->top);
+		glEnd();
 	}
 
 	// lunaran: draw all selection borders over the colored quads so nothing in the selection is obscured
 	glColor4f(selColor[0], selColor[1], selColor[2], 1.0f);
-	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	for (auto zbIt = brDraw.begin(); zbIt != brDraw.end(); ++zbIt)
 	{
 		glBegin(GL_LINE_LOOP);
-		glVertex2f(-xCam, brush->mins[2]);
-		glVertex2f(xCam, brush->mins[2]);
-		glVertex2f(xCam, brush->maxs[2]);
-		glVertex2f(-xCam, brush->maxs[2]);
+		glVertex2f(-xCam, zbIt->brush->mins[2]);
+		glVertex2f(xCam, zbIt->brush->mins[2]);
+		glVertex2f(xCam, zbIt->brush->maxs[2]);
+		glVertex2f(-xCam, zbIt->brush->maxs[2]);
 		glEnd();
 	}
+}
+
+/*
+==============
+ZView::DrawBrush
+==============
+*/
+void ZView::DrawBrush(Brush *brush, vec3 color)
+{
+	int xCam = width / 3;
+	zbr_t zb;
+
+	if (!TestBrush(*brush, zb))
+		return;
+
+	glColor3f(zb.tex->color[0], zb.tex->color[1], zb.tex->color[2]);
+	glBegin(GL_QUADS);
+	glVertex2f(-xCam, zb.bottom);
+	glVertex2f(xCam, zb.bottom);
+	glVertex2f(xCam, zb.top);
+	glVertex2f(-xCam, zb.top);
+	glEnd();
+
+	glColor4f(color[0], color[1], color[2], 1.0f);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(-xCam, zb.brush->mins[2]);
+	glVertex2f(xCam, zb.brush->mins[2]);
+	glVertex2f(xCam, zb.brush->maxs[2]);
+	glVertex2f(-xCam, zb.brush->maxs[2]);
+	glEnd();
 }
 
 /*
@@ -450,7 +503,8 @@ void ZView::Draw ()
 	float		w, h;
 	float		top, bottom;
 	double		start, end;
-	Texture *q;
+	zbr_t zbtemp;
+	std::vector<zbr_t> brDraw;
 
 	int xCam = width / 3;
 
@@ -488,50 +542,37 @@ void ZView::Draw ()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
+
 	glDisable(GL_DEPTH_TEST);
 
 	// draw filled interiors and edges
-	vec3 org_top, org_bottom;
-	org_top = origin;
-	org_top[2] = g_cfgEditor.MapSize / 2;
-	org_bottom = origin;
-	org_bottom[2] = -g_cfgEditor.MapSize / 2;
-
 	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
 	{
-		if (brush->mins[0] >= origin[0] || 
-			brush->maxs[0] <= origin[0] || 
-			brush->mins[1] >= origin[1] || 
-			brush->maxs[1] <= origin[1])
+		if (!TestBrush(*brush, zbtemp))
 			continue;
+		brDraw.push_back(zbtemp);
+	}
 
-		if (brush->IsFiltered())
-			continue;
-
-		if (!brush->RayTest(org_top, vec3(0,0,-1), &top))
-			continue;
-		top = org_top[2] - top;
-
-		if (!brush->RayTest(org_bottom, vec3(0,0,1), &bottom))
-			continue;
-		bottom = org_bottom[2] + bottom;
-
-		q = Textures::ForName(brush->faces->texdef.name);
-
-		glColor3f(q->color[0], q->color[1], q->color[2]);
+	for (auto zbIt = brDraw.begin(); zbIt != brDraw.end(); ++zbIt)
+	{
+		glColor3f(zbIt->tex->color[0], zbIt->tex->color[1], zbIt->tex->color[2]);
 		glBegin(GL_QUADS);
-		glVertex2f(-xCam, bottom);
-		glVertex2f(xCam, bottom);
-		glVertex2f(xCam, top);
-		glVertex2f(-xCam, top);
+		glVertex2f(-xCam, zbIt->bottom);
+		glVertex2f(xCam, zbIt->bottom);
+		glVertex2f(xCam, zbIt->top);
+		glVertex2f(-xCam, zbIt->top);
 		glEnd();
+	}
 
-		glColor3f(1, 1, 1);
+	// lunaran: draw all borders over the colored quads so nothing in the selection is obscured
+	glColor4f(g_colors.brush[0], g_colors.brush[1], g_colors.brush[2], 1.0f);
+	for (auto zbIt = brDraw.begin(); zbIt != brDraw.end(); ++zbIt)
+	{
 		glBegin(GL_LINE_LOOP);
-		glVertex2f(-xCam, bottom);
-		glVertex2f(xCam, bottom);
-		glVertex2f(xCam, top);
-		glVertex2f(-xCam, top);
+		glVertex2f(-xCam, zbIt->brush->mins[2]);
+		glVertex2f(xCam, zbIt->brush->mins[2]);
+		glVertex2f(xCam, zbIt->brush->maxs[2]);
+		glVertex2f(-xCam, zbIt->brush->maxs[2]);
 		glEnd();
 	}
 

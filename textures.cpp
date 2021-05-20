@@ -716,13 +716,13 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 
 	if (IO_LoadFile(filepath, wadFileBuf) <= 0)
 	{
-		Sys_Printf("WARNING: %s could not be loaded.\n", filename);
+		Warning("%s could not be loaded.", filename);
 		return false;
 	}
 
 	if ( strncmp(((char*)*wadFileBuf), "WAD2", 4) )
 	{
-		Sys_Printf("WARNING: %s is not a valid wadfile.\n", filename);
+		Warning("%s is not a valid wadfile.", filename);
 		return false;
 	}
 	return true;
@@ -752,19 +752,19 @@ TextureGroup *WadLoader::ParseWad(qeBuffer &wadFileBuf)
 
 		if (lumpinfo->type != TYP_MIPTEX)
 		{
-			Sys_Printf("Warning: %s is not a miptex, ignoring", lumpinfo->name);
+			Warning("%s is not a miptex, ignoring", lumpinfo->name);
 			continue;
 		}
 
 		if (qmip->width > 1024 || qmip->width < 1 || qmip->height > 1024 || qmip->height < 1)
 		{
-			Sys_Printf("Warning: %s has bad size, ignoring", lumpinfo->name);
+			Warning("%s has bad size, ignoring", lumpinfo->name);
 			continue;
 		}
 
 		if (lumpinfo->filepos + (qmip->width * qmip->height) > wadFileBuf.size())
 		{
-			Sys_Printf("Warning: %s is incomplete, stopping after %i textures", lumpinfo->name, i);
+			Warning("%s is incomplete, stopping after %i textures", lumpinfo->name, i);
 			return texGroup;
 		}
 

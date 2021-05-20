@@ -117,7 +117,7 @@ void FindBrush (int entitynum, int brushnum)
 			e = e->next;
 			if (e == &g_map.entities)
 			{
-				Sys_Printf("WARNING: No such entity.\n");
+				Warning("No such entity.");
 				return;
 			}
 		}
@@ -126,7 +126,7 @@ void FindBrush (int entitynum, int brushnum)
 	b = e->brushes.onext;
 	if (b == &e->brushes)
 	{
-		Sys_Printf("WARNING: No such brush.\n");
+		Warning("No such brush.");
 		return;
 	}
 
@@ -135,7 +135,7 @@ void FindBrush (int entitynum, int brushnum)
 		b = b->onext;
 		if (b == &e->brushes)
 		{
-			Sys_Printf("WARNING: No such brush.\n");
+			Warning("No such brush.");
 			return;
 		}
 	}

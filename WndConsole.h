@@ -14,6 +14,7 @@ public:
 
 	void Initialize();
 	int WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void ScrollToEnd();
 	static void AddText(const char* txt);	// static so sys_printfs can happen before the window exists
 	bool TryCopy();
 private:

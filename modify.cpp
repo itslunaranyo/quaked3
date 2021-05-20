@@ -121,7 +121,7 @@ void Modify::InsertBrush()
 
 	if (!dest)
 	{
-		Sys_Printf("WARNING: No brush entity selected to add brushes to.\n");
+		Warning("No brush entity selected to add brushes to.");
 		return;
 	}
 
@@ -228,7 +228,7 @@ void Modify::ConnectEntities()
 	{
 		if (b->prev == &g_brSelectedBrushes)
 		{
-			Sys_Printf("WARNING: Must have two entities selected.\n");
+			Warning("Must have two entities selected.");
 			Sys_Beep();
 			return;
 		}
@@ -238,7 +238,7 @@ void Modify::ConnectEntities()
 
 	if (e1->IsWorld() || e2->IsWorld())
 	{
-		Sys_Printf("WARNING: Cannot connect to the world.\n");
+		Warning("Cannot connect to the world.");
 		Sys_Beep();
 		return;
 	}
@@ -474,7 +474,7 @@ void Modify::MakeCzgCylinder(int degree)
 
 	if (!QE_SingleBrush())
 	{
-		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -508,7 +508,7 @@ void Modify::MakeSided(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -543,7 +543,7 @@ void Modify::MakeSidedCone(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -575,7 +575,7 @@ void Modify::MakeSidedSphere(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Sys_Printf("WARNING: Must have a single brush selected.\n");
+		Warning("Must have a single brush selected.");
 		return;
 	}
 

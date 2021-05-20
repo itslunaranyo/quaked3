@@ -365,7 +365,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 
 	if (texdef->name[0] == '#')
 	{
-		Sys_Printf("WARNING: Cannot select an entity texture.\n");
+		Warning("Cannot select an entity texture.");
 		return;
 	}
 	g_qeglobals.d_workTexDef = *texdef;
@@ -423,7 +423,7 @@ void TextureView::SelectTexture(int x, int y)
 		return;
 	}
 
-	Sys_Printf("WARNING: Did not select a texture.\n");
+	Warning("Did not select a texture.");
 }
 */
 

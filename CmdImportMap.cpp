@@ -7,6 +7,7 @@
 
 CmdImportMap::CmdImportMap() : Command("Import Map")
 {
+	modifiesSelection = true;
 	selectOnDo = true;
 }
 

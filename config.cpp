@@ -557,7 +557,7 @@ bool qeConfig::Load()
 		}
 		else
 		{
-			Sys_Printf("Warning: Unrecognized token in qe3.cfg: %s\n", g_szToken);
+			Warning("Unrecognized token in qe3.cfg: %s", g_szToken);
 			GetToken(true);
 		}
 	}
