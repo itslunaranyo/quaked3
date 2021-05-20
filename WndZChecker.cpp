@@ -39,8 +39,9 @@ int WndZChecker::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
-		QE_KeyDown(wParam);
-		return 0;
+		return QE_KeyDown(wParam);
+	case WM_KEYUP:
+		return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();

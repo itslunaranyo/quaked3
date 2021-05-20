@@ -98,6 +98,8 @@ void CmdPaste::Do_Impl()
 	{
 		enext = e->next;
 		e->RemoveFromList();
+		if (e->IsBrush())
+			e->brushes.onext = e->brushes.oprev = e->brushes.next;
 		cmdAR.AddedEntity(e);
 	}
 

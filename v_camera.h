@@ -10,9 +10,8 @@
 class CameraView : public View
 {
 public:
-	float	viewdistance;		// For rotating around a point
+	vec3	focus;
 	vec3	angles;
-	vec3	color;				// background 
 	vec3	forward, right, up;	// move matrix
 	vec3	vup, vpn, vright;	// view matrix
 	vec3	mpUp, mpRight;		// mouse manipulation plane
@@ -29,11 +28,12 @@ public:
 	mouseContext_t	const GetMouseContext(const int x, const int y);
 
 	void ChangeFloor(bool up);
+	void PointAt(vec3 pt);
+	void LevelView();
 	void FreeLook();
 	void PositionDrag();
 	void PositionCenter();	// sikk - Center Camera on Selection
-	void PositionRotate();
-	void Rotate(int yaw, int pitch, const vec3 origin);
+	void Orbit();
 	void BoundAngles();
 
 	void Draw ();

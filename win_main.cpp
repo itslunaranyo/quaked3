@@ -1464,9 +1464,7 @@ LONG WINAPI CommandHandler (
 			break;
 
 		case ID_VIEW_CENTER:
-			g_qeglobals.d_vCamera.angles[ROLL] = g_qeglobals.d_vCamera.angles[PITCH] = 0;
-			g_qeglobals.d_vCamera.angles[YAW] = 22.5f * floor((g_qeglobals.d_vCamera.angles[YAW] + 11) / 22.5f);
-			Sys_UpdateWindows(W_CAMERA|W_XY);
+			g_qeglobals.d_vCamera.LevelView();
 			break;
 		case ID_VIEW_UPFLOOR:
 			g_qeglobals.d_vCamera.ChangeFloor(true);
@@ -2233,6 +2231,10 @@ LONG WINAPI WMain_WndProc (
 		if (Tool::HandleInput(uMsg, wParam, lParam))
 			return 0;
 		return QE_KeyDown(wParam);
+	case WM_KEYUP:
+		if (Tool::HandleInput(uMsg, wParam, lParam))
+			return 0;
+		return QE_KeyUp(wParam);
 
 	case WM_COMMAND:
 		if (Tool::HandleInput(uMsg, wParam, lParam))

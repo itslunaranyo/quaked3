@@ -225,7 +225,7 @@ bool Face::TestSideSelect(const vec3 origin, const vec3 dir)
 	vec3	p1, p2;
 
 	p1 = origin;
-	p2 = origin + dir * 2.0f * (float)g_cfgEditor.MapSize;
+	p2 = origin + dir * (float)g_cfgEditor.MapSize;
 
 	for (f2 = owner->faces; f2; f2 = f2->fnext)
 	{
@@ -307,7 +307,7 @@ void Face::Transform(mat4 mat, bool bTexLock)
 	vec3	p1, p2, p3;
 
 	if (bTexLock)
-		ComputeAbsolute(this, p1, p2, p3);
+		Surface::ComputeAbsolute(this, p1, p2, p3);
 
 	for (int i = 0; i < 3; i++)
 		plane.pts[i] = mat * glm::vec4(plane.pts[i], 1);
@@ -318,7 +318,7 @@ void Face::Transform(mat4 mat, bool bTexLock)
 		p1 = mat * glm::vec4(p1, 1);
 		p2 = mat * glm::vec4(p2, 1);
 		p3 = mat * glm::vec4(p3, 1);
-		AbsoluteToLocal(plane, this, p1, p2, p3);
+		Surface::AbsoluteToLocal(plane, texdef, p1, p2, p3);
 	}
 }
 
@@ -376,7 +376,7 @@ Face::SetTexture
 */
 void Face::SetTexture(TexDef *texdefIn, unsigned flags)
 {
-	Surf_ApplyTexdef(texdef, *texdefIn, flags);
+	Surface::ApplyTexdef(texdef, *texdefIn, flags);
 	//owner->Build();
 	ColorAndTexture();
 }

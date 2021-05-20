@@ -7,7 +7,7 @@
 
 #define QE_VERSION_MAJOR	3
 #define	QE_VERSION_MINOR	2
-#define QE_VERSION_BUILD	39
+#define QE_VERSION_BUILD	40
 
 #ifdef _DEBUG
 #define QE3_WIN_REGISTRY "Software\\id\\QuakeEd3X"
@@ -115,6 +115,13 @@
 #define COLOR_VIEWNAME		14
 #define COLOR_LAST			15
 
+
+#define CLONE_OFFSET	0
+#define CLONE_INPLACE	1
+#define CLONE_DRAG		2
+
+#define TEX_PROJECT_AXIAL	0
+#define TEX_PROJECT_FACE	1
 
 // used in some Drawing routines
 enum VIEWTYPE {YZ, XZ, XY};

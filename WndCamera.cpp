@@ -41,6 +41,11 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		else
 			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
+	case WM_KEYUP:
+		if (QE_KeyUp(wParam))
+			return 0;
+		else
+			return DefWindowProc(w_hwnd, uMsg, wParam, lParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();
@@ -51,10 +56,19 @@ int WndCamera::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			float fwd = 64;
+			vec3 fwd;
+			if (fwKeys & MK_RBUTTON && fwKeys & MK_SHIFT)
+			{
+				fwd = cv->vpn;	// orbiting
+			}
+			else
+			{
+				fwd = cv->forward;
+				if (fwKeys & MK_SHIFT)
+					fwd *= 4.0f;
+			}
 			if ((short)HIWORD(wParam) < 0) fwd *= -1;
-			if (fwKeys & MK_SHIFT) fwd *= 4;
-			cv->origin += cv->forward * fwd;
+			cv->origin += fwd * 64.0f;
 		}
 		Sys_UpdateWindows(W_SCENE);
 		return 0;

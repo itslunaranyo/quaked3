@@ -38,6 +38,8 @@ public:
 
 	void	DrawPathLines();
 	bool	GetBasis(vec3 &right, vec3 &up, vec3 &forward) { return false; }
+	void	GLSelectionColor();
+	void	GLSelectionColorAlpha(float alpha);
 
 	int	cursorX, cursorY;
 private:

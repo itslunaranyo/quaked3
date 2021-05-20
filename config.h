@@ -10,10 +10,6 @@ class Entity;
 #define MAX_PROJNAME	64
 #define MAX_CVARSTR		256
 
-#define CLONE_OFFSET	0
-#define CLONE_INPLACE	1
-#define CLONE_DRAG		2
-
 
 struct qecfgUI_t
 {
@@ -51,6 +47,7 @@ struct qecfgEditor_t
 	bool BrushPrecision;
 	bool VFEModesExclusive;
 	int CloneStyle;
+	int TexProjectionMode;
 
 	bool CubicClip;
 	int	CubicScale;

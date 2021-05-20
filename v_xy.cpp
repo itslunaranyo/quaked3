@@ -1289,7 +1289,7 @@ void XYZView::DrawSizeInfo (const vec3 vMinBounds, const vec3 vMaxBounds)
 
 		glEnd();
 
-		glColor3fv((GLfloat*)&g_colors.selection);
+		GLSelectionColor();
 
 		glRasterPos3f((vMinBounds[nDim1] + vMaxBounds[nDim1]) * 0.5f, vMinBounds[nDim2] - 20.0 / scale, 0.0f);
 		sprintf(dimstr, g_pszDimStrings[nDim1], vSize[nDim1]);
@@ -1441,7 +1441,7 @@ void XYZView::DrawLightRadius (Brush *pBrush, int nViewType)
 	}
 	glEnd();
 
-	glColor3fv(&g_colors.selection.r);
+	GLSelectionColor();
 	glBegin(GL_LINE_STRIP);
 	for (f = 0; f <= 8; f += fStep)
 	{
@@ -1499,7 +1499,7 @@ bool XYZView::CullBrush(Brush *b)
 
 void XYZView::BeginDrawSelection()
 {
-	glColor3fv(&g_colors.selection.r);
+	GLSelectionColor();
 	if (g_cfgUI.Stipple)
 		glEnable(GL_LINE_STIPPLE);
 	if (g_qeglobals.d_selSelectMode != sel_face)

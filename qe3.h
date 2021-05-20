@@ -206,6 +206,7 @@ typedef struct
 
 	bool		d_bTextureLock;
 	float		d_fDefaultTexScale;		// sikk - Default Texture Scale Dialog
+	float		d_fTexFitW, d_fTexFitH;
 	vec3		d_lastColor;
 
 	std::vector<Tool*> d_tools;
@@ -250,7 +251,8 @@ void	QE_CheckOpenGLForErrors (void);
 void	QE_ConvertDOSToUnixName (char *dst, const char *src);
 void	QE_ExpandBspString (char *bspaction, char *out, char *mapname);
 void	QE_Init();
-bool	QE_KeyDown (int key);
+bool	QE_KeyDown(int key);
+bool	QE_KeyUp(int key);
 void	QE_SaveMap();
 void	QE_UpdateTitle();
 bool	QE_InitProject();

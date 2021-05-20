@@ -972,7 +972,7 @@ BOOL CALLBACK FindTextureDlgProc (
 			bSelected = SendDlgItemMessage(hwndDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0);
 			bForce = SendDlgItemMessage(hwndDlg, IDC_CHECK_FORCE, BM_GETCHECK, 0, 0);
 
-			Surf_FindReplace(szFind, szReplace, bSelected, bForce);
+			Surface::FindReplace(szFind, szReplace, bSelected, bForce);
 
 			// because F&R dialog is modal, the camera window never gets a normal redraw message
 			// and apply appears to do nothing until the dialog is closed, so force update here

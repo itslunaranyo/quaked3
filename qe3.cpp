@@ -106,6 +106,9 @@ void QE_Init ()
 	g_qeglobals.d_fDefaultTexScale = 1.00f;	// sikk - Default Texture Size Dialog
 	g_qeglobals.d_v3WorkMin = vec3(0);
 	g_qeglobals.d_v3WorkMax = vec3(8);
+	g_qeglobals.d_fTexFitW = 1.0f;
+	g_qeglobals.d_fTexFitH = 1.0f;
+
 	g_cfgUI.ViewFilter |= BFL_HIDDEN;	// hidden things are always filtered
 
 	g_cmdQueue.SetSize(g_cfgEditor.UndoLevels);
@@ -373,7 +376,10 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
 		break;
 	case ' ':
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
+		if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+			Sys_UpdateWindows(W_SCENE);
+		else
+			PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
 		break;
 	case VK_BACK:
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DELETE, 0);
@@ -500,11 +506,30 @@ bool QE_KeyDown (int key)
 	case VK_F12:	// sikk - Test Map
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_MISC_TESTMAP, 0);
 		break;
-
 	default:
 		return false;
 	}
 
+	return true;
+}
+
+
+
+bool QE_KeyUp(int key)
+{
+	//bool shift, ctrl;
+	//shift = (GetKeyState(VK_SHIFT) < 0);
+	//ctrl = (GetKeyState(VK_CONTROL) < 0);
+
+	switch (key)
+	{
+	case ' ':
+		if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+			Sys_UpdateWindows(W_SCENE);
+		break;
+	default:
+		return false;
+	}
 	return true;
 }
 

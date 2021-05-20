@@ -218,6 +218,9 @@
 #define IDC_BUTTON_COLORDELETE          1311
 #define IDC_EDIT_KEYLIST                1312
 #define IDC_EDIT_MOUSELIST              1313
+#define IDC_RADIO_TEXAXIAL              1314
+#define IDC_RADIO2                      1315
+#define IDC_RADIO_TEXFACE               1315
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -470,7 +473,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        199
 #define _APS_NEXT_COMMAND_VALUE         40467
-#define _APS_NEXT_CONTROL_VALUE         1314
+#define _APS_NEXT_CONTROL_VALUE         1316
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -30,7 +30,8 @@ public:
 	void		Translate(const vec3 move);
 	void		Snap(int increment = 1);
 	winding_t	*BasePoly();
-	void		GetTextureAxis(vec3 &xv, vec3 &yv);
+	vec3		GetTextureAxis(vec3 &xv, vec3 &yv);
+	vec3		ProjectPointAxial(vec3 &in, vec3 &axis);
 };
 
 

@@ -210,6 +210,8 @@ int WndGrid::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_KEYDOWN:
 		return QE_KeyDown(wParam);
+	case WM_KEYUP:
+		return QE_KeyUp(wParam);
 
 	case WM_MOUSEWHEEL:
 		Focus();

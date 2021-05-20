@@ -419,6 +419,7 @@ Test_BrushFilter
 bool Test_BrushFilter(Brush *brush, int flags)
 {
 	if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
+	//if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsBrush())
 		return false;
 	if (flags & (SF_NOFIXEDSIZE | SF_FACES) && brush->owner->IsPoint())
 		return false;
@@ -438,6 +439,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 	Face	*face;
 	float	dist;
 	trace_t	t;
+	int		rank, t_rank;	// point entities > brush entities > worldspawn
 
 	// single selection cycle:
 	// find the first unselected brush behind the first selected brush
@@ -462,6 +464,8 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(org, dir, &dist);
+			if (!face)
+				continue;
 			if (dist > 0 && dist < t.dist)
 			{
 				t.dist = dist;
@@ -474,6 +478,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 	}
 
 	memset(&t, 0, sizeof(t));
+	t_rank = 3;
 	t.dist = DIST_START;
 
 	if (!(flags & SF_SELECTED_ONLY))
@@ -483,8 +488,19 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
-			if (dist > 0 && dist < t.dist)
+			if (!face)
+				continue;
+
+			rank = 3;
+			if (flags & SF_ENTITIES_FIRST)
 			{
+				if (brush->owner->IsPoint()) rank = 1;
+				else if (!brush->owner->IsWorld()) rank = 2;
+			}
+
+			if (rank < t_rank || (rank == t_rank && dist > 0 && dist < t.dist))
+			{
+				t_rank = rank;
 				t.dist = dist;
 				t.brush = brush;
 				t.face = face;
@@ -500,8 +516,19 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
-			if (dist > 0 && dist < t.dist)
+			if (!face)
+				continue;
+
+			rank = 3;
+			if (flags & SF_ENTITIES_FIRST)
 			{
+				if (brush->owner->IsPoint()) rank = 1;
+				else if (!brush->owner->IsWorld()) rank = 2;
+			}
+
+			if (rank < t_rank || (rank == t_rank && dist > 0 && dist < t.dist))
+			{
+				t_rank = rank;
 				t.dist = dist;
 				t.brush = brush;
 				t.face = face;
@@ -511,7 +538,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 	}
 
 	// if entities first, but didn't find any, check regular
-	if ((flags & SF_ENTITIES_FIRST) && t.brush == NULL)
+	if ((flags & SF_ENTITIES_FIRST) && !t.brush)
 		return TestRay(origin, dir, flags - SF_ENTITIES_FIRST);
 
 	return t;
@@ -1035,11 +1062,11 @@ void Selection::CompleteTall()
 	{
 		next = b->next;
 
-		if ((b->maxs[nDim1] > maxs[nDim1] || b->mins[nDim1] < mins[nDim1]) ||
-			(b->maxs[nDim2] > maxs[nDim2] || b->mins[nDim2] < mins[nDim2]))
+		if (b->IsFiltered())
 			continue;
 
-		if (b->IsFiltered())
+		if ((b->maxs[nDim1] > maxs[nDim1] || b->mins[nDim1] < mins[nDim1]) ||
+			(b->maxs[nDim2] > maxs[nDim2] || b->mins[nDim2] < mins[nDim2]))
 			continue;
 
 		SelectBrushSorted(b);
@@ -1079,11 +1106,11 @@ void Selection::PartialTall()
 	{
 		next = b->next;
 
-		if ((b->mins[nDim1] > maxs[nDim1] || b->maxs[nDim1] < mins[nDim1]) ||
-			(b->mins[nDim2] > maxs[nDim2] || b->maxs[nDim2] < mins[nDim2]))
+		if (b->IsFiltered())
 			continue;
 
-		if (b->IsFiltered())
+		if ((b->mins[nDim1] > maxs[nDim1] || b->maxs[nDim1] < mins[nDim1]) ||
+			(b->mins[nDim2] > maxs[nDim2] || b->maxs[nDim2] < mins[nDim2]))
 			continue;
 
 		SelectBrushSorted(b);
@@ -1112,6 +1139,9 @@ void Selection::Touching()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
+		if (b->IsFiltered())
+			continue;
+
 		for (i = 0; i < 3; i++)
 			if (b->mins[i] > maxs[i] + 1 || b->maxs[i] < mins[i] - 1)
 				break;
@@ -1145,6 +1175,9 @@ void Selection::Inside()
 	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
 	{
 		next = b->next;
+		if (b->IsFiltered())
+			continue;
+
 		for (i = 0; i < 3; i++)
 			if (b->maxs[i] > maxs[i] || b->mins[i] < mins[i])
 				break;

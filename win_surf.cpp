@@ -15,7 +15,6 @@ SURFACE INSPECTOR
 TexDef		g_texdefEdit;
 unsigned	g_nEditSurfMixed;
 
-
 /*
 ==============
 WndSurf_ClearEditTexdef
@@ -65,6 +64,7 @@ void WndSurf_RefreshEditTexdef()
 		return;
 
 	WndSurf_ClearEditTexdef();
+	g_texdefEdit = g_qeglobals.d_workTexDef;
 
 	if (Selection::NumFaces())
 	{
@@ -83,6 +83,8 @@ void WndSurf_RefreshEditTexdef()
 		bool first = true;
 		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
+			if (b->owner->IsPoint())
+				continue;
 			for (Face *f = b->faces; f; f = f->fnext)
 			{
 				if (first)
@@ -96,8 +98,6 @@ void WndSurf_RefreshEditTexdef()
 		}
 		return;
 	}
-
-	g_texdefEdit = g_qeglobals.d_workTexDef;
 }
 
 
@@ -223,7 +223,7 @@ void WndSurf_Apply()
 	if (mixed == SFI_ALL)
 		return;
 
-	Surf_SetTexdef(texdef, mixed);
+	Surface::SetTexdef(texdef, mixed);
 }
 
 /*
@@ -235,6 +235,11 @@ void WndSurf_UpdateUI()
 {
 	if (!g_qeglobals.d_hwndSurfaceDlg)
 		return;
+
+	if (g_cfgEditor.TexProjectionMode == TEX_PROJECT_FACE)
+		SendDlgItemMessage(g_qeglobals.d_hwndSurfaceDlg, IDC_RADIO_TEXFACE, BM_SETCHECK, 1, 0);
+	else
+		SendDlgItemMessage(g_qeglobals.d_hwndSurfaceDlg, IDC_RADIO_TEXAXIAL, BM_SETCHECK, 1, 0);
 
 	WndSurf_RefreshEditTexdef();
 	WndSurf_FromEditTexdef();
@@ -387,9 +392,14 @@ BOOL CALLBACK SurfaceDlgProc(
 	{
 	case WM_INITDIALOG:
 		g_qeglobals.d_hwndSurfaceDlg = hwndDlg;
-		SetDlgItemText(hwndDlg, IDC_EDIT_HFIT, "1.0");
-		SetDlgItemText(hwndDlg, IDC_EDIT_WFIT, "1.0");
-		WndSurf_UpdateUI();
+		{
+			char sz[8];
+			FloatToString(g_qeglobals.d_fTexFitH, sz);
+			SetDlgItemText(hwndDlg, IDC_EDIT_HFIT, sz);
+			FloatToString(g_qeglobals.d_fTexFitW, sz);
+			SetDlgItemText(hwndDlg, IDC_EDIT_WFIT, sz);
+			WndSurf_UpdateUI();
+		}
 		return TRUE;
 
 	case WM_CLOSE:
@@ -409,17 +419,22 @@ BOOL CALLBACK SurfaceDlgProc(
 			WndSurf_Close();
 			return TRUE;
 
+		case IDC_RADIO_TEXAXIAL:
+			g_cfgEditor.TexProjectionMode = TEX_PROJECT_AXIAL;
+			return TRUE;
+		case IDC_RADIO_TEXFACE:
+			g_cfgEditor.TexProjectionMode = TEX_PROJECT_FACE;
+			return TRUE;
+
 		case IDC_BUTTON_FIT:
 			{
 				char sz[8];
-				float nHeight, nWidth;
-
 				GetDlgItemText(hwndDlg, IDC_EDIT_HFIT, sz, 8);
-				nHeight = atof(sz);
+				g_qeglobals.d_fTexFitH = atof(sz);
 				GetDlgItemText(hwndDlg, IDC_EDIT_WFIT, sz, 8);
-				nWidth = atof(sz);
+				g_qeglobals.d_fTexFitW = atof(sz);
 
-				g_qeglobals.d_texTool->FitTexture(nHeight, nWidth);
+				g_qeglobals.d_texTool->FitTexture(g_qeglobals.d_fTexFitH, g_qeglobals.d_fTexFitW);
 				//WndSurf_UpdateUI();
 				Sys_UpdateWindows(W_CAMERA|W_SURF);
 			}
@@ -443,6 +458,12 @@ WndSurf_Create
 */
 void WndSurf_Close()
 {
+	char sz[8];
+	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_HFIT, sz, 8);
+	g_qeglobals.d_fTexFitH = atof(sz);
+	GetDlgItemText(g_qeglobals.d_hwndSurfaceDlg, IDC_EDIT_WFIT, sz, 8);
+	g_qeglobals.d_fTexFitW = atof(sz);
+
 	EndDialog(g_qeglobals.d_hwndSurfaceDlg, 0);
 	g_qeglobals.d_hwndSurfaceDlg = NULL;
 }

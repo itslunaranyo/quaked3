@@ -713,6 +713,7 @@ void WndCfg_ConfigToWnd()
 	SetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz);
 
 	SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_SETCURSEL, g_cfgEditor.CloneStyle, 0);
+	// TexProjectionMode is in the surface dlg
 
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_SETCHECK, (g_cfgEditor.LogConsole ? BST_CHECKED : BST_UNCHECKED), 0);
 	SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_SETCHECK, (g_cfgEditor.VFEModesExclusive ? BST_CHECKED : BST_UNCHECKED), 0);
@@ -762,6 +763,7 @@ void WndCfg_WndToConfigEditor(qecfgEditor_t &cfgEd)
 	cfgEd.MapSize = atoi(sz);
 
 	cfgEd.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
+	// TexProjectionMode is in the surface dlg
 
 	cfgEd.LogConsole = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_LOGCONSOLE, BM_GETCHECK, 0, 0) != 0;
 	cfgEd.VFEModesExclusive = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_VFEEXCLUSIVE, BM_GETCHECK, 0, 0) != 0;

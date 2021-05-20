@@ -18,7 +18,8 @@ CameraView::Init
 */
 void CameraView::Init()
 {
-	viewdistance = 256;
+	focus = origin + vpn * 256.0f;
+	//viewdistance = 256;
 }
 
 // sikk---> Center Camera on Selection. Same as PositionView() for XY View
@@ -128,6 +129,24 @@ void CameraView::ChangeFloor (bool up)
 	Sys_UpdateWindows(W_CAMERA | W_Z);
 }
 
+void CameraView::PointAt(vec3 pt)
+{
+	focus = pt;
+	vpn = pt - origin;
+	VectorToAngles(vpn, angles);
+	BoundAngles();
+	BuildMatrix();
+}
+
+void CameraView::LevelView()
+{
+	g_qeglobals.d_vCamera.angles[ROLL] = g_qeglobals.d_vCamera.angles[PITCH] = 0;
+	g_qeglobals.d_vCamera.angles[YAW] = 22.5f * floor((g_qeglobals.d_vCamera.angles[YAW] + 11) / 22.5f);
+	BoundAngles();
+	BuildMatrix();
+	Sys_UpdateWindows(W_CAMERA | W_XY);
+}
+
 
 //===============================================
 
@@ -155,123 +174,39 @@ void CameraView::PositionDrag ()
 	}
 }
 
+
 /*
-================
-CameraView::Rotate
-================
+==================
+CameraView::Orbit
+==================
 */
-void CameraView::Rotate (int yaw, int pitch, const vec3 org)
+void CameraView::Orbit()
 {
-	int		i;
-	float	distance;
-	vec3	work, forward, dir, vecdist;
+	int			x, y;// , i, j;
+	int yaw, pitch;
+	float vecdist;
 
-	for (i = 0; i < 3; i++)
-	{
-		vecdist[i] = fabs((origin[i] - org[i]));
-		vecdist[i] *= vecdist[i];
-	}
+	SetCursor(NULL); // sikk - Remove Cursor
+	Sys_GetCursorPos(&x, &y);
 
-	viewdistance = distance = sqrt(vecdist[0] + vecdist[1] + vecdist[2]);
-	work = origin - org;
-	VectorToAngles(work, angles);
+	if (x == cursorX && y == cursorY)
+		return;
 
-	if(angles[PITCH] > 100)
-		angles[PITCH] -= 360;
+	yaw = x - cursorX;
+	pitch = y - cursorY;
 
 	angles[PITCH] -= pitch;
 	angles[YAW] -= yaw;
 	BoundAngles();
-
-	AngleVectors(angles, forward, vec3(0), vec3(0));
-	forward[2] = -forward[2];
-	origin = org + distance * forward;
-
-	dir = org - origin;
-	VectorNormalize(dir);
-	angles[1] = atan2(dir[1], dir[0]) * 180 / Q_PI;
-	angles[0] = asin(dir[2]) * 180 / Q_PI;
+	vecdist = VectorLength(focus - origin);
+	AngleVectors(angles, vpn, vright, vup);
+	vpn[2] = -vpn[2];
+	origin = focus - vecdist * vpn;
 
 	BuildMatrix();
 
 	Sys_SetCursorPos(cursorX, cursorY);
 	Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
-}
-
-/*
-==================
-CameraView::PositionRotate
-==================
-*/
-void CameraView::PositionRotate ()
-{
-	int			x, y, i, j;
-	vec3		mins, maxs, forward, vecdist;
-	vec3		sorigin;
-	Brush	   *b;
-	Face	   *f;
-
-	SetCursor(NULL); // sikk - Remove Cursor
-	Sys_GetCursorPos(&x, &y);
-
-	if (x == g_qeglobals.d_vCamera.cursorX && y == g_qeglobals.d_vCamera.cursorY)
-		return;
-
-	x -= g_qeglobals.d_vCamera.cursorX;
-	y -= g_qeglobals.d_vCamera.cursorY;
-
-	if (Selection::HasBrushes())
-	{
-		ClearBounds(mins, maxs);
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			for (i = 0; i < 3; i++)
-			{
-				if (b->maxs[i] > maxs[i])
-					maxs[i] = b->maxs[i];
-				if (b->mins[i] < mins[i])
-					mins[i] = b->mins[i];
-			}
-		}
-		sorigin = (mins + maxs) / 2.0f;
-	}
-	else if (Selection::NumFaces())
-	{
-		ClearBounds(mins, maxs);
-
-		//		f = g_pfaceSelectedFace;
-		// rotate around last selected face
-		//f = g_vfSelectedFaces[Selection::NumFaces() - 1];	// sikk - Multiple Face Selection
-		f = Selection::faces.back();
-		for (j = 0; j < f->face_winding->numpoints; j++)
-		{
-			for (i = 0; i < 3; i++)
-			{
-				if (f->face_winding->points[j].point[i] > maxs[i])
-					maxs[i] = f->face_winding->points[j].point[i];
-				if (f->face_winding->points[j].point[i] < mins[i])
-					mins[i] = f->face_winding->points[j].point[i];
-			}
-		}
-
-		sorigin = (mins + maxs) / 2.0f;
-	}
-	else
-	{
-		AngleVectors(g_qeglobals.d_vCamera.angles, forward, vec3(0), vec3(0));
-		forward[2] = -forward[2];
-		if (g_qeglobals.d_vCamera.viewdistance <= 8)
-			g_qeglobals.d_vCamera.viewdistance = 256;
-		sorigin = g_qeglobals.d_vCamera.origin + g_qeglobals.d_vCamera.viewdistance * forward;
-	}
-
-	for (i = 0; i < 3; i++)
-	{
-		vecdist[i] = fabs((g_qeglobals.d_vCamera.origin[i] - sorigin[i]));
-		vecdist[i] *= vecdist[i];
-	}
-
-	Rotate(x, y, sorigin);
 }
 
 /*
@@ -281,10 +216,11 @@ CameraView::BoundAngles
 */
 void CameraView::BoundAngles()
 {
-//	angles[YAW] = fmod(angles[YAW], 360.0f);
-
-	angles[PITCH] = min(angles[PITCH], 90.0f);
-	angles[PITCH] = max(angles[PITCH], -90.0f);
+	angles[YAW] = fmod(angles[YAW], 360.0f);
+	angles[PITCH] = fmod(angles[PITCH] + 180, 360.0f);
+	angles[PITCH] = min(angles[PITCH], 270.0f);
+	angles[PITCH] = max(angles[PITCH], 90.0f);
+	angles[PITCH] -= 180;
 }
 
 /*
@@ -426,26 +362,26 @@ void CameraView::MouseDown (int x, int y, int buttons)
 	nCamButtonState = buttons;
 	buttonX = x;
 	buttonY = y;
-	
-	// LBUTTON = manipulate selection
-	// shift-LBUTTON = select
-	// middle button = grab texture
-	// ctrl-middle button = set entire brush to texture
-	// ctrl-shift-middle button = set single face to texture
-	/*
-	if ((buttons == MK_LBUTTON)	|| 
-		(buttons == (MK_LBUTTON | MK_SHIFT)) || 
-		(buttons == (MK_LBUTTON | MK_CONTROL)) || 
-		(buttons == (MK_LBUTTON | MK_CONTROL | MK_SHIFT)) || 
-		(buttons == MK_MBUTTON) || 
-		(buttons == (MK_MBUTTON | MK_SHIFT)) || 
-		(buttons == (MK_MBUTTON | MK_CONTROL)) || 
-		(buttons == (MK_MBUTTON | MK_CONTROL | MK_SHIFT)))
+
+	// look-at for starting the camera orbit
+	if (buttons == (MK_RBUTTON | MK_SHIFT))
 	{
-		Drag_Begin(x, y, buttons, vright, vup, origin, dir);
-		return;
+		vec3 aim;
+		trace_t vtest;
+		vtest = Selection::TestRay(origin, dir, 0);
+		if (vtest.brush)
+		{
+			if (vtest.brush->owner->IsPoint())
+				focus = vtest.brush->owner->origin;
+			else
+				focus = origin + vtest.dist * dir;
+		}
+		else
+		{
+			focus = origin + 256.0f * dir;
+		}
+		PointAt(focus);
 	}
-	*/
 }
 
 /*
@@ -467,8 +403,6 @@ CameraView::MouseMoved
 */
 void CameraView::MouseMoved (int x, int y, int buttons)
 {
-	int			i;
-	float		f, r, u;
 	char		camstring[256];
 	vec3		dir;
 	trace_t		t;
@@ -478,13 +412,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 	if (!buttons)
 	{
 		// calc ray direction
-		u = (float)(y - height / 2) / (width / 2);
-		r = (float)(x - width / 2) / (width / 2);
-		f = 1;
-
-		for (i = 0; i < 3; i++)
-			dir[i] = vpn[i] * f + vright[i] * r + vup[i] * u;
-		VectorNormalize(dir);
+		PointToRay(x, y, dir);
 		t = Selection::TestRay(origin, dir, false);
 
 		if (t.brush)
@@ -531,7 +459,7 @@ void CameraView::MouseMoved (int x, int y, int buttons)
 
 	if (buttons == (MK_RBUTTON | MK_SHIFT))
 	{
-		PositionRotate();
+		Orbit();
 		Sys_UpdateWindows(W_XY | W_CAMERA | W_Z);
 		return;
 	}
@@ -758,10 +686,7 @@ void CameraView::DrawSelected(Brush	*pList)
 	glEnable(GL_BLEND);
 
 	// lunaran: brighten & clarify selection tint, use selection color preference
-	glColor4f(g_colors.selection[0],
-			g_colors.selection[1],
-			g_colors.selection[2],
-			0.3f);
+	GLSelectionColorAlpha(0.3f);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glDisable(GL_TEXTURE_2D);
 

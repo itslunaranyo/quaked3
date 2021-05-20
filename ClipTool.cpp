@@ -417,8 +417,9 @@ bool ClipTool::CamPointOnSelection(int x, int y, vec3 &out, int* outAxis)
 			*outAxis = XY;
 
 		pt = g_qeglobals.d_vCamera.origin + t.dist * dir;
-		pt = pointOnGrid(pt);
-		ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pt);
+		//ProjectOnPlane(t.face->plane.normal, t.face->plane.dist, pn, pointOnGrid(pt));
+		pt = t.face->plane.ProjectPointAxial(pointOnGrid(pt), pn);
+
 		out = pt;
 		return true;
 	}

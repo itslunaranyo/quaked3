@@ -497,6 +497,7 @@ calculate a new origin based on the current brush position and warn if not
 */
 void Entity::CheckOrigin()
 {
+#ifdef _DEBUG
 	if (IsBrush()) return;
 
 	vec3 testorg, org;
@@ -508,6 +509,7 @@ void Entity::CheckOrigin()
 		SetOriginFromBrush();
 		Sys_Printf("WARNING: Entity origins out of sync on %s at (%f %f %f)\n", eclass->name, org[0], org[1], org[2]);
 	}
+#endif
 }
 
 /*

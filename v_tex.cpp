@@ -52,9 +52,9 @@ void TextureView::MouseDown(int x, int y, int buttons)
 			texdef.Set(tw);
 			ChooseTexture(&texdef);
 			if (buttons == MK_MBUTTON)
-				Surf_SetTexdef(texdef, SFI_ALL - SFI_NAME);
+				Surface::SetTexdef(texdef, SFI_ALL - SFI_NAME);
 			else
-				Surf_SetTexdef(texdef, 0);
+				Surface::SetTexdef(texdef, 0);
 			return;
 		}
 	}
@@ -384,8 +384,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 		return;
 	}
 	g_qeglobals.d_workTexDef = *texdef;
-
-	Sys_UpdateWindows(W_TEXTURE);
+	Sys_UpdateWindows(W_TEXTURE | W_SURF);
 
 	// scroll origin so the texture is completely on screen
 	for (int i = 0; i < count; i++)
@@ -435,7 +434,7 @@ void TextureView::SelectTexture(int x, int y)
 
 		texdef.Set(tw);
 		ChooseTexture(&texdef);
-		Surf_SetTexdef(texdef, 0);
+		Surface::SetTexdef(texdef, 0);
 		return;
 	}
 

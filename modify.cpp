@@ -170,12 +170,17 @@ Modify::HideUnselected
 */
 void Modify::HideUnselected()
 {
+	if (Selection::IsEmpty())
+		return;
+
 	Brush *b;
 
 	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
 	{
 		b->showFlags |= BFL_HIDDEN;
 	}
+
+	Sys_UpdateWindows(W_SCENE);
 }
 
 

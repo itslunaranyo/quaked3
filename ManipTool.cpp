@@ -295,26 +295,29 @@ void ManipTool::DragStart2D(const mouseContext_t &mc, int vDim)
 		}
 		// translate if click hit the selection, side-detect for auto plane drag otherwise
 		trace_t t = Selection::TestRay(mc.org, mc.ray, SF_SELECTED_ONLY);	
-		if (t.selected)
-		{
-			SetupTranslate();
-			return;
-		}
-		else
-		{
 			std::vector<Face*> fSides;
 			if (CtrlDown())
 			{
-				SideSelectShearFaces(mc.org, mc.ray, fSides);
+				if (t.selected)
+					fSides.push_back(t.face);
+				else
+					SideSelectShearFaces(mc.org, mc.ray, fSides);
 				StartQuickShear(fSides);
 			}
 			else
 			{
-				SideSelectFaces(mc.org, mc.ray, fSides);
-				StartPlaneShift(fSides);
+				if (t.selected)
+				{
+					SetupTranslate();
+					return;
+				}
+				else
+				{
+					SideSelectFaces(mc.org, mc.ray, fSides);
+					StartPlaneShift(fSides);
+				}
 			}
 			return;
-		}
 	}
 	else if (Selection::NumFaces())
 	{
@@ -677,10 +680,7 @@ bool ManipTool::Draw3D(CameraView &v)
 		glEnable(GL_BLEND);
 
 		// lunaran: brighten & clarify selection tint, use selection color preference
-		glColor4f(g_colors.selection[0],
-				g_colors.selection[1],
-				g_colors.selection[2],
-				0.3f);
+		v.GLSelectionColorAlpha(0.3f);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 		glDisable(GL_TEXTURE_2D);
 		for (Face *face = brDragNew->faces; face; face = face->fnext)

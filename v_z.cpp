@@ -412,7 +412,7 @@ void ZView::DrawSelection()
 	}
 
 	// lunaran: draw all selection borders over the colored quads so nothing in the selection is obscured
-	glColor3fv(&g_colors.selection.x);
+	GLSelectionColor();
 	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
 	{
 		glBegin(GL_LINE_LOOP);

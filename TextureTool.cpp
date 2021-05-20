@@ -4,6 +4,7 @@
 
 #include "qe3.h"
 #include "TextureTool.h"
+#include "CmdCompound.h"
 #include "CmdTextureApply.h"
 #include "CmdTextureFit.h"
 #include "CmdTextureMod.h"
@@ -14,7 +15,7 @@
 
 
 TextureTool::TextureTool() : 
-	lastTexMod(nullptr),
+	lastTexMod(nullptr), lastWrap(nullptr), lastWrap2(nullptr), cmdCmp(nullptr),
 	Tool("Texturing", false)	// always on (not modal)
 {
 	g_qeglobals.d_texTool = this;
@@ -30,8 +31,8 @@ TextureTool::~TextureTool()
 
 bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, WndView & vWnd)
 {
-	if (uMsg != WM_MBUTTONDOWN)
-		return false;
+	//if (uMsg != WM_MBUTTONDOWN)
+	//	return false;
 
 	vec3 ray;
 	trace_t t;
@@ -40,62 +41,104 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 	switch (uMsg)
 	{
 	case WM_MBUTTONDOWN:
-		//hot = true;
-		//SetCapture(vWnd.w_hwnd);
+		{
+			//hot = true;
+			//SetCapture(vWnd.w_hwnd);
+			vWnd.GetMsgXY(lParam, x, y);
+			v.PointToRay(x, y, ray);
+			t = Selection::TestRay(v.origin, ray, SF_NOFIXEDSIZE);
+			if (!t.brush)
+				return true;
+
+			if (AltDown())
+			{
+				hot = true;
+				SetCapture(vWnd.w_hwnd);
+				lastWrap2 = lastWrap;
+				lastWrap = t.face;
+			}
+			else
+			{
+				CmdTextureApply *cmdTA = new CmdTextureApply();
+				if (wParam & MK_CONTROL && wParam & MK_SHIFT)
+				{
+					// ctrl shift mmb = apply texture and alignment to hit face
+					cmdTA->UseFace(t.face);
+					cmdTA->Apply(g_qeglobals.d_workTexDef);
+				}
+				else if (wParam & MK_SHIFT)
+				{
+					// shift mmb = apply texture to hit face, not alignment
+					cmdTA->UseFace(t.face);
+					cmdTA->Apply(g_qeglobals.d_workTexDef, SFI_ALL - SFI_NAME);
+				}
+				else if (wParam & MK_CONTROL)
+				{
+					// ctrl mmb = apply texture and alignment to entire hit brush
+					cmdTA->UseBrush(t.brush);
+					cmdTA->Apply(g_qeglobals.d_workTexDef);
+				}
+				else
+				{
+					// mmb = sample hit face, apply texture and alignment to to selection
+					UpdateWorkzone(t.brush);
+					g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
+					if (Selection::NumFaces())
+						cmdTA->UseFaces(Selection::faces);
+					else if (Selection::HasBrushes())
+						cmdTA->UseBrushes(&g_brSelectedBrushes);
+
+					cmdTA->Apply(g_qeglobals.d_workTexDef);
+				}
+				g_cmdQueue.Complete(cmdTA);
+			}
+			return true;
+		}
+		return false;
+
+	case WM_MOUSEMOVE:
+		if (!hot)
+			return false;
 		vWnd.GetMsgXY(lParam, x, y);
 		v.PointToRay(x, y, ray);
 		t = Selection::TestRay(v.origin, ray, SF_NOFIXEDSIZE);
 		if (!t.brush)
+			return false;
+
+		if (t.face != lastWrap)
+		{
+			if (t.face != lastWrap2)	// don't wrap back to where we just wrapped from
+			{
+				if (!cmdCmp)
+					cmdCmp = new CmdCompound("Wrap Texture");
+				TexDef td = lastWrap->texdef;
+				Surface::WrapProjection(lastWrap->plane, t.face->plane, td);
+				CmdTextureApply *cmdTA = new CmdTextureApply();
+				cmdTA->UseFace(t.face);
+				cmdTA->Apply(td);
+				cmdCmp->Complete(cmdTA);
+				Sys_UpdateWindows(W_CAMERA);
+			}
+			lastWrap2 = lastWrap;
+			lastWrap = t.face;
 			return true;
-
-		CmdTextureApply *cmdTA = new CmdTextureApply();
-
-		if (wParam & MK_CONTROL && wParam & MK_SHIFT)
-		{
-			// ctrl shift mmb = apply texture and alignment to hit face
-			cmdTA->UseFace(t.face);
-			cmdTA->Apply(g_qeglobals.d_workTexDef);
 		}
-		else if (wParam & MK_SHIFT)
-		{
-			// shift mmb = apply texture to hit face, not alignment
-			cmdTA->UseFace(t.face);
-			cmdTA->Apply(g_qeglobals.d_workTexDef, SFI_ALL - SFI_NAME);
-		}
-		else if (wParam & MK_CONTROL)
-		{
-			// ctrl mmb = apply texture and alignment to entire hit brush
-			cmdTA->UseBrush(t.brush);
-			cmdTA->Apply(g_qeglobals.d_workTexDef);
-		}
-		else
-		{
-			// mmb = sample hit face, apply texture and alignment to to selection
-			UpdateWorkzone(t.brush);
-			g_qeglobals.d_vTexture.ChooseTexture(&t.face->texdef);
-			if (Selection::NumFaces())
-				cmdTA->UseFaces(Selection::faces);
-			else if (Selection::HasBrushes())
-				cmdTA->UseBrushes(&g_brSelectedBrushes);
-
-			cmdTA->Apply(g_qeglobals.d_workTexDef);
-		}
-		g_cmdQueue.Complete(cmdTA);
-		return true;
-
-	/*
-	case WM_MOUSEMOVE:
-		if (!hot) return false;
-		v.PointToRay(x, y, ray);
-		return true;
+		return false;
 
 	case WM_MBUTTONUP:
 		if (!hot) return false;
 		hot = false;
+		lastWrap = nullptr;
+		lastWrap2 = nullptr;
+		if (cmdCmp)
+		{
+			g_cmdQueue.Complete(cmdCmp);
+			cmdCmp = nullptr;
+		}
 		if (!(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON)))
 			ReleaseCapture();
 		return true;
-	*/
+
 	}
 	return false;
 }

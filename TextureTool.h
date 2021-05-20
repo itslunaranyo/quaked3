@@ -6,6 +6,7 @@
 #define __TEXTURE_TOOL_H__
 
 class CmdTextureMod;
+class CmdCompound;
 
 class TextureTool :	public Tool
 {
@@ -24,7 +25,9 @@ public:
 	void RotateTexture(float r);
 private:
 	CmdTextureMod *lastTexMod;
+	CmdCompound *cmdCmp;
 	clock_t lastTexModTime;
+	Face *lastWrap, *lastWrap2;
 
 	void GetTexModCommand(texModType_t tm);
 };

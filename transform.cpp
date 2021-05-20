@@ -3,6 +3,8 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdClone.h"
+#include "CmdCompound.h"
 #include "CmdRotate.h"
 #include "CmdScale.h"
 #include <glm/gtc/matrix_transform.hpp>
@@ -35,14 +37,33 @@ Transform_FlipAxis
 void Transform_FlipAxis(int axis)
 {
 	vec3 scx;
+	CmdCompound *cmdCmpd;
+
 	scx = vec3(1);
 	scx[axis] = -1;
+
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+	{
+		cmdCmpd = new CmdCompound("Clone Mirror");
+		CmdClone *cmdCl = new CmdClone(&g_brSelectedBrushes);
+		Selection::DeselectAll();
+		cmdCmpd->Complete(cmdCl);
+	}
 
 	CmdScale *cmdS = new CmdScale();
 	cmdS->UseBrushes(&g_brSelectedBrushes);
 	cmdS->TextureLock(g_qeglobals.d_bTextureLock);
 	cmdS->Scale(Selection::GetMid(), scx);
-	g_cmdQueue.Complete(cmdS);
+
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+	{
+		cmdCmpd->Complete(cmdS);
+		g_cmdQueue.Complete(cmdCmpd);
+	}
+	else
+	{
+		g_cmdQueue.Complete(cmdS);
+	}
 }
 
 /*
@@ -53,6 +74,7 @@ Transform_RotateAxis
 void Transform_RotateAxis(int axis, float deg, bool bMouse)
 {
 	vec3 rx;
+	CmdCompound *cmdCmpd;
 
 	while (deg >= 360)
 		deg -= 360;
@@ -64,11 +86,28 @@ void Transform_RotateAxis(int axis, float deg, bool bMouse)
 
 	rx[axis] = -1;
 
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+	{
+		cmdCmpd = new CmdCompound("Clone Rotate");
+		CmdClone *cmdCl = new CmdClone(&g_brSelectedBrushes);
+		Selection::DeselectAll();
+		cmdCmpd->Complete(cmdCl);
+	}
+
 	CmdRotate *cmdR = new CmdRotate();
 	cmdR->UseBrushes(&g_brSelectedBrushes);
 	cmdR->TextureLock(g_qeglobals.d_bTextureLock);
 	cmdR->Rotate(deg, Selection::GetMid(), rx);
-	g_cmdQueue.Complete(cmdR);
+
+	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
+	{
+		cmdCmpd->Complete(cmdR);
+		g_cmdQueue.Complete(cmdCmpd);
+	}
+	else
+	{
+		g_cmdQueue.Complete(cmdR);
+	}
 }
 
 /*

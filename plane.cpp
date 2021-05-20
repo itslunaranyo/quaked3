@@ -305,7 +305,7 @@ winding_t *Plane::BasePoly()
 Plane::GetTextureAxis
 ==================
 */
-void Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
+vec3 Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 {
 	int		i, bestaxis;
 	float	dot, best;
@@ -325,5 +325,22 @@ void Plane::GetTextureAxis(vec3 &xv, vec3 &yv)
 
 	xv = g_v3BaseAxis[bestaxis * 3 + 1];
 	yv = g_v3BaseAxis[bestaxis * 3 + 2];
+	return g_v3BaseAxis[bestaxis * 3];
 }
 
+/*
+==================
+Plane::ProjectPointAxial
+==================
+*/
+vec3 Plane::ProjectPointAxial(vec3 &in, vec3 &axis)
+{
+	vec3 out = in;
+	if (fabs(axis[0]) == 1)
+		out[0] = (dist - normal[1] * in[1] - normal[2] * in[2]) / normal[0];
+	else if (fabs(axis[1]) == 1)
+		out[1] = (dist - normal[0] * in[0] - normal[2] * in[2]) / normal[1];
+	else
+		out[2] = (dist - normal[0] * in[0] - normal[1] * in[1]) / normal[2];
+	return out;
+}
