@@ -40,6 +40,8 @@ bool	VectorCompare(const vec3 &v1, const vec3 &v2);
 inline float VectorLength(const vec3 v) { return glm::length(v); }
 inline float DotProduct(const vec3 x, const vec3 y) { return glm::dot(x, y); }
 
+bool	LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2start, const vec3 l2end, vec3 &intersect);
+
 float	VectorNormalize(vec3 &v);
 inline void VectorInverse(vec3 &v) { v = -v; }
 void	VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out);

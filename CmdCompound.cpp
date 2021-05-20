@@ -39,7 +39,7 @@ bool CmdCompound::Complete(Command *cmd)
 {
 	assert(state == NOOP || state == LIVE);
 	if (stalled)
-		Error("tried to add %s to stalled compound cmd", cmd->name);
+		CmdError("tried to add %s to stalled compound cmd", cmd->name);
 
 	if (cmd->state == NOOP)
 	{
@@ -50,10 +50,11 @@ bool CmdCompound::Complete(Command *cmd)
 	try {
 		cmd->Do();
 	}
-	catch (...) {
+	catch (qe3_cmd_exception& ex) {
 		delete cmd;
 		Undo_Impl();	// revert all prior commands if one fails
 		state = NOOP;
+		ReportError(ex);
 		return false;
 	}
 
@@ -108,7 +109,7 @@ void CmdCompound::Redo_Impl()
 		(*cmdIt)->Redo();
 }
 
-void CmdCompound::Select_Impl()
+void CmdCompound::Sel_Impl()
 {
 	for (auto cmdIt = series.begin(); cmdIt != series.end(); ++cmdIt)
 		(*cmdIt)->Select();

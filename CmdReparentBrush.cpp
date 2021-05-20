@@ -31,12 +31,12 @@ void CmdReparentBrush::AddBrush(Brush *br)
 	if (newowner->IsPoint())
 	{
 		state = NOOP;
-		Error("Can't add brushes to a fixed size entity");
+		CmdError("Can't add brushes to a fixed size entity");
 	}
 	if (br->owner->IsPoint())
 	{
 		state = NOOP;
-		Error("Can't reparent a fixed size entity");
+		CmdError("Can't reparent a fixed size entity");
 	}
 
 	reparents.emplace_back(br);

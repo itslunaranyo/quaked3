@@ -19,7 +19,7 @@ void CmdBridge::UseFace(Face *f)
 	assert(state == LIVE || state == NOOP);
 
 	if (f->owner->owner->IsPoint())
-		Error("Can't Bridge a point entity");
+		CmdError("Can't Bridge a point entity");
 	else if (!f->owner->IsHidden())
 		fBridged.push_back(f);
 
@@ -38,7 +38,7 @@ void CmdBridge::Do_Impl()
 {
 	Brush *newbrush = CSG::DoBridge(fBridged);
 	if (!newbrush)
-		Error("Faces could not be Bridged");
+		CmdError("Faces could not be Bridged");
 
 	cmdAR.AddedBrush(newbrush);
 	cmdAR.Do();

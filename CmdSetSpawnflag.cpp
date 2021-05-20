@@ -8,7 +8,7 @@
 CmdSetSpawnflag::CmdSetSpawnflag(int flag, bool val) : newval(val), Command("Set Spawnflag")
 {
 	if (flag < 1 || flag > 32)
-		Error("Spawnflag out of range (valid: 1-32, passed: %i)", flag);
+		CmdError("Spawnflag out of range (valid: 1-32, passed: %i)", flag);
 
 	flagnum = 1 << (flag - 1);
 }

@@ -8,9 +8,9 @@
 CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value) : Command("Set Keyvalue")
 {
 	if (!key[0])
-		Error("No key specified");
+		CmdError("No key specified");
 	if (!strcmp(key, "classname") && !value[0])
-		Error("Cannot delete classname keyvalue (it is important)");
+		CmdError("Cannot delete classname keyvalue (it is important)");
 
 	newKV.key.resize(strlen(key) + 1);
 	newKV.value.resize(strlen(value) + 1);

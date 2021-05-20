@@ -11,7 +11,7 @@ CmdSphere::~CmdSphere() {}
 void CmdSphere::SetSides(int s)
 {
 	if (s < 4)
-		Error("Couldn't create sphere: too few sides (minimum: 4)");
+		CmdError("Couldn't create sphere: too few sides (minimum: 4)");
 
 	sides = s;
 }
@@ -20,7 +20,7 @@ void CmdSphere::SetSides(int s)
 void CmdSphere::UseBrush(Brush *br)
 {
 	if (br->owner->IsPoint())
-		Error("Can't make a cylinder out of a point entity");
+		CmdError("Can't make a cylinder out of a point entity");
 	target = br;
 	state = LIVE;
 }

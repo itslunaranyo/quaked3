@@ -648,7 +648,7 @@ ClipTool::clippoint_t* ClipTool::XYGetNearestClipPoint(XYZView* xyz, int x, int 
 
 	tdp[0] = tdp[1] = tdp[2] = 256;
 
-	xyz->SnapToPoint(x, y, tdp);
+	xyz->ToPoint(x, y, tdp);
 	nDim1 = (xyz->GetAxis() == YZ) ? 1 : 0;
 	nDim2 = (xyz->GetAxis() == XY) ? 1 : 2;
 
@@ -795,7 +795,7 @@ void ClipTool::DrawPoints()
 		sprintf(strMsg, "%i", i);
 		glCallLists(strlen(strMsg), GL_UNSIGNED_BYTE, strMsg);
 	}
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 void ClipTool::DrawClipWire(std::vector<Brush*> *brList)
@@ -808,7 +808,7 @@ void ClipTool::DrawClipWire(std::vector<Brush*> *brList)
 	for (auto brIt = brList->begin(); brIt != brList->end(); ++brIt)
 		for (face = (*brIt)->faces; face; face = face->fnext)
 			face->DrawWire();
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 /*

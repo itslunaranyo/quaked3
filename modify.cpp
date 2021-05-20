@@ -82,20 +82,22 @@ Turn the currently selected entity back into normal brushes
 */
 void Modify::Ungroup()
 {
+	CmdReparentBrush *cmd;
 	try
 	{
-		CmdReparentBrush *cmd = new CmdReparentBrush();
+		cmd = new CmdReparentBrush();
 		cmd->Destination(g_map.world);
 		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
 		{
 			cmd->AddBrush(br);
 		}
-		g_cmdQueue.Complete(cmd);
 	}
-	catch (...)
+	catch (qe3_exception &ex)
 	{
+		ReportError(ex);
 		return;
 	}
+	g_cmdQueue.Complete(cmd);
 	Sys_UpdateWindows(W_SCENE);
 }
 
@@ -124,21 +126,24 @@ void Modify::InsertBrush()
 		Warning("No brush entity selected to add brushes to.");
 		return;
 	}
-
+	
+	CmdReparentBrush *cmd;
 	try
 	{
-		CmdReparentBrush *cmd = new CmdReparentBrush();
+		cmd = new CmdReparentBrush();
 		cmd->Destination(dest);
 		for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
 		{
 			cmd->AddBrush(br);
 		}
-		g_cmdQueue.Complete(cmd);
 	}
-	catch (...)
+	catch (qe3_exception &ex)
 	{
+		ReportError(ex);
 		return;
 	}
+
+	g_cmdQueue.Complete(cmd);
 	Sys_UpdateWindows(W_SCENE);
 }
 // <---sikk
@@ -300,11 +305,12 @@ Modify::SetKeyValue
 void Modify::SetKeyValue(const char *key, const char *value)
 {
 	Entity *last;
-
+	CmdSetKeyvalue *cmd;
 	last = nullptr;
+
 	try
 	{
-		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, value);
+		cmd = new CmdSetKeyvalue(key, value);
 		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 		{
 			// skip entity brushes in sequence
@@ -313,13 +319,14 @@ void Modify::SetKeyValue(const char *key, const char *value)
 			last = b->owner;
 			cmd->AddEntity(last);
 		}
-		g_cmdQueue.Complete(cmd);
 	}
-	catch (...)
+	catch (qe3_exception &ex)
 	{
+		ReportError(ex);
 		return;
 	}
 
+	g_cmdQueue.Complete(cmd);
 	Sys_UpdateWindows(W_SCENE | W_ENTITY);
 }
 
@@ -361,14 +368,12 @@ void Modify::SetKeyValueSeriesNum(const char *key, const char *value, const int 
 			continue;
 		last = b->owner;
 		sprintf(valuesfx, "%s%i", value, sfx++);
-		try
+
+		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
+		cmd->AddEntity(last);
+		if (!cmdCmp->Complete(cmd))
 		{
-			CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
-			cmd->AddEntity(last);
-			cmdCmp->Complete(cmd);
-		}
-		catch (...)
-		{
+			delete cmdCmp;
 			return;
 		}
 	}
@@ -426,14 +431,12 @@ void Modify::SetKeyValueSeriesAlpha(const char *key, const char *value, const ch
 		}
 		sprintf(valuesfx, "%s%s", value, szSfx);
 		sfx++;
-		try
+
+		CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
+		cmd->AddEntity(last);
+		if (!cmdCmp->Complete(cmd))
 		{
-			CmdSetKeyvalue *cmd = new CmdSetKeyvalue(key, valuesfx);
-			cmd->AddEntity(last);
-			cmdCmp->Complete(cmd);
-		}
-		catch (...)
-		{
+			delete cmdCmp;
 			return;
 		}
 	}

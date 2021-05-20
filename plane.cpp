@@ -27,6 +27,11 @@ Plane::Plane() : dist(0), normal(0)
 {
 }
 
+bool Plane::PointOn(const vec3 &pt)
+{
+	return (fabs(DotProduct(pt, normal) - dist) < ON_EPSILON);
+}
+
 /*
 =============
 Plane::EqualTo

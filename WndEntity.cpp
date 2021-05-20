@@ -781,23 +781,16 @@ void WndEntity::FlagChecked(int flag)
 	Entity *last;
 
 	last = nullptr;
-	try
+	CmdSetSpawnflag *cmd = new CmdSetSpawnflag(flag, on);
+	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
 	{
-		CmdSetSpawnflag *cmd = new CmdSetSpawnflag(flag, on);
-		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
-		{
-			// skip entity brushes in sequence
-			if (b->owner == last)
-				continue;
-			last = b->owner;
-			cmd->AddEntity(last);
-		}
-		g_cmdQueue.Complete(cmd);
+		// skip entity brushes in sequence
+		if (b->owner == last)
+			continue;
+		last = b->owner;
+		cmd->AddEntity(last);
 	}
-	catch (...)
-	{
-		return;
-	}
+	if (!g_cmdQueue.Complete(cmd)) return;
 
 	Sys_UpdateWindows(W_SCENE|W_ENTITY);
 }

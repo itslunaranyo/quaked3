@@ -3,6 +3,7 @@
 //==============================
 
 #include "qe3.h"
+#include "CmdPolyBrushConcave.h"
 
 #define	SPEED_MOVE	32.0f
 #define	SPEED_TURN	22.5f
@@ -10,10 +11,20 @@
 qeglobals_t	g_qeglobals;
 qeConfig	g_qeconfig;
 
-// it can test aaanything you want
+// it can test aaanything you want just press PEE
 void QE_TestSomething()
 {
+	CmdPolyBrushConcave cmdPBC;
+	std::vector<vec3> plist;
 
+	plist.emplace_back(0, 0, 0);
+	plist.emplace_back(1, 1.5, 0);
+	plist.emplace_back(-1, 1.5, 0);
+	plist.emplace_back(-2, 0, 0);
+	plist.emplace_back(-1, -1.5, 0);
+	plist.emplace_back(1, -1.5, 0);
+
+	cmdPBC.SetPoints(plist);
 }
 
 
@@ -313,7 +324,7 @@ bool QE_KeyDown (int key)
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_GRID_256, 0);
 		break;
 	case 'B':
-		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_BRUSH_CYLINDER, 0);
+		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_TOOLS_DRAWBRUSHESTOOL, 0);
 		break;
 	case 'E':
 		PostMessage(g_qeglobals.d_hwndMain, WM_COMMAND, ID_SELECTION_DRAGEDGES, 0);
@@ -944,6 +955,10 @@ void QE_UpdateCommandUI ()
 		modeCheck = (gt && (gt->mode & GeoTool::GT_FACE));
 		CheckMenuItem(hMenu, ID_SELECTION_DRAGFACES, modeCheck ? MF_CHECKED : MF_UNCHECKED);
 		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_SELECTION_DRAGFACES, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
+
+		modeCheck = (dynamic_cast<PolyTool*>(Tool::ModalTool()) != nullptr);
+		CheckMenuItem(hMenu, ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? MF_CHECKED : MF_UNCHECKED));
+		SendMessage(g_qeglobals.d_hwndToolbar[5], TB_CHECKBUTTON, (WPARAM)ID_TOOLS_DRAWBRUSHESTOOL, (modeCheck ? (LPARAM)TRUE : (LPARAM)FALSE));
 	}
 
 	// Scale Lock X

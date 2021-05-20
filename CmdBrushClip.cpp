@@ -66,7 +66,7 @@ void CmdBrushClip::SetSide(clipside s)
 void CmdBrushClip::CreateSplitLists()
 {
 	if (!pointsSet)
-		Error("Tried to 3-point clip without 3 points");
+		CmdError("Tried to 3-point clip without 3 points");
 
 	ClearSplitLists();
 

@@ -768,16 +768,19 @@ bool Entity::Create (EntClass *ecIn)
 			return true;
 		}
 
+		CmdCreateBrushEntity *cmd;
 		try
 		{
-			CmdCreateBrushEntity *cmd = new CmdCreateBrushEntity(ecIn->name);
+			cmd = new CmdCreateBrushEntity(ecIn->name);
 			cmd->AddBrushes(&g_brSelectedBrushes);
-			g_cmdQueue.Complete(cmd);
 		}
-		catch (...)
+		catch (qe3_cmd_exception &ex)
 		{
+			ReportError(ex);
+			delete cmd;
 			return false;
 		}
+		g_cmdQueue.Complete(cmd);
 	}
 	else
 	{

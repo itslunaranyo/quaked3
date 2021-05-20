@@ -135,6 +135,27 @@ void Command::Select()
 	Selection::Changed();
 }
 
+/*
+==================
+Command::CmdError
+
+any error in configuration or other malformed input to a command object is
+signalled by throwing a qe3_cmd_exception up to the encapsulating tool or
+script editor
+==================
+*/
+void Command::CmdError(char * error, ...)
+{
+	va_list argptr;
+	char	text[1024];
+
+	va_start(argptr, error);
+	vsprintf(text, error, argptr);
+	va_end(argptr);
+
+	throw qe3_cmd_exception(text);
+}
+
 
 // ========================================================================
 
@@ -161,7 +182,7 @@ bool CommandQueue::Complete(Command *cmd)
 	{
 		// dead command that produces no changes in the scene, throw it away
 #ifdef _DEBUG
-		Sys_Printf("command already a noop, deleting\n");
+		Sys_Printf("DEBUG: command already a noop, deleting\n");
 #endif
 		delete cmd;
 		return true;
@@ -171,15 +192,16 @@ bool CommandQueue::Complete(Command *cmd)
 	try {
 		cmd->Do();
 	}
-	catch (...)	{
+	catch (qe3_cmd_exception &ex)	{
 		delete cmd;
+		ReportError(ex);
 		return false;
 	}
 
 	if (cmd->state == Command::NOOP)
 	{
 #ifdef _DEBUG
-		Sys_Printf("noop command after do, deleting\n");
+		Sys_Printf("DEBUG: noop command after do, deleting\n");
 #endif
 		delete cmd;
 		return true;

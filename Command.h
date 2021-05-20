@@ -36,6 +36,8 @@ public:
 	virtual int EntityDelta() { return 0; };
 
 protected:
+	void CmdError(char *error, ...);
+
 	bool selectOnDo;
 	bool selectOnUndo;
 	virtual void Do_Impl() { return; }

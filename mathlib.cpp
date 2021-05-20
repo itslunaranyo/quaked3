@@ -43,6 +43,27 @@ float VectorNormalize(vec3 &v)
 	return l;
 }
 
+static float Cross2D(const vec3 a, const vec3 b) { return (a[0] * b[1] - a[1] * b[0]); }
+
+bool LineSegmentIntersect2D(const vec3 l1start, const vec3 l1end, const vec3 l2start, const vec3 l2end, vec3 &intersect)
+{
+	float t, u;
+	vec3 l1v, l2v;
+
+	l1v = l1end - l1start;
+	l2v = l2end - l2start;
+
+	t = Cross2D((l2start - l1start), l2v) / Cross2D(l1v, l2v);
+	u = Cross2D((l1start - l2start), l1v) / Cross2D(l2v, l1v);
+
+	if ((0 <= t && t <= 1) && (0 <= u && u <= 1))
+	{
+		intersect = l1start + l1v * t;
+		return true;
+	}
+	return false;
+}
+
 void VectorRotate(const vec3 vIn, const vec3 vRotation, vec3 &out)
 {
 	vec3	vWork, va;

@@ -91,7 +91,7 @@ void CmdGeoMod::SetBrushes(std::vector<Brush*>& brList)
 void CmdGeoMod::SetPoint(Brush* br, const vec3 pt)
 {
 	if (brMods.empty())
-		Error("Specified brush not set");
+		CmdError("Specified brush not set");
 
 	assert(modState == NOTHING_DONE || modState == BRUSHES_DONE);
 	if (modState == NOTHING_DONE)
@@ -109,7 +109,7 @@ void CmdGeoMod::SetPoint(Brush* br, const vec3 pt)
 		++svert;
 	}
 	if (svert == vertMaster.end())
-		Error("Point not on brush geometry (%f %f %f)", pt.x, pt.y, pt.z);
+		CmdError("Point not on brush geometry (%f %f %f)", pt.x, pt.y, pt.z);
 
 	vec3 *vStat, *vDyn;
 	vStat = &*svert;
@@ -121,7 +121,7 @@ void CmdGeoMod::SetPoint(Brush* br, const vec3 pt)
 void CmdGeoMod::SetPoints(Brush* br, const std::vector<vec3> &pts)
 {
 	if (brMods.empty())
-		Error("Specified brush not set");
+		CmdError("Specified brush not set");
 
 	assert(modState == NOTHING_DONE || modState == BRUSHES_DONE);
 	if (modState == NOTHING_DONE)
@@ -141,7 +141,7 @@ void CmdGeoMod::SetPoints(Brush* br, const std::vector<vec3> &pts)
 			++svert;
 		}
 		if (svert == vertMaster.end())
-			Error("Point not on brush geometry (%f %f %f)", p.x, p.y, p.z);
+			CmdError("Point not on brush geometry (%f %f %f)", p.x, p.y, p.z);
 
 		vec3 *vStat, *vDyn;
 		vStat = &*svert;
@@ -154,7 +154,7 @@ void CmdGeoMod::SetPoints(Brush* br, const std::vector<vec3> &pts)
 void CmdGeoMod::SetPoint(const vec3 pt, const std::vector<Brush*>& brList)
 {
 	if (brMods.empty())
-		Error("Specified brush not set");
+		CmdError("Specified brush not set");
 
 	assert(modState == NOTHING_DONE || modState == BRUSHES_DONE);
 	if (modState == NOTHING_DONE)
@@ -170,7 +170,7 @@ void CmdGeoMod::SetPoint(const vec3 pt, const std::vector<Brush*>& brList)
 		++svert;
 	}
 	if (svert == vertMaster.end())
-		Error("Point not on brush geometry (%f %f %f)", p.x, p.y, p.z);
+		CmdError("Point not on brush geometry (%f %f %f)", p.x, p.y, p.z);
 
 	vec3 *vStat, *vDyn;
 	vStat = &*svert;
@@ -190,7 +190,7 @@ CmdGeoMod::Mesh *CmdGeoMod::EnsureMesh(Brush *br)
 	// a vector realloc would mess that up
 	auto brMod = std::find(brMods.begin(), brMods.end(), br);
 	if (brMod == brMods.end())
-		Error("Specified brush not set");
+		CmdError("Specified brush not set");
 
 	auto bmIt = brushMeshes.begin();
 	for (bmIt; bmIt != brushMeshes.end(); ++bmIt)
@@ -207,7 +207,7 @@ void CmdGeoMod::FinalizeBrushList()
 {
 	assert(modState == NOTHING_DONE);
 	if (brMods.empty())
-		Error("No brushes specified for geometry mod!");
+		CmdError("No brushes specified for geometry mod!");
 
 	Face* f;
 	std::vector<vec3> allverts;
@@ -796,7 +796,7 @@ void CmdGeoMod::Redo_Impl()
 	cmdBM.Redo();
 }
 
-void CmdGeoMod::Select_Impl()
+void CmdGeoMod::Sel_Impl()
 {
 	cmdBM.Select();
 }

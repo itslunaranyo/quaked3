@@ -17,9 +17,9 @@ CmdPaste::CmdPaste() : Command("Paste")
 void CmdPaste::Do_Impl()
 {
 	if (!IsClipboardFormatAvailable(CF_TEXT))
-		Error("Couldn't paste from clipboard");
+		CmdError("Couldn't paste from clipboard");
 	if (!OpenClipboard(g_qeglobals.d_hwndMain))
-		Error("Couldn't paste from clipboard");
+		CmdError("Couldn't paste from clipboard");
 
 	HGLOBAL hglb;
 	char*	cbdata;
@@ -29,7 +29,7 @@ void CmdPaste::Do_Impl()
 	if (!hglb)
 	{
 		CloseClipboard();
-		Error("Couldn't paste from clipboard");
+		CmdError("Couldn't paste from clipboard");
 	}
 
 	cbdata = (char*)GlobalLock(hglb);
@@ -37,7 +37,7 @@ void CmdPaste::Do_Impl()
 	{
 		GlobalUnlock(hglb);
 		CloseClipboard();
-		Error("Couldn't paste from clipboard");
+		CmdError("Couldn't paste from clipboard");
 	}
 
 

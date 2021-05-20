@@ -11,7 +11,7 @@ CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Cre
 	selectOnUndo = true;
 	modifiesSelection = true;
 	if (!strcmp(classname, "worldspawn"))
-		Error("Cannot create a new worldspawn entity.");
+		CmdError("Cannot create a new worldspawn entity.");
 
 	EntClass *ec = EntClass::ForName(classname, true, false);
 	ent = new Entity();

@@ -30,7 +30,7 @@ void CmdImportMap::Do_Impl()
 	Entity elist;
 
 	if (!filename.size() || filename[0] == 0)
-		Error("No filename specified for import");
+		CmdError("No filename specified for import");
 
 	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
 	if (g_qeglobals.bGridSnap)

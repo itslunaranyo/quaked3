@@ -848,44 +848,7 @@ HWND CreateStatusBar (HWND hWnd)
 ===============================================================
 */
 
-/*
-==============
-CreateReBar
-==============
-*/
-HWND CreateReBar (HWND hWnd, HINSTANCE hInst)
-{
-	HWND		hwndRB;
-	REBARINFO	rbi;
-	INITCOMMONCONTROLSEX icex;
 
-	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-	icex.dwICC	= ICC_COOL_CLASSES | ICC_BAR_CLASSES;
-	InitCommonControlsEx(&icex);
-
-	hwndRB = CreateWindowEx(
-		WS_EX_TOOLWINDOW,	// extended window style
-		REBARCLASSNAME,		// registered class name
-		NULL,				// window name
-		QE3_REBAR_STYLE,	// window style
-		0, 0, 0, 0,			// window position and size
-		hWnd,				// parent or owner window
-		(HMENU)ID_REBAR,	// menu or child-window identifier
-		hInst,				// application instance
-		NULL);				// window-creation data
-
-	if(!hwndRB)
-		return NULL;
-
-	// Initialize and send the REBARINFO structure.
-	rbi.cbSize	= sizeof(REBARINFO);	// Required when using this struct.
-	rbi.fMask	= 0;
-	rbi.himl	= (HIMAGELIST)NULL;
-	if(!SendMessage(hwndRB, RB_SETBARINFO, 0, (LPARAM)&rbi))
-		return NULL;
-
-	return (hwndRB);
-}
 
 #define NUMBUTTONS 66
 
@@ -894,12 +857,13 @@ HWND CreateReBar (HWND hWnd, HINSTANCE hInst)
 CreateToolBar
 ==============
 */
-HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButtons, int nSize)
+HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButtons)
 { 
 	HWND			hwndTB; 
 	//TBBUTTON		tbb[NUMBUTTONS];
 	REBARBANDINFO	rbBand;
 	DWORD			dwBtnSize;
+	int				barSize;
 
 	// Ensure that the common control DLL is loaded. 
 	InitCommonControls(); 
@@ -912,78 +876,81 @@ HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButto
 		{ 1, ID_FILE_OPEN, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 2, ID_FILE_SAVE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 3, ID_FILE_SAVEAS, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
-		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
+		//{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
+		//{ 4, ID_FILE_PRINTXY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 
-		{ 4, ID_FILE_PRINTXY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
-		{ 5, ID_HELP_ABOUT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 6, ID_EDIT_CUT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 7, ID_EDIT_COPY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 8, ID_EDIT_PASTE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 9, ID_SELECTION_CLONE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 10, ID_SELECTION_INVERT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 11, ID_SELECTION_DELETE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 12, ID_EDIT_UNDO, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 13, ID_EDIT_REDO, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 14, ID_EDIT_FINDBRUSH, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 15, ID_EDIT_PREFERENCES, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 16, ID_EDIT_MAPINFO, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 17, ID_EDIT_ENTITYINFO, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 18, ID_SELECTION_FLIPX, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 19, ID_SELECTION_ROTATEX, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 20, ID_SELECTION_FLIPY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 21, ID_SELECTION_ROTATEY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 22, ID_SELECTION_FLIPZ, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 23, ID_SELECTION_ROTATEZ, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 24, ID_SELECTION_SELECTCOMPLETETALL, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 25, ID_SELECTION_SELECTTOUCHING, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 26, ID_SELECTION_SELECTPARTIALTALL, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 27, ID_SELECTION_SELECTINSIDE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 28, ID_SELECTION_CSGHOLLOW, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 29, ID_SELECTION_CSGSUBTRACT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 30, ID_SELECTION_CSGMERGE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
+		{ 58, ID_TOOLS_DRAWBRUSHESTOOL, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 31, ID_SELECTION_CLIPPER, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 32, ID_SELECTION_DRAGEDGES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 33, ID_SELECTION_DRAGVERTICES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 57, ID_SELECTION_DRAGFACES, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
-		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
 
-		{ 34, ID_SELECTION_SCALELOCKX, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
-		{ 35, ID_SELECTION_SCALELOCKY, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
-		{ 36, ID_SELECTION_SCALELOCKZ, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
+	//	{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
+	//	{ 34, ID_SELECTION_SCALELOCKX, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
+	//	{ 35, ID_SELECTION_SCALELOCKY, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
+	//	{ 36, ID_SELECTION_SCALELOCKZ, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
+
 		{ 37, ID_SELECTION_UNGROUPENTITY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 38, ID_SELECTION_CONNECT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 39, ID_SELECTION_GROUPNEXTBRUSH, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 40, ID_BRUSH_CYLINDER, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 41, ID_BRUSH_CONE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 42, ID_BRUSH_SPHERE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 43, ID_TEXTURES_REPLACEALL, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 44, ID_TEXTURES_INSPECTOR, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 45, ID_VIEW_CONSOLE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 46, ID_VIEW_ENTITY, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 47, ID_VIEW_TEXTURE, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 48, ID_VIEW_NEXTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 49, ID_VIEW_CENTERONSELECTION, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 50, ID_TEXTURES_POPUP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0 },
-
 		{ 51, ID_VIEW_CAMSPEED, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 52, ID_VIEW_CUBICCLIP, TBSTATE_ENABLED, TBSTYLE_CHECK, 0, 0 },
 		{ 53, ID_VIEW_CUBICCLIPZOOMOUT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
 		{ 54, ID_VIEW_CUBICCLIPZOOMIN, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+
 		{ 55, ID_MISC_TESTMAP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
-		{ 56, ID_HELP_HELP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 }
+		{ 56, ID_HELP_HELP, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 },
+		{ 5, ID_HELP_ABOUT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, 0 }
 	};
 
 	/*
@@ -1023,6 +990,15 @@ HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButto
 	// Get the height of the toolbar buttons.
 	dwBtnSize = SendMessage(hwndTB, TB_GETBUTTONSIZE, 0, 0);
 
+	barSize = 4;
+	for (int i = 0; i < nButtons; i++)
+	{
+		if (tbbtns[nPos + i].fsStyle == TBSTYLE_SEP)
+			barSize += 10;
+		else
+			barSize += HIWORD(dwBtnSize); // 22
+	}
+
 	// Initialize REBARBANDINFO for all coolbar bands.
 	rbBand.cbSize = REBARBANDINFO_V3_SIZE;// sizeof(REBARBANDINFO);
 	rbBand.fMask  = RBBIM_STYLE |		// fStyle is valid
@@ -1033,10 +1009,10 @@ HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButto
 					RBBIM_ID;			// wID is valid
 	rbBand.fStyle		= RBBS_CHILDEDGE | RBBS_GRIPPERALWAYS;
 	rbBand.hwndChild	= hwndTB;
-	rbBand.cxMinChild	= nSize;
+	rbBand.cxMinChild	= barSize;
 	rbBand.cyMinChild	= HIWORD(dwBtnSize);
-	rbBand.cx			= nSize;
-	rbBand.cxIdeal		= nSize;
+	rbBand.cx			= barSize;
+	rbBand.cxIdeal		= barSize;
 	rbBand.wID			= ID_TOOLBAR + nIndex;
 
 	// Insert band into rebar.
@@ -1045,6 +1021,69 @@ HWND CreateToolBar (HWND hWnd, HINSTANCE hInst, int nIndex, int nPos, int nButto
 		return NULL;
 	}
 	return hwndTB; 
+}
+
+/*
+==============
+CreateReBar
+==============
+*/
+HWND CreateReBar(HWND hWnd, HINSTANCE hInst)
+{
+	HWND		hwndRB;
+	REBARINFO	rbi;
+	INITCOMMONCONTROLSEX icex;
+
+	icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icex.dwICC = ICC_COOL_CLASSES | ICC_BAR_CLASSES;
+	InitCommonControlsEx(&icex);
+
+	hwndRB = CreateWindowEx(
+		WS_EX_TOOLWINDOW,	// extended window style
+		REBARCLASSNAME,		// registered class name
+		NULL,				// window name
+		QE3_REBAR_STYLE,	// window style
+		0, 0, 0, 0,			// window position and size
+		hWnd,				// parent or owner window
+		(HMENU)ID_REBAR,	// menu or child-window identifier
+		hInst,				// application instance
+		NULL);				// window-creation data
+
+	if (!hwndRB)
+		return NULL;
+
+	// Initialize and send the REBARINFO structure.
+	rbi.cbSize = sizeof(REBARINFO);	// Required when using this struct.
+	rbi.fMask = 0;
+	rbi.himl = (HIMAGELIST)NULL;
+	if (!SendMessage(hwndRB, RB_SETBARINFO, 0, (LPARAM)&rbi))
+		return NULL;
+
+	int tbSizes[11] = { 4, 16, 6, 4, 3, 5, 3, 3, 2, 13, 3 };
+	int offset = 0;
+	for (int i = 0; i < 11; i++)
+	{
+		g_qeglobals.d_hwndToolbar[i] = CreateToolBar(hwndRB, hInst, i, offset, tbSizes[i]);
+		offset += tbSizes[i];
+	}
+	/*
+	g_qeglobals.d_hwndToolbar[0] = CreateToolBar(hwndRB, hInst, 0, 0, 7, 146);
+	g_qeglobals.d_hwndToolbar[1] = CreateToolBar(hwndRB, hInst, 1, 7, 16, 308);
+	g_qeglobals.d_hwndToolbar[2] = CreateToolBar(hwndRB, hInst, 2, 23, 6, 144);
+	g_qeglobals.d_hwndToolbar[3] = CreateToolBar(hwndRB, hInst, 3, 29, 4, 96);
+	g_qeglobals.d_hwndToolbar[4] = CreateToolBar(hwndRB, hInst, 4, 33, 3, 72);
+	g_qeglobals.d_hwndToolbar[5] = CreateToolBar(hwndRB, hInst, 5, 36, 5, 114);
+	g_qeglobals.d_hwndToolbar[6] = CreateToolBar(hwndRB, hInst, 6, 45, 3, 72);
+	g_qeglobals.d_hwndToolbar[7] = CreateToolBar(hwndRB, hInst, 7, 48, 3, 72);
+	g_qeglobals.d_hwndToolbar[8] = CreateToolBar(hwndRB, hInst, 8, 51, 2, 48);
+	g_qeglobals.d_hwndToolbar[9] = CreateToolBar(hwndRB, hInst, 9, 53, 13, 256);
+	g_qeglobals.d_hwndToolbar[10] = CreateToolBar(hwndRB, hInst, 10, 66, 2, 48);
+	*/
+	/*
+	g_qeglobals.d_hwndRebar = CreateToolBar(g_qeglobals.d_hwndMain, hInstance, 0, 0, 0, 0);
+	*/
+
+	return (hwndRB);
 }
 
 /*
@@ -1695,6 +1734,13 @@ LONG WINAPI CommandHandler (
 				delete g_qeglobals.d_tools.back();
 			else
 				new ClipTool();
+			break;
+
+		case ID_TOOLS_DRAWBRUSHESTOOL:
+			if (dynamic_cast<PolyTool*>(g_qeglobals.d_tools.back()))
+				delete g_qeglobals.d_tools.back();
+			else
+				new PolyTool();
 			break;
 
 		case ID_SELECTION_CONNECT:
@@ -2351,22 +2397,7 @@ void WMain_Create ()
 
 	LoadWindowState(g_qeglobals.d_hwndMain, "MainWindow");
 
-	g_qeglobals.d_hwndRebar			= CreateReBar(g_qeglobals.d_hwndMain, hInstance);
-	g_qeglobals.d_hwndToolbar[0]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 0, 0, 7, 146);
-	g_qeglobals.d_hwndToolbar[1]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 1, 7, 16, 308);
-	g_qeglobals.d_hwndToolbar[2]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 2, 23, 6, 144);
-	g_qeglobals.d_hwndToolbar[3]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 3, 29, 4, 96);
-	g_qeglobals.d_hwndToolbar[4]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 4, 33, 3, 72);
-	g_qeglobals.d_hwndToolbar[5]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 5, 36, 4, 90);
-	//g_qeglobals.d_hwndToolbar[5]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 5, 36, 7, 148);
-	g_qeglobals.d_hwndToolbar[6]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 6, 44, 3, 72);
-	g_qeglobals.d_hwndToolbar[7]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 7, 47, 3, 72);
-	g_qeglobals.d_hwndToolbar[8]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 8, 50, 2, 48);
-	g_qeglobals.d_hwndToolbar[9]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 9, 52, 13, 256);
-	g_qeglobals.d_hwndToolbar[10]	= CreateToolBar(g_qeglobals.d_hwndRebar, hInstance, 10, 65, 2, 48);
-	/*
-	g_qeglobals.d_hwndRebar = CreateToolBar(g_qeglobals.d_hwndMain, hInstance, 0, 0, 0, 0);
-	*/
+	g_qeglobals.d_hwndRebar		= CreateReBar(g_qeglobals.d_hwndMain, hInstance);
 	g_qeglobals.d_hwndStatus	= CreateStatusBar(g_qeglobals.d_hwndMain);
 
 	// load misc info from registry
@@ -2627,8 +2658,14 @@ int WINAPI WinMain (
 					// sikk - We don't want QE3 to handle accelerator shortcuts when editing text in the Entity & Console Windows
 					if (!TranslateAccelerator(g_qeglobals.d_hwndMain, accelerators, &msg))
 					{
-						TranslateMessage(&msg);
-						DispatchMessage(&msg);
+						try {
+							TranslateMessage(&msg);
+							DispatchMessage(&msg);
+						}
+						catch (qe3_exception &ex)
+						{
+							ReportError(ex);
+						}
 					}
 				}
 

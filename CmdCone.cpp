@@ -11,10 +11,10 @@ CmdCone::~CmdCone() {}
 void CmdCone::SetSides(int s)
 {
 	if (s < 3)
-		Error("Couldn't create cone: too few sides (minimum: 3)");
+		CmdError("Couldn't create cone: too few sides (minimum: 3)");
 
 	if (s >= MAX_POINTS_ON_WINDING - 4)
-		Error("Couldn't create cone: too many sides (maximum: %i)", MAX_POINTS_ON_WINDING - 4);
+		CmdError("Couldn't create cone: too many sides (maximum: %i)", MAX_POINTS_ON_WINDING - 4);
 
 	sides = s;
 }
@@ -22,7 +22,7 @@ void CmdCone::SetSides(int s)
 void CmdCone::SetAxis(int ax)
 {
 	if (ax < 0 || ax > 2)
-		Error("Bad axis specified (%i)", ax);
+		CmdError("Bad axis specified (%i)", ax);
 
 	axis = ax;
 }
@@ -30,7 +30,7 @@ void CmdCone::SetAxis(int ax)
 void CmdCone::UseBrush(Brush *br)
 {
 	if (br->owner->IsPoint())
-		Error("Can't make a cone out of a point entity");
+		CmdError("Can't make a cone out of a point entity");
 	target = br;
 	state = LIVE;
 }

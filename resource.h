@@ -229,7 +229,6 @@
 #define IDC_TEXREPLACE_SAMPLE           1319
 #define IDC_EDIT_SETKVKEY               1320
 #define IDC_EDIT_SETKVVALUE             1321
-#define IDC_CHECK1                      1322
 #define IDC_CHECK_SETKVINCR             1322
 #define IDC_EDIT_SETKVSTART             1324
 #define ID_FILE_EXIT                    40002
@@ -484,13 +483,14 @@
 #define ID_FILTER_SHOWDEATHMATCH        40471
 #define ID_TOOLS_SETENTITYKEY           40472
 #define ID_TOOLS_SETENTITYKEYS          40473
+#define ID_TOOLS_DRAWBRUSHESTOOL        40474
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        200
-#define _APS_NEXT_COMMAND_VALUE         40474
+#define _APS_NEXT_COMMAND_VALUE         40475
 #define _APS_NEXT_CONTROL_VALUE         1323
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

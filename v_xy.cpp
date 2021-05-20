@@ -171,6 +171,9 @@ void const XYZView::ToGridPoint(const int xIn, const int yIn, int &xOut, int &yO
 /*
 ==================
 XYZView::SnapToPoint
+
+lunaran TODO: return bool on all these snapTo functions to throw back a false
+if the point snapped didn't actually move (ie was snapped to own position)
 ==================
 */
 void const XYZView::SnapToPoint (const int x, const int y, vec3 &point)

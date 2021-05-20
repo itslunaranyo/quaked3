@@ -49,6 +49,8 @@ void Textures::Init()
 
 	// prepare null texture
 	MakeNullTexture();
+	if (!g_qeglobals.d_workTexDef.tex)
+		g_qeglobals.d_workTexDef.Set(nulltexture);
 
 	// create solid color group
 	strcpy(group_solid.name, "*solid");

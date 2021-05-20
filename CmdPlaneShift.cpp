@@ -11,7 +11,7 @@ CmdPlaneShift::~CmdPlaneShift() {}
 void CmdPlaneShift::SetFaces(std::vector<Face*> &faceList)
 {
 	if (fShifted.size())
-		Error("Faces already set on CmdPlaneShift");	// one time operation
+		CmdError("Faces already set on CmdPlaneShift");	// one time operation
 	assert(planeShift == vec3(0));	// faces before translate
 
 	// filter out duplicates now
@@ -99,7 +99,7 @@ void CmdPlaneShift::Do_Impl()
 void CmdPlaneShift::Undo_Impl() { cmdFM.Undo(); }
 void CmdPlaneShift::Redo_Impl() { cmdFM.Redo(); }
 
-void CmdPlaneShift::Select_Impl()
+void CmdPlaneShift::Sel_Impl()
 {
 	for (auto bcIt = bChanged.begin(); bcIt != bChanged.end(); ++bcIt)
 		Selection::HandleBrush(*bcIt, false);

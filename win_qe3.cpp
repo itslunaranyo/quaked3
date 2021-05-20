@@ -22,7 +22,6 @@ HCURSOR	g_hcursorWait;
 
 char	g_qeAppName[64];
 char	g_qePath[MAX_PATH];
-bool	g_bWarningOrError;
 
 //===========================================
 
@@ -286,47 +285,6 @@ void PrintPixels (HDC hDC)
 //==========================================================================
 
 
-
-/*
-=================
-Warning
-=================
-*/
-void Warning(char *warning, ...)
-{
-	va_list argptr;
-	char	text[1024];
-
-	va_start(argptr, warning);
-	vsprintf(text, warning, argptr);
-	va_end(argptr);
-
-	Sys_Printf("WARNING: %s\n", text);
-	g_bWarningOrError = true;
-}
-
-/*
-=================
-Error
-
-For abnormal program terminations
-=================
-*/
-void Error (char *error, ...)
-{
-	va_list argptr;
-	char	text[1024];
-//	char	text2[1024];
-//	int		err;
-
-	va_start(argptr,error);
-	vsprintf(text, error, argptr);
-	va_end(argptr);
-
-	Sys_Printf("ERROR: %s\n", text);
-	g_bWarningOrError = true;
-	throw std::exception(text);
-}
 
 /*
 ======================================================================

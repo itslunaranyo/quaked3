@@ -171,9 +171,7 @@ BEGIN
     END
     POPUP "&Tools",                         65535,MFT_STRING,MFS_ENABLED
     BEGIN
-        MENUITEM "Drag &Edges\tE",              ID_SELECTION_DRAGEDGES,MFT_STRING,MFS_ENABLED
-        MENUITEM "Drag &Vertices\tV",           ID_SELECTION_DRAGVERTICES,MFT_STRING,MFS_ENABLED
-        MENUITEM "Drag &Faces\tF",              ID_SELECTION_DRAGFACES,MFT_STRING,MFS_ENABLED
+        MENUITEM "Draw &Brushes Tool\tB",       ID_TOOLS_DRAWBRUSHESTOOL,MFT_STRING,MFS_ENABLED
         POPUP "&Clipper",                       65535,MFT_STRING,MFS_ENABLED
         BEGIN
             MENUITEM "&Toggle Clipper\tX",          ID_SELECTION_CLIPPER,MFT_STRING,MFS_ENABLED
@@ -182,6 +180,10 @@ BEGIN
             MENUITEM "&Split Selection\tShift+Enter", ID_SELECTION_SPLITSELECTED,MFT_STRING,MFS_ENABLED
             MENUITEM "&Flip Clip Orientation\tCtrl+Enter", ID_SELECTION_FLIPCLIP,MFT_STRING,MFS_ENABLED
         END
+        MENUITEM MFT_SEPARATOR
+        MENUITEM "Drag &Edges\tE",              ID_SELECTION_DRAGEDGES,MFT_STRING,MFS_ENABLED
+        MENUITEM "Drag &Vertices\tV",           ID_SELECTION_DRAGVERTICES,MFT_STRING,MFS_ENABLED
+        MENUITEM "Drag &Faces\tF",              ID_SELECTION_DRAGFACES,MFT_STRING,MFS_ENABLED
         MENUITEM MFT_SEPARATOR
         MENUITEM "&Select Entity Color...\tK",  ID_MISC_SELECTENTITYCOLOR,MFT_STRING,MFS_ENABLED
         MENUITEM "Se&t Entity Key/Values...",   ID_TOOLS_SETENTITYKEYS,MFT_STRING,MFS_ENABLED
@@ -221,8 +223,8 @@ BEGIN
         MENUITEM MFT_SEPARATOR
         POPUP "&Primitives",                    65535,MFT_STRING,MFS_ENABLED
         BEGIN
-            MENUITEM "Czg Cylinder (&12)\tB",       ID_PRIMITIVES_CZGCYLINDER1,MFT_STRING,MFS_ENABLED
-            MENUITEM "Czg Cylinder (&24)\tCtrl+B",  ID_PRIMITIVES_CZGCYLINDER2,MFT_STRING,MFS_ENABLED
+            MENUITEM "Czg Cylinder (&12)",          ID_PRIMITIVES_CZGCYLINDER1,MFT_STRING,MFS_ENABLED
+            MENUITEM "Czg Cylinder (&24)",          ID_PRIMITIVES_CZGCYLINDER2,MFT_STRING,MFS_ENABLED
             MENUITEM MFT_SEPARATOR
             MENUITEM "&Cylinder...",                ID_BRUSH_CYLINDER,MFT_STRING,MFS_ENABLED
             MENUITEM "C&one...",                    ID_BRUSH_CONE,MFT_STRING,MFS_ENABLED
@@ -1040,8 +1042,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,44,0
- PRODUCTVERSION 3,2,44,0
+ FILEVERSION 3,2,45,0
+ PRODUCTVERSION 3,2,45,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1058,14 +1060,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 44)"
-            VALUE "FileVersion", "3.2.44.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 44)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 45)"
+            VALUE "FileVersion", "3.2.45.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 45)"
             VALUE "LegalCopyright", "Copyright © 1997-2018"
             VALUE "LegalTrademarks", "Quake™ 1996-2018"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.44.0"
+            VALUE "ProductVersion", "3.2.45.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1267,7 +1269,7 @@ BEGIN
     BUTTON      ID_HELP_HELP
     SEPARATOR
     BUTTON      ID_SELECTION_DRAGFACES
-    BUTTON      ID_SELECTION_ARBITRARYROTATION
+    BUTTON      ID_TOOLS_DRAWBRUSHESTOOL
     BUTTON      ID_SELECTION_ARBITRARYROTATION
     BUTTON      ID_SELECTION_ARBITRARYROTATION
     BUTTON      ID_SELECTION_ARBITRARYROTATION
@@ -1856,6 +1858,11 @@ END
 STRINGTABLE
 BEGIN
     ID_SELECTION_DRAGFACES  "Set Drag Faces Mode (F)"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_DRAWBRUSHESTOOL "Draw Brush Tool (B)"
 END
 
 #endif    // English (United States) resources

@@ -6,7 +6,8 @@
 #define __COMMAND_CZG_CYLINDER_H__
 
 #include "Command.h"
-#include "CmdBrushMod.h"
+#include "CmdAddRemove.h"
+#include "CmdPolyBrush.h"
 
 class Brush;
 
@@ -20,7 +21,8 @@ public:
 	void SetAxis(int ax);
 	void UseBrush(Brush* br);
 private:
-	CmdBrushMod cmdBM;
+	CmdAddRemove cmdAR;
+	CmdPolyBrush cmdPB;
 	Brush *target;
 	int degree;
 	int axis;

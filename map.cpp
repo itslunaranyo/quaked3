@@ -232,9 +232,11 @@ bool Map::ParseBufferMerge(const char *data)
 			}
 		}
 	}
-	catch (std::exception &ex)
+	catch (qe3_exception &ex)
 	{
-		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Exception", MB_OK | MB_ICONEXCLAMATION);
+		ReportError(ex);
+		// blist and elist are auto-freed by stack unwinding without a merger,
+		// so the map isn't polluted with a partial import when we exit
 		return false;
 	}
 
@@ -274,9 +276,10 @@ bool Map::ParseBufferReplace(const char *data)
 			}
 		}
 	}
-	catch (std::exception &ex)
+	catch (qe3_exception &ex)
 	{
-		MessageBox(g_qeglobals.d_hwndMain, ex.what(), "QuakeEd 3: Exception", MB_OK | MB_ICONEXCLAMATION);
+		ReportError(ex);
+		// don't need to free here, loaded map wasn't merged into the now-empty scene yet
 		return false;
 	}
 

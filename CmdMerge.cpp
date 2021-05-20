@@ -19,7 +19,7 @@ void CmdMerge::UseBrush(Brush *br)
 	assert(state == LIVE || state == NOOP);
 
 	if (br->owner->IsPoint())
-		Error("Can't merge a point entity");
+		CmdError("Can't merge a point entity");
 	else if (!br->IsHidden())
 		brMerged.push_back(br);
 
@@ -38,7 +38,7 @@ void CmdMerge::Do_Impl()
 {
 	Brush *newbrush = CSG::DoMerge(brMerged, false);// , convex);
 	if (!newbrush)
-		Error("Brushes could not be merged");
+		CmdError("Brushes could not be merged");
 
 	cmdAR.RemovedBrushes(brMerged);
 	cmdAR.AddedBrush(newbrush);

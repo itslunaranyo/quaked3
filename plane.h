@@ -18,6 +18,7 @@ public:
 	vec3	normal;
 	double	dist;
 
+	bool		PointOn(const vec3 &pt);
 	bool		EqualTo(const Plane *b, const int flip);	// returns true if the planes are equal-ish
 	bool		ConvexTo(const Plane *other);
 	bool		FromPoints(const vec3 p0, const vec3 p1, const vec3 p2);	// returns false if the points are collinear

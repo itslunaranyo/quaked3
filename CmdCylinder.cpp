@@ -11,10 +11,10 @@ CmdCylinder::~CmdCylinder() {}
 void CmdCylinder::SetSides(int s)
 {
 	if (s < 3)
-		Error("Couldn't create cylinder: too few sides (minimum: 3)");
+		CmdError("Couldn't create cylinder: too few sides (minimum: 3)");
 
 	if (s >= MAX_POINTS_ON_WINDING - 4)
-		Error("Couldn't create cylinder: too many sides (maximum: %i)", MAX_POINTS_ON_WINDING - 4);
+		CmdError("Couldn't create cylinder: too many sides (maximum: %i)", MAX_POINTS_ON_WINDING - 4);
 
 	sides = s;
 }
@@ -22,7 +22,7 @@ void CmdCylinder::SetSides(int s)
 void CmdCylinder::SetAxis(int ax)
 {
 	if (ax < 0 || ax > 2)
-		Error("Bad axis specified (%i)", ax);
+		CmdError("Bad axis specified (%i)", ax);
 
 	axis = ax;
 }
@@ -30,7 +30,7 @@ void CmdCylinder::SetAxis(int ax)
 void CmdCylinder::UseBrush(Brush *br)
 {
 	if (br->owner->IsPoint())
-		Error("Can't make a cylinder out of a point entity");
+		CmdError("Can't make a cylinder out of a point entity");
 	target = br;
 	state = LIVE;
 }

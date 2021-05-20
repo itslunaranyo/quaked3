@@ -35,6 +35,7 @@
 #include "qeBuffer.h"	// lunaran - generic heap space; malloc as an object
 #include "mathlib.h"
 #include "cmdlib.h"
+#include "errors.h"
 
 #include "qedefs.h"
 #include "qfiles.h"
@@ -78,6 +79,7 @@
 #include "TextureTool.h"
 #include "ClipTool.h"
 #include "GeoTool.h"
+#include "PolyTool.h"
 
 //========================================================================
 
@@ -232,7 +234,6 @@ extern HANDLE	g_hBSP_Process;
 
 extern char		g_qeAppName[64];
 extern char		g_qePath[MAX_PATH];
-extern bool		g_bWarningOrError;
 
 /*
 ** global declarations

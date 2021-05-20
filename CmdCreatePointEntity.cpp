@@ -15,7 +15,7 @@ CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 ori
 	modifiesSelection = true;
 
 	if (!strcmp(classname, "worldspawn"))
-		Error("Cannot create a new worldspawn entity.");
+		CmdError("Cannot create a new worldspawn entity.");
 
 	CreatePointEntity(classname, origin);
 
