@@ -271,9 +271,13 @@ void CmdImportMap::Do_Impl()
 	for (b = blist.next; b != &blist; b = next)
 	{
 		next = b->next;
-		if (b->owner->IsBrush())
-			b->onext = b->oprev = nullptr;
 		b->RemoveFromList();
+		if (b->owner->IsBrush() && !b->owner->IsWorld())
+		{
+			e = b->owner;
+			Entity::UnlinkBrush(b);
+			b->owner = e;
+		}
 		cmdAR.AddedBrush(b);
 	}
 	for (e = elist.next; e != &elist; e = enext)
