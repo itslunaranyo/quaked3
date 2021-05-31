@@ -563,6 +563,7 @@ void TextureTool::DoAddWad()
 			g_cmdQueue.Complete(cmdKV);
 		}
 
+		g_map.BuildBrushData();
 		Sys_EndWait();
 		WndMain_SetInspectorMode(W_TEXTURE);
 	}
