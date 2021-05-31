@@ -47,15 +47,6 @@ void CmdImportMap::File(const char *fname)
 	state = LIVE;
 }
 
-const char* CmdImportMap::WadsAdded()
-{
-	if (state == DONE && mergewads)
-	{
-		return newWads.c_str();
-	}
-	return nullptr;
-}
-
 //==============================
 
 struct targetLink
@@ -176,11 +167,7 @@ void CmdImportMap::Do_Impl()
 				{
 					char outwadkey[1024];
 					char* worldwads = g_map.world->GetKeyValue("wad");
-					int wherethenewwadsstart = strlen(worldwads);
 					Textures::MergeWadStrings(worldwads, kv->value.c_str(), outwadkey);
-
-					// copy added wads to a buffer so they can be loaded
-					newWads = outwadkey + wherethenewwadsstart;
 					cmdKV = new CmdSetKeyvalue("wad", outwadkey);
 					cmdKV->AddEntity(g_map.world);
 					cmdWorldKVs.push_back(cmdKV);

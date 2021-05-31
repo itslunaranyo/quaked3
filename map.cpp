@@ -445,7 +445,6 @@ flush only wads added to wadstring
 */
 void Map::ImportFromFile(const char *filename)
 {
-	const char	*w;
 	char	temp[1024];
 	bool	bSnapCheck = false;
 
@@ -463,15 +462,12 @@ void Map::ImportFromFile(const char *filename)
 		cmdIM->File(filename);
 		g_cmdQueue.Complete(cmdIM);
 
-		Textures::ReloadAll();
-		// TODO: why not just reload them all, dupes could be flushed and require a refresh
-		w = cmdIM->WadsAdded();
-		if (w)
-		{
-			Textures::LoadWadsFromWadstring(w);
-			Textures::RefreshUsedStatus();
-			Textures::FlushUnusedFromWadstring(w);
-		}
+		if (!*world->GetKeyValue("wad"))
+			Warning("No \"wad\" key.");
+		else
+			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
+		Textures::RefreshUsedStatus();
+
 		g_map.BuildBrushData();
 
 		WndMain_UpdateWindows(W_ALL);

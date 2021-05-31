@@ -30,13 +30,11 @@ public:
 
 	int BrushDelta() { return cmdAR.BrushDelta(); };
 	int EntityDelta() { return cmdAR.EntityDelta(); };
-	const char* WadsAdded();
 
 private:
 	CmdAddRemove cmdAR;
 	std::vector<CmdSetKeyvalue*> cmdWorldKVs;
 	qeBuffer filename;
-	qeBuffer newWads;
 	bool mergewads;
 	bool adjusttargets;
 	worldKVMerge mergekvs;
