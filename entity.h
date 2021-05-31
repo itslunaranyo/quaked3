@@ -93,7 +93,7 @@ public:
 	static Entity* Parse (bool onlypairs);
 	void	CheckOrigin();
 	void	Write(std::ostream & stream, bool use_region);
-	void	WriteSelected(std::ostream & out);
+	void	WriteSelected(std::ostream & out, int n);
 };
 
 #endif

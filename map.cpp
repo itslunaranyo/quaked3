@@ -687,18 +687,15 @@ map-print only selected brushes and entities to the buffer
 */
 void Map::WriteSelected(std::ostream &out)
 {
-	int count;
+	int count = 0;
 	Entity *e, *next;
 
 	// write world entity first
-	world->WriteSelected(out);
+	world->WriteSelected(out, count++);
 
 	// then write all other ents
-	count = 1;
 	for (e = entities.next; e != &entities; e = next)
 	{
-		out << "// entity " << count << "\n";
-		count++;
 		next = e->next;
 		/*
 		if (e->brushes.onext == &e->brushes)
@@ -710,7 +707,7 @@ void Map::WriteSelected(std::ostream &out)
 			e->WriteSelected(out);
 		*/
 		if (e->brushes.onext != &e->brushes)
-			e->WriteSelected(out);
+			e->WriteSelected(out, count++);
 	}
 }
 

@@ -721,7 +721,7 @@ void Entity::Write(std::ostream &out, bool use_region)
 Entity::WriteSelected
 =================
 */
-void Entity::WriteSelected(std::ostream &out)
+void Entity::WriteSelected(std::ostream &out, int n)
 {
 	Brush	*b;
 	EPair	*ep;
@@ -738,6 +738,7 @@ void Entity::WriteSelected(std::ostream &out)
 	if (b == &brushes)
 		return;		// no part of this entity selected, don't write it at all
 
+	out << "// entity " << n << "\n";
 	out << "{\n";
 	for (ep = epairs; ep; ep = ep->next)
 		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
