@@ -28,7 +28,7 @@ void CmdTranslate::UseBrush(Brush *br)
 
 	// translate in place if fewer than some small number of brushes is being
 	// moved, and do the camera transform trick only for larger selections
-	if (brMoved.size() > 8)
+	if (brMoved.size() + entMoved.size() > 8)
 		postDrag = true;
 
 	state = LIVE;
