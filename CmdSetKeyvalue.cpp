@@ -136,7 +136,7 @@ void CmdSetKeyvalue::Redo_Impl() { SetNew(); }
 void CmdSetKeyvalue::Sel_Impl()
 {
 	for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
-		for (Brush *br = kvcIt->ent->brushes.onext; br != &kvcIt->ent->brushes; br = br->onext)
+		for (Brush *br = kvcIt->ent->brushes.ENext(); br != &kvcIt->ent->brushes; br = br->ENext())
 			Selection::SelectBrush(br);
 }
 

@@ -89,7 +89,7 @@ void WndSurf_RefreshEditTexdef()
 	if (Selection::HasBrushes())
 	{
 		bool first = true;
-		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
 			if (b->owner->IsPoint())
 				continue;

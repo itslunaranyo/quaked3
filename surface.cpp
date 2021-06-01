@@ -261,7 +261,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 	{
 		if (Selection::HasBrushes())
 		{
-			for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+			for (br = g_brSelectedBrushes.Next(); br != &g_brSelectedBrushes; br = br->Next())
 			{
 				for (f = br->faces; f; f = f->fnext)
 				{
@@ -290,7 +290,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 		}
 		else
 		{
-			for (br = g_map.brActive.next; br != &g_map.brActive; br = br->next)
+			for (br = g_map.brActive.Next(); br != &g_map.brActive; br = br->Next())
 			{
 				if (!br->IsFiltered())
 				{
@@ -428,7 +428,7 @@ void Surface::RotateForTransform(int nAxis, float fDeg, const vec3 vOrigin)
 	Brush *b;
 	Face	*f;
 
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		for (f = b->faces; f; f = f->fnext)
 		{

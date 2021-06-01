@@ -14,7 +14,7 @@ Brush::Brush
 =============
 */
 Brush::Brush() :
-	prev(nullptr), next(nullptr), oprev(nullptr), onext(nullptr),
+	prev(this), next(this), oprev(this), onext(this),
 	owner(nullptr), showFlags(0),
 	faces(nullptr), mins(99999), maxs(-99999)
 {}
@@ -33,11 +33,11 @@ Brush::~Brush()
 	ClearFaces();
 
 	// unlink from active/selected list
-	if (next)
+	if (next != this)
 		RemoveFromList();
 
 	// unlink from entity list
-	if (onext)
+	if (onext != this)
 		Entity::UnlinkBrush(this);
 }
 
@@ -407,76 +407,6 @@ void Brush::RemoveEmptyFaces()
 }
 
 
-
-/*
-=================
-Brush::CheckTexdef
-
-sikk---> temporary fix for bug when undoing manipulation of multiple entity types. 
-detect potential problems when saving the texture name and apply default tex
-
-lunaran: what bug did this fix? is it necessary? was it ever?
-=================
-*/
-void Brush::CheckTexdef (Face *f, char *pszName)
-{
-/*	if (!strlen(f->inTexDef.name))
-	{
-#ifdef _DEBUG
-		Warning("Unexpected inTexDef.name is empty in Brush.cpp Brush_CheckTexdef()");
-#endif
-//		fa->inTexDef.SetName("unnamed");
-		strcpy(pszName, "unnamed");
-		return;
-	}
-*/
-	/*
-	// Check for texture names containing "(" (parentheses) or " " (spaces) in their maps
-	if (f->texdef.name[0] == '#' || strchr(f->texdef.name, ' '))
-	{
-		int			nBrushNum = 0;
-		char		sz[128], szMB[128];
-		bool		bFound = false;
-		Brush	   *b2;
-
-		 // sikk - This seems to work but it needs more testing
-		b2 = owner->brushes.onext;
-
-		// this is to catch if the bad brush is brush #0
-		if (b2 == this || b2 == &owner->brushes)
-			bFound = true;
-
-		// find brush
-		while (!bFound)
-		{
-			b2 = b2->onext;
-			if (b2 == this || b2 == &owner->brushes)
-				bFound = true;
-			nBrushNum++;
-		}
-		
-		if (!g_bMBCheck)
-		{
-			sprintf(szMB, "Bad texture name was found.\nSaving will continue and the brush(es)\ncontaining bad faces will be listed in the console.");
-			MessageBox(g_hwndMain, szMB, "QuakeEd 3: Warning", MB_OK | MB_ICONEXCLAMATION);
-			g_bMBCheck = true;
-		}
-
-		if (g_nBrushNumCheck != nBrushNum)
-		{
-			g_nBrushNumCheck = nBrushNum;
-			sprintf(sz, "Bad texture name found on brush(#%d)\n...Texture replaced with editor default.\n", nBrushNum);
-			Sys_Printf("%s", sz);
-		}
-
-		strcpy(pszName, "unnamed");
-		return;
-	}
-
-//	strcpy(pszName, f->inTexDef.name);
-*/
-}
-
 /*
 =================
 Brush::FitTexture
@@ -599,26 +529,45 @@ bool Brush::PointTest(const vec3 origin)
 
 /*
 =================
+Brush::IsLinked
+=================
+*/
+bool Brush::IsLinked()
+{
+	assert((next == this) == (prev == this));
+	return (next != this);
+}
+
+/*
+=================
 Brush::AddToList
 =================
 */
-void Brush::AddToList (Brush *list, bool tail)
+void Brush::AddToList (Brush &list)
 {
-	assert((!next && !prev) || (next && prev));
+	assert((next == this) == (prev == this));
+	if (next != this)
+		Error("Brush::AddToList: Already linked!\n");
 
-	if (next || prev)
-		Error("Brush_AddToList: Already linked.");
+	next = list.next;
+	prev = &list;
+	next->prev = this;
+	prev->next = this;
+}
 
-	if (tail)
-	{
-		next = list;
-		prev = list->prev;
-	}
-	else
-	{
-		next = list->next;
-		prev = list;
-	}
+/*
+=================
+Brush::AddToList
+=================
+*/
+void Brush::AddToListTail(Brush &list)
+{
+	assert((next == this) == (prev == this));
+	if (next != this)
+		Error("Brush::AddToList: Already linked!\n");
+
+	next = &list;
+	prev = list.prev;
 	next->prev = this;
 	prev->next = this;
 }
@@ -630,26 +579,14 @@ Brush::RemoveFromList
 */
 void Brush::RemoveFromList()
 {
-	assert((!next && !prev) || (next && prev));
-
-	if (!next || !prev)
-		Error("Brush_RemoveFromList: Not currently linked.");
+	if (!IsLinked())
+	{
+		Error("Brush::RemoveFromList: Already unlinked.");
+		return;
+	}
 
 	next->prev = prev;
 	prev->next = next;
-	next = prev = nullptr;
-}
-
-void Brush::CloseLinks()
-{
-	assert((!next && !prev) || (next && prev));
-
-	if (next == prev && prev == this)
-		return;	// done
-
-	if (next || prev)
-		Error("Brush: tried to close non-empty linked list.");
-
 	next = prev = this;
 }
 
@@ -658,35 +595,28 @@ void Brush::CloseLinks()
 Brush::MergeListIntoList
 =================
 */
-void Brush::MergeListIntoList(Brush *dest, bool tail)
+void Brush::MergeListIntoList(Brush &dest, bool tail)
 {
-	// properly doubly-linked lists only
-	if (!next || !prev)
+	if (!IsLinked())
 	{
-		Error("Tried to merge a list with NULL links!\n");
-		return;
-	}
-
-	if (next == this || prev == this)
-	{
-		Warning("Tried to merge an empty list.");
+//		Error("Tried to merge an empty list.");
 		return;
 	}
 	if (tail)
 	{
 		// merge at tail of list
-		dest->prev->next = next;
-		next->prev = dest->prev;
-		dest->prev = prev;
-		prev->next = dest;
+		dest.prev->next = next;
+		next->prev = dest.prev;
+		dest.prev = prev;
+		prev->next = &dest;
 	}
 	else
 	{
 		// merge at head of list
-		next->prev = dest;
-		prev->next = dest->next;
-		dest->next->prev = prev;
-		dest->next = next;
+		next->prev = &dest;
+		prev->next = dest.next;
+		dest.next->prev = prev;
+		dest.next = next;
 	}
 
 	prev = next = this;
@@ -711,27 +641,6 @@ void Brush::FreeList(Brush *pList)
 		pBrush = pNext;
 	}
 }
-
-/*
-==================
-Brush::CopyList
-==================
-*/
-void Brush::CopyList(Brush *pFrom, Brush *pTo)
-{
-	Brush *pBrush, *pNext;
-
-	pBrush = pFrom->next;
-
-	while (pBrush != NULL && pBrush != pFrom)
-	{
-		pNext = pBrush->next;
-		pBrush->RemoveFromList();
-		pBrush->AddToList(pTo);
-		pBrush = pNext;
-	}
-}
-
 
 
 
@@ -924,7 +833,7 @@ void Brush::DrawFacingAngle ()
 
 	AngleVectors(angles, forward, right, up);
 
-	start = owner->brushes.onext->mins + owner->brushes.onext->maxs;
+	start = owner->brushes.ENext()->mins + owner->brushes.ENext()->maxs;
 	start = start * 0.5f;
 	dist = (maxs[0] - start[0]) * 2.5f;
 
@@ -965,7 +874,7 @@ void Brush::DrawEntityName ()
 	if (owner->IsWorld())
 		return;
 
-	if (this != owner->brushes.onext)
+	if (this != owner->brushes.ENext())
 		return;	// not key brush
 
 	// draw the angle pointer

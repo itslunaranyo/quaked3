@@ -49,7 +49,7 @@ void CmdReparentBrush::AddBrush(Brush *br)
 
 void CmdReparentBrush::AddBrushes(Brush *brList)
 {
-	for (Brush* br = brList->next; br != brList; br = br->next)
+	for (Brush* br = brList->Next(); br != brList; br = br->Next())
 		AddBrush(br);
 }
 
@@ -60,7 +60,7 @@ void CmdReparentBrush::Do_Impl()
 	for (auto rpIt = reparents.begin(); rpIt != reparents.end(); ++rpIt)
 	{
 		// if this is the last brush in the entity, remove the entity too
-		if (rpIt->br->onext == rpIt->br->oprev && !rpIt->br->owner->IsWorld())
+		if (rpIt->br->ENext() == rpIt->br->EPrev() && !rpIt->br->owner->IsWorld())
 		{
 			Entity* own = rpIt->br->owner;
 			entRemoved.push_back(own);
@@ -102,7 +102,7 @@ void CmdReparentBrush::Sel_Impl()
 	for (auto rpIt = reparents.begin(); rpIt != reparents.end(); ++rpIt)
 	{
 		rpIt->br->RemoveFromList();
-		rpIt->br->AddToList(&g_brSelectedBrushes);
+		rpIt->br->AddToList(g_brSelectedBrushes);
 	}
 }
 

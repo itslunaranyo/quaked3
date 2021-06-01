@@ -116,7 +116,7 @@ void CmdBrushMod::ModifyBrush(Brush *brIn)
 
 void CmdBrushMod::ModifyBrushes(Brush *brList)
 {
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 		ModifyBrush(b);
 }
 
@@ -154,7 +154,7 @@ void CmdBrushMod::RestoreBrush(Brush *br)
 
 void CmdBrushMod::RestoreBrushes(Brush *brList)
 {
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 		RestoreBrush(b);
 }
 
@@ -210,7 +210,7 @@ void CmdBrushMod::RevertBrush(Brush *br)
 
 void CmdBrushMod::RevertBrushes(Brush *brList)
 {
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 		RevertBrush(b);
 }
 

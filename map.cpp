@@ -26,14 +26,7 @@ Brush	*g_pbrRegionSides[4];
 
 Map::Map() : numBrushes(0), numEntities(0), numTextures(0), world(nullptr)
 {
-	g_brSelectedBrushes.CloseLinks();
 	ClearBounds(regionMins, regionMaxs);
-
-	/*
-	entities.CloseLinks();
-	brActive.CloseLinks();
-	brRegioned.CloseLinks();
-	*/
 }
 
 /*
@@ -52,30 +45,7 @@ void Map::New()
 
 	world = new Entity();
 	world->SetKeyValue("classname", "worldspawn");
-	world->CloseLinks();
-
-	// sikk---> Wad Loading
-	/*
-	char buf[1024];
-	strcpy(buf, g_project.defaultWads);
-	if (strlen(buf))
-	{
-		int i = 0;
-		char *temp, tempwads[1024] = "";
-		char *texpath = g_project.wadPath;
-		for (temp = strtok(buf, ";"); temp; temp = strtok(0, ";"), i++)
-		{
-			if (i)
-				strncat(tempwads, ";", 1);
-			strcat(tempwads, texpath);
-			strcat(tempwads, temp);
-		}
-		world->SetKeyValue("wad", tempwads);
-	}
-	*/
 	world->SetKeyValue("wad", g_project.defaultWads);
-	// <---sikk
-
 	world->eclass = EntClass::ForName("worldspawn", true, true);
 
 	g_vCamera.Reset();
@@ -107,29 +77,17 @@ void Map::Free()
 	g_map.numBrushes = 0;
 	g_map.numEntities = 0;
 
-	if (brActive.next)
-		while (brActive.next != &brActive)
-			delete brActive.next;
-	else
-		brActive.CloseLinks();
+	while (brActive.Next() != &brActive)
+		delete brActive.Next();
 
-	if (brRegioned.next)
-		while (brRegioned.next != &brRegioned)
-			delete brRegioned.next;
-	else
-		brRegioned.CloseLinks();
+	while (brRegioned.Next() != &brRegioned)
+		delete brRegioned.Next();
 
-	if (entities.next)
-		while (entities.next != &entities)
-			delete entities.next;
-	else
-		entities.CloseLinks();
+	while (entities.Next() != &entities)
+		delete entities.Next();
 
-	if (g_brSelectedBrushes.next)
-		while (g_brSelectedBrushes.next != &g_brSelectedBrushes)
-			delete g_brSelectedBrushes.next;
-	else
-		g_brSelectedBrushes.CloseLinks();
+	while (g_brSelectedBrushes.Next() != &g_brSelectedBrushes)
+		delete g_brSelectedBrushes.Next();
 
 	if (world)
 		delete world;
@@ -157,12 +115,12 @@ void Map::BuildBrushData(Brush &blist)
 {
 	Brush	*b, *next;
 
-	if (!blist.next || blist.next == &blist)
+	if (!blist.IsLinked())
 		return;
 
-	for (b = blist.next; b != NULL && b != &blist; b = next)
+	for (b = blist.Next(); b != NULL && b != &blist; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		// buildbrushdata is called after a wad is loaded or refreshed to make sure names match texture pointers
 		// wads are also not loaded until after worldspawn is parsed during a map load
@@ -216,22 +174,20 @@ bool Map::ParseBufferMerge(const char *data)
 {
 	Entity elist;
 	Brush blist;
-	elist.CloseLinks();
-	blist.CloseLinks();
 
 	try
 	{
 		Read(data, blist, elist);
-		for (Entity *ent = elist.next; ent != &elist; ent = ent->next)
+		for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
 		{
 			// world brushes need to be merged into the existing worldspawn
 			if (ent->eclass == EntClass::worldspawn)
 			{
 				ent->RemoveFromList();
 				Brush *b, *next;
-				for (b = ent->brushes.onext; b != &ent->brushes; b = next)
+				for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)
 				{
-					next = b->onext;
+					next = b->ENext();
 					Entity::UnlinkBrush(b);
 					world->LinkBrush(b);
 				}
@@ -250,7 +206,7 @@ bool Map::ParseBufferMerge(const char *data)
 
 	Selection::DeselectAll();
 	elist.MergeListIntoList(&entities);
-	blist.MergeListIntoList(&g_brSelectedBrushes);	// merge to selection
+	blist.MergeListIntoList(g_brSelectedBrushes);	// merge to selection
 	SanityCheck();
 	return true;
 }
@@ -269,13 +225,10 @@ bool Map::LoadFromFile_Parse(const char *data)
 	Entity elist;
 	Brush blist;
 
-	elist.CloseLinks();
-	blist.CloseLinks();
-
 	try
 	{
 		Read(data, blist, elist);
-		for (Entity *ent = elist.next; ent != &elist; ent = ent->next)
+		for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
 		{
 			if (ent->eclass == EntClass::worldspawn)
 			{
@@ -294,7 +247,7 @@ bool Map::LoadFromFile_Parse(const char *data)
 
 	// now merge the fully loaded data into the scene
 	elist.MergeListIntoList(&entities);
-	blist.MergeListIntoList(&brActive);
+	blist.MergeListIntoList(brActive);
 	SanityCheck();
 	return true;
 }
@@ -305,15 +258,15 @@ void Map::SanityCheck()
 #ifdef _DEBUG
 	Entity *e;
 	Brush *b;
-	for (e = entities.next; e != &entities; e = e->next)
+	for (e = entities.Next(); e != &entities; e = e->Next())
 	{
-		assert(e->next->prev == e);
-		assert(e->brushes.onext->oprev == &e->brushes);
-		assert(e->brushes.oprev->onext == &e->brushes);
+		assert(e->Next()->Prev() == e);
+		assert(e->brushes.ENext()->EPrev() == &e->brushes);
+		assert(e->brushes.EPrev()->ENext() == &e->brushes);
 
-		for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+		for (b = e->brushes.ENext(); b != &e->brushes; b = b->ENext())
 		{
-			assert(b->onext->oprev == b);
+			assert(b->ENext()->EPrev() == b);
 		}
 	}
 
@@ -374,16 +327,15 @@ void Map::LoadFromFile(const char *filename)
 			world = new Entity();
 			world->SetKeyValue("classname", "worldspawn");
 		}
-		world->CloseLinks();
 
 		if (!*world->GetKeyValue("wad"))
 			Warning("No \"wad\" key.");
 		else
 			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
 
-		for (Brush* b = brActive.next; b != &brActive; b = b->next)
+		for (Brush* b = brActive.Next(); b != &brActive; b = b->Next())
 			numBrushes++;
-		for (Entity* e = entities.next; e != &entities; e = e->next)
+		for (Entity* e = entities.Next(); e != &entities; e = e->Next())
 		{
 			if (e->IsPoint())
 				numBrushes--;
@@ -663,13 +615,10 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 		}
 
 		// add all the brushes to the brush list
-		for (Brush* b = ent->brushes.onext; b != &ent->brushes; b = next)
+		for (Brush* b = ent->brushes.ENext(); b != &ent->brushes; b = next)
 		{
-			next = b->onext;
-			b->next = blist.next;
-			blist.next->prev = b;
-			b->prev = &blist;
-			blist.next = b;
+			next = b->ENext();
+			b->AddToList(blist);
 		}
 	}
 }
@@ -690,9 +639,9 @@ void Map::WriteSelected(std::ostream &out)
 	world->WriteSelected(out, count++);
 
 	// then write all other ents
-	for (e = entities.next; e != &entities; e = next)
+	for (e = entities.Next(); e != &entities; e = next)
 	{
-		next = e->next;
+		next = e->Next();
 		/*
 		if (e->brushes.onext == &e->brushes)
 		{
@@ -702,7 +651,7 @@ void Map::WriteSelected(std::ostream &out)
 		else
 			e->WriteSelected(out);
 		*/
-		if (e->brushes.onext != &e->brushes)
+		if (e->brushes.ENext() != &e->brushes)
 			e->WriteSelected(out, count++);
 	}
 }
@@ -724,13 +673,13 @@ void Map::WriteAll(std::ostream &out, bool use_region)
 
 	// then write all other ents
 	count = 1;
-	for (e = entities.next; e != &entities; e = next)
+	for (e = entities.Next(); e != &entities; e = next)
 	{
 		out << "// entity " << count << "\n";
 		count++;
-		next = e->next;
+		next = e->Next();
 
-		if (e->brushes.onext != &e->brushes)
+		if (e->brushes.ENext() != &e->brushes)
 			e->Write(out, use_region);
 	}
 }
@@ -794,13 +743,13 @@ void Map::RegionOff()
 		regionMins[i] = -g_cfgEditor.MapSize / 2;
 	}
 
-	for (b = brRegioned.next; b != &brRegioned; b = next)
+	for (b = brRegioned.Next(); b != &brRegioned; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		if (IsBrushFiltered(b))
 			continue;		// still filtered
 		b->RemoveFromList();
-		b->AddToList(&brActive);
+		b->AddToList(brActive);
 	}
 
 	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
@@ -829,7 +778,7 @@ void Map::RegionTallBrush()
 	if (!QE_SingleBrush())
 		return;
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 
 	RegionOff();
 
@@ -849,7 +798,7 @@ void Map::RegionBrush()
 	if (!QE_SingleBrush())
 		return;
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 
 	RegionOff();
 
@@ -871,10 +820,10 @@ void Map::RegionSelectedBrushes()
 	Selection::GetBounds(regionMins, regionMaxs);
 
 	// move the entire active_brushes list to filtered_brushes
-	brActive.MergeListIntoList(&brRegioned);
+	brActive.MergeListIntoList(brRegioned);
 
 	// move the entire g_brSelectedBrushes list to brActive
-	g_brSelectedBrushes.MergeListIntoList(&brActive);
+	g_brSelectedBrushes.MergeListIntoList(brActive);
 	Selection::Changed();
 	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
 }
@@ -884,13 +833,13 @@ void Map::RegionApply()
 	Brush	*b, *next;
 
 	regionActive = true;
-	for (b = brActive.next; b != &brActive; b = next)
+	for (b = brActive.Next(); b != &brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		if (!IsBrushFiltered(b))
 			continue;		// still filtered
 		b->RemoveFromList();
-		b->AddToList(&brRegioned);
+		b->AddToList(brRegioned);
 	}
 
 	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
@@ -932,7 +881,7 @@ void Map::RegionAdd()
 
 	for (i = 0; i < 4; i++)
 	{
-		g_pbrRegionSides[i]->AddToList(&g_brSelectedBrushes);
+		g_pbrRegionSides[i]->AddToList(g_brSelectedBrushes);
 		world->LinkBrush(g_pbrRegionSides[i]);
 		g_pbrRegionSides[i]->Build();
 	}
@@ -973,9 +922,9 @@ Entity *Map::FindEntity(char *pszKey, char *pszValue)
 {
 	Entity *pe;
 
-	pe = entities.next;
+	pe = entities.Next();
 
-	for (; pe != nullptr && pe != &entities; pe = pe->next)
+	for (; pe != nullptr && pe != &entities; pe = pe->Next())
 		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
 			return pe;
 
@@ -986,9 +935,9 @@ Entity *Map::FindEntity(char *pszKey, int iValue)
 {
 	Entity *pe;
 
-	pe = entities.next;
+	pe = entities.Next();
 
-	for (; pe != nullptr && pe != &entities; pe = pe->next)
+	for (; pe != nullptr && pe != &entities; pe = pe->Next())
 		if (pe->GetKeyValueInt(pszKey) == iValue)
 			return pe;
 

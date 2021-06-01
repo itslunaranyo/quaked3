@@ -43,7 +43,7 @@ void CmdTextureApply::UseBrush(Brush *br)
 void CmdTextureApply::UseBrushes(Brush *brList)
 {
 	std::vector<Face*> fq;
-	for (Brush* br = brList->next; br != brList; br = br->next)
+	for (Brush* br = brList->Next(); br != brList; br = br->Next())
 	{
 		if (br->owner->IsPoint())
 			continue;

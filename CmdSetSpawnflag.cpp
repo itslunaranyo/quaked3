@@ -54,7 +54,7 @@ void CmdSetSpawnflag::Redo_Impl() { SetNew(); }
 void CmdSetSpawnflag::Sel_Impl()
 {
 	for (auto sfcIt = sfchanges.begin(); sfcIt != sfchanges.end(); ++sfcIt)
-		for (Brush *br = sfcIt->ent->brushes.onext; br != &sfcIt->ent->brushes; br = br->onext)
+		for (Brush *br = sfcIt->ent->brushes.ENext(); br != &sfcIt->ent->brushes; br = br->ENext())
 			Selection::SelectBrush(br);
 }
 

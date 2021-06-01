@@ -50,7 +50,7 @@ void CmdAddRemove::RemovedBrush(Brush *br)
 
 void CmdAddRemove::RemovedBrushes(Brush *brList)
 {
-	for (Brush *br = brList->next; br != brList; br = br->next)
+	for (Brush *br = brList->Next(); br != brList; br = br->Next())
 		RemovedBrush(br);
 }
 
@@ -132,7 +132,7 @@ void CmdAddRemove::Do_Impl()
 	for (auto brIt = brRemoved.begin(); brIt != brRemoved.end(); ++brIt)
 	{
 		br = *brIt;
-		if (br->owner->brushes.onext == &br->owner->brushes &&
+		if (br->owner->brushes.ENext() == &br->owner->brushes &&
 			br->owner->GetEntClass() != EntClass::worldspawn)	// never delete worldspawn
 		{
 			RemovedEntity(br->owner);
@@ -145,17 +145,14 @@ void CmdAddRemove::Do_Impl()
 void CmdAddRemove::Sequester(std::vector<Brush*>& brList)
 {
 	Brush* br;
-	Entity* own;
 
 	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 	{
 		br = *brIt;
 		br->RemoveFromList();	// unlink from scene
 
-		own = br->owner;
 		// unlink brush from owner but don't lose the pointer, we'll need it on restore
-		Entity::UnlinkBrush(br);
-		br->owner = own;
+		Entity::UnlinkBrush(br, true);
 	}
 }
 
@@ -167,7 +164,7 @@ void CmdAddRemove::Sequester(std::vector<Entity*> &entList)
 		ent = *entIt;
 		ent->RemoveFromList();
 		if (ent->IsPoint())
-			ent->brushes.onext->RemoveFromList();
+			ent->brushes.ENext()->RemoveFromList();
 	}
 }
 
@@ -178,7 +175,7 @@ void CmdAddRemove::Restore(std::vector<Brush*>& brList)
 	for (auto brIt = brList.begin(); brIt != brList.end(); ++brIt)
 	{
 		br = *brIt;
-		br->AddToList(&g_map.brActive);	// put back in scene
+		br->AddToList(g_map.brActive);	// put back in scene
 		br->owner->LinkBrush(br);
 
 		// brushes in undo-limbo aren't caught by mass rebuilds for wad load/flush
@@ -196,7 +193,7 @@ void CmdAddRemove::Restore(std::vector<Entity*> &entList)
 		ent = *entIt;
 		ent->AddToList(&g_map.entities);
 		if (ent->IsPoint())
-			ent->brushes.onext->AddToList(&g_map.brActive);
+			ent->brushes.ENext()->AddToList(g_map.brActive);
 	}
 }
 
@@ -239,12 +236,12 @@ void CmdAddRemove::Sel_Impl()
 		for (auto brIt = brAdded.begin(); brIt != brAdded.end(); ++brIt)
 			Selection::SelectBrush(*brIt);
 		for (auto entIt = entAdded.begin(); entIt != entAdded.end(); ++entIt)
-			Selection::SelectBrush((*entIt)->brushes.onext);
+			Selection::SelectBrush((*entIt)->brushes.ENext());
 		return;
 	}
 	for (auto brIt = brRemoved.begin(); brIt != brRemoved.end(); ++brIt)
 		Selection::SelectBrush(*brIt);
 	for (auto entIt = entRemoved.begin(); entIt != entRemoved.end(); ++entIt)
-		Selection::SelectBrush((*entIt)->brushes.onext);
+		Selection::SelectBrush((*entIt)->brushes.ENext());
 }
 

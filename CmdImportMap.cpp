@@ -112,16 +112,13 @@ void CmdImportMap::Do_Impl()
 	}
 	// <---sikk
 
-	blist.CloseLinks();
-	elist.CloseLinks();
-
 	IO_LoadFile(filename.c_str(), buf);
 	g_map.Read(buf.c_str(), blist, elist);
 
 	// list all the unique target/targetname values in the current map
 	if (adjusttargets)
 	{
-		for (Entity *ent = g_map.entities.next; ent != &g_map.entities; ent = ent->next)
+		for (Entity *ent = g_map.entities.Next(); ent != &g_map.entities; ent = ent->Next())
 		{
 			for (EPair* kv = ent->epairs; kv; kv = kv->next)
 			{
@@ -145,16 +142,16 @@ void CmdImportMap::Do_Impl()
 
 
 	// process the imported entities for addition to the scene
-	for (Entity *ent = elist.next; ent != &elist; ent = enext)
+	for (Entity *ent = elist.Next(); ent != &elist; ent = enext)
 	{
 		// world brushes and keyvalues need to be merged into the existing worldspawn
-		enext = ent->next;
+		enext = ent->Next();
 		if (ent->eclass == EntClass::worldspawn)
 		{
 			ent->RemoveFromList();
-			for (b = ent->brushes.onext; b != &ent->brushes; b = next)
+			for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)
 			{
-				next = b->onext;
+				next = b->ENext();
 				b->owner->UnlinkBrush(b);
 				b->owner = g_map.world;
 			}
@@ -255,21 +252,19 @@ void CmdImportMap::Do_Impl()
 
 	// delink the lists to feed them to CmdAddRemove
 	// lunaran FIXME: this is stupid and parse should change instead
-	for (b = blist.next; b != &blist; b = next)
+	for (b = blist.Next(); b != &blist; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		b->RemoveFromList();
 		if (b->owner->IsBrush() && !b->owner->IsWorld())
 		{
-			e = b->owner;
-			Entity::UnlinkBrush(b);
-			b->owner = e;
+			Entity::UnlinkBrush(b, true);
 		}
 		cmdAR.AddedBrush(b);
 	}
-	for (e = elist.next; e != &elist; e = enext)
+	for (e = elist.Next(); e != &elist; e = enext)
 	{
-		enext = e->next;
+		enext = e->Next();
 		e->RemoveFromList();
 		cmdAR.AddedEntity(e);
 	}

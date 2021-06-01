@@ -31,13 +31,18 @@ public:
 	Entity();
 	~Entity();
 
-	Entity		*prev, *next;
-	Brush		brushes;	// head/tail of list - TODO: make this brush the dummy brush for point entities instead of a stupid linked one?
-	vec3		origin;
 	EntClass	*eclass;
+	Brush		brushes;	// head/tail of list - TODO: make this brush the dummy brush for point entities instead of a stupid linked one?
 	EPair		*epairs;
 	int			showflags;
+	vec3		origin;
 
+	inline Entity* Next() const { return next; }
+	inline Entity* Prev() const { return prev; }
+private:
+	Entity		*prev, *next;
+
+public:
 	bool		IsPoint() const { return (eclass->IsPointClass()); }
 	bool		IsBrush() const { return !(eclass->IsPointClass()); }
 	bool		IsWorld() const { return (eclass == EntClass::worldspawn); }
@@ -46,8 +51,8 @@ public:
 
 	static bool	Create (EntClass *c);
 	Entity		*Clone();
-	void		LinkBrush (Brush *b);
-	static void	UnlinkBrush (Brush *b);
+	void		LinkBrush (Brush *b, bool tail = false);
+	static void	UnlinkBrush (Brush *b, bool preserveOwner = false);
 
 	void	ChangeClassname(EntClass* ec);
 	void	ChangeClassname(const char *classname);
@@ -81,14 +86,11 @@ public:
 	bool	IsFiltered() const;
 	vec3	GetCenter() const;
 
-	// sikk---> Undo/Redo
-	int		MemorySize();
 	void	RemoveFromList();
-	void	CloseLinks();
+	bool	IsLinked() const;
 	void	AddToList(Entity *list, bool tail = false);
 	void	MergeListIntoList(Entity *dest, bool tail = false);
 	void	FreeEpairs();
-	// <---sikk
 
 	static Entity* Parse (bool onlypairs);
 	void	CheckOrigin();

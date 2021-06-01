@@ -526,7 +526,7 @@ void WndEntity::UpdateUI()
 	}
 	else
 	{
-		EntClass *pec = g_brSelectedBrushes.next->owner->eclass;
+		EntClass *pec = g_brSelectedBrushes.Next()->owner->eclass;
 		int nIndex = (int)SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
 		if (nIndex != LB_ERR)
 			SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
@@ -773,7 +773,7 @@ void WndEntity::FlagChecked(int flag)
 
 	last = nullptr;
 	CmdSetSpawnflag *cmd = new CmdSetSpawnflag(flag, on);
-	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		// skip entity brushes in sequence
 		if (b->owner == last)

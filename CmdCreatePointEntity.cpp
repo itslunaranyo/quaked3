@@ -50,25 +50,25 @@ void CmdCreatePointEntity::CreatePointEntity(const char *classname, const vec3 o
 void CmdCreatePointEntity::Do_Impl()
 {
 	ent->AddToList(&g_map.entities);
-	ent->brushes.onext->AddToList(&g_map.brActive);
+	ent->brushes.ENext()->AddToList(g_map.brActive);
 }
 
 void CmdCreatePointEntity::Undo_Impl()
 {
 	ent->RemoveFromList();
-	ent->brushes.onext->RemoveFromList();
+	ent->brushes.ENext()->RemoveFromList();
 }
 
 void CmdCreatePointEntity::Redo_Impl()
 {
 	ent->AddToList(&g_map.entities);
-	ent->brushes.onext->AddToList(&g_map.brActive);
+	ent->brushes.ENext()->AddToList(g_map.brActive);
 }
 
 void CmdCreatePointEntity::Sel_Impl()
 {
 	if (state != DONE) return;
 
-	ent->brushes.onext->RemoveFromList();
-	ent->brushes.onext->AddToList(&g_brSelectedBrushes);
+	ent->brushes.ENext()->RemoveFromList();
+	ent->brushes.ENext()->AddToList(g_brSelectedBrushes);
 }

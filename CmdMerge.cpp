@@ -29,7 +29,7 @@ void CmdMerge::UseBrush(Brush *br)
 
 void CmdMerge::UseBrushes(Brush *brList)
 {
-	for (Brush *br = brList->next; br != brList; br = br->next)
+	for (Brush *br = brList->Next(); br != brList; br = br->Next())
 		UseBrush(br);
 }
 

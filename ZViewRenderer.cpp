@@ -240,7 +240,7 @@ void ZViewRenderer::DrawSelection(vec3 selColor)
 
 	std::vector<zbr_t> brDraw;
 
-	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 	{
 		zbr_t zbtemp(*brush);
 		if (!TestBrush(zbtemp))
@@ -318,8 +318,8 @@ void ZViewRenderer::Draw()
 
 	int xCam = zv.GetWidth() / 3;
 
-	if (!g_map.brActive.next)
-		return;	// not valid yet
+	//if (!g_map.brActive.next)
+	//	return;	// not valid yet
 
 	if (timing)
 		start = Sys_DoubleTime();
@@ -356,7 +356,7 @@ void ZViewRenderer::Draw()
 	glDisable(GL_DEPTH_TEST);
 
 	// draw filled interiors and edges
-	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+	for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 	{
 		zbr_t zbtemp(*brush);
 		if (!TestBrush(zbtemp))

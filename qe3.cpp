@@ -27,7 +27,7 @@ QEConfig	g_qeconfig;
 
 void QE_FixMonFlags()
 {
-	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
+	for (Entity *e = g_map.entities.Next(); e != &g_map.entities; e = e->Next())
 	{
 		int sf, sf_lo, sf_mid, sf_hi, sf_new;
 		sf = e->GetKeyValueInt("spawnflags");
@@ -90,7 +90,7 @@ void QE_FindKTs()
 	char *target3 = nullptr;
 	char *target4 = nullptr;
 
-	for (Entity *e = g_map.entities.next; e != &g_map.entities; e = e->next)
+	for (Entity *e = g_map.entities.Next(); e != &g_map.entities; e = e->Next())
 	{
 		killtarget = e->GetKeyValue("killtarget");
 		if (!killtarget || killtarget[0] == 0) continue;
@@ -105,7 +105,7 @@ void QE_FindKTs()
 			!strcmp(killtarget, target2) ||
 			!strcmp(killtarget, target3) ||
 			!strcmp(killtarget, target4))
-			Selection::HandleBrush(e->brushes.next, true);
+			Selection::HandleBrush(e->brushes.Next(), true);
 	}
 }
 
@@ -775,12 +775,12 @@ QE_SingleBrush
 bool QE_SingleBrush ()
 {
 	if ((!Selection::HasBrushes()) ||
-		(g_brSelectedBrushes.next->next != &g_brSelectedBrushes))
+		(g_brSelectedBrushes.Next()->Next() != &g_brSelectedBrushes))
 	{
 		Warning("Must have a single brush selected.");
 		return false;
 	}
-	if (g_brSelectedBrushes.next->owner->IsPoint())
+	if (g_brSelectedBrushes.Next()->owner->IsPoint())
 	{
 		Warning("Cannot manipulate fixed size entities.");
 		return false;

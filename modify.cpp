@@ -93,7 +93,7 @@ void Modify::Ungroup()
 	{
 		cmd = new CmdReparentBrush();
 		cmd->Destination(g_map.world);
-		for (Brush *br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+		for (Brush *br = g_brSelectedBrushes.Next(); br != &g_brSelectedBrushes; br = br->Next())
 		{
 			cmd->AddBrush(br);
 		}
@@ -119,7 +119,7 @@ void Modify::InsertBrush()
 	Entity *dest;
 
 	dest = nullptr;
-	for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+	for (br = g_brSelectedBrushes.Next(); br != &g_brSelectedBrushes; br = br->Next())
 	{
 		if (br->owner->IsWorld() || br->owner->IsPoint())
 			continue;
@@ -138,7 +138,7 @@ void Modify::InsertBrush()
 	{
 		cmd = new CmdReparentBrush();
 		cmd->Destination(dest);
-		for (br = g_brSelectedBrushes.next; br != &g_brSelectedBrushes; br = br->next)
+		for (br = g_brSelectedBrushes.Next(); br != &g_brSelectedBrushes; br = br->Next())
 		{
 			cmd->AddBrush(br);
 		}
@@ -166,7 +166,7 @@ void Modify::HideSelected()
 {
 	Brush *b;
 
-	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b && b != &g_brSelectedBrushes; b = b->Next())
 	{
 		b->showFlags |= BFL_HIDDEN;
 	}
@@ -187,7 +187,7 @@ void Modify::HideUnselected()
 
 	Brush *b;
 
-	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
+	for (b = g_map.brActive.Next(); b && b != &g_map.brActive; b = b->Next())
 	{
 		b->showFlags |= BFL_HIDDEN;
 	}
@@ -205,10 +205,10 @@ void Modify::ShowHidden()
 {
 	Brush *b;
 
-	for (b = g_brSelectedBrushes.next; b && b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b && b != &g_brSelectedBrushes; b = b->Next())
 		b->showFlags -= BFL_HIDDEN & b->showFlags;
 
-	for (b = g_map.brActive.next; b && b != &g_map.brActive; b = b->next)
+	for (b = g_map.brActive.Next(); b && b != &g_map.brActive; b = b->Next())
 		b->showFlags -= BFL_HIDDEN & b->showFlags;
 	
 	WndMain_UpdateWindows(W_SCENE | W_TARGETGRAPH);
@@ -233,18 +233,18 @@ void Modify::ConnectEntities()
 	Brush		*b;
 	char		newtarg[32];
 
-	b = g_brSelectedBrushes.prev;
+	b = g_brSelectedBrushes.Prev();
 	e1 = b->owner;
 	e2 = e1;
 	while (e2 == b->owner)
 	{
-		if (b->prev == &g_brSelectedBrushes)
+		if (b->Prev() == &g_brSelectedBrushes)
 		{
 			Warning("Must have two entities selected.");
 			Sys_Beep();
 			return;
 		}
-		b = b->prev;
+		b = b->Prev();
 	}
 	e2 = b->owner;
 
@@ -268,7 +268,7 @@ void Modify::ConnectEntities()
 			int maxtarg, targetnum;
 			// make a unique target value
 			maxtarg = 0;
-			for (e = g_map.entities.next; e != &g_map.entities; e = e->next)
+			for (e = g_map.entities.Next(); e != &g_map.entities; e = e->Next())
 			{
 				tn = e->GetKeyValue("targetname");
 				if (tn && tn[0])
@@ -318,7 +318,7 @@ void Modify::SetKeyValue(const char *key, const char *value)
 	try
 	{
 		cmd = new CmdSetKeyvalue(key, value);
-		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
 			// skip entity brushes in sequence
 			if (b->owner == last)
@@ -368,7 +368,7 @@ void Modify::SetKeyValueSeriesNum(const char *key, const char *value, const int 
 	last = nullptr;
 	CmdCompound *cmdCmp = new CmdCompound("Set Sequential Keyvalues");
 
-	for (Brush *b = g_brSelectedBrushes.prev; b != &g_brSelectedBrushes; b = b->prev)
+	for (Brush *b = g_brSelectedBrushes.Prev(); b != &g_brSelectedBrushes; b = b->Prev())
 	{
 		// skip entity brushes in sequence
 		if (b->owner == last)
@@ -418,7 +418,7 @@ void Modify::SetKeyValueSeriesAlpha(const char *key, const char *value, const ch
 	last = nullptr;
 	CmdCompound *cmdCmp = new CmdCompound("Set Sequential Keyvalues");
 	
-	for (Brush *b = g_brSelectedBrushes.prev; b != &g_brSelectedBrushes; b = b->prev)
+	for (Brush *b = g_brSelectedBrushes.Prev(); b != &g_brSelectedBrushes; b = b->Prev())
 	{
 		// skip entity brushes in sequence
 		if (b->owner == last)
@@ -491,7 +491,7 @@ void Modify::MakeCzgCylinder(int degree)
 	// lunaran - grid view reunification
 	axis = QE_BestViewAxis();
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	CmdCzgCylinder *cmdCzgC = new CmdCzgCylinder();
 
 	cmdCzgC->SetAxis(axis);
@@ -525,7 +525,7 @@ void Modify::MakeSided(int sides)
 	// lunaran - grid view reunification
 	axis = QE_BestViewAxis();
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	CmdCylinder	*cmdCyl = new CmdCylinder();
 
 	cmdCyl->SetAxis(axis);
@@ -560,7 +560,7 @@ void Modify::MakeSidedCone(int sides)
 	// lunaran - grid view reunification
 	axis = QE_BestViewAxis();
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	CmdCone	*cmdCone = new CmdCone();
 
 	cmdCone->SetAxis(axis);
@@ -589,7 +589,7 @@ void Modify::MakeSidedSphere(int sides)
 		return;
 	}
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	CmdSphere *cmdSph = new CmdSphere();
 
 	cmdSph->SetSides(sides);

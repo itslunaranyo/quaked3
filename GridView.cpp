@@ -88,8 +88,8 @@ void GridView::PositionView()
 {
 	Brush	   *b;
 
-	b = g_brSelectedBrushes.next;
-	if (b && b->next != b)
+	b = g_brSelectedBrushes.Next();
+	if (b && b->Next() != b)
 	{
 		Center(b->mins + (b->maxs - b->mins) * 0.5f);
 	}

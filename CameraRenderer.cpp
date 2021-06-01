@@ -190,7 +190,7 @@ void CameraRenderer::DrawActive()
 {
 	transBrushes.clear();
 
-	for (Brush *brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+	for (Brush *brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 	{
 		if (brush->IsFiltered())
 			continue;
@@ -236,7 +236,7 @@ void CameraRenderer::DrawSelected(Brush	*pList, vec3 selColor)
 	glMatrixMode(GL_PROJECTION);
 
 	// draw brushes first normally
-	for (brush = pList->next; brush != pList; brush = brush->next)
+	for (brush = pList->Next(); brush != pList; brush = brush->Next())
 		brush->Draw();
 
 	// redraw tint on top
@@ -250,7 +250,7 @@ void CameraRenderer::DrawSelected(Brush	*pList, vec3 selColor)
 	glDisable(GL_TEXTURE_2D);
 
 	// fully selected brushes, then loose faces
-	for (brush = pList->next; brush != pList; brush = brush->next)
+	for (brush = pList->Next(); brush != pList; brush = brush->Next())
 		for (face = brush->faces; face; face = face->fnext)
 			face->Draw();
 
@@ -263,7 +263,7 @@ void CameraRenderer::DrawSelected(Brush	*pList, vec3 selColor)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glColor3f(1, 1, 1);
 
-	for (brush = pList->next; brush != pList; brush = brush->next)
+	for (brush = pList->Next(); brush != pList; brush = brush->Next())
 		for (face = brush->faces; face; face = face->fnext)
 			face->Draw();
 
@@ -353,8 +353,8 @@ void CameraRenderer::Draw()
 {
 	double	start, end;
 
-	if (!g_map.brActive.next)
-		return;	// not valid yet
+	//if (!g_map.brActive.next)
+	//	return;	// not valid yet
 
 	if (timing)
 		start = Sys_DoubleTime();

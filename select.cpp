@@ -40,7 +40,7 @@ void Selection::HandleChange()
 	{
 		GetBounds(vMin, vMax);
 		vSize = vMax - vMin;
-		name = g_brSelectedBrushes.next->owner->GetKeyValue("classname");
+		name = g_brSelectedBrushes.Next()->owner->GetKeyValue("classname");
 		sprintf(selectionstring, "Selected: %s (%d %d %d)", name, (int)vSize[0], (int)vSize[1], (int)vSize[2]);
 		WndMain_Status(selectionstring, 3);
 	}
@@ -69,7 +69,7 @@ interface functions
 */
 bool Selection::HasBrushes()
 {
-	return (g_brSelectedBrushes.next && (g_brSelectedBrushes.next != &g_brSelectedBrushes));
+	return (g_brSelectedBrushes.Next() && (g_brSelectedBrushes.Next() != &g_brSelectedBrushes));
 }
 int Selection::NumFaces()
 {
@@ -81,7 +81,7 @@ bool Selection::IsEmpty()
 }
 bool Selection::OnlyPointEntities()
 {
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		if (b->owner->IsBrush())
 			return false;
 
@@ -89,7 +89,7 @@ bool Selection::OnlyPointEntities()
 }
 bool Selection::OnlyBrushEntities()
 {
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		if (b->owner->IsPoint())
 			return false;
 
@@ -97,7 +97,7 @@ bool Selection::OnlyBrushEntities()
 }
 bool Selection::OnlyWorldBrushes()
 {
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		if (!b->owner->IsWorld())
 			return false;
 
@@ -106,13 +106,13 @@ bool Selection::OnlyWorldBrushes()
 int Selection::NumBrushes()
 {
 	int i = 0;
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next) i++;
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next()) i++;
 	return i;
 }
 bool Selection::OneBrushEntity()
 {
 	Entity *first = nullptr;
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint() || b->owner->IsWorld())
 			return false;
@@ -134,7 +134,7 @@ bool Selection::IsBrushSelected(const Brush* bSel)
 {
 	Brush* b;
 
-	for (b = g_brSelectedBrushes.next; (b != nullptr) && (b != &g_brSelectedBrushes); b = b->next)
+	for (b = g_brSelectedBrushes.Next(); (b != nullptr) && (b != &g_brSelectedBrushes); b = b->Next())
 		if (b == bSel)
 			return true;
 
@@ -150,7 +150,7 @@ bool Selection::IsEntitySelected(const Entity* eSel)
 {
 	Brush* b;
 
-	for (b = g_brSelectedBrushes.next; (b != nullptr) && (b != &g_brSelectedBrushes); b = b->next)
+	for (b = g_brSelectedBrushes.Next(); (b != nullptr) && (b != &g_brSelectedBrushes); b = b->Next())
 		if (b->owner == eSel)
 			return true;
 
@@ -164,10 +164,10 @@ Selection::SelectBrush
 */
 void Selection::SelectBrush(Brush* b)
 {
-	if (b->next && b->prev)
+	if (b->IsLinked())
 		b->RemoveFromList();
 
-	b->AddToList(&g_brSelectedBrushes);
+	b->AddToList(g_brSelectedBrushes);
 	Selection::Changed();
 }
 
@@ -179,28 +179,28 @@ add a brush to the selected list, but adjacent to other brushes in the same enti
 */
 void Selection::SelectBrushSorted(Brush* b)
 {
-	if (b->next && b->prev)
+	if (b->IsLinked())
 		b->RemoveFromList();
 
 	// world brushes, point entities, and brush ents with only one brush go to the end 
 	// of the list, so we don't keep looping over them looking for buddies
-	if (b->owner->IsWorld() || b->owner->IsPoint() || b->onext == b)
+	if (b->owner->IsWorld() || b->owner->IsPoint() || b->ENext() == b)
 	{
 		//b->AddToList(g_brSelectedBrushes.prev);
-		b->AddToList(&g_brSelectedBrushes); // no, actually, add them up front because selection order matters
+		b->AddToList(g_brSelectedBrushes); // no, actually, add them up front because selection order matters
 		Selection::Changed();
 		return;
 	}
 
 	Brush* bCur;
 
-	for (bCur = g_brSelectedBrushes.next; bCur != &g_brSelectedBrushes; bCur = bCur->next)
+	for (bCur = g_brSelectedBrushes.Next(); bCur != &g_brSelectedBrushes; bCur = bCur->Next())
 	{
 		if (bCur->owner == b->owner)
 			break;
 	}
 
-	b->AddToList(bCur);
+	b->AddToList(*bCur);
 	Selection::Changed();
 }
 
@@ -223,19 +223,19 @@ void Selection::HandleBrush (Brush *brush, bool bComplete)
 		// select complete entity on first click
 		if (!e->IsWorld() && bComplete == true)
 		{
-			for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+			for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 			{
 				if (b->owner != e) continue;
 
 				// current entity is partially selected, select just this brush
 				//SelectBrush(brush);
 				brush->RemoveFromList();
-				brush->AddToList(b);	// add next to its partners to minimize entity fragmentation in the list
+				brush->AddToList(*b);	// add next to its partners to minimize entity fragmentation in the list
 				Selection::Changed();
 				return;
 			}
 			// current entity is not selected at all, select the whole thing
-			for (b = e->brushes.onext; b != &e->brushes; b = b->onext)
+			for (b = e->brushes.ENext(); b != &e->brushes; b = b->ENext())
 			{
 				SelectBrushSorted(b);
 			}
@@ -440,7 +440,7 @@ void Selection::BrushesToFaces()
 	if (!HasBrushes())
 		return;
 
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		for (f = b->faces; f; f = f->fnext)
 		{
@@ -448,7 +448,7 @@ void Selection::BrushesToFaces()
 		}
 	}
 	g_selMode = sel_face;
-	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
+	g_brSelectedBrushes.MergeListIntoList(g_map.brActive);
 	Selection::Changed();
 }
 
@@ -500,7 +500,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 
 		vec3 org;
 		float bestdist = DIST_START;
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+		for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -509,7 +509,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 				bestdist = dist;
 		}
 		org = origin + glm::normalize(dir) * bestdist;
-		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+		for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -533,7 +533,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 
 	if (!(flags & SF_SELECTED_ONLY))
 	{
-		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+		for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -561,7 +561,7 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 
 	if (!(flags & SF_FACES))
 	{
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+		for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -655,7 +655,7 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_UNSELECTED) return 0;
 			out |= SF_SELECTED;
 			t.brush->RemoveFromList();
-			t.brush->AddToList(&g_map.brActive);
+			t.brush->AddToList(g_map.brActive);
 			Selection::Changed();
 			if (flags & SF_EXPAND)
 				HandleBrush(t.brush, true);	
@@ -667,12 +667,12 @@ int Selection::Ray(const vec3 origin, const vec3 dir, int flags)
 			if (flags & SF_EXPAND)
 			{
 				Brush *brNext;
-				for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = brNext)
+				for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = brNext)
 				{
-					brNext = b->next;
+					brNext = b->Next();
 					if (b->owner != t.brush->owner) continue;
 					b->RemoveFromList();
-					b->AddToList(&g_map.brActive);
+					b->AddToList(g_map.brActive);
 					Selection::Changed();
 				}
 			}
@@ -697,7 +697,7 @@ trace_t Selection::TestPoint(const vec3 origin, int flags)
 
 	if (!(flags & SF_SELECTED_ONLY))
 	{
-		for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+		for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -712,7 +712,7 @@ trace_t Selection::TestPoint(const vec3 origin, int flags)
 
 	if (!(flags & SF_FACES))
 	{
-		for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+		for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
@@ -746,7 +746,7 @@ void Selection::Point(const vec3 origin, int flags)
 	if (t.selected)
 	{
 		t.brush->RemoveFromList();
-		t.brush->AddToList(&g_map.brActive);
+		t.brush->AddToList(g_map.brActive);
 		Selection::Changed();
 	}
 	else
@@ -787,7 +787,7 @@ void Selection::SelectAll()
 
 	DeselectAllFaces();
 
-	g_map.brActive.MergeListIntoList(&g_brSelectedBrushes);
+	g_map.brActive.MergeListIntoList(g_brSelectedBrushes);
 
 	Selection::Changed();
 }
@@ -801,14 +801,14 @@ void Selection::DeselectFiltered()
 {
 	Brush *b, *next;
 
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		if (b->IsFiltered())
 		{
 			b->RemoveFromList();
-			b->AddToList(&g_map.brActive);
+			b->AddToList(g_map.brActive);
 			Selection::Changed();
 		}
 	}
@@ -828,9 +828,9 @@ void Selection::DeselectAll()
 	if (!HasBrushes())
 		return;
 
-	QE_UpdateWorkzone(g_brSelectedBrushes.next);
+	QE_UpdateWorkzone(g_brSelectedBrushes.Next());
 
-	g_brSelectedBrushes.MergeListIntoList(&g_map.brActive);
+	g_brSelectedBrushes.MergeListIntoList(g_map.brActive);
 	Selection::Changed();
 }
 
@@ -848,7 +848,7 @@ bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
 
 	if (HasBrushes())
 	{
-		for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
 			mins = glm::min(mins, b->mins);
 			maxs = glm::max(maxs, b->maxs);
@@ -928,9 +928,9 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 
 	if (strlen(szKey) && strlen(szValue))	// if both "key" & "value" are declared
 	{
-		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
+		for (b = g_map.brActive.Next(); b != &g_map.brActive; b = bnext)
 		{
-			bnext = b->next;
+			bnext = b->Next();
 			if (b->IsFiltered()) continue;
 			if (!strcmp(b->owner->GetKeyValue(szKey), szValue))
 			{
@@ -941,9 +941,9 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 	}
 	else if (strlen(szKey))	// if only "key" is declared
 	{
-		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
+		for (b = g_map.brActive.Next(); b != &g_map.brActive; b = bnext)
 		{
-			bnext = b->next;
+			bnext = b->Next();
 			if (b->IsFiltered()) continue;
 
 			if (strlen(b->owner->GetKeyValue(szKey)))
@@ -955,9 +955,9 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 	}
 	else if (strlen(szValue))	// if only "value" is declared
 	{
-		for (b = g_map.brActive.next; b != &g_map.brActive; b = bnext)
+		for (b = g_map.brActive.Next(); b != &g_map.brActive; b = bnext)
 		{
-			bnext = b->next;
+			bnext = b->Next();
 			if (b->IsFiltered()) continue;
 			bFound = false;
 
@@ -1003,9 +1003,9 @@ void Selection::MatchingTextures()
 
 	DeselectAll();
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		if (b->IsFiltered()) continue;
 		for (f = b->faces; f; f = f->fnext)
 		{
@@ -1031,10 +1031,16 @@ Selection::Invert
 */
 void Selection::Invert()
 {
+	Brush temp;
+
+	g_brSelectedBrushes.MergeListIntoList(temp);
+	g_map.brActive.MergeListIntoList(g_brSelectedBrushes);
+	temp.MergeListIntoList(g_map.brActive);
+
+	/*
 	Brush *next, *prev;
 
 	//Sys_Printf("Inverting selection...\n");
-
 	next = g_map.brActive.next;
 	prev = g_map.brActive.prev;
 
@@ -1063,9 +1069,9 @@ void Selection::Invert()
 		g_brSelectedBrushes.next = &g_brSelectedBrushes;
 		g_brSelectedBrushes.prev = &g_brSelectedBrushes;
 	}
-
-	Selection::Changed();
 	//Sys_Printf("Done.\n");
+	*/
+	Selection::Changed();
 }
 
 
@@ -1080,14 +1086,14 @@ void Selection::AllType()
 {
 	Brush	*b, *next, *selected;
 
-	selected = g_brSelectedBrushes.next;
+	selected = g_brSelectedBrushes.Next();
 	// if nothing is selected, do nothing and return
 	if (selected == &g_brSelectedBrushes)
 		return;
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		if (!strcmp(b->owner->eclass->name, selected->owner->eclass->name))
 		{
@@ -1114,8 +1120,8 @@ void Selection::CompleteTall()
 
 	g_selMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->mins;
-	maxs = g_brSelectedBrushes.next->maxs;
+	mins = g_brSelectedBrushes.Next()->mins;
+	maxs = g_brSelectedBrushes.Next()->maxs;
 	Modify::Delete();
 
 	// lunaran - grid view reunification
@@ -1126,9 +1132,9 @@ void Selection::CompleteTall()
 		nDim2 = (nViewType == GRID_XY) ? 1 : 2;
 	}
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		if (b->IsFiltered())
 			continue;
@@ -1158,8 +1164,8 @@ void Selection::PartialTall()
 
 	g_selMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->mins;
-	maxs = g_brSelectedBrushes.next->maxs;
+	mins = g_brSelectedBrushes.Next()->mins;
+	maxs = g_brSelectedBrushes.Next()->maxs;
 	Modify::Delete();
 
 	// lunaran - grid view reunification
@@ -1170,9 +1176,9 @@ void Selection::PartialTall()
 		nDim2 = (nViewType == GRID_XY) ? 1 : 2;
 	}
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		if (b->IsFiltered())
 			continue;
@@ -1201,12 +1207,12 @@ void Selection::Touching()
 
 	g_selMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->mins;
-	maxs = g_brSelectedBrushes.next->maxs;
+	mins = g_brSelectedBrushes.Next()->mins;
+	maxs = g_brSelectedBrushes.Next()->maxs;
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		if (b->IsFiltered())
 			continue;
 
@@ -1236,13 +1242,13 @@ void Selection::Inside()
 
 	g_selMode = sel_brush;
 
-	mins = g_brSelectedBrushes.next->mins;
-	maxs = g_brSelectedBrushes.next->maxs;
+	mins = g_brSelectedBrushes.Next()->mins;
+	maxs = g_brSelectedBrushes.Next()->maxs;
 	Modify::Delete();
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = next)
 	{
-		next = b->next;
+		next = b->Next();
 		if (b->IsFiltered())
 			continue;
 
@@ -1270,23 +1276,23 @@ void Selection::NextBrushInGroup()
 	// check to see if the selected brush is part of a func group
 	// if it is, deselect everything and reselect the next brush 
 	// in the group
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	if (b != &g_brSelectedBrushes)
 	{
 		if (_strcmpi(b->owner->eclass->name, "worldspawn") != 0)
 		{
 			e = b->owner;
 			DeselectAll();
-			for (b2 = e->brushes.onext; b2 != &e->brushes; b2 = b2->onext)
+			for (b2 = e->brushes.ENext(); b2 != &e->brushes; b2 = b2->ENext())
 			{
 				if (b == b2)
 				{
-					b2 = b2->onext;
+					b2 = b2->ENext();
 					break;
 				}
 			}
 			if (b2 == &e->brushes)
-				b2 = b2->onext;
+				b2 = b2->ENext();
 
 			HandleBrush(b2, false);
 		}

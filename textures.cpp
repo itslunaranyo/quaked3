@@ -295,11 +295,11 @@ void Textures::RefreshUsedStatus()
 
 	// refresh texdefs to reset used status
 	Brush* b;
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		b->RefreshTexdefs();
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = b->next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = b->Next())
 		b->RefreshTexdefs();
-	for (b = g_map.brRegioned.next; b != &g_map.brRegioned; b = b->next)
+	for (b = g_map.brRegioned.Next(); b != &g_map.brRegioned; b = b->Next())
 		b->RefreshTexdefs();
 
 	g_vTexture.Refresh();

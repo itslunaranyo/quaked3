@@ -28,7 +28,7 @@ void CmdBrushClip::StartBrushes(Brush *brList)
 	// only allow setting the list once; if the selection list changes, the tool
 	// can destroy the command and create a new one
 	assert(state == NOOP);
-	for (Brush* br = brList->next; br != brList; br = br->next)
+	for (Brush* br = brList->Next(); br != brList; br = br->Next())
 	{
 		if (br->owner->IsPoint())
 			continue;

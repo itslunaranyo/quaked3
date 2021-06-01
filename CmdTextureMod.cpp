@@ -38,7 +38,7 @@ void CmdTextureMod::UseBrushes(Brush *brList)
 
 	std::vector<Face*> fq;
 
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 	{
 		for (Face* f = b->faces; f; f = f->fnext)
 			fq.push_back(f);

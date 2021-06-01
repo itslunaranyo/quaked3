@@ -93,7 +93,7 @@ void EntityView::Refresh()
 
 	eo = NULL;
 	first = true;
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		// since brushes in the selection are (mostly) sorted by entity, this is a 
 		// decent enough way to shuffle through them, but it does no harm if a 

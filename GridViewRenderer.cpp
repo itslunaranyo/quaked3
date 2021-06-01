@@ -719,7 +719,7 @@ void GridViewRenderer::DrawSelection(vec3 selColor)
 	ClearBounds(vMinBounds, vMaxBounds);
 	bFixedSize = false;
 
-	for (brush = g_brSelectedBrushes.next; brush != &g_brSelectedBrushes; brush = brush->next)
+	for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 	{
 		brush->DrawXY(gv.GetAxis());
 
@@ -763,8 +763,8 @@ void GridViewRenderer::Draw()
 	double	start, end;
 	vec3	mins, maxs;
 
-	if (!g_map.brActive.next)
-		return;	// not valid yet
+	//if (!g_map.brActive.next)
+	//	return;	// not valid yet
 
 	if (timing)
 		start = Sys_DoubleTime();
@@ -808,7 +808,7 @@ void GridViewRenderer::Draw()
 	}
 
 	e = g_map.world;
-	for (brush = g_map.brActive.next; brush != &g_map.brActive; brush = brush->next)
+	for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
 	{
 		if (brush->IsFiltered())
 			continue;

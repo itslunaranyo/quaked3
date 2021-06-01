@@ -54,22 +54,18 @@ void CmdPaste::Do_Impl()
 		bSnapCheck = true;
 	}
 	// <---sikk
-//	g_qeglobals.d_nParsedBrushes = 0;
-
-	blist.CloseLinks();
-	elist.CloseLinks();
 
 	g_map.Read(cbdata, blist, elist);
 
-	for (Entity *ent = elist.next; ent != &elist; ent = ent->next)
+	for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
 	{
 		// world brushes need to be merged into the existing worldspawn
 		if (ent->eclass == EntClass::worldspawn)
 		{
 			ent->RemoveFromList();
-			for (b = ent->brushes.onext; b != &ent->brushes; b = next)
+			for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)
 			{
-				next = b->onext;
+				next = b->ENext();
 				b->owner->UnlinkBrush(b);
 				b->owner = g_map.world;
 			}
@@ -88,20 +84,20 @@ void CmdPaste::Do_Impl()
 
 	// delink the lists to feed them to CmdAddRemove
 	// lunaran FIXME: this is stupid and parse should change instead
-	for (b = blist.next; b != &blist; b = next)
+	for (b = blist.Next(); b != &blist; b = next)
 	{
-		next = b->next;
-		if (b->owner->IsBrush())
-			b->onext = b->oprev = nullptr;
+		next = b->Next();
 		b->RemoveFromList();
+		if (b->owner->IsBrush() && !b->owner->IsWorld())
+		{
+			Entity::UnlinkBrush(b, true);
+		}
 		cmdAR.AddedBrush(b);
 	}
-	for (e = elist.next; e != &elist; e = enext)
+	for (e = elist.Next(); e != &elist; e = enext)
 	{
-		enext = e->next;
+		enext = e->Next();
 		e->RemoveFromList();
-		if (e->IsBrush())
-			e->brushes.onext = e->brushes.oprev = e->brushes.next;
 		cmdAR.AddedEntity(e);
 	}
 

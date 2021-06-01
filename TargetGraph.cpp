@@ -34,7 +34,7 @@ bool TargetGraph::FilterByVisibility(const Entity *e)
 		return true;
 
 	// if any brush is visible, so is the entity
-	for (Brush* b = e->brushes.onext; b && b != &e->brushes; b = b->onext)
+	for (Brush* b = e->brushes.ENext(); b && b != &e->brushes; b = b->ENext())
 	{
 		if (((g_cfgUI.ViewFilter & b->showFlags) == 0) &&	// by brush flag
 			!g_map.IsBrushFiltered(b))	// by region
@@ -129,10 +129,10 @@ void TargetGraph::Refresh(const Entity &elist)
 
 	edgeList.clear();
 
-	if (elist.next == nullptr)
+	if (!elist.IsLinked())
 		return;
 
-	for (Entity *es = elist.next; es != &elist; es = es->next)
+	for (Entity *es = elist.Next(); es != &elist; es = es->Next())
 	{
 		if (FilterByVisibility(es))
 			continue;
@@ -145,7 +145,7 @@ void TargetGraph::Refresh(const Entity &elist)
 			if (!src->IsTarget())
 				continue;
 
-			for (Entity *ed = elist.next; ed != &elist; ed = ed->next)
+			for (Entity *ed = elist.Next(); ed != &elist; ed = ed->Next())
 			{
 				if (es == ed)
 					continue;

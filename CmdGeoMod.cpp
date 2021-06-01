@@ -54,14 +54,14 @@ void CmdGeoMod::SetBrushes(Brush *brList)
 
 	// minimize needless copying
 	int numBrushes = 0;
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 	{
 		if (b->owner->IsBrush())
 			numBrushes++;
 	}
 	brMods.reserve(brMods.size() + numBrushes);
 
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 		if (b->owner->IsBrush())
 			brMods.push_back(b);
 

@@ -13,6 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 // sikk---> Transparent Brushes
+// lunaran TODO: oh god. oh my god
 Brush		*g_pbrTransBrushes[MAX_MAP_BRUSHES];
 int			g_nNumTransBrushes;
 // <---sikk
@@ -41,8 +42,8 @@ void CameraView::PositionCenter ()
 {
 	Brush *b;
 
-	b = g_brSelectedBrushes.next;
-	if (b && b->next != b)
+	b = g_brSelectedBrushes.Next();
+	if (b && b->Next() != b)
 	{
 		origin[0] = b->mins[0] - 64;
 		origin[1] = b->mins[1] - 64;
@@ -119,7 +120,7 @@ void CameraView::ChangeFloor (bool up)
 	else
 		bestd = 16384;
 
-	for (b = g_map.brActive.next; b != &g_map.brActive; b = b->next)
+	for (b = g_map.brActive.Next(); b != &g_map.brActive; b = b->Next())
 	{
 		if (!b->RayTest(start, dir, &d))
 			continue;

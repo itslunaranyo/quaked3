@@ -14,10 +14,9 @@
 #include <iostream>
 
 Entity::Entity() :
-	next(nullptr), prev(nullptr), epairs(nullptr), eclass(nullptr),
+	next(this), prev(this), epairs(nullptr), eclass(nullptr),
 	showflags(0), origin(0)
 {
-	brushes.onext = brushes.oprev = &brushes;
 	brushes.owner = this;
 }
 
@@ -32,10 +31,10 @@ The entity is removed from the global entities list.
 */
 Entity::~Entity()
 {
-	while (brushes.onext != &brushes)
-		delete brushes.onext;
+	while (brushes.ENext() != &brushes)
+		delete brushes.ENext();
 
-	if (next)
+	if (next != this)
 	{
 		next->prev = prev;
 		prev->next = next;
@@ -302,7 +301,7 @@ vec3 Entity::GetCenter() const
 
 	vec3 mins, maxs;
 	ClearBounds(mins, maxs);
-	for (Brush *b = brushes.onext; b != &brushes; b = b->onext)
+	for (Brush *b = brushes.ENext(); b != &brushes; b = b->ENext())
 	{
 		AddPointToBounds(b->mins, mins, maxs);
 		AddPointToBounds(b->maxs, mins, maxs);
@@ -335,6 +334,20 @@ void Entity::FreeEpairs ()
 	SetSpawnflagFilter();
 }
 
+
+
+
+/*
+=================
+Entity::IsLinked
+=================
+*/
+bool Entity::IsLinked() const
+{
+	assert((next == this) == (prev == this));
+	return (next != this);
+}
+
 /*
 =================
 Entity::AddToList
@@ -342,10 +355,10 @@ Entity::AddToList
 */
 void Entity::AddToList(Entity *list, bool tail)
 {
-	assert((!next && !prev) || (next && prev));
+	assert((next == this) == (prev == this));
 
-	if (next || prev)
-		Error("Entity_AddToList: Already linked.");
+	if (next != this)
+		Error("Entity::AddToList: Already linked.\n");
 
 	if (tail)
 	{
@@ -368,26 +381,13 @@ Entity::RemoveFromList
 */
 void Entity::RemoveFromList()
 {
-	assert((!next && !prev) || (next && prev));
+	assert((next == this) == (prev == this));
 
-	if (!next || !prev)
-		Error("Entity::RemoveFromList: Not currently linked.");
+	if (next == this)
+		Error("Entity::RemoveFromList: Not currently linked.\n");
 
 	next->prev = prev;
 	prev->next = next;
-	next = prev = nullptr;
-}
-
-void Entity::CloseLinks()
-{
-	assert((!next && !prev) || (next && prev));
-
-	if (next == prev && prev == this)
-		return;	// done
-
-	if (next || prev)
-		Error("Entity: tried to close non-empty linked list.");
-
 	next = prev = this;
 }
 
@@ -398,16 +398,9 @@ Entity::MergeListIntoList
 */
 void Entity::MergeListIntoList(Entity *dest, bool tail)
 {
-	// properly doubly-linked lists only
-	if (!next || !prev)
-	{
-		Error("Tried to merge a list with NULL links!");
-		return;
-	}
-
+	assert((next == this) == (prev == this));
 	if (next == this || prev == this)
 	{
-		Warning("Tried to merge an empty list.");
 		return;
 	}
 	if (tail)
@@ -430,26 +423,6 @@ void Entity::MergeListIntoList(Entity *dest, bool tail)
 	prev = next = this;
 }
 
-/*
-=================
-Entity::MemorySize
-=================
-*/
-int Entity::MemorySize ()
-{
-	EPair	*ep;
-	int size = 0;
-
-	for (ep = epairs; ep; ep = ep->next)
-	{
-		size += ep->key.size();
-		size += ep->value.size();
-		size += sizeof(*ep);
-	}
-	size += sizeof(Entity);
-	return size;
-}
-// <---sikk
 
 /*
 =================
@@ -580,7 +553,6 @@ Entity *Entity::Parse (bool onlypairs)
 		Error("Entity_Parse: { not found.");
 	
 	ent = new Entity();
-	ent->brushes.CloseLinks();
 
 	do
 	{
@@ -591,13 +563,8 @@ Entity *Entity::Parse (bool onlypairs)
 		if (!strcmp(g_szToken, "{"))
 		{
 			b = Brush::Parse();
-			b->owner = ent;
-
 			// add to the end of the entity chain
-			b->onext = &ent->brushes;
-			b->oprev = ent->brushes.oprev;
-			ent->brushes.oprev->onext = b;
-			ent->brushes.oprev = b;
+			ent->LinkBrush(b, true);
 		}
 		else
 		{
@@ -610,7 +577,7 @@ Entity *Entity::Parse (bool onlypairs)
 	if (onlypairs)
 		return ent;
 
-	if (ent->brushes.onext == &ent->brushes)
+	if (ent->brushes.ENext() == &ent->brushes)
 		has_brushes = false;
 	else
 		has_brushes = true;
@@ -685,7 +652,7 @@ void Entity::Write(std::ostream &out, bool use_region)
 			return;
 		}
 
-		for (b = brushes.onext; b != &brushes; b = b->onext)
+		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
 			if (!g_map.IsBrushFiltered(b))
 				break;	// got one
 
@@ -702,7 +669,7 @@ void Entity::Write(std::ostream &out, bool use_region)
 	if (IsBrush())
 	{
 		count = 0;
-		for (b = brushes.onext; b != &brushes; b = b->onext)
+		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
 		{
 			if (!use_region || !g_map.IsBrushFiltered(b))
 			{
@@ -729,9 +696,9 @@ void Entity::WriteSelected(std::ostream &out, int n)
 
 	// a .map with no worldspawn is broken, so always write worldspawn even if it's empty
 	if (eclass == EntClass::worldspawn)
-		b = brushes.onext;
+		b = brushes.ENext();
 	else
-		for (b = brushes.onext; b != &brushes; b = b->onext)
+		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
 			if (Selection::IsBrushSelected(b))
 				break;
 
@@ -748,7 +715,7 @@ void Entity::WriteSelected(std::ostream &out, int n)
 	if (IsBrush())
 	{
 		count = 0;
-		for (b; b != &brushes; b = b->onext)
+		for (b; b != &brushes; b = b->ENext())
 		{
 			if (Selection::IsBrushSelected(b))
 			{
@@ -807,9 +774,9 @@ void Entity::SetOriginFromBrush()
 	vec3	org;
 
 	if (IsBrush()) return;
-	if (brushes.onext == &brushes) return;
+	if (brushes.ENext() == &brushes) return;
 
-	org = brushes.onext->mins - eclass->mins;
+	org = brushes.ENext()->mins - eclass->mins;
 	SetKeyValueIVector("origin", org);
 	origin = org;
 }
@@ -843,14 +810,14 @@ Brush *Entity::MakeBrush()
 	// create a custom brush
 	emins = eclass->mins + origin;
 	emaxs = eclass->maxs + origin;
-	if (brushes.onext == &brushes)
+	if (brushes.ENext() == &brushes)
 	{
 		b = Brush::Create(emins, emaxs, &eclass->texdef);
 		LinkBrush(b);
 	}
 	else
 	{
-		b = brushes.onext;
+		b = brushes.ENext();
 		b->Recreate(emins, emaxs, &eclass->texdef);
 	}
 
@@ -871,11 +838,11 @@ bool Entity::Create (EntClass *ecIn)
 {
 	Entity		*e;
 
-	if (g_brSelectedBrushes.next != &g_brSelectedBrushes &&		// brushes are selected
-		g_brSelectedBrushes.next == g_brSelectedBrushes.prev &&	// one brush is selected
-		g_brSelectedBrushes.next->owner->IsPoint())		// it is a fixedsize brush
+	if (g_brSelectedBrushes.Next() != &g_brSelectedBrushes &&		// brushes are selected
+		g_brSelectedBrushes.Next() == g_brSelectedBrushes.Prev() &&	// one brush is selected
+		g_brSelectedBrushes.Next()->owner->IsPoint())		// it is a fixedsize brush
 	{
-		e = g_brSelectedBrushes.next->owner;
+		e = g_brSelectedBrushes.Next()->owner;
 		e->ChangeClassname(ecIn);
 		WndMain_UpdateWindows(W_SCENE);
 		Selection::Changed();
@@ -893,7 +860,7 @@ bool Entity::Create (EntClass *ecIn)
 	{
 		if (Selection::OneBrushEntity())
 		{
-			g_brSelectedBrushes.next->owner->ChangeClassname(ecIn);
+			g_brSelectedBrushes.Next()->owner->ChangeClassname(ecIn);
 			WndMain_UpdateWindows(W_SCENE);
 			Selection::Changed();
 			return true;
@@ -944,7 +911,7 @@ void Entity::ChangeClassname(EntClass* ec)
 void Entity::ChangeClassname(const char *classname)
 {
 	// lunaran TODO: jesus christ there has to be a better way
-	bool hasbrushes = (brushes.onext->faces->texdef.tex->name[0] != '#');
+	bool hasbrushes = (brushes.ENext()->faces->texdef.tex->name[0] != '#');
 
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
 	ChangeClassname(ec);
@@ -953,32 +920,50 @@ void Entity::ChangeClassname(const char *classname)
 /*
 ===========
 Entity::LinkBrush
-===========
-*/
-void Entity::LinkBrush (Brush *b)
-{
-	if (b->oprev || b->onext)
-		Error("Entity::LinkBrush: Already linked.");
-	b->owner = this;
-	b->onext = brushes.onext;
-	b->oprev = &brushes;
-	brushes.onext->oprev = b;
-	brushes.onext = b;
-}
-
-/*
-===========
 Entity::UnlinkBrush
 ===========
 */
-void Entity::UnlinkBrush (Brush *b)
+void _brush_ent_accessor::LinkToEntity(Brush* b, Entity* e)
 {
-	if (!b->owner || !b->onext || !b->oprev)
-		Error("Entity::UnlinkBrush: Not currently linked.");
+	b->owner = e;
+	b->onext = e->brushes.onext;
+	b->oprev = &e->brushes;
+	e->brushes.onext->oprev = b;
+	e->brushes.onext = b;
+}
+void _brush_ent_accessor::LinkToEntityTail(Brush* b, Entity* e)
+{
+	b->owner = e;
+	b->onext = &e->brushes;
+	b->oprev = e->brushes.oprev;
+	e->brushes.oprev->onext = b;
+	e->brushes.oprev = b;
+}
+
+void _brush_ent_accessor::UnlinkFromEntity(Brush* b, bool preserveOwner)
+{
 	b->onext->oprev = b->oprev;
 	b->oprev->onext = b->onext;
-	b->onext = b->oprev = nullptr;
+	b->onext = b->oprev = b;
+	if (preserveOwner) return;
 	b->owner = nullptr;
+}
+
+void Entity::LinkBrush(Brush *b, bool tail)
+{
+	if (b->ENext() != b || b->EPrev() != b)
+		Error("Entity::LinkBrush: Already linked.");
+	if (tail)
+		_brush_ent_accessor::LinkToEntityTail(b, this);
+	else
+		_brush_ent_accessor::LinkToEntity(b, this);
+}
+
+void Entity::UnlinkBrush (Brush *b, bool preserveOwner)
+{
+	if (!b->owner || b->ENext() == b || b->EPrev() == b)
+		Error("Entity::UnlinkBrush: Not currently linked.");
+	_brush_ent_accessor::UnlinkFromEntity(b, preserveOwner);
 }
 
 /*
@@ -1002,6 +987,5 @@ Entity *Entity::Clone()
 	}
 	n->showflags = showflags;
 	n->origin = origin;
-	//	n->CloseLinks();
 	return n;
 }

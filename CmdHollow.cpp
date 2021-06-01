@@ -29,7 +29,7 @@ void CmdHollow::UseBrush(Brush *br)
 
 void CmdHollow::UseBrushes(Brush *brList)
 {
-	for (Brush *br = brList->next; br != brList; br = br->next)
+	for (Brush *br = brList->Next(); br != brList; br = br->Next())
 		UseBrush(br);
 }
 

@@ -322,7 +322,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 			return;
 		}
 		vec3 ray;
-		for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
 			if (b->IsFiltered())
 				continue;
@@ -345,7 +345,7 @@ void ManipTool::DragStart1D(const mouseContext_t &mc)
 			return;		// is this even possible
 
 		// match backfaces to sliding front faces, so brush contacts move with their planes
-		for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+		for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
 			for (Face *f = b->faces; f; f = f->fnext)
 			{
@@ -772,7 +772,7 @@ void ManipTool::StartTranslate()
 
 void ManipTool::SideSelectFaces(const vec3 org, const vec3 ray, std::vector<Face*> &fSides)
 {
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			continue;
@@ -788,7 +788,7 @@ void ManipTool::SideSelectFaces(const vec3 org, const vec3 ray, std::vector<Face
 
 void ManipTool::SideSelectShearFaces(const vec3 org, const vec3 ray, std::vector<Face*> &fSides)
 {
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			continue;
@@ -807,7 +807,7 @@ void ManipTool::SideSelectBackFaces(std::vector<Face*> &fSides)
 
 	std::vector<Face*> backSides;
 	// match backfaces to sliding front faces, so brush contacts move with their planes
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			continue;
@@ -826,7 +826,7 @@ void ManipTool::SideSelectBackFaces(std::vector<Face*> &fSides)
 void ManipTool::FrontSelectShearFaces(const Face *hit, std::vector<Face*> &fSides)
 {
 	// match backfaces to sliding front faces, so brush contacts move with their planes
-	for (Brush* b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		for (Face *f = b->faces; f; f = f->fnext)
 		{

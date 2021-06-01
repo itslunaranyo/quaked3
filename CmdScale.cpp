@@ -28,7 +28,7 @@ void CmdScale::UseBrush(Brush *br)
 
 void CmdScale::UseBrushes(Brush *brList)
 {
-	for (Brush* b = brList->next; b != brList; b = b->next)
+	for (Brush* b = brList->Next(); b != brList; b = b->Next())
 		UseBrush(b);
 }
 
@@ -138,5 +138,5 @@ void CmdScale::Sel_Impl()
 	for (auto brIt = brScaled.begin(); brIt != brScaled.end(); ++brIt)
 		Selection::SelectBrush((*brIt));
 	for (auto eIt = entMoved.begin(); eIt != entMoved.end(); ++eIt)
-		Selection::SelectBrush((*eIt)->brushes.onext);
+		Selection::SelectBrush((*eIt)->brushes.ENext());
 }

@@ -26,7 +26,7 @@ void CmdClone::Clone(Brush *brList, const vec3 offset)
 
 	laste = nullptr;
 
-	for (Brush *b = brList->next; b != brList; b = b->next)
+	for (Brush *b = brList->Next(); b != brList; b = b->Next())
 	{
 		mat4 mat = glm::translate(mat4(1), offset);
 

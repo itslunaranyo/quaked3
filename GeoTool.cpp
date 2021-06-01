@@ -556,7 +556,7 @@ void GeoTool::GenerateHandles()
 
 	wPoints = 0;
 	wFaces = 0;
-	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			continue;
@@ -578,7 +578,7 @@ void GeoTool::GenerateHandles()
 
 	// stick a handle of each type at the first point it affects
 	pIdx = 0;
-	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			continue;

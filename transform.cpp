@@ -23,7 +23,7 @@ void Transform_Move(const vec3 delta)
 {
 	mat4 mat = glm::translate(mat4(1), delta);
 
-	for (Brush *b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 			b->owner->Transform(mat);

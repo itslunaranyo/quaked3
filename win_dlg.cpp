@@ -169,10 +169,10 @@ void FindBrush (int entitynum, int brushnum)
 		e = g_map.world;
 	else
 	{
-		e = g_map.entities.next;
+		e = g_map.entities.Next();
 		while (--entitynum)
 		{
-			e = e->next;
+			e = e->Next();
 			if (e == &g_map.entities)
 			{
 				Warning("No such entity.");
@@ -181,7 +181,7 @@ void FindBrush (int entitynum, int brushnum)
 		}
 	}
 
-	b = e->brushes.onext;
+	b = e->brushes.ENext();
 	if (b == &e->brushes)
 	{
 		Warning("No such brush.");
@@ -190,7 +190,7 @@ void FindBrush (int entitynum, int brushnum)
 
 	while (brushnum--)
 	{
-		b = b->onext;
+		b = b->ENext();
 		if (b == &e->brushes)
 		{
 			Warning("No such brush.");
@@ -217,7 +217,7 @@ void GetSelectionIndex (int *entity, int *brush)
 
 	*entity = *brush = 0;
 
-	b = g_brSelectedBrushes.next;
+	b = g_brSelectedBrushes.Next();
 	if (b == &g_brSelectedBrushes)
 		return;
 
@@ -225,12 +225,12 @@ void GetSelectionIndex (int *entity, int *brush)
 	if (!b->owner->IsWorld())
 	{
 		(*entity)++;
-		for (e = g_map.entities.next; e != &g_map.entities; e = e->next, (*entity)++)
+		for (e = g_map.entities.Next(); e != &g_map.entities; e = e->Next(), (*entity)++)
 			;
 	}
 
 	// find brush
-	for (b2 = b->owner->brushes.onext; (b2 != b) && (b2 != &b->owner->brushes); b2 = b2->onext, (*brush)++)
+	for (b2 = b->owner->brushes.ENext(); (b2 != b) && (b2 != &b->owner->brushes); b2 = b2->ENext(), (*brush)++)
 		;
 }
 
@@ -1165,7 +1165,7 @@ BOOL CALLBACK MapInfoDlgProc (
 		hList = GetDlgItem(hwndDlg, IDC_LIST_ENTITYBREAKDOWN);
 		SendMessage(hList, LB_SETTABSTOPS, (WPARAM)1, (LPARAM)(LPINT)nTabs);
 
-		for (pBrush = g_map.brActive.next; pBrush != &g_map.brActive; pBrush = pBrush->next)
+		for (pBrush = g_map.brActive.Next(); pBrush != &g_map.brActive; pBrush = pBrush->Next())
 		{
 			if (pBrush->owner->IsWorld())
 			{
@@ -1190,7 +1190,7 @@ BOOL CALLBACK MapInfoDlgProc (
 		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++) 
 		{
 			pEClass = *ecIt;
-			for (pEntity = g_map.entities.next; pEntity != &g_map.entities; pEntity = pEntity->next)
+			for (pEntity = g_map.entities.Next(); pEntity != &g_map.entities; pEntity = pEntity->Next())
 				if (pEntity->eclass->name == pEClass->name)
 					nCount++;
 
@@ -1383,7 +1383,7 @@ void OnSelect (HWND hTree)
 		if (pEntity)
 		{
 			Selection::DeselectAll();
-			Selection::HandleBrush(pEntity->brushes.onext, true);
+			Selection::HandleBrush(pEntity->brushes.ENext(), true);
 		}
 	}
 
@@ -1480,7 +1480,7 @@ BOOL CALLBACK EntityInfoDlgProc (
 		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
 		{
 			pEClass = *ecIt;
-			for (pEntity = g_map.entities.next; pEntity != &g_map.entities; pEntity = pEntity->next)
+			for (pEntity = g_map.entities.Next(); pEntity != &g_map.entities; pEntity = pEntity->Next())
 			{
 				if (pEntity->eclass->name == pEClass->name)
 				{

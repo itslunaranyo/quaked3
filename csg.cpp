@@ -373,15 +373,15 @@ bool CSG_CanMerge()
 		return false;
 	}
 
-	if (g_brSelectedBrushes.next->next == &g_brSelectedBrushes)
+	if (g_brSelectedBrushes.Next()->Next() == &g_brSelectedBrushes)
 	{
 		Warning("At least two brushes must be selected.");
 		return false;
 	}
 
-	owner = g_brSelectedBrushes.next->owner;
+	owner = g_brSelectedBrushes.Next()->owner;
 
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b = b->next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 	{
 		if (b->owner->IsPoint())
 		{
@@ -435,63 +435,89 @@ Input and output should be a single linked list using .next
 Brush *CSG::BrushMergeListPairs (Brush *brushlist, bool onlyshape)
 {
 	int		nummerges, merged;
-	Brush	*b1, *b2, *tail, *newbrush, *newbrushlist;
-	Brush	*lastb2;
+	Brush	*a, *b, *newbrush;
+	Brush	*bNext;
 
 	if (!brushlist)
 		return nullptr;
 
 	nummerges = 0;
 
+	Brush open, closed;
+	open.AddToList(*brushlist);
+
 	do
 	{
-		for (tail = brushlist; tail; tail = tail->next)
-			if (!tail->next) 
-				break;
+		merged = 0;
+		for (a = open.Next(); a != &open; a = open.Next())
+		{
+			for (b = a->Next(); b != &open; b = bNext)
+			{
+				bNext = b->Next();
+				newbrush = CSG_DoSimpleMerge(a, b);
+				if (newbrush)
+				{
+					a->RemoveFromList();
+					b->RemoveFromList();
+					newbrush->AddToListTail(open);
+					merged++;
+					nummerges++;
+					break;
+				}
+			}
 
+			// if a can't be merged with any of the other brushes
+			if (b == &open)
+			{
+				a->RemoveFromList();
+				a->AddToList(closed);
+			}
+		}
+	} while (merged);
+/*
+	do
+	{
 		merged = 0;
 		newbrushlist = nullptr;
 
-		for (b1 = brushlist; b1; b1 = brushlist)
+		for (a = brushlist; a; a = brushlist)
 		{
-			lastb2 = b1;
-			for (b2 = b1->next; b2; b2 = b2->next)
+			bLast = a;
+			for (b = a->Next(); b != a; b = b->Next())
 			{
-				newbrush = CSG_DoSimpleMerge(b1, b2);
+				newbrush = CSG_DoSimpleMerge(a, b);
 				if (newbrush)
 				{
 					tail->next = newbrush;
-					lastb2->next = b2->next;
+					bLast->next = b->next;
 					brushlist = brushlist->next;
-					b1->next = b1->prev = nullptr;
-					b2->next = b2->prev = nullptr;
-					delete b1;
-					delete b2;
-
-					for (tail = brushlist; tail; tail = tail->next)
-						if (!tail->next) 
-							break;
+					a->next = a->prev = nullptr;
+					b->next = b->prev = nullptr;
+					delete a;
+					delete b;
 
 					merged++;
 					nummerges++;
 					break;
 				}
-				lastb2 = b2;
+				bLast = b;
 			}
 
 			// if b1 can't be merged with any of the other brushes
-			if (!b2)
+			if (!b)
 			{
-				brushlist = brushlist->next;
+				brushlist = brushlist->Next();
 				// keep b1
-				b1->next = newbrushlist;
-				newbrushlist = b1;
+				a->next = newbrushlist;
+				newbrushlist = a;
 			}
 		}
 		brushlist = newbrushlist;
 	} while (merged);
-
-	return newbrushlist;
+	*/
+	newbrush = closed.Next();
+	closed.RemoveFromList();
+	return newbrush;
 }
 
 /*
@@ -524,8 +550,10 @@ Brush *CSG_BrushSubtract (Brush *a, Brush *b)
 			delete in;
 		if (front)
 		{	// add to list
-			front->next = out;
-			out = front;
+			if (!out)
+				out = front;
+			else
+				front->AddToList(*out);
 			//front->owner->LinkBrush(front);
 		}
 		//back->owner->LinkBrush(back);
@@ -539,8 +567,8 @@ Brush *CSG_BrushSubtract (Brush *a, Brush *b)
 	{	// didn't really intersect
 		for (b = out; b; b = next)
 		{
-			next = b->next;
-			b->next = b->prev = nullptr;
+			next = b->Next();
+			//b->next = b->prev = nullptr;
 			delete b;
 		}
 		return a;
@@ -556,7 +584,7 @@ CSG::Subtract
 void CSG::Subtract ()
 {
 	int		numfragments, numbrushes;
-	Brush	fragmentlist;
+	Brush	m_fragList;
 	Brush	*b, *s, *fragments, *nextfragment, *frag, *next, *snext;
 
 	std::vector<Brush*> brCarved;
@@ -570,21 +598,19 @@ void CSG::Subtract ()
 		return;
 	}
 
-	fragmentlist.CloseLinks();
-
 	numfragments = 0;
 	numbrushes = 0;
-	for (b = g_brSelectedBrushes.next; b != &g_brSelectedBrushes; b=next)
+	for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b=next)
 	{
-		next = b->next;
+		next = b->Next();
 
 		if (b->owner->IsPoint())
 			continue;	// can't use texture from a fixed entity, so don't subtract
 
 		// chop all fragments further up
-		for (s = fragmentlist.next; s != &fragmentlist; s = snext)
+		for (s = m_fragList.Next(); s != &m_fragList; s = snext)
 		{
-			snext = s->next;
+			snext = s->Next();
 
 			fragments = CSG_BrushSubtract(s, b);
 
@@ -596,22 +622,22 @@ void CSG::Subtract ()
 			fragments = CSG::BrushMergeListPairs(fragments, true);
 
 			// add the fragments to the list
-			for (frag = fragments; frag; frag = nextfragment)
+			while (fragments->Next() != fragments)
 			{
-				nextfragment = frag->next;
-				frag->next = nullptr;
+				frag = fragments->Next();
 				frag->owner = s->owner;
-				frag->AddToList(&fragmentlist);
 			}
+			fragments->MergeListIntoList(m_fragList);
+			fragments->AddToList(m_fragList);
 
 			// free the original brush
 			delete s;
 		}
 
 		// chop any active brushes up
-		for (s = g_map.brActive.next; s != &g_map.brActive; s = snext)
+		for (s = g_map.brActive.Next(); s != &g_map.brActive; s = snext)
 		{
-			snext = s->next;
+			snext = s->Next();
 
 			if (s->owner->IsPoint() || s->IsFiltered())
 				continue;
@@ -624,9 +650,6 @@ void CSG::Subtract ()
 			if (fragments == s)
 				continue;
 
-			//Undo::AddBrush(s);	// sikk - Undo/Redo
-			//cmdAR->RemovedBrush(s);
-
 			// one extra brush chopped up
 			numbrushes++;
 
@@ -634,36 +657,34 @@ void CSG::Subtract ()
 			fragments = CSG::BrushMergeListPairs(fragments, true);
 
 			// add the fragments to the list
-			for (frag = fragments; frag; frag = nextfragment)
-			{
-				nextfragment = frag->next;
-				frag->next = nullptr;
+			frag = fragments;
+			do {
 				frag->owner = s->owner;
-				frag->AddToList(&fragmentlist);
+				frag = frag->Next();
 			}
+			while (frag != fragments);
+			fragments->MergeListIntoList(m_fragList);
+			fragments->AddToList(m_fragList);
 
 			// free the original brush
 			brCarved.push_back(s);
-			//delete s;
 		}
 	}
 	cmdAR->RemovedBrushes(brCarved);
 
 	// move all fragments to the active brush list
-	for (frag = fragmentlist.next; frag != &fragmentlist; frag = nextfragment)
+	for (frag = m_fragList.Next(); frag != &m_fragList; frag = nextfragment)
 	{
-		nextfragment = frag->next;
+		nextfragment = frag->Next();
 		numfragments++;
 		frag->RemoveFromList();
-		//frag->AddToList( &g_map.brActive);
-		//Undo::EndBrush(frag);	// sikk - Undo/Redo
 		cmdAR->AddedBrush(frag);
 	}
 
 	if (numfragments == 0)
 	{
 		Warning("Selected brush%s did not intersect with any other brushes.",
-				   (g_brSelectedBrushes.next->next == &g_brSelectedBrushes) ? "":"es");
+				   (g_brSelectedBrushes.Next()->Next() == &g_brSelectedBrushes) ? "":"es");
 		delete cmdAR;
 		return;
 	}
