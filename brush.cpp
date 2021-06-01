@@ -257,8 +257,9 @@ Brush::Transform
 */
 void Brush::Transform(const mat4 mat, const bool textureLock)
 {
-	if (!owner->IsBrush())
-		return;
+	//if (!owner->IsBrush())
+	//	return;
+	bool tlock = textureLock & owner->IsBrush();
 
 	for (Face *f = faces; f; f = f->fnext)
 		f->Transform(mat, textureLock);

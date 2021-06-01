@@ -40,7 +40,6 @@ void CmdCreatePointEntity::CreatePointEntity(const char *classname, const vec3 o
 	ent->SetKeyValue("classname", classname);
 
 	ent->SetKeyValueIVector("origin", origin);
-	ent->origin = origin;
 
 	ent->MakeBrush();
 }

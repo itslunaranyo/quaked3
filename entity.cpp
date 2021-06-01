@@ -12,10 +12,11 @@
 #include "parse.h"
 #include "win_dlg.h"
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 Entity::Entity() :
 	next(this), prev(this), epairs(nullptr), eclass(nullptr),
-	showflags(0), origin(0)
+	showflags(0)
 {
 	brushes.owner = this;
 }
@@ -297,7 +298,7 @@ vec3 Entity::GetCenter() const
 {
 	// some entities have wonky origins, ie min corner
 	if (IsPoint())
-		return origin + (eclass->mins + eclass->maxs) / 2.0f;
+		return brushes.ENext()->mins + (eclass->maxs - eclass->mins) / 2.0f;
 
 	vec3 mins, maxs;
 	ClearBounds(mins, maxs);
@@ -582,7 +583,6 @@ Entity *Entity::Parse (bool onlypairs)
 	else
 		has_brushes = true;
 
-	ent->GetKeyValueVector("origin", ent->origin);
 	ent->SetSpawnflagFilter();
 
 	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
@@ -600,30 +600,6 @@ Entity *Entity::Parse (bool onlypairs)
 	return ent;
 }
 
-/*
-================
-Entity::CheckOrigin
-
-if fixedsize, make sure origins are consistent with each other
-calculate a new origin based on the current brush position and warn if not
-================
-*/
-void Entity::CheckOrigin()
-{
-#ifdef _DEBUG
-	if (IsBrush()) return;
-
-	vec3 testorg, org;
-	GetKeyValueVector("origin", testorg);
-
-	// be sure for now
-	if (!VectorCompare(origin, testorg))
-	{
-		SetOriginFromBrush();
-		Warning("Entity origins out of sync on %s at (%f %f %f)", eclass->name, org[0], org[1], org[2]);
-	}
-#endif
-}
 
 /*
 ============
@@ -660,8 +636,6 @@ void Entity::Write(std::ostream &out, bool use_region)
 			return;	// nothing visible
 	}
 
-	CheckOrigin();
-
 	out << "{\n";
 	for (ep = epairs; ep; ep = ep->next)
 		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
@@ -682,7 +656,6 @@ void Entity::Write(std::ostream &out, bool use_region)
 	out << "}\n";
 }
 
-// sikk---> Export Selection (Map/Prefab)
 /*
 =================
 Entity::WriteSelected
@@ -710,8 +683,6 @@ void Entity::WriteSelected(std::ostream &out, int n)
 	for (ep = epairs; ep; ep = ep->next)
 		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
 
-	CheckOrigin();
-
 	if (IsBrush())
 	{
 		count = 0;
@@ -727,45 +698,47 @@ void Entity::WriteSelected(std::ostream &out, int n)
 	}
 	out << "}\n";
 }
-// <---sikk
 
+/*
+============
+Entity::GetOrigin
+============
+*/
+vec3 Entity::GetOrigin() const
+{
+	vec3 org(0);
+	if (GetKeyValueVector("origin", org))
+		return org;
+	if (IsPoint() && brushes.ENext() != &brushes)
+		return brushes.ENext()->mins - eclass->mins;
+	return org;
+}
 
 /*
 ============
 Entity::SetOrigin
 
-entity origins are stored/modified three different ways (by entity.origin, by 
-"origin" keyvalue, and derived from brush bounds) - always set a point entity's
-origin via these functions or they won't stay synced and you're a JERK
+entity origins are stored/modified by "origin" keyvalue or derived from 
+brush bounds - always set origin via these methods or they won't stay synced
 ============
 */
 void Entity::SetOrigin(const vec3 org)
 {
 	if (IsBrush()) return;
 
-	origin = org;
+	vec3 oldorg = GetOrigin();
 	SetKeyValueIVector("origin", org);
-	MakeBrush();
-}
-
-// call one of these three after updating the odd one out, to not loop
-void Entity::SetOriginFromMember()
-{
-	if (IsBrush()) return;
-
-	origin[0] = floorf(origin[0] + 0.5f);
-	origin[1] = floorf(origin[1] + 0.5f);
-	origin[2] = floorf(origin[2] + 0.5f);
-
-	SetKeyValueIVector("origin", origin);
-	MakeBrush();
+	
+	// don't need to remake the brush, which just throws away six faces and then 
+	//	reallocates them anyway
+	brushes.ENext()->Transform(glm::translate(mat4(1), org - oldorg), false);
 }
 
 void Entity::SetOriginFromKeyvalue()
 {
 	if (IsBrush()) return;
 
-	GetKeyValueVector("origin", origin);
+	// makeBrush calls getOrigin which gets the keyvalue itself
 	MakeBrush();
 }
 
@@ -776,40 +749,33 @@ void Entity::SetOriginFromBrush()
 	if (IsBrush()) return;
 	if (brushes.ENext() == &brushes) return;
 
-	org = brushes.ENext()->mins - eclass->mins;
-	SetKeyValueIVector("origin", org);
-	origin = org;
-}
-
-void Entity::Move(const vec3 trans)
-{
-	origin = trans + origin;
-	SetOriginFromMember();
+	SetKeyValueIVector("origin", GetOrigin());
 }
 
 void Entity::Transform(mat4 mat)
 {
-	origin = mat * glm::vec4(origin, 1);
+	vec3 origin;
+	origin = mat * glm::vec4(GetOrigin(), 1);
 	origin = glm::round(origin);
-	SetOriginFromMember();
+	SetOrigin(origin);
 }
 
 /*
 ============
 Entity_MakeBrush
 
-update the dummy brush for point entities after the origin is overridden (easier 
-than translating it) or when the classname is changed
+update the dummy brush for point entities when the classname is changed
 ============
 */
 Brush *Entity::MakeBrush()
 {
 	Brush		*b;
-	vec3		emins, emaxs;
+	vec3		emins, emaxs, org;
 
 	// create a custom brush
-	emins = eclass->mins + origin;
-	emaxs = eclass->maxs + origin;
+	org = GetOrigin();
+	emins = eclass->mins + org;
+	emaxs = eclass->maxs + org;
 	if (brushes.ENext() == &brushes)
 	{
 		b = Brush::Create(emins, emaxs, &eclass->texdef);
@@ -986,6 +952,6 @@ Entity *Entity::Clone()
 		n->epairs = np;
 	}
 	n->showflags = showflags;
-	n->origin = origin;
+	//n->origin = origin;
 	return n;
 }

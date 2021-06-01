@@ -211,7 +211,7 @@ void CameraView::SetOrbit(vec3 dir)
 	if (vtest.brush)
 	{
 		if (vtest.brush->owner->IsPoint())
-			focus = vtest.brush->owner->origin;
+			focus = (vtest.brush->mins + vtest.brush->maxs) * 0.5f;
 		else
 			focus = origin + vtest.dist * dir;
 	}

@@ -35,7 +35,6 @@ public:
 	Brush		brushes;	// head/tail of list - TODO: make this brush the dummy brush for point entities instead of a stupid linked one?
 	EPair		*epairs;
 	int			showflags;
-	vec3		origin;
 
 	inline Entity* Next() const { return next; }
 	inline Entity* Prev() const { return prev; }
@@ -57,14 +56,12 @@ public:
 	void	ChangeClassname(EntClass* ec);
 	void	ChangeClassname(const char *classname);
 	Brush	*MakeBrush();
+	void	Transform(mat4 mat);
 
-	// TODO: properly constrain the ways origin is set and stored
+	vec3	GetOrigin() const;
 	void	SetOrigin(const vec3 org);
-	void	SetOriginFromMember();
 	void	SetOriginFromKeyvalue();
 	void	SetOriginFromBrush();
-	void	Move(const vec3 trans);
-	void	Transform(mat4 mat);
 
 	void	SetSpawnFlag(int flag, bool on);
 	void	SetSpawnflagFilter();
@@ -93,7 +90,6 @@ public:
 	void	FreeEpairs();
 
 	static Entity* Parse (bool onlypairs);
-	void	CheckOrigin();
 	void	Write(std::ostream & stream, bool use_region);
 	void	WriteSelected(std::ostream & out, int n);
 };
