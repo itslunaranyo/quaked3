@@ -532,7 +532,7 @@ bool Brush::PointTest(const vec3 origin)
 Brush::IsLinked
 =================
 */
-bool Brush::IsLinked()
+bool Brush::IsLinked() const
 {
 	assert((next == this) == (prev == this));
 	return (next != this);

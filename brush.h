@@ -35,7 +35,7 @@ public:
 	inline Brush* EPrev() const { return oprev; }	// previous brush in its owning entity
 
 	void	RemoveFromList();
-	bool	IsLinked();
+	bool	IsLinked() const;
 	void	AddToList(Brush &list);
 	void	AddToListTail(Brush &list);
 	void	MergeListIntoList(Brush &dest, bool tail = false);	// donates all brushes to dest, leaving this brush empty
