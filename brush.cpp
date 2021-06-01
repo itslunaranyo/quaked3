@@ -148,9 +148,9 @@ Brush *Brush::Create(const vec3 inMins, const vec3 inMaxs, TexDef *texdef)
 
 void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 {
-	vec3		pts[4][2];
-	int			i, j;
-	Face	   *f, *fnext;
+	vec3	pts[4][2];
+	int		i, j;
+	Face	*f;
 
 	// with no wads loaded, a brush created has to summon a broken texture
 	// from somewhere - putting it here prevents a pink garbage texture added 
@@ -163,12 +163,22 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 			inTexDef->Set("none");
 	}
 
-	// free old faces
-	for (f = faces; f; f = fnext)
+	// reuse old faces - chances are they're already contiguous in memory, and
+	// deleting/reallocating them might get us fragments all over instead.
+	i = 0;
+	for (f = faces; f; f = f->fnext)	// ensure we have six first though
+		++i;
+	while (i < 6)
 	{
-		fnext = f->fnext;
-		delete f;
-		faces = nullptr;
+		f = new Face(this);
+		++i;
+	}
+	while (i > 6)
+	{
+		f = faces->fnext;
+		delete faces;
+		faces = f;
+		--i;
 	}
 
 	mins = inMins;
@@ -194,19 +204,19 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 		pts[i][1][2] = inMaxs[2];
 	}
 
+	f = faces;
 	for (i = 0; i < 4; i++)
 	{
-		f = new Face(this);
 		f->texdef = *inTexDef;
 		j = (i + 1) % 4;
 		f->plane.FromPoints(pts[j][1], pts[i][1], pts[i][0]);
+		f = f->fnext;
 	}
 
-	f = new Face(this);
 	f->texdef = *inTexDef;
 	f->plane.FromPoints(pts[0][1], pts[1][1], pts[2][1]);
+	f = f->fnext;
 
-	f = new Face(this);
 	f->texdef = *inTexDef;
 	f->plane.FromPoints(pts[2][0], pts[1][0], pts[0][0]);
 }
