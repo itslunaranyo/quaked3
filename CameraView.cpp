@@ -12,12 +12,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-// sikk---> Transparent Brushes
-// lunaran TODO: oh god. oh my god
-Brush		*g_pbrTransBrushes[MAX_MAP_BRUSHES];
-int			g_nNumTransBrushes;
-// <---sikk
-
 CameraView g_vCamera;
 
 /*
