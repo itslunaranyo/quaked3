@@ -13,10 +13,10 @@
 Face::Face
 ================
 */
-Face::Face() : owner(nullptr), fnext(nullptr), face_winding(nullptr) {}
+Face::Face() : owner(nullptr), fnext(nullptr), winding(nullptr) {}
 
 Face::Face(Brush *b) : 
-	owner(b), fnext(b->faces), face_winding(nullptr)
+	owner(b), fnext(b->faces), winding(nullptr)
 {
 	assert(b);
 
@@ -25,13 +25,13 @@ Face::Face(Brush *b) :
 
 Face::Face(Face *f) : 
 	owner(nullptr), fnext(nullptr),
-	plane(f->plane), texdef(f->texdef), face_winding(nullptr)
+	plane(f->plane), texdef(f->texdef), winding(nullptr)
 {
 	assert(f);
 }
 
 Face::Face(Brush *b, Face *f) : 
-	owner(b), face_winding(nullptr), 
+	owner(b), winding(nullptr), 
 	plane(f->plane), texdef(f->texdef)
 {
 	assert(b);
@@ -42,7 +42,7 @@ Face::Face(Brush *b, Face *f) :
 }
 
 Face::Face(Plane &p, TexDef &td) : 
-	owner(nullptr), fnext(nullptr), face_winding(nullptr),
+	owner(nullptr), fnext(nullptr), winding(nullptr),
 	plane(p), texdef(td)
 {}
 
@@ -53,8 +53,8 @@ Face::~Face
 */
 Face::~Face()
 {
-	if (face_winding)
-		Winding::Free(face_winding);
+	if (winding)
+		Winding::Free(winding);
 }
 
 
@@ -104,8 +104,8 @@ int Face::MemorySize()
 {
 	int size = 0;
 
-	if (face_winding)
-		size += Winding::MemorySize(face_winding);
+	if (winding)
+		size += Winding::MemorySize(winding);
 
 	size += sizeof(Face);
 
@@ -185,7 +185,7 @@ void Face::BoundsOnAxis(const vec3 a, float* min, float* max)
 	float p;
 	vec3 an;
 
-	if (!face_winding)
+	if (!winding)
 		return;
 
 	*max = -99999;
@@ -194,9 +194,9 @@ void Face::BoundsOnAxis(const vec3 a, float* min, float* max)
 	an = a;
 	VectorNormalize(an);
 
-	for (i = 0; i < face_winding->numpoints; i++)
+	for (i = 0; i < winding->numpoints; i++)
 	{
-		p = DotProduct(an, face_winding->points[i].point);
+		p = DotProduct(an, winding->points[i].point);
 		if (p > *max) *max = p;
 		if (p < *min) *min = p;
 	}
@@ -209,10 +209,10 @@ Face::AddBounds
 */
 void Face::AddBounds(vec3 & mins, vec3 & maxs)
 {
-	for (int i = 0; i < face_winding->numpoints; i++)
+	for (int i = 0; i < winding->numpoints; i++)
 	{
-		mins = glm::min(mins, face_winding->points[i].point);
-		maxs = glm::max(maxs, face_winding->points[i].point);
+		mins = glm::min(mins, winding->points[i].point);
+		maxs = glm::max(maxs, winding->points[i].point);
 	}
 }
 
@@ -282,7 +282,7 @@ void Face::FitTexture(const float fHeight, const float fWidth)
 	float		min, max, len;
 	winding_t	*w;
 
-	w = face_winding;
+	w = winding;
 	if (!w)
 		return;
 
@@ -417,7 +417,7 @@ void Face::ColorAndTexture()
 	}
 
 	SetColor();
-	Winding::TextureCoordinates(face_winding, texdef.tex, this);
+	Winding::TextureCoordinates(winding, texdef.tex, this);
 }
 
 /*
@@ -486,23 +486,29 @@ Face::Draw
 */
 void Face::Draw()
 {
-	if (!face_winding)
+	if (!winding)
 		return;
 
 	glBegin(GL_POLYGON);
-	for (int i = 0; i < face_winding->numpoints; i++)
-		glVertex3fv(&face_winding->points[i].point[0]);
+	for (int i = 0; i < winding->numpoints; i++)
+		glVertex3fv(&winding->points[i].point[0]);
 	glEnd();
 }
 
 void Face::DrawWire()
 {
-	if (!face_winding)
+	if (!winding)
 		return;
 
 	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < face_winding->numpoints; i++)
-		glVertex3fv(&face_winding->points[i].point[0]);
+	for (int i = 0; i < winding->numpoints; i++)
+		glVertex3fv(&winding->points[i].point[0]);
 	glEnd();
 }
 
+void Face::SetWinding(winding_t* w)
+{
+	if (winding && winding != w)
+		Winding::Free(winding);
+	winding = w;
+}

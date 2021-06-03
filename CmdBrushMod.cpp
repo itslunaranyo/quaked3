@@ -35,8 +35,7 @@ CmdBrushMod::brBasis_s::brBasis_s(Brush *bOrig) :
 		nf->d_color = of->d_color;	// or noops will turn the brush black
 
 		// give the existing windings back, ours will need to be rebuilt on an undo anyway
-		std::swap(of->face_winding, nf->face_winding);
-		//f->face_winding = nullptr;
+		of->SwapWinding(nf);
 
 		nf->fnext = faces;
 		faces = nf;

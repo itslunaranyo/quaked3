@@ -290,7 +290,7 @@ Selection::SelectFace
 void Selection::SelectFace(Face* f)
 {
 	assert(!IsFaceSelected(f));
-	if (!f->face_winding)
+	if (!f->GetWinding())
 		return;
 	//g_vfSelectedFaces[g_nSelFaceCount++] = f;
 	//g_vfSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
@@ -858,10 +858,10 @@ bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
 	{
 		for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
 		{
-			for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
+			for (int i = 0; i < (*fIt)->GetWinding()->numpoints; i++)
 			{
-				mins = glm::min(mins, (*fIt)->face_winding->points[i].point);
-				maxs = glm::max(maxs, (*fIt)->face_winding->points[i].point);
+				mins = glm::min(mins, (*fIt)->GetWinding()->points[i].point);
+				maxs = glm::max(maxs, (*fIt)->GetWinding()->points[i].point);
 			}
 		}
 	}

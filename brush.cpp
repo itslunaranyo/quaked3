@@ -51,7 +51,7 @@ int Brush::NumFaces() const
 	int sum = 0;
 	Face* f;
 	for (f = faces; f; f = f->fnext)
-		if (f->face_winding)
+		if (f->GetWinding())
 			sum++;
 	return sum;
 }
@@ -85,15 +85,15 @@ bool Brush::IsConvex() const
 
 	for (face1 = faces; face1; face1 = face1->fnext)
 	{
-		if (!face1->face_winding)
+		if (!face1->GetWinding())
 			continue;
 		for (face2 = faces; face2; face2 = face2->fnext)
 		{
 			if (face1 == face2)
 				continue;
-			if (!face2->face_winding)
+			if (!face2->GetWinding())
 				continue;
-			if (Winding::PlanesConcave(face1->face_winding, face2->face_winding,
+			if (Winding::PlanesConcave(face1->GetWinding(), face2->GetWinding(),
 				face1->plane.normal, face2->plane.normal,
 				face1->plane.dist, face2->plane.dist))
 				return false;
@@ -335,9 +335,11 @@ bool Brush::Build()
 		face->owner = this;
 		
 		//w = face->face_winding = MakeFaceWinding(face);
-		w = face->face_winding = face->MakeWinding();
+		w = face->MakeWinding();
 		if (!w)
 			continue;
+
+		face->SetWinding(w);
 
 		for (i = 0; i < w->numpoints; i++)
 		{
@@ -407,7 +409,7 @@ void Brush::RemoveEmptyFaces()
 	{
 		fnext = f->fnext;
 
-		if (!f->face_winding)
+		if (!f->GetWinding())
 			delete f;
 		else
 		{
@@ -694,7 +696,7 @@ void Brush::Draw ()
 	tprev = NULL;
 	for (face = faces, order = 0; face; face = face->fnext, order++)
 	{
-		w = face->face_winding;
+		w = face->GetWinding();
 		if (!w)
 			continue;	// freed face
 
@@ -803,7 +805,7 @@ void Brush::DrawXY (int nViewType)
 		if (face->plane.normal[nViewType] <= 0)
 			continue;
 
-		w = face->face_winding;
+		w = face->GetWinding();
 		if (!w)
 			continue;
 

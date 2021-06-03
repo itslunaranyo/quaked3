@@ -706,7 +706,7 @@ void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
 	std::vector<winding_t*> fSideWindings;
 	fSideWindings.reserve(fSides.size());
 	for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
-		fSideWindings.push_back((*fIt)->face_winding);
+		fSideWindings.push_back((*fIt)->GetWinding());
 
 	if (Selection::HasBrushes())
 	{
@@ -728,8 +728,8 @@ void ManipTool::StartQuickShear(std::vector<Face*> &fSides)
 	for (auto fIt = fSides.begin(); fIt != fSides.end(); ++fIt)
 	{
 		points.clear();
-		for (int i = 0; i < (*fIt)->face_winding->numpoints; i++)
-			points.push_back((*fIt)->face_winding->points[i].point);
+		for (int i = 0; i < (*fIt)->GetWinding()->numpoints; i++)
+			points.push_back((*fIt)->GetWinding()->points[i].point);
 		cmdGM->SetPoints((*fIt)->owner, points);
 		++wIt;
 	}

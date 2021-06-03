@@ -33,7 +33,6 @@ public:
 	Face		*fnext;
 	//Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
 	Brush		*owner;		// sikk - brush of selected face
-	winding_t	*face_winding;
 	Plane		plane;
 	TexDef		texdef;
 	vec3		d_color;
@@ -59,7 +58,17 @@ public:
 
 	void	Draw();
 	void	DrawWire();
+
+	inline winding_t* GetWinding() const  { return winding; }
+	void SetWinding(winding_t* w);
+	inline void SwapWinding(Face* other) {
+		winding_t* w = winding;
+		winding = other->winding;
+		other->winding = w;
+	}
+
 private:
+	winding_t	*winding;
 	void	SetColor();
 	float	ShadeForPlane();
 };
