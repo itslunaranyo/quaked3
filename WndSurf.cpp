@@ -369,7 +369,7 @@ void WndSurf_UpdateSpinners(WPARAM wParam, LPARAM lParam)
 SurfaceDlgProc
 ============
 */
-BOOL CALLBACK SurfaceDlgProc(
+INT_PTR CALLBACK SurfaceDlgProc(
 	HWND	hwndDlg,// handle to dialog box
 	UINT	uMsg,	// message
 	WPARAM	wParam,	// first message parameter

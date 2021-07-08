@@ -85,7 +85,7 @@ void WndMain_CreateStatusBar(HWND hWnd)
 		ID_STATUSBAR);			// window ID
 
 
-	SendMessage(hwndSB, SB_SETPARTS, 4, (long)partsize); // EER
+	SendMessage(hwndSB, SB_SETPARTS, 4, (LPARAM)partsize); // EER
 
 	g_hwndStatus = hwndSB;
 }

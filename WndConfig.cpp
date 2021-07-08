@@ -385,7 +385,7 @@ void WndCfg_ProjectPresetsToWnd()
 ConfigNewProjDlgProc
 ============
 */
-BOOL CALLBACK ConfigNewProjDlgProc( HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
+INT_PTR CALLBACK ConfigNewProjDlgProc( HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
 	char sz[256];
 	sz[0] = 0;
@@ -573,7 +573,7 @@ void WndCfg_SelectColor(int btnIDD)
 	}
 }
 
-BOOL CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	char sz[MAX_PROJNAME];
 	sz[0] = 0;
@@ -972,7 +972,7 @@ ConfigSubDlgProc
 catch-all proc for all config subpanes
 ============
 */
-BOOL CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int nAutosave, nUndoLevel;
 	char sz[256];
@@ -1309,7 +1309,7 @@ bool WndCfg_OnClose()
 ConfigDlgProc
 ============
 */
-BOOL CALLBACK ConfigDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ConfigDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{

@@ -78,7 +78,7 @@ bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut)
 AboutDlgProc
 ============
 */
-BOOL CALLBACK AboutDlgProc( 
+INT_PTR CALLBACK AboutDlgProc( 
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -239,7 +239,7 @@ void GetSelectionIndex (int *entity, int *brush)
 FindBrushDlgProc
 ============
 */
-BOOL CALLBACK FindBrushDlgProc (
+INT_PTR CALLBACK FindBrushDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -306,7 +306,7 @@ void DoFindBrush ()
 RotateDlgProc
 ============
 */
-BOOL CALLBACK RotateDlgProc (
+INT_PTR CALLBACK RotateDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -542,7 +542,7 @@ int	g_nType = 0;	// sikk - Brush Primitives
 SidesDlgProc
 ============
 */
-BOOL CALLBACK SidesDlgProc (
+INT_PTR CALLBACK SidesDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -683,7 +683,7 @@ void DoSides (int nType)	// sikk - Brush Primitives (previously took no argument
 KeylistDlgProc
 ============
 */
-BOOL CALLBACK MouselistDlgProc(
+INT_PTR CALLBACK MouselistDlgProc(
 	HWND	hwndDlg,// handle to dialog box
 	UINT	uMsg,	// message
 	WPARAM	wParam,	// first message parameter
@@ -811,7 +811,7 @@ void DoMouselist()
 KeylistDlgProc
 ============
 */
-BOOL CALLBACK KeylistDlgProc ( 
+INT_PTR CALLBACK KeylistDlgProc ( 
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1056,7 +1056,7 @@ bool CreateEntityDlg_Make (HWND h)
 CreateEntityDlgProc
 ============
 */
-BOOL CALLBACK CreateEntityDlgProc (
+INT_PTR CALLBACK CreateEntityDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1136,7 +1136,7 @@ void DoCreateEntity (bool bPointbased, bool bBrushbased, bool bSel, const vec3 o
 MapInfoDlgProc
 ============
 */
-BOOL CALLBACK MapInfoDlgProc (
+INT_PTR CALLBACK MapInfoDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1433,7 +1433,7 @@ void OnDelete (HWND hTree, HWND hList)
 EntityInfoDlgProc
 ============
 */
-BOOL CALLBACK EntityInfoDlgProc (
+INT_PTR CALLBACK EntityInfoDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1562,7 +1562,7 @@ void DoEntityInfo ()
 ScaleDlgProc
 ============
 */
-BOOL CALLBACK ScaleDlgProc (
+INT_PTR CALLBACK ScaleDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1776,7 +1776,7 @@ void DoScale ()
 CamSpeedDlgProc
 ============
 */
-BOOL CALLBACK CamSpeedDlgProc( 
+INT_PTR CALLBACK CamSpeedDlgProc( 
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1856,7 +1856,7 @@ void DoCamSpeed ()
 DefaultTexScaleDlgProc
 ============
 */
-BOOL CALLBACK DefaultTexScaleDlgProc (
+INT_PTR CALLBACK DefaultTexScaleDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -1951,7 +1951,7 @@ void DoDefaultTexScale ()
 FindKeyValueDlgProc
 ============
 */
-BOOL CALLBACK FindKeyValueDlgProc (
+INT_PTR CALLBACK FindKeyValueDlgProc (
     HWND	hwndDlg,// handle to dialog box
     UINT	uMsg,	// message
     WPARAM	wParam,	// first message parameter
@@ -2026,7 +2026,7 @@ void DoFindKeyValue ()
 SetKeyvalsDlgProc
 ============
 */
-BOOL CALLBACK SetKeyvalsDlgProc(
+INT_PTR CALLBACK SetKeyvalsDlgProc(
 	HWND	hwndDlg,// handle to dialog box
 	UINT	uMsg,	// message
 	WPARAM	wParam,	// first message parameter
@@ -2111,7 +2111,7 @@ void DoSetKeyValues()
 
 // =======================================================
 
-BOOL CALLBACK ImportOptionsDlgProc(
+INT_PTR CALLBACK ImportOptionsDlgProc(
 	HWND	hwndDlg,// handle to dialog box
 	UINT	uMsg,	// message
 	WPARAM	wParam,	// first message parameter

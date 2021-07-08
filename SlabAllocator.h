@@ -45,7 +45,7 @@ private:
 			assert(numFree < SlabSize - 1);
 
 			byte* db = reinterpret_cast<byte*>(d);
-			byte index = ((db - slab) / sizeof(T));
+			byte index = static_cast<byte>((db - slab) / sizeof(T));
 			*db = firstFree;
 			firstFree = index;
 			numFree++;

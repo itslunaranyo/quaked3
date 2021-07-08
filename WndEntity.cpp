@@ -130,7 +130,7 @@ BOOL WndEntity::FieldProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			if (hWnd == w_hwndCtrls[ENT_KEYFIELD])
 			{
-				SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (long)"");
+				SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)"");
 				SetFocus(w_hwndCtrls[ENT_VALUEFIELD]);
 			}
 			else
@@ -467,12 +467,12 @@ void WndEntity::CreateControls()
 		}
 	}
 
-	DefaultFieldProc = (WNDPROC)GetWindowLong(w_hwndCtrls[ENT_KEYFIELD], GWL_WNDPROC);
-	SetWindowLong(w_hwndCtrls[ENT_KEYFIELD], GWL_WNDPROC, (long)WndFieldProc);
-	SetWindowLong(w_hwndCtrls[ENT_VALUEFIELD], GWL_WNDPROC, (long)WndFieldProc);
+	DefaultFieldProc = (WNDPROC)GetWindowLongPtr(w_hwndCtrls[ENT_KEYFIELD], GWLP_WNDPROC);
+	SetWindowLongPtr(w_hwndCtrls[ENT_KEYFIELD], GWLP_WNDPROC, (LONG_PTR)&WndFieldProc);
+	SetWindowLongPtr(w_hwndCtrls[ENT_VALUEFIELD], GWLP_WNDPROC, (LONG_PTR)&WndFieldProc);
 
-	DefaultEntityListProc = (WNDPROC)GetWindowLong(w_hwndCtrls[ENT_CLASSLIST], GWL_WNDPROC);
-	SetWindowLong(w_hwndCtrls[ENT_CLASSLIST], GWL_WNDPROC, (long)WndEntityListProc);
+	DefaultEntityListProc = (WNDPROC)GetWindowLongPtr(w_hwndCtrls[ENT_CLASSLIST], GWLP_WNDPROC);
+	SetWindowLongPtr(w_hwndCtrls[ENT_CLASSLIST], GWLP_WNDPROC, (LONG_PTR)&WndEntityListProc);
 
 	ResizeControls();
 	FillClassList();

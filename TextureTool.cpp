@@ -317,7 +317,7 @@ void TextureTool::UpdateFindReplaceHistories()
 	}
 }
 
-BOOL CALLBACK FindTextureDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FindTextureDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	assert(g_texTool);
 	return g_texTool->InputReplaceDlg(hwndDlg, uMsg, wParam, lParam);

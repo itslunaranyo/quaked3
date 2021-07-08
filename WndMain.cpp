@@ -41,7 +41,7 @@ int		g_nInspectorMode;		// W_TEXTURE, W_ENTITY, or W_CONSOLE
 SplashDlgProc
 ============
 */
-BOOL CALLBACK SplashDlgProc(
+INT_PTR CALLBACK SplashDlgProc(
 	HWND	hwndDlg,// handle to dialog box
 	UINT	uMsg,	// message
 	WPARAM	wParam,	// first message parameter
