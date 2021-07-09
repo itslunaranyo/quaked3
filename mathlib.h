@@ -36,6 +36,8 @@ inline int min(int a, int b) { if (a < b) return a; return b; }
 inline int max(int a, int b) { if (a > b) return a; return b; }
 inline float min(float a, float b) { if (a < b) return a; return b; }
 inline float max(float a, float b) { if (a > b) return a; return b; }
+inline uint32_t min(uint32_t a, uint32_t b) { if (a < b) return a; return b; }
+inline uint32_t max(uint32_t a, uint32_t b) { if (a > b) return a; return b; }
 
 bool	VectorCompareLT(const vec3 &v1, const vec3 &v2);
 bool	VectorCompare(const vec3 &v1, const vec3 &v2);

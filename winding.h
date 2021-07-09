@@ -14,10 +14,65 @@
 
 //====================================================================
 
+typedef unsigned char byte;
+
 struct windingpoint_t
 {
 	vec3 point;
 	float s, t;
+};
+
+class NuWinding
+{
+public:
+	NuWinding() {};
+	~NuWinding();
+	void Grow(const int vMinPoints = 0, const bool noFrags = false);
+	void Free();
+
+	struct vertex_t
+	{
+		vec3 point;
+		float s, t;
+		float shade;
+	};
+
+	//inline vertex_t* GetPoints() const { return (vertex_t*)(_pool + vsIndex); }
+	vertex_t* operator[](const int i);
+
+	enum realloc_status {
+		OK,			// no need to reallocate at present
+		PRUDENT,	// reallocate after next save
+		URGENT,		// reallocate after next save or cmdQueue op
+		EMERGENCY	// reallocate immediately
+	};
+
+	inline realloc_status GetStatus() const { return _status; }
+
+private:
+	byte vCount = 0, vMaxPts = 0;	// measured in singular vertices
+	uint32_t vsIndex = -1;	// SEG offset
+	// 8 MSBs guaranteed to never be used (24 bits is enough for ~2mil brushes)
+
+	static constexpr int segSize = 4;
+	struct vertex_seg_t { vertex_t v[segSize]; };
+	struct free_vseg_t {
+		uint32_t vsLoc = 0;
+		byte vsSize = 0;
+		free_vseg_t* next = nullptr;
+	};
+	static vertex_seg_t* _pool;
+	static uint32_t _vsCapacity;
+	// pool retains a high water mark with all empty space above and a fragmented free list below
+	static uint32_t _vsMargin;
+	static free_vseg_t* _freeList;
+	static realloc_status _status;
+
+	static inline uint32_t v2vs(int x) { return (x + segSize - 1) / segSize; }
+	static inline uint32_t vs2v(int x) { return x * segSize; }
+	static void Allocate(const int vMinPoints = 0);
+	static void SetStatus();
+	inline bool IsHighmost() const { return (vsIndex + v2vs(vMaxPts) == _vsMargin); }
 };
 
 struct winding_t
@@ -30,7 +85,7 @@ struct winding_t
 struct free_winding_t {
 	int maxWindings;	// winding points / 6
 	free_winding_t* next;
-	free_winding_t* prev;
+	free_winding_t* prev;	// is this needed?
 };
 
 namespace Winding

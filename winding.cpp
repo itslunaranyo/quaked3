@@ -3,6 +3,7 @@
 //==============================
 
 #include "pre.h"
+#include "mathlib.h"
 #include "qe3.h"
 #include "winding.h"
 #include <list>
@@ -11,6 +12,202 @@
 
 free_winding_t *first;
 std::list<free_winding_t*> windingChunks;
+
+//===============================================================================
+
+/*
+THE NEW WINDING SHIT
+
+- single global pool, no pages
+	- start at 768kb (32k verts, enough for ~1300 brushes)
+	- reallocate with +768kb whenever free space drops under threshold
+	- pool location is static
+	- faces keep uint32 index into pool alongside winding size (count+capacity)
+- allocation
+	- pool is consumed in groups of 4 verts
+		- 95% of brushes on map load have only quads for all faces, and stay that way
+		- a double consumption of 8 verts covers 95% of the rest
+	- pool retains a high water mark with all empty space above and a free list below
+	- retain a count of how many windings are pulled from the free list vs highwater
+		and use as a rough guide to fragmentation - realloc if too high
+- reallocation
+	- triggered after a save under 128k free, after cmdqueue op under 32k free
+	- rather than copy data, just call map->rebuild to heal all fragmentation as well
+	- whole map rebuild is complete in a few hundred ms so this is acceptable
+- signaling
+	- need a semaphore to denote if prior allocations should be ignored (because the 
+		block was freed or is about to be) 
+	- windingalloc doesn't know when it's safe to turn that signal off again (like
+		when the map is done rebuilding) - who gets to control it?
+- etc
+	- all brushes are loaded from a map before being built, so it allows an initial
+		pool size guess (32*brushcount verts leaves room to grow)
+	- 3 bytes as winding index is enough for 16 million faces - use last byte for...?
+		- fork pools for different purposes? other allocators?
+		- keeps scratch windings out of the main (render) pool
+	- global pool is used directly as the VAO for rendering
+*/
+
+constexpr uint32_t vsWINDING_BLOCK_SIZE = 8192;	// measured in 4-vert segs
+
+NuWinding::realloc_status NuWinding::_status = NuWinding::EMERGENCY;
+NuWinding::vertex_seg_t* NuWinding::_pool = nullptr;
+NuWinding::free_vseg_t* NuWinding::_freeList = nullptr;
+uint32_t NuWinding::_vsMargin = 0;
+uint32_t NuWinding::_vsCapacity = 0;
+
+NuWinding::~NuWinding()
+{
+	Free();
+//	count = maxPts = 0;
+//	w = -1;
+}
+
+/*
+==================
+Winding::Grow
+
+ensure the winding has room for at least minPoints. does not guarantee
+that prior winding points will be copied if a change of location is 
+necessary, so windings cannot be safely grown while under construction. 
+use scratch memory for this.
+
+resizing to a minPoints of less than the current capacity does nothing.
+
+noFrags: always alloc at the high margin (skip the free list) - used if
+	a number of windings are going to be allocated at once and it would
+	be nice if they were contiguous.
+==================
+*/
+void NuWinding::Grow(const int vMinPoints, const bool noFrags)
+{
+	if (vMaxPts >= vMinPoints) return;	// we're already big enough
+
+	// qe3 already exploited lack of array overrun protection to treat winding_t
+	//	as variably sized. we always alloc in groups of 4: 95% of brushes have
+	//	only quads for all faces, and stay that way forever, and a double alloc
+	//	of 8 verts covers 95% of the rest.
+	uint32_t vsNewSize = v2vs(vMinPoints);
+
+	// if we're the last winding below the high water mark, just get bigger
+	if (IsHighmost())
+	{
+		_vsMargin = vsIndex + vsNewSize;
+		vMaxPts = vs2v(vsNewSize);
+
+		SetStatus();
+		return;
+	}
+
+	Free();
+	vCount = 0;
+
+	// check free list for something of suitable size
+	if (!noFrags)// && vsNewSize <= 8)
+	{
+		// for now: leave windings sized as they are - if we're dragging the clip
+		// points across a 12-sided cylinder (for example) we don't want to 
+		// parasitically gobble the buffer 12 at a time, and if a 12-winding was
+		// recently freed it'll be close to the start of the free list anyway
+
+		// for later: solve this problem by not using this (permanent) allocator
+		//	for (temporary) tool windings
+
+		free_vseg_t *freew;
+		free_vseg_t *lastfreew = nullptr;
+		for (freew = _freeList; freew; freew = freew->next)
+		{
+			if (freew->vsSize == vsNewSize)
+			{
+				if (lastfreew)
+					lastfreew->next = freew->next;
+				else
+					_freeList = freew->next;
+
+				vsIndex = freew->vsLoc;
+				vMaxPts = vs2v(vsNewSize);
+				SetStatus();
+				return;
+			}
+			lastfreew = freew;
+		}
+	}
+
+	// put at the end
+	vsIndex = _vsMargin;
+	vMaxPts = vs2v(vsNewSize);
+	_vsMargin += vsNewSize;
+
+	SetStatus();
+}
+
+void NuWinding::Free()
+{
+	if (vMaxPts)
+	{
+		if (IsHighmost())
+		{
+			_vsMargin -= v2vs(vMaxPts);
+			return;
+		}
+		free_vseg_t* freew = (free_vseg_t*)&_pool[vsIndex];
+
+		freew->vsSize = v2vs(vMaxPts);
+		freew->vsLoc = vsIndex;
+		freew->next = _freeList;
+		_freeList = freew;
+		//count = maxPts = 0;
+		//w = -1;
+	}
+}
+
+NuWinding::vertex_t* NuWinding::operator[](const int i)
+{
+	if (i < 0 && i >= vCount)
+		throw new std::exception("Index out of range on winding[]\n");
+	return (vertex_t*)(_pool + vsIndex) + i;
+}
+
+void NuWinding::Allocate(const int vMinPoints)
+{
+	_vsCapacity = max(v2vs(vMinPoints), (_vsCapacity + vsWINDING_BLOCK_SIZE));
+
+	// copy old pool:
+	vertex_seg_t* oldpool = _pool;
+	_pool = (vertex_seg_t*)malloc(_vsCapacity * sizeof(vertex_seg_t));
+	if (!_pool)
+		throw new std::exception("Winding::Allocate failed! that's p. bad\n");
+	if (oldpool)
+	{
+		memcpy(_pool, oldpool, _vsMargin * sizeof(vertex_seg_t));
+		free(_pool);
+	}
+
+	// better: trash all data, require map to rebuild all, as a defragmentation strategy
+	//	(needs a semaphore to make all windings ignore their allocations, which have been freed)
+	//	(same semaphore should affect both grow and free)
+	/*
+	if (_pool) free(_pool);
+	_pool = (vertex_seg_t*)malloc(_vsCapacity * sizeof(vertex_seg_t));
+	if (!_pool)
+		throw new std::exception("Winding::Allocate failed! that's p. bad\n");
+	_vsMargin = 0;
+	_freeList = nullptr;
+	*/
+
+	_status = OK;
+}
+
+void NuWinding::SetStatus()
+{
+	int remaining = _vsCapacity - _vsMargin;
+	if (remaining < 320)
+		_status = EMERGENCY;
+	else if (remaining < 1280)
+		_status = URGENT;
+	else if (remaining < 5120)
+		_status = PRUDENT;
+}
 
 //===============================================================================
 
@@ -189,7 +386,7 @@ void Winding::CheckFreeChain()
 	if (!first)
 		return;
 	assert(first->prev == NULL);
-	assert((int)first->next != 0x45400000);
+	//assert((int)first->next != 0x45400000);
 	free_winding_t* chunk;
 	chunk = first;
 	while (chunk->next)
@@ -211,7 +408,7 @@ void Winding::Free(winding_t *w)
 
 	int maxW = w->maxpoints / 6;
 
-	memset(w, 0xEF, sizeof(winding_t) * maxW);
+	//memset(w, 0xEF, sizeof(winding_t) * maxW);
 	free_winding_t* fw = (free_winding_t*)w;
 
 	fw->maxWindings = maxW;
@@ -639,3 +836,4 @@ vec3 Winding::Centroid(winding_t * w)
 	}
 	return c / (float)w->numpoints;
 }
+
