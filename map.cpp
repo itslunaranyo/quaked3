@@ -342,7 +342,7 @@ void Map::LoadFromFile(const char *filename)
 
 		Log::Print("--- LoadMapFile ---\n");
 		Log::Print(_S("%s\n")<< temp);
-		Log::Print(_S("%5i brushes\n%5i entities\n")<< numBrushes<< numEntities);
+		Log::Print(_S("%n brushes\n%n entities\n")<< numBrushes<< numEntities);
 
 		LoadBetween(between);
 		g_map.BuildBrushData();
