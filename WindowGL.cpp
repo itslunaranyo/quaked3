@@ -142,7 +142,9 @@ int WindowGL::OnCreate()
 		Log::Print(_S("GL_VENDOR: %s\n") << (const char*)glGetString(GL_VENDOR));
 		Log::Print(_S("GL_RENDERER: %s\n") << (const char*)glGetString(GL_RENDERER));
 		Log::Print(_S("GL_VERSION: %s\n") << (const char*)glGetString(GL_VERSION));
+#ifdef _DEBUG
 		Log::Print(_S("GL_EXTENSIONS: %s\n") << (const char*)glGetString(GL_EXTENSIONS));
+#endif
 
 		//glPolygonStipple((GLubyte *)s_stipple);
 		glLineStipple(3, 0xaaaa);
