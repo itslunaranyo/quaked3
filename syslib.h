@@ -10,8 +10,6 @@ double	Sys_DoubleTime();
 void	Sys_DeltaTime();
 
 void    Sys_ClearPrintf();
-void    Sys_Printf(char *text, ...);
-void	Sys_LogFile();
 
 void    Sys_GetCursorPos(int *x, int *y);
 void    Sys_SetCursorPos(int x, int y);

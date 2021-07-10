@@ -14,20 +14,20 @@ void Palette::LoadFromFile(const char* palfile)
 	char pfname[MAX_PATH];
 	qeBuffer lmp(768);
 
-	Sys_Printf("Loading palette from %s ...\n", palfile);
+	Log::Print(_S("Loading palette from %s ...\n")<< palfile);
 	if (LoadFromFileImpl(pfname))
 		return;
 
-	Sys_Printf("Could not load %s, trying texturepath ...\n", palfile);
+	Log::Print(_S("Could not load %s, trying texturepath ...\n")<< palfile);
 	sprintf(pfname, "%s/%s", g_project.wadPath, palfile);
 	if (LoadFromFileImpl(pfname))
 		return;
 
-	Warning("Couldn't load palette! Loading local quakepal.lmp as fallback ...");
+	Log::Warning("Couldn't load palette! Loading local quakepal.lmp as fallback ...");
 	if (LoadFromFileImpl("./quakepal.lmp"))
 		return;
 
-	Warning("Couldn't open QE3 data directory! Are you running it from the directory it's installed in?");
+	Log::Warning("Couldn't open QE3 data directory! Are you running it from the directory it's installed in?");
 	GenerateErrorPalette();
 }
 
@@ -41,7 +41,7 @@ bool Palette::LoadFromFileImpl(const char* file)
 	if (lenf != 768)
 	{
 		if (lenf > 0)
-			Warning("Problem loading palette! (bad length)");
+			Log::Warning("Problem loading palette! (bad length)");
 		return false;
 	}
 
@@ -57,13 +57,13 @@ bool Palette::LoadFromFileImpl(const char* file)
 
 		pal[i] = { gammatable[r], gammatable[g], gammatable[b], 255};
 	}
-	Sys_Printf("Palette loaded.\n");
+	Log::Print("Palette loaded.\n");
 	return true;
 }
 
 void Palette::GenerateErrorPalette()
 {
-	Warning("Generating hideous error-colored palette ...");
+	Log::Warning("Generating hideous error-colored palette ...");
 	int i;
 	for (i = 0; i < 256; i++)
 	{

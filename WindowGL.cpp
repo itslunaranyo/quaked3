@@ -103,7 +103,7 @@ int WindowGL::SetupPixelFormat(HDC hDC, bool zbuffer)
 
 	if ((pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0)
 	{
-		Error("ChoosePixelFormat: Failed (error %d)", GetLastError());
+		Error(_S("ChoosePixelFormat: Failed (error %d)") << (int)GetLastError());
 	}
 
 	if (!SetPixelFormat(hDC, pixelformat, &pfd))
@@ -139,10 +139,10 @@ int WindowGL::OnCreate()
 		Textures::SetTextureMode(g_cfgUI.TextureMode);
 
 		// report OpenGL information
-		Sys_Printf("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
-		Sys_Printf("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
-		Sys_Printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
-		Sys_Printf("GL_EXTENSIONS: %s\n", glGetString(GL_EXTENSIONS));
+		Log::Print(_S("GL_VENDOR: %s\n") << (const char*)glGetString(GL_VENDOR));
+		Log::Print(_S("GL_RENDERER: %s\n") << (const char*)glGetString(GL_RENDERER));
+		Log::Print(_S("GL_VERSION: %s\n") << (const char*)glGetString(GL_VERSION));
+		Log::Print(_S("GL_EXTENSIONS: %s\n") << (const char*)glGetString(GL_EXTENSIONS));
 
 		//glPolygonStipple((GLubyte *)s_stipple);
 		glLineStipple(3, 0xaaaa);

@@ -93,7 +93,7 @@ EntClass *EntClass::InitFromText(char *text)
 	r = sscanf(text, " (%f %f %f)", &e->color[0], &e->color[1], &e->color[2]);
 	if (r != 3)
 	{
-		Sys_Printf("Error parsing: %s\n", e->name);
+		Log::Print(_S("Error parsing: %s\n")<< e->name);
 		delete e;
 		return nullptr;
 	}
@@ -106,7 +106,7 @@ EntClass *EntClass::InitFromText(char *text)
 	{
 		if (!*text)
 		{
-			Sys_Printf("Error parsing: %s\n", e->name);
+			Log::Print(_S("Error parsing: %s\n")<< e->name);
 			delete e;
 			return nullptr;
 		}
@@ -125,7 +125,7 @@ EntClass *EntClass::InitFromText(char *text)
 			&e->maxs[0], &e->maxs[1], &e->maxs[2]);
 		if (r != 6)
 		{
-			Sys_Printf("Error parsing: %s\n", e->name);
+			Log::Print(_S("Error parsing: %s\n")<< e->name);
 			delete e;
 			return nullptr;
 		}
@@ -136,7 +136,7 @@ EntClass *EntClass::InitFromText(char *text)
 			{
 				if (!*text)
 				{
-					Sys_Printf("Error parsing: %s\n", e->name);
+					Log::Print(_S("Error parsing: %s\n")<< e->name);
 					delete e;
 					return nullptr;
 				}
@@ -283,12 +283,12 @@ EntClass *EntClass::CreateOppositeForm(EntClass *e)
 		dupe->form = (ECF_POINT | ECF_HACKED);
 		dupe->mins[0] = dupe->mins[1] = dupe->mins[2] = -8;
 		dupe->maxs[0] = dupe->maxs[1] = dupe->maxs[2] = 8;
-		Sys_Printf("Creating fixed-size %s entity class definition\n", dupe->name);
+		Log::Print(_S("Creating fixed-size %s entity class definition\n")<< dupe->name);
 	}
 	else if (dupe->form & ECF_POINT)
 	{
 		dupe->form = (ECF_BRUSH | ECF_HACKED);
-		Sys_Printf("Creating brush-based %s entity class definition\n", dupe->name);
+		Log::Print(_S("Creating brush-based %s entity class definition\n")<< dupe->name);
 	}
 	else
 		Error("Bad EntClass passed to CreateOppositeForm!\n");
@@ -342,7 +342,7 @@ void EntClass::ScanFile(const char *filename)
 	qeBuffer	fdata;
 
 	Sys_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("ScanFile: %s\n", temp);
+	Log::Print(_S("ScanFile: %s\n")<< temp);
 
 	size = IO_LoadFile(filename, fdata);
 
@@ -351,7 +351,7 @@ void EntClass::ScanFile(const char *filename)
 		if (!strncmp((char*)&fdata[i], "/*QUAKED", 8))
 		{
 			if (!EntClass::InitFromTextAndAdd((char*)&fdata[i]))
-				Warning("couldn't scan %s for entity definitions", filename);
+				Log::Warning(_S("couldn't scan %s for entity definitions") << filename);
 		}
 	}
 }
@@ -372,7 +372,7 @@ void EntClass::InitForSourceDirectory(const char *path)
 	char	fname[_MAX_FNAME];
 
 	Sys_ConvertDOSToUnixName(temp, path);
-	Sys_Printf("ScanEntityPath: %s\n", temp);
+	Log::Print(_S("ScanEntityPath: %s\n")<< temp);
 
 	Clear();
 
@@ -425,7 +425,7 @@ void EntClass::InitForSourceDirectory(const char *path)
 	worldspawn = ForName("worldspawn", true, true);
 	if (!worldspawn)
 	{
-		Warning("No worldspawn definition found in source! Creating a default worldspawn ...");
+		Log::Warning("No worldspawn definition found in source! Creating a default worldspawn ...");
 		worldspawn = EntClass::InitFromTextAndAdd("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
 	}
 

@@ -108,7 +108,7 @@ void Window::Create()
 	wbInitializing = nullptr;
 
 	if (!wHwnd)
-		Error("Could not create window: %s, error %i", name, GetLastError());
+		Error(_S("Could not create window: %s, error %i") << name << (int)GetLastError());
 
 	RestorePosition();
 }

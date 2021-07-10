@@ -76,7 +76,7 @@ void QE_FixMonFlags()
 		if (sf_new != sf)
 		{
 			e->SetKeyValue("spawnflags", sf_new);
-			Sys_Printf("%s, %i -> %i\n", e->eclass->name, sf, sf_new);
+			Log::Print(_S("%s, %i -> %i\n")<< e->eclass->name<< sf<< sf_new);
 		}
 	}
 }
@@ -195,7 +195,7 @@ QE_Init
 */
 void QE_Init ()
 {
-	Sys_Printf("Initializing QuakeEd\n");
+	Log::Print("Initializing QuakeEd\n");
 
 	// check if registry key exists and do default windows if not
 	HKEY hKey;
@@ -224,7 +224,7 @@ void QE_Init ()
 
 	// create tools - creation order determines which tools get first chance to 
 	// handle inputs (created later = top of stack, first to handle)
-	Sys_Printf("Creating base tools\n");
+	Log::Print("Creating base tools\n");
 	new NavTool();
 	new SelectTool();
 	new TextureTool();
@@ -630,31 +630,31 @@ void QE_CheckOpenGLForErrors (void)
 		switch (i)
 		{
 		case GL_INVALID_ENUM:
-			Sys_Printf("OpenGL Error: GL_INVALID_ENUM");
+			Log::Print("OpenGL Error: GL_INVALID_ENUM");
 			break;
 		case GL_INVALID_VALUE:
-			Sys_Printf("OpenGL Error: GL_INVALID_VALUE");
+			Log::Print("OpenGL Error: GL_INVALID_VALUE");
 			break;
 		case GL_INVALID_OPERATION:
-			Sys_Printf("OpenGL Error: GL_INVALID_OPERATION");
+			Log::Print("OpenGL Error: GL_INVALID_OPERATION");
 			break;
 		case GL_STACK_OVERFLOW:
-			Sys_Printf("OpenGL Error: GL_STACK_OVERFLOW");
+			Log::Print("OpenGL Error: GL_STACK_OVERFLOW");
 			break;
 		case GL_STACK_UNDERFLOW:
-			Sys_Printf("OpenGL Error: GL_STACK_UNDERFLOW");
+			Log::Print("OpenGL Error: GL_STACK_UNDERFLOW");
 			break;
 		case GL_OUT_OF_MEMORY:
-			Sys_Printf("OpenGL Error: GL_OUT_OF_MEMORY");
+			Log::Print("OpenGL Error: GL_OUT_OF_MEMORY");
 			break;
 		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			Sys_Printf("OpenGL Error: GL_INVALID_FRAMEBUFFER_OPERATION");
+			Log::Print("OpenGL Error: GL_INVALID_FRAMEBUFFER_OPERATION");
 			break;
 		case GL_CONTEXT_LOST:
-			Sys_Printf("OpenGL Error: GL_CONTEXT_LOST");
+			Log::Print("OpenGL Error: GL_CONTEXT_LOST");
 			break;
 		case GL_TABLE_TOO_LARGE:
-			Sys_Printf("OpenGL Error: GL_TABLE_TOO_LARGE");
+			Log::Print("OpenGL Error: GL_TABLE_TOO_LARGE");
 			break;
 		}
     }
@@ -669,7 +669,7 @@ unused; openGL error callback is 4.3+ and we're targeting 2.0 to be fair to quak
 */
 void QE_OpenGLError(int errornum, const char *errorstr)
 {
-	Sys_Printf("*** OpenGL Error %i ***\n%s", errornum, errorstr);
+	Log::Print(_S("*** OpenGL Error %i ***\n%s")<< errornum<< errorstr);
 }
 
 /*
@@ -713,12 +713,12 @@ void QE_CheckAutoSave ()
 
 	if (now - g_map.autosaveTime > (CLOCKS_PER_SEC * 60 * g_cfgEditor.AutosaveTime))	// sikk - Preferences Dialog
 	{
-		Sys_Printf("Autosaving...\n");
+		Log::Print("Autosaving...\n");
 		WndMain_Status("Autosaving...", 0);
 
 		g_map.SaveToFile(g_project.autosaveFile, false);
 
-		Sys_Printf("Autosave successful.\n");
+		Log::Print("Autosave successful.\n");
 		WndMain_Status("Autosave successful.", 0);
 
 		g_map.autosaveTime = -1;
@@ -732,15 +732,15 @@ QE_InitProject
 */
 bool QE_InitProject()
 {
-	Sys_Printf("Initializing project '%s'\n", g_project.name);
+	Log::Print(_S("Initializing project '%s'\n") << g_project.name);
 
-	Sys_Printf("basePath: %s\n", g_project.basePath);
-	Sys_Printf("mapPath: %s\n", g_project.mapPath);
-	Sys_Printf("autosaveFile: %s\n", g_project.autosaveFile);
-	Sys_Printf("entityFiles: %s\n", g_project.entityFiles);
-	Sys_Printf("wadPath: %s\n", g_project.wadPath);
-	Sys_Printf("defaultWads: %s\n", g_project.defaultWads);
-	Sys_Printf("paletteFile: %s\n", g_project.paletteFile);
+	Log::Print(_S("basePath: %s\n") << g_project.basePath);
+	Log::Print(_S("mapPath: %s\n") << g_project.mapPath);
+	Log::Print(_S("autosaveFile: %s\n") << g_project.autosaveFile);
+	Log::Print(_S("entityFiles: %s\n") << g_project.entityFiles);
+	Log::Print(_S("wadPath: %s\n") << g_project.wadPath);
+	Log::Print(_S("defaultWads: %s\n") << g_project.defaultWads);
+	Log::Print(_S("paletteFile: %s\n") << g_project.paletteFile);
 
 	EntClass::InitForSourceDirectory(g_project.entityFiles);
 
@@ -777,12 +777,12 @@ bool QE_SingleBrush ()
 	if ((!Selection::HasBrushes()) ||
 		(g_brSelectedBrushes.Next()->Next() != &g_brSelectedBrushes))
 	{
-		Warning("Must have a single brush selected.");
+		Log::Warning("Must have a single brush selected.");
 		return false;
 	}
 	if (g_brSelectedBrushes.Next()->owner->IsPoint())
 	{
-		Warning("Cannot manipulate fixed size entities.");
+		Log::Warning("Cannot manipulate fixed size entities.");
 		return false;
 	}
 

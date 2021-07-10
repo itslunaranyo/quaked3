@@ -482,7 +482,7 @@ WndMain_CreateViews
 */
 void WndMain_CreateViews()
 {
-	Sys_Printf("Creating windows\n");
+	Log::Print("Creating windows\n");
 	g_wndConsole = new WndConsole();
 	g_wndConsole->Initialize();
 
@@ -594,7 +594,7 @@ LONG WINAPI WMain_WndProc(
 		WndMain_SaveWindowStates();
 
 		time(&lTime);	// sikk - Print current time for logging purposes
-		Sys_Printf("\nSession Stopped: %s", ctime(&lTime));
+		Log::Print(_S("\nSession Stopped: %s")<< ctime(&lTime));
 
 		// TODO:
 		// at program quit, the static slab lists are emptied before the global command queue

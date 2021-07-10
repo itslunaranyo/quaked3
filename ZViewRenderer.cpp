@@ -400,7 +400,7 @@ void ZViewRenderer::Draw()
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("Z: %d ms\n", (int)(1000 * (end - start)));
+		Log::Print(_S("Z: %d ms\n")<< (int)(1000 * (end - start)));
 	}
 }
 

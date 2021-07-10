@@ -974,9 +974,9 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 	}
 	Selection::Changed();
 	if (selected)
-		Sys_Printf("Selected %i entities\n", selected);
+		Log::Print(_S("Selected %i entities\n") << selected);
 	else
-		Sys_Printf("No matching unhidden entities found\n");
+		Log::Print("No matching unhidden entities found\n");
 }
 // <---sikk
 
@@ -1017,9 +1017,9 @@ void Selection::MatchingTextures()
 		}
 	}
 	if (selected)
-		Sys_Printf("Selected %i faces with %s\n", selected, txfind->name);
+		Log::Print(_S("Selected %i faces with %s\n") << selected << txfind->name);
 	else
-		Sys_Printf("No visible faces with %s found\n", txfind->name);
+		Log::Print(_S("No visible faces with %s found\n") << txfind->name);
 }
 // <---sikk
 
@@ -1040,7 +1040,7 @@ void Selection::Invert()
 	/*
 	Brush *next, *prev;
 
-	//Sys_Printf("Inverting selection...\n");
+	//Log::Print("Inverting selection...\n");
 	next = g_map.brActive.next;
 	prev = g_map.brActive.prev;
 
@@ -1069,7 +1069,7 @@ void Selection::Invert()
 		g_brSelectedBrushes.next = &g_brSelectedBrushes;
 		g_brSelectedBrushes.prev = &g_brSelectedBrushes;
 	}
-	//Sys_Printf("Done.\n");
+	//Log::Print("Done.\n");
 	*/
 	Selection::Changed();
 }

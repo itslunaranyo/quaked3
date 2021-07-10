@@ -45,7 +45,7 @@ void CmdPlaneShift::Translate(vec3 shift, bool preventCrush)
 	if (shiftMod == vec3(0))
 		return;
 
-	//Sys_Printf("Shift: %f %f %f Total %f %f %f\n", shiftMod.x, shiftMod.y, shiftMod.z, planeShift.x, planeShift.y, planeShift.z);
+	//Log::Print("Shift: %f %f %f Total %f %f %f\n", shiftMod.x, shiftMod.y, shiftMod.z, planeShift.x, planeShift.y, planeShift.z);
 
 	for (auto fIt = fShifted.begin(); fIt != fShifted.end(); ++fIt)
 	{

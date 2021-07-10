@@ -847,6 +847,6 @@ void GridViewRenderer::Draw()
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("Grid: %d ms\n", (int)(1000 * (end - start)));
+		Log::Print(_S("Grid: %d ms\n")<< (int)(1000 * (end - start)));
 	}
 }

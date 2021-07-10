@@ -8,15 +8,22 @@
 #include <afxres.h>
 #include <commctrl.h>
 
-//#define GLEW_STATIC 1
-#include <GL\glew.h>
-#include <gl\gl.h>
-#include <math.h>
-#include <stdlib.h>
 #include <cassert>
 #include <string>
 #include <vector>
+
+// REMOVE ONE BY ONE:
+//#define GLEW_STATIC 1
+#include <GL\glew.h>
+#include <gl\gl.h>
+#include <stdlib.h>
 #include <utility>
 #include <io.h>
+
+#include "Log.h"
+#include "Exceptions.h"
+
+typedef unsigned char byte;
+extern HWND g_hwndMain;
 
 #endif

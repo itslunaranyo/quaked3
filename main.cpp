@@ -73,15 +73,15 @@ void Main_Init()
 	try
 	{
 #endif
-		Sys_LogFile();
+		Log::Init();
 		time(&lTime);
-		Sys_Printf("%s\nSesson Started: %s\n", g_qeAppName, ctime(&lTime));
+		Log::Print(_S("%s\nSesson Started: %s\n")<< g_qeAppName<< ctime(&lTime));
 
 		WndMain_Create();
 
 		GLenum glewerr = glewInit();
 		if (glewerr != GLEW_OK)
-			Error("GLEW init failed! %s", glewGetErrorString(glewerr));
+			Error(_S("GLEW init failed! %s") << *glewGetErrorString(glewerr));
 
 		QE_Init();
 		Sys_DeltaTime();
@@ -105,7 +105,7 @@ void Main_Loop()
 	HACCEL	accelerators;
 	bool	haveQuit = false;
 
-	Sys_Printf("Entering message loop...\n");
+	Log::Print("Entering message loop...\n");
 
 	accelerators = LoadAccelerators(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR1));
 	if (!accelerators)
@@ -137,9 +137,9 @@ void Main_Loop()
 							TranslateMessage(&msg);
 							DispatchMessage(&msg);
 						}
-						catch (qe3_exception &ex)
+						catch (qe3_exception)
 						{
-							ReportError(ex);
+							//ReportError(ex);
 						}
 					}
 				}
@@ -153,9 +153,8 @@ void Main_Loop()
 			// some consequences of texture library changes are also best kept out of the loop
 			Textures::HandleChange();
 
-			if (g_bWarningOrError)
+			if (Log::CheckWarningOrError())
 			{
-				g_bWarningOrError = false;
 				WndMain_SetInspectorMode(W_CONSOLE);
 				WndMain_Status("There were problems: see console for details", 1);
 			}
@@ -196,7 +195,6 @@ int WINAPI WinMain (
 	)
 {
 	g_qeglobals.d_hInstance = hInstance;
-	g_bWarningOrError = false;
 
 	WndSplash_Create();
 
@@ -208,7 +206,7 @@ int WINAPI WinMain (
 	{
 		ParseCommandLine(lpCmdLine);
 		if (g_pszArgV[1])
-			Sys_Printf("Command line: %s\n", lpCmdLine);
+			Log::Print(_S("Command line: %s\n")<< lpCmdLine);
 	}
 
 	// lunaran: can't mix win32 exceptions with c++ exceptions in the same function without
@@ -224,10 +222,9 @@ int WINAPI WinMain (
 		Main_Loop();
 #ifndef _DEBUG
 	} __except (CrashSave(SEHExceptionString(GetExceptionCode()))) {
-		return FALSE;	// never reached, CrashSave does the work
+		return FALSE;
 	}
 #endif
 
-    /* return success of application */
-    return TRUE;
+	return TRUE;
 }

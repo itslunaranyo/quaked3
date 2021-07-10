@@ -255,7 +255,7 @@ void Entity::DeleteKeyValue(const char *key)
 
 	if (!strcmp(key, "origin") && IsPoint())
 	{
-		Warning("Point entities must have an origin");
+		Log::Warning("Point entities must have an origin.");
 		Sys_Beep();
 		return;
 	}
@@ -838,9 +838,8 @@ bool Entity::Create (EntClass *ecIn)
 			cmd = new CmdCreateBrushEntity(ecIn->name);
 			cmd->AddBrushes(&g_brSelectedBrushes);
 		}
-		catch (qe3_cmd_exception &ex)
+		catch (qe3_cmd_exception)
 		{
-			ReportError(ex);
 			delete cmd;
 			return false;
 		}

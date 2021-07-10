@@ -192,7 +192,7 @@ bool Plane::Make()
 
 	if (VectorCompare(norm, vec3(0)) || VectorNormalize(norm) < 0.05f)
 	{
-		Warning("Brush plane with no normal");
+		Log::Warning("Brush plane with no normal");
 		return false;
 	}
 

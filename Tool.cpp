@@ -82,19 +82,19 @@ int Tool::HandleInput3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, 
 	Tool* ht = HotTool();
 	if (ht)
 	{
-		//if (uMsg == WM_LBUTTONDOWN) Sys_Printf("sending HOT lbtndn input to %s\n", ht->name);
-		//if (uMsg == WM_LBUTTONUP) Sys_Printf("sending HOT lbtnup input to %s\n", ht->name);
+		//if (uMsg == WM_LBUTTONDOWN) Log::Print("sending HOT lbtndn input to %s\n", ht->name);
+		//if (uMsg == WM_LBUTTONUP) Log::Print("sending HOT lbtnup input to %s\n", ht->name);
 		return ht->Input3D(uMsg, wParam, lParam, v, vWnd);
 	}
 
 	for (auto rtIt = stack.rbegin(); rtIt != stack.rend(); ++rtIt)
 	{
-		//if (uMsg == WM_LBUTTONDOWN) Sys_Printf("sending lbtndn input to %s\n", (*rtIt)->name);
-		//if (uMsg == WM_LBUTTONUP) Sys_Printf("sending lbtnup input to %s\n", (*rtIt)->name);
+		//if (uMsg == WM_LBUTTONDOWN) Log::Print("sending lbtndn input to %s\n", (*rtIt)->name);
+		//if (uMsg == WM_LBUTTONUP) Log::Print("sending lbtnup input to %s\n", (*rtIt)->name);
 		out = (*rtIt)->Input3D(uMsg, wParam, lParam, v, vWnd);
 		if (out)
 		{
-			//if (uMsg == WM_LBUTTONDOWN) Sys_Printf("  it says it handled it\n");
+			//if (uMsg == WM_LBUTTONDOWN) Log::Print("  it says it handled it\n");
 			return out;
 		}
 	}

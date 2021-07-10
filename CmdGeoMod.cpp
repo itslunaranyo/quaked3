@@ -271,10 +271,10 @@ bool CmdGeoMod::Translate(const vec3 trans, bool relative)
 	// try to turn the polygons back into brush planes that don't hate each other
 	for (auto bmIt = brushMeshes.begin(); bmIt != brushMeshes.end(); ++bmIt)
 	{
-		//Sys_Printf("mesh %i:\n", i++);
+		//Log::Print("mesh %i:\n", i++);
 		if (!bmIt->Resolve())
 		{
-			//Sys_Printf("Couldn't resolve\n");
+			//Log::Print("Couldn't resolve\n");
 			ApplyTranslation(-tMod);
 			return false;
 		}
@@ -387,7 +387,7 @@ bool CmdGeoMod::Mesh::Resolve()
 	for (auto pIt = polies.begin(); pIt != polies.end(); ++pIt)
 	{
 		// each polygon checks itself for validity and returns at least one face
-		//Sys_Printf(" poly %i:\n", i++);
+		//Log::Print(" poly %i:\n", i++);
 		if (!pIt->Resolve())
 			return false;
 	}
@@ -497,7 +497,7 @@ bool CmdGeoMod::Polygon::Resolve()
 	/*
 	for (int i = 0; i < vertices.size(); i++)
 	{
-		Sys_Printf("  %f %f %f\n", vertices[i]->x, vertices[i]->y, vertices[i]->z);
+		Log::Print("  %f %f %f\n", vertices[i]->x, vertices[i]->y, vertices[i]->z);
 	}
 	*/
 	if (!dynamic)	// all our verts are static, so just copy the original

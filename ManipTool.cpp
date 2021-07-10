@@ -656,7 +656,7 @@ void ManipTool::Nudge(int nudge, vec3 right, vec3 up)
 		reuse = false;
 	}
 	//else
-	//	Sys_Printf("combining nudge\n");
+	//	Log::Print("combining nudge\n");
 
 	switch (nudge)
 	{

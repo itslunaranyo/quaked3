@@ -234,7 +234,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 				cmdTA->UseFaces(Selection::faces);
 			else
 			{
-				Sys_Printf("Couldn't replace; nothing selected\n");
+				Log::Print("Couldn't replace; nothing selected\n");
 				delete cmdTA;
 				return;
 			}
@@ -283,7 +283,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 			}
 			else if (!Selection::HasBrushes())
 			{
-				Sys_Printf("Couldn't replace; nothing selected\n");
+				Log::Print("Couldn't replace; nothing selected\n");
 				delete cmdTA;
 				return;
 			}

@@ -369,13 +369,13 @@ bool CSG_CanMerge()
 
 	if (!Selection::HasBrushes())
 	{
-		Warning("No brushes selected.");
+		Log::Warning("No brushes selected.");
 		return false;
 	}
 
 	if (g_brSelectedBrushes.Next()->Next() == &g_brSelectedBrushes)
 	{
-		Warning("At least two brushes must be selected.");
+		Log::Warning("At least two brushes must be selected.");
 		return false;
 	}
 
@@ -385,13 +385,13 @@ bool CSG_CanMerge()
 	{
 		if (b->owner->IsPoint())
 		{
-			Warning("Cannot merge fixed size entities.");
+			Log::Warning("Cannot merge fixed size entities.");
 			return false;
 		}
 
 		if (b->owner != owner)
 		{
-			Warning("Cannot merge brushes from different entities.");
+			Log::Warning("Cannot merge brushes from different entities.");
 			return false;
 		}
 	}
@@ -407,7 +407,7 @@ bool CSG_CanBridge()
 {
 	if (!Selection::NumFaces())
 	{
-		Warning("No faces selected.");
+		Log::Warning("No faces selected.");
 		return false;
 	}
 
@@ -415,7 +415,7 @@ bool CSG_CanBridge()
 	{
 		if ((*fIt)->owner->owner->IsPoint())
 		{
-			Warning("Cannot bridge fixed size entities.");
+			Log::Warning("Cannot bridge fixed size entities.");
 			return false;
 		}
 	}
@@ -590,11 +590,11 @@ void CSG::Subtract ()
 	std::vector<Brush*> brCarved;
 	CmdAddRemove *cmdAR = new CmdAddRemove();
 
-	Sys_Printf("CSG Subtracting...\n");
+	Log::Print("CSG Subtracting...\n");
 
 	if (!Selection::HasBrushes())
 	{
-		Warning("No brushes selected.");
+		Log::Warning("No brushes selected.");
 		return;
 	}
 
@@ -683,17 +683,17 @@ void CSG::Subtract ()
 
 	if (numfragments == 0)
 	{
-		Warning("Selected brush%s did not intersect with any other brushes.",
-				   (g_brSelectedBrushes.Next()->Next() == &g_brSelectedBrushes) ? "":"es");
+		Log::Warning("Selection did not intersect with any other brushes.");
 		delete cmdAR;
 		return;
 	}
 
 	g_cmdQueue.Complete(cmdAR);
 
-	Sys_Printf("Done. (created %d fragment%s out of %d brush%s)\n", 
-				numfragments, (numfragments == 1) ? "" : "s",
-				numbrushes, (numbrushes == 1) ? "" : "es");
+	Log::Print(_S("Done. (created %d fragment%s out of %d brush%s)\n")
+				<< (numfragments, (numfragments == 1) ? "" : "s")
+				<< numbrushes
+				<< (numbrushes == 1) ? "" : "es");
 	WndMain_UpdateWindows(W_SCENE);
 }
 
@@ -704,11 +704,11 @@ CSG::Hollow
 */
 void CSG::Hollow()
 {
-	Sys_Printf("CSG Hollowing...\n");
+	Log::Print("CSG Hollowing...\n");
 
 	if (!Selection::HasBrushes())
 	{
-		Warning("No brushes selected.");
+		Log::Warning("No brushes selected.");
 		return;
 	}
 
@@ -733,7 +733,7 @@ void CSG::Merge ()
 		return;
 	}
 
-	Sys_Printf("CSG Merging...\n");
+	Log::Print("CSG Merging...\n");
 
 	if (!CSG_CanMerge())
 		return;
@@ -743,7 +743,7 @@ void CSG::Merge ()
 	g_cmdQueue.Complete(cmdM);
 	//cmdM->Select();
 
-	Sys_Printf("Merge done.\n");
+	Log::Print("Merge done.\n");
 	WndMain_UpdateWindows(W_SCENE);
 }
 
@@ -754,7 +754,7 @@ CSG::Bridge
 */
 void CSG::Bridge()
 {
-	Sys_Printf("CSG Bridging...\n");
+	Log::Print("CSG Bridging...\n");
 
 	if (!CSG_CanBridge())
 		return;
@@ -763,6 +763,6 @@ void CSG::Bridge()
 	cmdB->UseFaces(Selection::faces);
 	g_cmdQueue.Complete(cmdB);
 
-	Sys_Printf("Bridge done.\n");
+	Log::Print("Bridge done.\n");
 	WndMain_UpdateWindows(W_SCENE);
 }

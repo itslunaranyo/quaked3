@@ -475,7 +475,7 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 			lastTexMod->UseFaces(Selection::faces);
 	}
 //	else
-//		Sys_Printf("combining texmod\n");
+//		Log::Print("combining texmod\n");
 }
 
 

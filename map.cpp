@@ -38,7 +38,7 @@ void Map::New()
 {
 	qeBuffer between(0);
 
-	Sys_Printf("Map::New\n");
+	Log::Print("Map::New\n");
 
 	SaveBetween(between);
 	Free();
@@ -126,9 +126,7 @@ void Map::BuildBrushData(Brush &blist)
 		// wads are also not loaded until after worldspawn is parsed during a map load
 		if (!b->FullBuild() || !b->faces)
 		{
-			Warning("Removed degenerate brush with mins (%f %f %f) maxs (%f %f %f).",
-				b->mins[0], b->mins[1], b->mins[2],
-				b->maxs[0], b->maxs[1], b->maxs[2]);
+			Log::Warning(_S("Removed degenerate brush with mins (%v) maxs (%v).") << b->mins << b->maxs);
 			delete b;
 		}
 	}
@@ -143,7 +141,7 @@ void Map::BuildBrushData()
 {
 	double time;
 
-	Sys_Printf("Map::BuildBrushData\n");
+	Log::Print("Map::BuildBrushData\n");
 
 	Sys_BeginWait();	// this could take a while
 	time = Sys_DoubleTime();
@@ -155,7 +153,7 @@ void Map::BuildBrushData()
 
 	time = Sys_DoubleTime() - time;
 	if (time)
-		Sys_Printf("Brush data built in %f seconds\n", time);
+		Log::Print(_S("Brush data built in %f seconds\n")<< time);
 	Sys_EndWait();
 }
 
@@ -196,9 +194,9 @@ bool Map::ParseBufferMerge(const char *data)
 			}
 		}
 	}
-	catch (qe3_exception &ex)
+	catch (qe3_exception)
 	{
-		ReportError(ex);
+		//ReportError(ex);
 		// blist and elist are auto-freed by stack unwinding without a merger,
 		// so the map isn't polluted with a partial import when we exit
 		return false;
@@ -238,9 +236,9 @@ bool Map::LoadFromFile_Parse(const char *data)
 			}
 		}
 	}
-	catch (qe3_exception &ex)
+	catch (qe3_exception)
 	{
-		ReportError(ex);
+		//ReportError(ex);
 		// don't need to free here, loaded map wasn't merged into the now-empty scene yet
 		return false;
 	}
@@ -306,14 +304,14 @@ void Map::LoadFromFile(const char *filename)
 	WndMain_SetInspectorMode(W_CONSOLE);
 
 	Sys_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("Map::LoadFromFile: %s\n", temp);
+	Log::Print(_S("Map::LoadFromFile: %s\n") << temp);
 
 	SaveBetween(between);
 	Free();
 
 	qeBuffer buf;
 	if (IO_LoadFile(filename, buf) < 1)
-		Error("Couldn't load %s!", filename);
+		Error(_S("Couldn't load %s!") << filename);
 
 	if (LoadFromFile_Parse((char*)*buf))
 	{
@@ -322,14 +320,14 @@ void Map::LoadFromFile(const char *filename)
 
 		if (!world)
 		{
-			Warning("No worldspawn in map! Creating new empty worldspawn ...");
+			Log::Warning("No worldspawn in map! Creating new empty worldspawn ...");
 
 			world = new Entity();
 			world->SetKeyValue("classname", "worldspawn");
 		}
 
 		if (!*world->GetKeyValue("wad"))
-			Warning("No \"wad\" key.");
+			Log::Warning("No \"wad\" key.");
 		else
 			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
 
@@ -342,9 +340,9 @@ void Map::LoadFromFile(const char *filename)
 			numEntities++;
 		}
 
-		Sys_Printf("--- LoadMapFile ---\n");
-		Sys_Printf("%s\n", temp);
-		Sys_Printf("%5i brushes\n%5i entities\n", numBrushes, numEntities);
+		Log::Print("--- LoadMapFile ---\n");
+		Log::Print(_S("%s\n")<< temp);
+		Log::Print(_S("%5i brushes\n%5i entities\n")<< numBrushes<< numEntities);
 
 		LoadBetween(between);
 		g_map.BuildBrushData();
@@ -405,7 +403,7 @@ void Map::ImportFromFile(const char *filename)
 	WndMain_SetInspectorMode(W_CONSOLE);
 
 	Sys_ConvertDOSToUnixName(temp, filename);
-	Sys_Printf("Map::ImportFromFile: %s\n", temp);
+	Log::Print(_S("Map::ImportFromFile: %s\n")<< temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();
 
@@ -415,7 +413,7 @@ void Map::ImportFromFile(const char *filename)
 		g_cmdQueue.Complete(cmdIM);
 
 		if (!*world->GetKeyValue("wad"))
-			Warning("No \"wad\" key.");
+			Log::Warning("No \"wad\" key.");
 		else
 			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
 		Textures::RefreshUsedStatus();
@@ -426,7 +424,7 @@ void Map::ImportFromFile(const char *filename)
 	}
 	else
 	{
-		Sys_Printf("Import canceled.\n");
+		Log::Print("Import canceled.\n");
 		delete cmdIM;
 	}
 
@@ -459,12 +457,12 @@ void Map::SaveToFile(const char *filename, bool use_region)
 		rename(filename, backup);
 	}
 
-	Sys_Printf("Map::SaveToFile: %s\n", filename);
+	Log::Print(_S("Map::SaveToFile: %s\n") << filename);
 
 	f = new std::ofstream(filename);
 	if (!f)
 	{
-		Sys_Printf("ERROR: Could not open %s\n", filename);
+		Log::Print(_S("ERROR: Could not open %s\n") << filename);
 		return;
 	}
 
@@ -478,7 +476,7 @@ void Map::SaveToFile(const char *filename, bool use_region)
 	if (use_region)
 		RegionRemove();
 
-	Sys_Printf("Saved.\n");
+	Log::Print("Saved.\n");
 	WndMain_Status("Saved.", 0);
 }
 
@@ -493,18 +491,18 @@ void Map::ExportToFile(const char *filename)
 {
 	std::ofstream	   *f;
 
-	Sys_Printf("Map::ExportToFile: %s\n", filename);
+	Log::Print(_S("Map::ExportToFile: %s\n")<< filename);
 
 	f = new std::ofstream(filename);
 	if (!f)
 	{
-		Sys_Printf("ERROR: Could not open %s\n", filename);
+		Log::Print(_S("ERROR: Could not open %s\n")<< filename);
 		return;
 	}
 	WriteSelected(*f);
 	f->close();
 
-	Sys_Printf("Selection exported.\n", filename);
+	Log::Print(_S("Selection exported.\n")<< filename);
 }
 
 /*
@@ -601,7 +599,7 @@ void Map::Read(const char *data, Brush &blist, Entity &elist)
 		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
 		{
 			if (foundWorld)
-				Warning("Multiple worldspawn.");
+				Log::Warning("Multiple worldspawn.");
 			foundWorld = true;
 
 			// add the worldspawn to the beginning of the entity list so it's easy to find

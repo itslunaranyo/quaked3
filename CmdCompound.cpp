@@ -51,11 +51,10 @@ bool CmdCompound::Complete(Command *cmd)
 	try {
 		cmd->Do();
 	}
-	catch (qe3_cmd_exception& ex) {
+	catch (qe3_cmd_exception) {
 		delete cmd;
 		Undo_Impl();	// revert all prior commands if one fails
 		state = NOOP;
-		ReportError(ex);
 		return false;
 	}
 

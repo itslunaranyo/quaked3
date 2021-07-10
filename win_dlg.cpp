@@ -175,7 +175,7 @@ void FindBrush (int entitynum, int brushnum)
 			e = e->Next();
 			if (e == &g_map.entities)
 			{
-				Warning("No such entity.");
+				Log::Warning("No such entity.");
 				return;
 			}
 		}
@@ -184,7 +184,7 @@ void FindBrush (int entitynum, int brushnum)
 	b = e->brushes.ENext();
 	if (b == &e->brushes)
 	{
-		Warning("No such brush.");
+		Log::Warning("No such brush.");
 		return;
 	}
 
@@ -193,7 +193,7 @@ void FindBrush (int entitynum, int brushnum)
 		b = b->ENext();
 		if (b == &e->brushes)
 		{
-			Warning("No such brush.");
+			Log::Warning("No such brush.");
 			return;
 		}
 	}
@@ -202,7 +202,7 @@ void FindBrush (int entitynum, int brushnum)
 
 	g_vGrid[0].Center((b->mins + b->maxs) * 0.5f);
 
-	Sys_Printf("Selected.\n");
+	Log::Print("Selected.\n");
 }
 
 /*

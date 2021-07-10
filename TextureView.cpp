@@ -433,7 +433,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 {
 	if (texdef->name[0] == '#')
 	{
-		Warning("Cannot select an entity texture.");
+		Log::Warning("Cannot select an entity texture.");
 		return;
 	}
 	g_qeglobals.d_workTexDef = *texdef;

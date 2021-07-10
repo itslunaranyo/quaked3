@@ -396,6 +396,6 @@ void CameraRenderer::Draw()
 	if (timing)
 	{
 		end = Sys_DoubleTime();
-		Sys_Printf("Camera: %d ms\n", (int)(1000 * (end - start)));
+		Log::Print(_S("Camera: %d ms\n") << (int)(1000 * (end - start)));
 	}
 }

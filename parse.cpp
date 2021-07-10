@@ -44,14 +44,14 @@ bool GetToken (bool crossline)
 			if (!*g_pszScript)
 			{
 				if (!crossline)
-					Error("Line %d is incomplete.", g_nScriptLine);
+					Error(_S("Line %d is incomplete.") << g_nScriptLine);
 				*g_szToken = 0;
 				return false;
 			}
 			if (*g_pszScript++ == '\n')
 			{
 				if (!crossline)
-					Error("Line %d is incomplete.", g_nScriptLine);
+					Error(_S("Line %d is incomplete.") << g_nScriptLine);
 				g_nScriptLine++;
 			}
 		}
@@ -59,13 +59,13 @@ bool GetToken (bool crossline)
 		if (g_pszScript[0] == '/' && g_pszScript[1] == '/')	// comment field
 		{
 			if (!crossline)
-				Error("Line %d is incomplete.", g_nScriptLine);
+				Error(_S("Line %d is incomplete.") << g_nScriptLine);
 
 			while (*g_pszScript++ != '\n')
 				if (!*g_pszScript)
 				{
 					if (!crossline)
-						Error("Line %d is incomplete.", g_nScriptLine);
+						Error(_S("Line %d is incomplete.") << g_nScriptLine);
 					*g_szToken = 0;
 					return false;
 				}
@@ -88,7 +88,7 @@ bool GetToken (bool crossline)
 			*token_p++ = *g_pszScript++;
 
 			if (token_p == &g_szToken[MAXTOKEN])
-				Error("Token too large on line %d.", g_nScriptLine);
+				Error(_S("Token too large on line %d.") << g_nScriptLine);
 		}
 		g_pszScript++;
 	}
@@ -98,7 +98,7 @@ bool GetToken (bool crossline)
 			*token_p++ = *g_pszScript++;
 
 			if (token_p == &g_szToken[MAXTOKEN])
-				Error("Token too large on line %d.", g_nScriptLine);
+				Error(_S("Token too large on line %d.") << g_nScriptLine);
 		}
 
 	*token_p = 0;

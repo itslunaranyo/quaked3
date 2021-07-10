@@ -33,7 +33,7 @@ Textures::Init
 */
 void Textures::Init()
 {
-	Sys_Printf("Initializing textures\n");
+	Log::Print("Initializing textures\n");
 
 	LoadPalette();
 
@@ -679,7 +679,7 @@ void Textures::LoadWad(const char* wadfile)
 	TextureGroup *oldwad, *newwad;
 	bool refresh = false;
 
-	Sys_Printf("Loading all textures from %s...\n", wadfile);
+	Log::Print(_S("Loading all textures from %s...\n")<< wadfile);
 
 	// check if the wad is already loaded and replace it
 	auto tgIt = groups.begin();
@@ -717,7 +717,7 @@ void Textures::LoadWad(const char* wadfile)
 void Textures::LoadPalette()
 {
 	// load palette
-	if (*g_project.paletteFile)
+	if (!g_project.paletteFile)
 		texpal.LoadFromFile(g_project.paletteFile);
 	else
 		texpal.LoadFromFile("palette.lmp");
@@ -1058,13 +1058,13 @@ bool WadLoader::ReadWad(const char* filename, qeBuffer &wadFileBuf)
 
 	if (IO_LoadFile(filepath, wadFileBuf) <= 0)
 	{
-		Warning("%s could not be loaded.", filename);
+		Log::Warning(_S("%s could not be loaded.") << filename);
 		return false;
 	}
 
 	if ( strncmp(((char*)*wadFileBuf), "WAD2", 4) )
 	{
-		Warning("%s is not a valid wadfile.", filename);
+		Log::Warning(_S("%s is not a valid wadfile.") << filename);
 		return false;
 	}
 	return true;
@@ -1094,19 +1094,19 @@ TextureGroup *WadLoader::ParseWad(qeBuffer &wadFileBuf)
 
 		if (lumpinfo->type != TYP_MIPTEX)
 		{
-			Warning("%s is not a miptex, ignoring", lumpinfo->name);
+			Log::Warning(_S("%s is not a miptex, ignoring") << lumpinfo->name);
 			continue;
 		}
 
 		if (qmip->width > 1024 || qmip->width < 1 || qmip->height > 1024 || qmip->height < 1)
 		{
-			Warning("%s has bad size, ignoring", lumpinfo->name);
+			Log::Warning(_S("%s has bad size, ignoring") << lumpinfo->name);
 			continue;
 		}
 
 		if (lumpinfo->filepos + (qmip->width * qmip->height) > wadFileBuf.size())
 		{
-			Warning("%s is incomplete, stopping after %i textures", lumpinfo->name, i);
+			Log::Warning(_S("%s is incomplete, stopping after %i textures") << lumpinfo->name << i);
 			return texGroup;
 		}
 

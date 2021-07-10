@@ -285,7 +285,7 @@ FILE *IO_SafeOpenWrite (char *filename)
 	f = fopen(filename, "wb");
 
 	if (!f)
-		Error("Error opening %s: %s", filename, strerror(errno));
+		Error(_S("Error opening %s: %s") << filename << strerror(errno));
 
 	return f;
 }
@@ -302,7 +302,7 @@ FILE *IO_SafeOpenRead (char *filename)
 	f = fopen(filename, "rb");
 
 	if (!f)
-		Error("Error opening %s: %s", filename, strerror(errno));
+		Error(_S("Error opening %s: %s") << filename << strerror(errno));
 
 	return f;
 }
@@ -695,7 +695,7 @@ int ParseHex (char *hex)
 		else if (*str >= 'A' && *str <= 'F')
 			num += 10 + *str -'A';
 		else
-			Error("Bad hex number: %s",hex);
+			Error(_S("Bad hex number: %s") << hex);
 		str++;
 	}
 

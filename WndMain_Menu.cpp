@@ -1086,7 +1086,7 @@ BOOL WndMain_UpdateMRU(WORD wId)
 	}
 	else
 	{
-		Warning("%s not found on disk!", szFileName);
+		Log::Warning(_S("%s not found on disk!") << szFileName);
 		// Remove the file on MRU.
 		DelMenuItem(g_lpMruMenu, wId + IDMRU, TRUE);
 	}

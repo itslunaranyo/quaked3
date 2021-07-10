@@ -98,9 +98,9 @@ void Modify::Ungroup()
 			cmd->AddBrush(br);
 		}
 	}
-	catch (qe3_exception &ex)
+	catch (qe3_exception)
 	{
-		ReportError(ex);
+		//ReportError(ex);
 		return;
 	}
 	g_cmdQueue.Complete(cmd);
@@ -129,7 +129,7 @@ void Modify::InsertBrush()
 
 	if (!dest)
 	{
-		Warning("No brush entity selected to add brushes to.");
+		Log::Warning("No brush entity selected to add brushes to.");
 		return;
 	}
 	
@@ -143,9 +143,9 @@ void Modify::InsertBrush()
 			cmd->AddBrush(br);
 		}
 	}
-	catch (qe3_exception &ex)
+	catch (qe3_exception)
 	{
-		ReportError(ex);
+		//ReportError(ex);
 		return;
 	}
 
@@ -240,7 +240,7 @@ void Modify::ConnectEntities()
 	{
 		if (b->Prev() == &g_brSelectedBrushes)
 		{
-			Warning("Must have two entities selected.");
+			Log::Warning("Must have two entities selected.");
 			Sys_Beep();
 			return;
 		}
@@ -250,7 +250,7 @@ void Modify::ConnectEntities()
 
 	if (e1->IsWorld() || e2->IsWorld())
 	{
-		Warning("Cannot connect to the world.");
+		Log::Warning("Cannot connect to the world.");
 		Sys_Beep();
 		return;
 	}
@@ -296,7 +296,7 @@ void Modify::ConnectEntities()
 
 	g_cmdQueue.Complete(cmdc);
 
-	Sys_Printf("Entities connected as '%s'.\n", newtarg);
+	Log::Print(_S("Entities connected as '%s'.\n")<< newtarg);
 	WndMain_UpdateWindows(W_XY | W_CAMERA);
 
 	Selection::DeselectAll();
@@ -327,9 +327,9 @@ void Modify::SetKeyValue(const char *key, const char *value)
 			cmd->AddEntity(last);
 		}
 	}
-	catch (qe3_exception &ex)
+	catch (qe3_exception)
 	{
-		ReportError(ex);
+		//ReportError(ex);
 		return;
 	}
 
@@ -484,7 +484,7 @@ void Modify::MakeCzgCylinder(int degree)
 
 	if (!QE_SingleBrush())
 	{
-		Warning("Must have a single brush selected.");
+		Log::Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -518,7 +518,7 @@ void Modify::MakeSided(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Warning("Must have a single brush selected.");
+		Log::Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -553,7 +553,7 @@ void Modify::MakeSidedCone(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Warning("Must have a single brush selected.");
+		Log::Warning("Must have a single brush selected.");
 		return;
 	}
 
@@ -585,7 +585,7 @@ void Modify::MakeSidedSphere(int sides)
 
 	if (!QE_SingleBrush())
 	{
-		Warning("Must have a single brush selected.");
+		Log::Warning("Must have a single brush selected.");
 		return;
 	}
 

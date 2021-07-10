@@ -60,65 +60,7 @@ void Sys_ClearPrintf ()
 	SendMessage(g_hwndConsole, WM_SETTEXT, 0, (LPARAM)text);
 }
 
-/*
-==================
-Sys_Printf
-==================
-*/
-void Sys_Printf (char *text, ...)
-{
-	va_list		argptr;
-	char		buf[32768];
-	char	   *out;
 
-	va_start(argptr, text);
-	vsprintf(buf, text, argptr);
-	va_end(argptr);
-
-	if (g_nLogFile)
-	{
-		_write(g_nLogFile, buf, strlen(buf));
-		_commit(g_nLogFile);
-	}
-
-	out = Sys_TranslateString(buf);
-
-	WndConsole::AddText(out);
-}
-
-
-
-/*
-==================
-Sys_LogFile
-
-called whenever we need to open/close/check the console log file
-==================
-*/
-void Sys_LogFile ()
-{
-	if (g_cfgEditor.LogConsole && !g_nLogFile)
-	{
-		// open a file to log the console (if user prefs say so)
-		// the file handle is g_nLogFile
-		// the log file is erased
-		char name[_MAX_PATH];
-		char path[_MAX_PATH];
-		GetCurrentDirectory(_MAX_PATH, path);
-		sprintf(name, "%s/qe3.log", path);
-		g_nLogFile = _open(name, _O_TRUNC | _O_CREAT | _O_WRONLY, _S_IREAD | _S_IWRITE);
-		if (g_nLogFile)
-			Sys_Printf("Console Logging: Started...\n");
-		else
-			MessageBox(g_hwndMain, "Failed to create log file. Check write permissions in QE3 directory.", "QuakeEd 3: Console Logging Error", MB_OK | MB_ICONEXCLAMATION);
-	}	
-	else if (g_nLogFile)
-	{
-		Sys_Printf("Console Logging: Stopped\n");
-		_close(g_nLogFile);
-		g_nLogFile = 0;
-	}
-}
 
 //===========================================
 

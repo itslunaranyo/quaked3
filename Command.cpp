@@ -191,7 +191,7 @@ bool CommandQueue::Complete(Command *cmd)
 	{
 		// dead command that produces no changes in the scene, throw it away
 #ifdef _DEBUG
-		Sys_Printf("DEBUG: '%s' is a no-op, deleting\n", cmd->name);
+		Log::Print(_S("DEBUG: '%s' is a no-op, deleting\n") << cmd->name);
 #endif
 		delete cmd;
 		return true;
@@ -201,16 +201,15 @@ bool CommandQueue::Complete(Command *cmd)
 	try {
 		cmd->Do();
 	}
-	catch (qe3_cmd_exception &ex)	{
+	catch (qe3_cmd_exception)	{
 		delete cmd;
-		ReportError(ex);
 		return false;
 	}
 
 	if (cmd->state == Command::NOOP)
 	{
 #ifdef _DEBUG
-		Sys_Printf("DEBUG: no-op '%s' after do, deleting\n", cmd->name);
+		Log::Print(_S("DEBUG: no-op '%s' after do, deleting\n") << cmd->name);
 #endif
 		delete cmd;
 		return true;
@@ -264,7 +263,7 @@ void CommandQueue::Undo()
 {
 	if (undoQueue.empty())
 	{
-		Sys_Printf("Nothing to undo.\n");
+		Log::Print("Nothing to undo.\n");
 		Sys_Beep();
 		return;
 	}
@@ -274,7 +273,7 @@ void CommandQueue::Undo()
 	g_map.numBrushes -= cmd->BrushDelta();
 	g_map.numEntities -= cmd->EntityDelta();
 	g_map.autosaveTime = 0;
-	Sys_Printf("Undo: %s\n", cmd->name);
+	Log::Print(_S("Undo: %s\n") << cmd->name);
 	cmd->Undo();
 	redoQueue.push_back(cmd);
 	Selection::Changed();
@@ -292,7 +291,7 @@ void CommandQueue::Redo()
 {
 	if (redoQueue.empty())
 	{
-		Sys_Printf("Nothing to redo.\n");
+		Log::Print("Nothing to redo.\n");
 		Sys_Beep();
 		return;
 	}
@@ -302,7 +301,7 @@ void CommandQueue::Redo()
 	g_map.numBrushes += cmd->BrushDelta();
 	g_map.numEntities += cmd->EntityDelta();
 	g_map.autosaveTime = 0;
-	Sys_Printf("Redo: %s\n", cmd->name);
+	Log::Print(_S("Redo: %s\n") << cmd->name);
 	cmd->Redo();
 	undoQueue.push_back(cmd);
 	Selection::Changed();

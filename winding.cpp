@@ -278,7 +278,7 @@ winding_t *Winding::Alloc(int points)
 
 	if (points > MAX_POINTS_ON_WINDING 	// MUST be less than WINDINGS_CHUNK * 6
 		|| points < 3)
-		Error("Winding::Alloc: %d points.", points);
+		Error(_S("Winding::Alloc: %d points.") << points);
 
 	pts = (points - 1) / 6 + 1;
 	w = nullptr;

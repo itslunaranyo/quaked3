@@ -121,7 +121,7 @@ void WndMain_SaveRebarPositions()
 /*	for (int i = 0; i < REBARBANDCOUNT; i++)
 	{
 		int nBandIndex = SendMessage(g_hwndRebar, RB_IDTOINDEX, (WPARAM)ID_TOOLBAR + i, (LPARAM)0);
-		//Sys_Printf("Band %d\n", nBandIndex);
+		//Log::Print("Band %d\n", nBandIndex);
 		g_qeglobals.d_savedinfo.rbiSettings[i].cbSize = sizeof(REBARBANDINFO);
 		g_qeglobals.d_savedinfo.rbiSettings[i].fMask = RBBIM_CHILDSIZE | RBBIM_STYLE;
 		SendMessage(g_hwndRebar, RB_GETBANDINFO, (WPARAM)nBandIndex, (LPARAM)(LPREBARBANDINFO)&g_qeglobals.d_savedinfo.rbiSettings[i]);

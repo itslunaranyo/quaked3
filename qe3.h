@@ -17,7 +17,7 @@
 #include "mathlib.h"
 #include "cmdlib.h"
 #include "syslib.h"
-#include "errors.h"
+//#include "errors.h"
 
 #include "qedefs.h"
 #include "qfiles.h"

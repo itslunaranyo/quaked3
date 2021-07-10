@@ -38,7 +38,7 @@ void WndConsole::Initialize()
 		NULL);
 
 	if (!w_hwndCons)
-		Error("CreateWindowEx: Failed %i", GetLastError());
+		Error(_S("CreateWindowEx: Failed %i") << (int)GetLastError());
 
 	SendMessage(w_hwndCons, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), (LPARAM)TRUE);
 

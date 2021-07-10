@@ -114,7 +114,7 @@ std::string DoubleToStringNice(const double f, const int dec, const bool noTrunc
 	std::sprintf(fmt, "%%1.%if", dec);
 
 	// trunc safety
-	float fp = f + ((f < 0) ? -0.000001f : 0.000001f);
+	double fp = f + ((f < 0) ? -0.000001f : 0.000001f);
 
 	p = std::snprintf(nullptr, 0, fmt, f);
 	str.resize(p);
