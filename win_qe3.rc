@@ -773,15 +773,15 @@ BEGIN
 END
 
 IDD_ENTITYINFO DIALOGEX 0, 0, 347, 185
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_TOOLWINDOW
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_CENTER | WS_POPUP | WS_CLIPSIBLINGS | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOPMOST | WS_EX_TOOLWINDOW
 CAPTION "Entity Info"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,295,5,45,14
     PUSHBUTTON      "Select",IDC_BUTTON_SELECT,295,25,45,15
     PUSHBUTTON      "Delete",IDC_BUTTON_DELETE,295,45,45,14
-    CONTROL         "Tree1",IDC_TREE_ENTITY,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_INFOTIP | WS_BORDER | WS_TABSTOP,5,5,140,175,WS_EX_CLIENTEDGE
+    CONTROL         "Tree1",IDC_TREE_ENTITY,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_INFOTIP | WS_BORDER | WS_HSCROLL | WS_TABSTOP,5,5,140,175,WS_EX_CLIENTEDGE
     CONTROL         "List1",IDC_LIST_ENTITY,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_EDITLABELS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,150,5,135,175,WS_EX_CLIENTEDGE
 END
 
@@ -1112,8 +1112,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,2,53,0
- PRODUCTVERSION 3,2,53,0
+ FILEVERSION 3,2,54,0
+ PRODUCTVERSION 3,2,54,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -1130,14 +1130,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "Level Editing Software for id Software's Quake™"
             VALUE "CompanyName", "id Software"
-            VALUE "FileDescription", "QuakeEd 3.2 (build 53)"
-            VALUE "FileVersion", "3.2.53.0"
-            VALUE "InternalName", "QuakeEd 3.2 (build 53)"
+            VALUE "FileDescription", "QuakeEd 3.2 (build 54)"
+            VALUE "FileVersion", "3.2.54.0"
+            VALUE "InternalName", "QuakeEd 3.2 (build 54)"
             VALUE "LegalCopyright", "Copyright © 1997-2020"
             VALUE "LegalTrademarks", "Quake™ 1996-2020"
             VALUE "OriginalFilename", "qe3.exe"
             VALUE "ProductName", "id Software QuakeEd 3"
-            VALUE "ProductVersion", "3.2.53.0"
+            VALUE "ProductVersion", "3.2.54.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -1790,6 +1790,11 @@ BEGIN
 END
 
 IDD_IMPORT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ENTITYINFO AFX_DIALOG_LAYOUT
 BEGIN
     0
 END
