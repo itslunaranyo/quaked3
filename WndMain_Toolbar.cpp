@@ -249,7 +249,7 @@ void WndMain_CreateReBar(HWND hWnd, HINSTANCE hInst)
 
 	int tb = 0;
 
-#define QEMAKETOOLBARBAND(x)	g_hwndToolbar[tb] = WndMain_CreateToolBar(hwndRB, hInst, tb++, (x), (sizeof(x)/sizeof(TBBUTTON)))
+#define QEMAKETOOLBARBAND(x)	g_hwndToolbar[tb++] = WndMain_CreateToolBar(hwndRB, hInst, tb, (x), (sizeof(x)/sizeof(TBBUTTON)))
 
 	TBBUTTON tb_file[] = {	// 0
 		// bitmap, command, state, style, data, string
