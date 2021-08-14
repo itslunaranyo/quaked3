@@ -3,6 +3,7 @@
 //==============================
 #include "pre.h"
 #include "qe3.h"
+#include "TextureGroup.h"
 #include "TexBrowserRenderer.h"
 #include "TextureView.h"
 
@@ -53,7 +54,7 @@ void TexBrowserRenderer::Draw()
 		glRasterPos2f(MARGIN_X + 4, thumbGroup->top - FONT_HEIGHT);
 		glCallLists(1, GL_UNSIGNED_BYTE, thumbGroup->folded ? "+" : "-");
 		glRasterPos2f(MARGIN_X + FONT_HEIGHT + 4, thumbGroup->top - FONT_HEIGHT);
-		glCallLists(strlen(thumbGroup->tg->name), GL_UNSIGNED_BYTE, thumbGroup->tg->name);
+		glCallLists(thumbGroup->tg->name.length(), GL_UNSIGNED_BYTE, thumbGroup->tg->name.c_str());
 
 		glColor3fv(&txavg.r);
 		glBegin(GL_LINE_LOOP);
@@ -92,7 +93,7 @@ void TexBrowserRenderer::Draw()
 
 			// Draw the texture
 			glColor3f(1, 1, 1);
-			glBindTexture(GL_TEXTURE_2D, thumb->tex->texture_number);
+			thumb->tex->glTex.Bind();
 			glBegin(GL_QUADS);
 			glTexCoord2f(0, 0);
 			glVertex2f(thumb->x, yTop - FONT_HEIGHT);
@@ -127,10 +128,10 @@ void TexBrowserRenderer::Draw()
 			glDisable(GL_TEXTURE_2D);
 
 			// don't draw the directory name
-			for (name = thumb->tex->name; *name && *name != '/' && *name != '\\'; name++)
+			for (name = thumb->tex->name.data(); *name && *name != '/' && *name != '\\'; name++)
 				;
 			if (!*name)
-				name = thumb->tex->name;
+				name = thumb->tex->name.data();
 			else
 				name++;
 

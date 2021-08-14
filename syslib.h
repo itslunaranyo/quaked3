@@ -20,6 +20,7 @@ void    Sys_Beep();
 
 void	Sys_ConvertDOSToUnixName(char *dst, const char *src);
 char   *Sys_TranslateString(char *buf);
+void	Sys_TranslateString(std::string& str);
 
 bool	Sys_RegistrySaveInfo(const char *pszName, void *pvBuf, long lSize);
 bool	Sys_RegistryLoadInfo(const char *pszName, void *pvBuf, long *plSize);

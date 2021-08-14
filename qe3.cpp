@@ -6,27 +6,30 @@
 #include "qe3.h"
 #include "map.h"
 #include "select.h"
+#include "points.h"
 
 #include "Command.h"
 #include "NavTool.h"
 #include "SelectTool.h"
 #include "TextureTool.h"
 #include "ManipTool.h"
+#include "EntClassInitializer.h"
 
 #include "CameraView.h"
 #include "GridView.h"
 #include "WndMain.h"
 #include "WndEntity.h"
 #include "WndGrid.h"
+#include "WndFiles.h"
 
 #define	SPEED_MOVE	32.0f
 #define	SPEED_TURN	22.5f
 
 qeglobals_t	g_qeglobals;
-QEConfig	g_qeconfig;
 
 void QE_FixMonFlags()
 {
+	/*
 	for (Entity *e = g_map.entities.Next(); e != &g_map.entities; e = e->Next())
 	{
 		int sf, sf_lo, sf_mid, sf_hi, sf_new;
@@ -35,7 +38,7 @@ void QE_FixMonFlags()
 		if ((e->eclass->showFlags & EFL_MONSTER))
 		{
 
-			if (!strcmp(e->eclass->name, "monster_zombie"))	// fucking crucified flag
+			if (e->eclass->name == "monster_zombie")	// fucking crucified flag
 			{
 				sf_lo = sf & 60;	// the four flags we're shifting up
 				sf_mid = sf & 192;  // two flags we shift down
@@ -79,10 +82,11 @@ void QE_FixMonFlags()
 			Log::Print(_S("%s, %i -> %i\n")<< e->eclass->name<< sf<< sf_new);
 		}
 	}
+	*/
 }
 
 void QE_FindKTs()
-{
+{/*
 	char *killtarget = nullptr;
 	char *targetname = nullptr;
 	char *target = nullptr;
@@ -106,7 +110,7 @@ void QE_FindKTs()
 			!strcmp(killtarget, target3) ||
 			!strcmp(killtarget, target4))
 			Selection::HandleBrush(e->brushes.Next(), true);
-	}
+	}*/
 }
 
 
@@ -206,7 +210,7 @@ void QE_Init ()
 	}
 
 	g_qeconfig.Load();
-
+	Textures::Init();
 	QE_InitProject();
 
 	// initialize variables
@@ -251,8 +255,8 @@ void QE_Init ()
 			if (IsPathAbsolute(g_pszArgV[i]))
 				strcpy(szMap, g_pszArgV[i]);
 			else	// path is relative, look in project maps dir
-				sprintf(szMap, "%s%s", g_project.mapPath, g_pszArgV[i]);	// config guarantees map path ends with /
-			g_map.LoadFromFile(szMap);
+				sprintf(szMap, "%s%s", g_project.mapPath.data(), g_pszArgV[i]);	// config guarantees map path ends with /
+			g_map.Load(szMap);
 			return;
 		}
 	}
@@ -679,10 +683,15 @@ QE_SaveMap
 */
 void QE_SaveMap()
 {
-	g_map.SaveToFile(g_map.name, false);	// ignore region
+	if (!g_map.hasFilename)
+		if (!SaveAsDialog())
+			return;
+	
+	g_map.Save();	// ignore region
 	g_cmdQueue.SetSaved();
 	g_map.autosaveTime = clock();
 
+	Pointfile_Clear();
 	WndMain_UpdateWindows(W_TITLE);
 }
 
@@ -716,7 +725,7 @@ void QE_CheckAutoSave ()
 		Log::Print("Autosaving...\n");
 		WndMain_Status("Autosaving...", 0);
 
-		g_map.SaveToFile(g_project.autosaveFile, false);
+		g_map.Save(g_project.autosaveFile);
 
 		Log::Print("Autosave successful.\n");
 		WndMain_Status("Autosave successful.", 0);
@@ -742,7 +751,8 @@ bool QE_InitProject()
 	Log::Print(_S("defaultWads: %s\n") << g_project.defaultWads);
 	Log::Print(_S("paletteFile: %s\n") << g_project.paletteFile);
 
-	EntClass::InitForSourceDirectory(g_project.entityFiles);
+	EntClassInitializer eci;
+	eci.InitForProject();
 
 	g_wndEntity->FillClassList();
 	//FillBSPMenu();
@@ -821,7 +831,7 @@ char *QE_ExpandProjectPath (char *p)
 	if (p[0] == '/' || p[0] == '\\')
 		return p;
 
-	sprintf(temp, "%s/%s", g_project.basePath, p);
+	sprintf(temp, "%s/%s", g_project.basePath.data(), p);
 	return temp;
 }
 

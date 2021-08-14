@@ -3,23 +3,13 @@
 //==============================
 
 #include "pre.h"
-#include "qe3.h"
+#include "mathlib.h"
+#include "StringFormatter.h"
+#include "EntClass.h"
 #include <algorithm>
 
-/*
-the classname, color triple, and bounding box are parsed out of comments
-A ? size means take the exact brush size.
-
-/*QUAKED <classname> (0 0 0) ?
-/*QUAKED <classname> (0 0 0) (-8 -8 -8) (8 8 8)
-
-Flag names can follow the size description:
-
-/*QUAKED func_door (0 .5 .8) ? START_OPEN STONE_SOUND DOOR_DONT_LINK GOLD_KEY SILVER_KEY
-*/
-
-std::vector<EntClass*> EntClass::pointclasses;
-std::vector<EntClass*> EntClass::brushclasses;
+std::map<std::string, EntClass*> EntClass::pointclasses;
+std::map<std::string, EntClass*> EntClass::brushclasses;
 std::vector<EntClass*> EntClass::entclasses;
 EntClass	*EntClass::badclass;
 EntClass	*EntClass::worldspawn;
@@ -30,32 +20,30 @@ EntClass::EntClass
 ==============
 */
 EntClass::EntClass() :
-	name("UNINITIALIZED"), comments(0), 
-	form(ECF_UNKNOWN), showFlags(0)
+	name("UNINITIALIZED"), comments("Not found in source."), 
+	form(ECF_UNKNOWN), showFlags(0), mins(0), maxs(0), color(0)
 {
-	mins = vec3(0);
-	maxs = vec3(0);
-	color = vec3(0);
-
-	memset(&texdef, 0, sizeof(texdef));
-	memset(flagnames, 0, MAX_FLAGS * 32);
+	//memset(&texdef, 0, sizeof(texdef));
+	//for (int i = 0; i < MAX_FLAGS; ++i)
+	//	flagnames[i] = "";
 }
 
-/*
-==============
-EntClass::EntClass
-==============
-*/
-EntClass::EntClass(const EntClass& other) :
-	form(other.form), comments(other.comments),
-	showFlags(other.showFlags), texdef(other.texdef)
+EntClass::EntClass(std::string_view& _n) :
+	name(_n), comments("Not found in source."),
+	form(ECF_UNKNOWN), showFlags(0), mins(0), maxs(0), color(0)
 {
-	mins = other.mins;
-	maxs = other.maxs;
-	color = other.color;
+	//memset(&texdef, 0, sizeof(texdef));
+	//for (int i = 0; i < MAX_FLAGS; ++i)
+	//	flagnames[i] = "";
+}
 
-	strcpy(name, other.name);
-	memcpy(flagnames, other.flagnames, MAX_FLAGS * 32);
+EntClass::EntClass(const EntClass& other) :
+	form(other.form), comments(other.comments), name(other.name),
+	mins(other.mins), maxs(other.maxs), color(other.color),
+	showFlags(other.showFlags)//, texdef(other.texdef)
+{
+	for (int i = 0; i < MAX_FLAGS; ++i)
+		flagnames[i] = other.flagnames[i];
 }
 
 /*
@@ -69,198 +57,107 @@ EntClass::~EntClass()
 
 /*
 ==============
-EntClass::InitFromText
+EntClass::ForName
+
+strict - do not look for or create a hacked opposite (ignores has_brushes bc the entclass form has priority anyway)
 ==============
 */
-EntClass *EntClass::InitFromText(char *text)
+EntClass* EntClass::ForName(const std::string& name, const bool has_brushes, const bool strict)
 {
-	char		*t;
-	int			len;
-	int			r, i;
-	char		*p, parms[256];
-	EntClass	*e;
-	char		color[MAX_TEXNAME];
+	EntClass* e;
 
-	e = new EntClass();
+	if (name.empty())
+		return badclass;
 
-	text += strlen("/*QUAKED ");
-
-	// grab the name
-	text = COM_Parse(text);
-	strcpy(e->name, g_szComToken);
-
-	// grab the color, reformat as texture name
-	r = sscanf(text, " (%f %f %f)", &e->color[0], &e->color[1], &e->color[2]);
-	if (r != 3)
+	if (strict)
 	{
-		Log::Print(_S("Error parsing: %s\n")<< e->name);
-		delete e;
+		for (auto ecIt = entclasses.begin(); ecIt != entclasses.end(); ecIt++)
+		{
+			e = (*ecIt);
+			if (name == e->name)
+				return e;
+		}
 		return nullptr;
 	}
-	//sprintf(color, "#%1.3f %1.3f %1.3f", e->color[0], e->color[1], e->color[2]);
-	//strcpy(e->texdef.name, color);
-	rgbToHex(e->color, color);
-	e->texdef.Set(color);	// make a solid color texture
 
-	while (*text != ')')
+	if (has_brushes)
 	{
-		if (!*text)
-		{
-			Log::Print(_S("Error parsing: %s\n")<< e->name);
-			delete e;
-			return nullptr;
-		}
-		text++;
-	}
-	text++;
+		// check the brush classes
+		e = brushclasses[name];
+		if (e) return e;
 
-	// get the size	
-	text = COM_Parse(text);
-	if (g_szComToken[0] == '(')
-	{	// parse the size as two vectors
-		e->form = ECF_POINT;
-
-		r = sscanf(text, "%f %f %f) (%f %f %f)", 
-			&e->mins[0], &e->mins[1], &e->mins[2], 
-			&e->maxs[0], &e->maxs[1], &e->maxs[2]);
-		if (r != 6)
+		// if there isn't a brush class by that name, check the point classes to make a hacked opposite
+		e = pointclasses[name];
+		if (e)
 		{
-			Log::Print(_S("Error parsing: %s\n")<< e->name);
-			delete e;
-			return nullptr;
-		}
-
-		for (i = 0; i < 2; i++)
-		{
-			while (*text != ')')
-			{
-				if (!*text)
-				{
-					Log::Print(_S("Error parsing: %s\n")<< e->name);
-					delete e;
-					return nullptr;
-				}
-				text++;
-			}
-			text++;
+			// create a point-to-brush duplicate of the entclass
+			e = CreateOppositeForm(e);
+			return e;
 		}
 	}
 	else
-	{	// use the brushes
+	{
+		// check the point classes
+		e = pointclasses[name];
+		if (e) return e;
+
+		// if there isn't a point class by that name, check the brush classes to make a hacked opposite
+		if (name != "worldspawn")	// never make a point-hacked worldspawn class
+		{
+			e = brushclasses[name];
+			if (e)
+			{
+				// create a point-to-brush duplicate of the entclass
+				e = CreateOppositeForm(e);
+				return e;
+			}
+		}
+	}
+
+	// create a new dummy class for it
+	e = new EntClass();
+	e->name = name;
+	e->comments = "Not found in source.";
+	e->color = vec3(0, 0.5f, 0);
+	if (has_brushes)
+	{
 		e->form = ECF_BRUSH;
 	}
-
-	// get the flags
-
-	// copy to the first /n
-	p = parms;
-	while (*text && *text != '\n')
-		*p++ = *text++;
-	*p = 0;
-	text++;
-
-	// any remaining words are parm flags
-	p = parms;
-	for (i = 0; i < MAX_FLAGS; i++)
-	{
-		p = COM_Parse(p);
-		if (!p)
-			break;
-		if (!strcmp(g_szComToken, "?"))		// lunaran - respect ? convention for unused spawnflags
-		{
-			e->flagnames[i][0] = 0;
-			continue;
-		}
-		strcpy(e->flagnames[i], g_szComToken);
-	}
-	if (i < 8)
-	{
-		// .def doesn't include skill level flags, put them in manually
-		strcpy(e->flagnames[8], "!Easy");
-		strcpy(e->flagnames[9], "!Normal");
-		strcpy(e->flagnames[10], "!Hard");
-		strcpy(e->flagnames[11], "!Deathmatch");
-
-		// TODO: specify default spawnflags in project file? ie for quoth/copper coop flags
-	}
-
-	// find the length until close comment
-	for (t = text; t[0] && !(t[0] == '*' && t[1] == '/'); t++)
-		;
-
-	// copy the comment block out
-	len = t - text;
-	e->comments.resize(len + 1);
-	memcpy(*e->comments, text, len);
-#if 0
-	for (i = 0; i < len; i++)
-		if (text[i] == '\n')
-			e->comments[i] = '\r';
-		else
-			e->comments[i] = text[i];
-#endif
-	e->comments[len] = 0;
-
-	// setup show flags
-	e->showFlags = 0;
-
-	if (_strnicmp(e->name, "worldspawn", 10) == 0)
-	{
-		e->showFlags = EFL_WORLDSPAWN;
-	}
 	else
 	{
-		if (e->form == ECF_BRUSH)
-		{
-			e->showFlags = EFL_BRUSHENTITY;
-			if (_strnicmp(e->name, "trigger", 7) == 0)
-				e->showFlags |= EFL_TRIGGER;
-			if (_strnicmp(e->name, "func_wall", 9) == 0)
-				e->showFlags |= EFL_FUNCWALL;
-			if (_strnicmp(e->name, "func_detail", 11) == 0)
-				e->showFlags |= EFL_DETAIL;
-		}
-		else
-		{
-			e->showFlags = EFL_POINTENTITY;
-			if (_strnicmp(e->name, "light", 5) == 0)
-				e->showFlags |= EFL_LIGHT;
-			else if (_strnicmp(e->name, "monster", 7) == 0)
-				e->showFlags |= EFL_MONSTER;
-			else if (_strnicmp(e->name, "path", 4) == 0)
-				e->showFlags |= EFL_PATH;
-		}
+		e->form = ECF_POINT;
+		e->mins = vec3(-8);
+		e->maxs = vec3(8);
 	}
+	e->AddToClassList();
 
-	if ((_strnicmp(e->name, "info_player", 11) == 0) ||
-		(_strnicmp(e->name, "info_teleport", 13) == 0) ||
-		(_strnicmp(e->name, "info_intermission", 17) == 0) ||
-		(_strnicmp(e->name, "monster", 7) == 0) ||	// sikk: added monsters
-		(_strnicmp(e->name, "path", 4) == 0) ||
-		(_strnicmp(e->name, "viewthing", 9) == 0))
-		e->form |= ECF_ANGLE;
-	/*
-	if (_strcmpi(e->name, "path") == 0)
-		e->showFlags |= ECLASS_PATH;
-	*/
+	Sort();
+
 	return e;
 }
 
+
+
 /*
-==============
-EntClass::InitFromText
-==============
+=================
+EntClass::AddToClassList
+=================
 */
-EntClass *EntClass::InitFromTextAndAdd(char *text)
+void EntClass::AddToClassList()
 {
-	EntClass *e;
-	e = InitFromText(text);
-	if (e)
+	entclasses.push_back(this);
+	if (IsPointClass())
 	{
-		entclasses.push_back(e);
-		e->AddToClassList();
+		if (pointclasses[this->name])
+			Error(_S("Created duplicate pointclass %s") << this->name);
+		pointclasses[this->name] = this;
 	}
-	return e;
+	else
+	{
+		if (brushclasses[this->name])
+			Error(_S("Created duplicate brushclass %s") << this->name);
+		brushclasses[this->name] = this;
+	}
 }
 
 
@@ -272,9 +169,9 @@ lunaran - create duplicate eclass with opposite fixedsize when a hacked point en
 with brushes or brush entity without any is created
 =================
 */
-EntClass *EntClass::CreateOppositeForm(EntClass *e)
+EntClass* EntClass::CreateOppositeForm(EntClass* e)
 {
-	EntClass *dupe;
+	EntClass* dupe;
 
 	dupe = new EntClass(*e);
 
@@ -283,153 +180,40 @@ EntClass *EntClass::CreateOppositeForm(EntClass *e)
 		dupe->form = (ECF_POINT | ECF_HACKED);
 		dupe->mins[0] = dupe->mins[1] = dupe->mins[2] = -8;
 		dupe->maxs[0] = dupe->maxs[1] = dupe->maxs[2] = 8;
-		Log::Print(_S("Creating fixed-size %s entity class definition\n")<< dupe->name);
+		Log::Print(_S("Creating fixed-size %s entity class definition\n") << dupe->name);
+		pointclasses[dupe->name] = dupe;
 	}
 	else if (dupe->form & ECF_POINT)
 	{
 		dupe->form = (ECF_BRUSH | ECF_HACKED);
-		Log::Print(_S("Creating brush-based %s entity class definition\n")<< dupe->name);
+		Log::Print(_S("Creating brush-based %s entity class definition\n") << dupe->name);
+		brushclasses[dupe->name] = dupe;
 	}
 	else
 		Error("Bad EntClass passed to CreateOppositeForm!\n");
 
-	dupe->AddToClassList();
 	return dupe;
 }
-
 /*
 =================
-EntClass::AddToClassList
+EntClass::Reset
 =================
 */
-void EntClass::AddToClassList()
-{
-	if (IsPointClass())
-		pointclasses.push_back(this);
-	else
-		brushclasses.push_back(this);
-}
-
-/*
-=================
-EntClass::Clear
-=================
-*/
-void EntClass::Clear()
+void EntClass::Reset()
 {
 	for (auto ecIt = brushclasses.begin(); ecIt != brushclasses.end(); ecIt++)
-		delete *ecIt;
+		delete ecIt->second;
 	for (auto ecIt = pointclasses.begin(); ecIt != pointclasses.end(); ecIt++)
-		delete *ecIt;
+		delete ecIt->second;
 
 	entclasses.clear();
 	pointclasses.clear();
 	brushclasses.clear();
 
 	delete badclass;
-}
-
-/*
-=================
-EntClass::ScanFile
-=================
-*/
-void EntClass::ScanFile(const char *filename)
-{
-	int			size;
-	int			i;
-	char		temp[1024];
-	qeBuffer	fdata;
-
-	Sys_ConvertDOSToUnixName(temp, filename);
-	Log::Print(_S("ScanFile: %s\n")<< temp);
-
-	size = IO_LoadFile(filename, fdata);
-
-	for (i = 0; i < size; i++)
-	{
-		if (!strncmp((char*)&fdata[i], "/*QUAKED", 8))
-		{
-			if (!EntClass::InitFromTextAndAdd((char*)&fdata[i]))
-				Log::Warning(_S("couldn't scan %s for entity definitions") << filename);
-		}
-	}
-}
-
-/*
-==============
-EntClass::InitForSourceDirectory
-==============
-*/
-void EntClass::InitForSourceDirectory(const char *path)
-{
-	struct _finddata_t	fileinfo;
-	int		handle;
-	char	filename[1024];
-	char	filebase[1024];
-	char    temp[1024];
-	char	ext[8];
-	char	fname[_MAX_FNAME];
-
-	Sys_ConvertDOSToUnixName(temp, path);
-	Log::Print(_S("ScanEntityPath: %s\n")<< temp);
-
-	Clear();
-
-	// check if entityFiles is a single file, directory path, or a wildcard path
-	ExtractFileExtension(path, ext);
-	if (*ext)
-	{
-		ExtractFilePath(path, filebase);
-		ExtractFileName(path, fname);
-		//if wildcard, scanfile on everything matching in the folder (likely '/*.qc')
-		if (strchr(fname, '*'))
-		{
-			handle = _findfirst(path, &fileinfo);
-			if (handle != -1)
-			{
-				do
-				{
-					sprintf(filename, "%s/%s", filebase, fileinfo.name);
-					EntClass::ScanFile(filename);
-				} while (_findnext(handle, &fileinfo) != -1);
-
-				_findclose(handle);
-			}
-		}
-		else
-		{
-			// just scan the single file (likely 'something.def')
-			EntClass::ScanFile(path);
-		}
-	}
-	else
-	{
-		//is directory, scanfile on everything in the folder
-		sprintf(filebase, "%s/*.*", path);
-		handle = _findfirst(filebase, &fileinfo);
-		if (handle != -1)
-		{
-			do
-			{
-				sprintf(filename, "%s/%s", path, fileinfo.name);
-				EntClass::ScanFile(filename);
-			} while (_findnext(handle, &fileinfo) != -1);
-
-			_findclose(handle);
-		}
-	}
-
-	Sort();
-
-	worldspawn = ForName("worldspawn", true, true);
-	if (!worldspawn)
-	{
-		Log::Warning("No worldspawn definition found in source! Creating a default worldspawn ...");
-		worldspawn = EntClass::InitFromTextAndAdd("/*QUAKED worldspawn (0 0 0) ?\nthis is a default worldspawn definition. no worldspawn definition was found in source - are your project settings correct?\n");
-	}
-
-	badclass = EntClass::InitFromText("/*QUAKED UNKNOWN_CLASS (0 0.5 0) ?");
+	//delete worldspawn;
+	badclass = nullptr;
+	worldspawn = nullptr;
 }
 
 /*
@@ -439,88 +223,9 @@ EntClass::Sort
 */
 void EntClass::Sort()
 {
-	std::sort(begin(), end(), eccmp);
+	std::sort(begin(), end(), 
+		[] (EntClass* a, EntClass* b) -> bool {
+			return (a->name.compare(b->name) < 0);
+		} );
 }
 
-/*
-==============
-EntClass::ForName
-
-strict - do not look for or create a hacked opposite (ignores has_brushes bc the entclass form has priority anyway)
-==============
-*/
-EntClass *EntClass::ForName(const char *name, bool has_brushes, bool strict)
-{
-	EntClass   *e;
-	char		init[1024];
-
-	if (!name)
-		return badclass;
-
-	if (strict)
-	{
-		for (auto ecIt = entclasses.begin(); ecIt != entclasses.end(); ecIt++)
-		{
-			e = (*ecIt);
-			if (!strcmp(name, e->name))
-				return e;
-		}
-		return nullptr;
-	}
-
-	if (has_brushes)
-	{
-		// check the brush classes
-		for (auto ecIt = brushclasses.begin(); ecIt != brushclasses.end(); ecIt++)
-		{
-			e = (*ecIt);
-			if (!strcmp(name, e->name))
-				return e;
-		}
-
-		// if there isn't a brush class by that name, check the point classes for a hacked opposite
-		for (auto ecIt = pointclasses.begin(); ecIt != pointclasses.end(); ecIt++)
-		{
-			e = (*ecIt);
-			if (!strcmp(name, e->name))
-			{
-				// create a point-to-brush duplicate of the entclass
-				e = CreateOppositeForm(e);
-				return e;
-			}
-		}
-	}
-	else
-	{
-		// check the point classes
-		for (auto ecIt = pointclasses.begin(); ecIt != pointclasses.end(); ecIt++)
-		{
-			e = (*ecIt);
-			if (!strcmp(name, e->name))
-				return e;
-		}
-
-		// if there isn't a point class by that name, check the brush classes for a hacked opposite
-		for (auto ecIt = brushclasses.begin(); ecIt != brushclasses.end(); ecIt++)
-		{
-			e = (*ecIt);
-			if (!strcmp(name, e->name))
-			{
-				if (!strcmp(name, "worldspawn"))	// never make a point-hacked worldspawn class
-					return e;
-
-				// create a brush-to-point duplicate of the entclass
-				e = CreateOppositeForm(e);
-				return e;
-			}
-		}
-	}
-
-	// create a new dummy class for it
-	sprintf(init, "/*QUAKED %s (0 0.5 0) %s\nNot found in source.\n", name, has_brushes ? "?" : "(-8 -8 -8) (8 8 8)");
-	e = EntClass::InitFromTextAndAdd(init);
-
-	Sort();
-
-	return e;
-}

@@ -179,7 +179,7 @@ WndCamera::MouseMoved
 */
 void WndCamera::MouseMoved(const int x, const int y, const int buttons)
 {
-	char		camstring[256];
+	std::string camstring;
 	vec3		dir;
 	trace_t		t;
 	int			nx, ny;
@@ -197,14 +197,14 @@ void WndCamera::MouseMoved(const int x, const int y, const int buttons)
 			vec3	size;
 			size = t.brush->maxs - t.brush->mins;
 			if (t.brush->owner->IsPoint())
-				sprintf(camstring, "%s (%d %d %d)", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2]);
+				camstring = (_S("%s (%0v)") << t.brush->owner->eclass->name << size).Emit();
 			else
-				sprintf(camstring, "%s (%d %d %d) %s", t.brush->owner->eclass->name, (int)size[0], (int)size[1], (int)size[2], t.face->texdef.name);
+				camstring = (_S("%s (%0v) %s") << t.brush->owner->eclass->name << size << t.face->texdef.name).Emit();
 		}
 		else
-			sprintf(camstring, "");
+			camstring = "";
 
-		WndMain_Status(camstring, 0);
+		WndMain_Status(camstring.data(), 0);
 
 		return;
 	}

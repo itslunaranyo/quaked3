@@ -9,7 +9,11 @@
 #include "modify.h"
 #include "points.h"
 #include "winding.h"
-#include "parse.h"
+
+#include "TextFileReader.h"
+#include "MapParser.h"
+#include "MapWriter.h"
+#include "IO.h"
 
 #include "CameraView.h"
 #include "GridView.h"
@@ -19,7 +23,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <string>
 
 Map		g_map;
 Brush	*g_pbrRegionSides[4];
@@ -36,27 +39,235 @@ Map::New
 */
 void Map::New()
 {
-	qeBuffer between(0);
+	std::string between;
 
 	Log::Print("Map::New\n");
 
 	SaveBetween(between);
 	Free();
 
-	world = new Entity();
-	world->SetKeyValue("classname", "worldspawn");
-	world->SetKeyValue("wad", g_project.defaultWads);
-	world->eclass = EntClass::ForName("worldspawn", true, true);
+	world = CreateWorldspawn();
+	std::string wads = world->GetKeyValue("wad");
+	if (!wads.empty())
+		Textures::LoadWadsFromWadstring(wads);
 
 	g_vCamera.Reset();
 	g_vGrid[0].Center(vec3(0));
 
 	if (LoadBetween(between))
-		BuildBrushData(g_brSelectedBrushes);	// in case something was betweened
+		BuildBrushData(g_brSelectedBrushes);
 
 	WndMain_SetInspectorMode(W_TEXTURE);
 	WndMain_UpdateWindows(W_ALL);
 }
+
+/*
+================
+Map::Save
+================
+*/
+void Map::Save()
+{
+	assert(hasFilename);
+	Save(name);
+}
+
+void Map::Save(const std::string& filename)
+{
+//	if (!use_region)
+	{
+		if (IO::FileExists(filename))
+			IO::RenameFile(filename, IO::ChangeExtension(filename, "bak"));
+	}
+
+	std::ofstream fOut(filename, std::ios::out | std::ios::trunc);
+	if (fOut.fail())
+		Error(_S("Couldn't write to %s!\n") << filename);
+
+	//if (use_region)
+	//	RegionAdd();
+
+//	name = filename;
+	MapWriter mOut;
+	mOut.WriteMap(*this, fOut);
+
+	fOut.close();
+
+	//if (use_region)
+	//	RegionRemove();
+
+	Log::Print("Saved.\n");
+	WndMain_Status("Saved.", 0);
+}
+
+/*
+================
+Map::SaveSelection
+
+write selected brushes and entities to a file
+================
+*/
+void Map::SaveSelection(const std::string& filename)
+{
+	Log::Print(_S("Map::SaveSelection: %s\n") << filename);
+
+	std::ofstream fOut(filename, std::ios::out | std::ios::trunc);
+	if (fOut.fail())
+		Error(_S("Couldn't write to %s!\n") << filename);
+
+	MapWriter mOut;
+	mOut.WriteMap(*this, fOut, (int)MapWriter::BrushListFlag::SELECTED);
+
+	fOut.close();
+	Log::Print("Selection exported.\n");
+}
+
+
+bool Map::LoadFromFile(const std::string& filename, Entity& elist, Brush& blist)
+{
+	// turn all this into something that returns new pools, not new data in the existing ones
+	TextFileReader reader;
+	reader.Open(filename);
+
+	std::string buf;
+	reader.ReadAll(buf);
+
+	MapParser parser(buf);
+	try
+	{
+		parser.Read(blist, elist);
+	}
+	catch (qe3_exception)
+	{
+		while (elist.Next() != &elist)
+			delete elist.Next();
+		return false;
+	}
+	return true;
+}
+
+/*
+================
+Map::Load
+
+replace all current map data with the contents of a file
+
+load map
+load wads
+build brush data
+flush wads
+================
+*/
+void Map::Load(const std::string& filename)
+{
+	bool bSnapCheck;
+
+	Log::Print(_S("Map::Load: %s\n") << filename);
+
+	Sys_BeginWait();
+
+	if (g_qeglobals.bGridSnap)
+	{
+		g_qeglobals.bGridSnap = false;
+		bSnapCheck = true;
+	}
+
+	WndMain_SetInspectorMode(W_CONSOLE);
+
+	// FIXME: parsing the whole map into brushes and entities, then freeing the old map,
+	// keeps loads/pastes/etc isolated until the parse is complete for exception guarantee
+	// but leaves a ton of freed space in several pools, and never at the end
+	Entity elist;
+	Brush blist;
+	if (!LoadFromFile(filename, elist, blist))
+		return;
+
+	Free();
+	name = filename;
+	hasFilename = true;
+
+	// now merge the fully loaded data into the scene
+	elist.MergeListIntoList(&entities);
+	blist.MergeListIntoList(brActive);
+
+	for (Brush* b = brActive.Next(); b != &brActive; b = b->Next())
+		numBrushes++;
+	for (Entity* e = entities.Next(); e != &entities; e = e->Next())
+	{
+		// create fixed/non-fixed entclasses on the fly for point entities with brushes or brush 
+		//	entities without any, so that all the downstream code Just Works
+		bool has_brushes = (e->brushes.ENext() != &e->brushes);
+		e->eclass = EntClass::ForName(e->GetKeyValue("classname"), has_brushes, false);
+
+		if (e->eclass->IsPointClass())
+		{	// create a custom brush
+			e->MakeBrush()->AddToList(brActive);
+		}
+		else if (e->eclass == EntClass::Worldspawn())
+		{
+			if (world)
+				Log::Warning("Multiple worldspawns!\n");
+			world = e;
+		}
+
+		numEntities++;
+	}
+
+	Log::Print(_S("%i brushes, %i entities\n") << numBrushes << numEntities);
+
+	if (world)
+	{
+		world->RemoveFromList();
+	}
+	else
+	{
+		Log::Warning("No worldspawn in map! Creating new empty worldspawn ...\n");
+
+		world = CreateWorldspawn();
+	}
+
+	std::string wads = world->GetKeyValue("wad");
+	if (wads.empty())
+		Log::Warning("No \"wad\" key.");
+	else
+		Textures::LoadWadsFromWadstring(wads);
+
+	BuildBrushData();
+
+	// move the view to a start position
+	Entity *ent = g_map.FindEntity("classname", "info_player_start");
+	if (!ent)
+		ent = g_map.FindEntity("classname", "info_player_deathmatch");
+
+	g_vCamera.Reset();
+	g_vGrid[0].Center(vec3(0));
+
+	if (ent)
+	{
+		vec3 startOrg;
+		ent->GetKeyValueVector("origin", startOrg);
+		ent->GetKeyValueVector("origin", startOrg);
+		g_vCamera.SetOrigin(startOrg);
+		g_vGrid[0].Center(startOrg);
+		g_vCamera.Turn(ent->GetKeyValueFloat("angle"), true);
+	}
+
+
+	WndMain_UpdateTitle();
+	RegionOff();
+
+	Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
+	SanityCheck();
+
+	WndMain_UpdateWindows(W_ALL);
+	WndMain_SetInspectorMode(W_TEXTURE);
+
+	if (bSnapCheck)
+		g_qeglobals.bGridSnap = true;
+
+	Sys_EndWait();
+}
+
 
 /*
 ================
@@ -105,6 +316,21 @@ void Map::Free()
 
 	WndMain_UpdateWindows(W_ALL);
 }
+
+/*
+==================
+Map::CreateWorldspawn
+==================
+*/
+Entity* Map::CreateWorldspawn()
+{
+	Entity* w = new Entity();
+	w->SetKeyValue("classname", "worldspawn");
+	w->SetKeyValue("wad", g_project.defaultWads);
+	w->eclass = EntClass::ForName("worldspawn", true, true);
+	return w;
+}
+
 
 /*
 ==================
@@ -159,97 +385,6 @@ void Map::BuildBrushData()
 
 //================================================================
 
-/*
-================
-Map::ParseBufferMerge
-
-parse all entities and brushes from the text buffer, assuming the scene is not empty
-
-only called by loadbetween, now
-================
-*/
-bool Map::ParseBufferMerge(const char *data)
-{
-	Entity elist;
-	Brush blist;
-
-	try
-	{
-		Read(data, blist, elist);
-		for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
-		{
-			// world brushes need to be merged into the existing worldspawn
-			if (ent->eclass == EntClass::worldspawn)
-			{
-				ent->RemoveFromList();
-				Brush *b, *next;
-				for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)
-				{
-					next = b->ENext();
-					Entity::UnlinkBrush(b);
-					world->LinkBrush(b);
-				}
-				delete ent;
-				break;
-			}
-		}
-	}
-	catch (qe3_exception)
-	{
-		//ReportError(ex);
-		// blist and elist are auto-freed by stack unwinding without a merger,
-		// so the map isn't polluted with a partial import when we exit
-		return false;
-	}
-
-	Selection::DeselectAll();
-	elist.MergeListIntoList(&entities);
-	blist.MergeListIntoList(g_brSelectedBrushes);	// merge to selection
-	SanityCheck();
-	return true;
-}
-
-/*
-================
-Map::LoadFromFile_Parse
-
-parse all entities and brushes from the text buffer, assuming the scene is empty
-
-only for File > Load
-================
-*/
-bool Map::LoadFromFile_Parse(const char *data)
-{
-	Entity elist;
-	Brush blist;
-
-	try
-	{
-		Read(data, blist, elist);
-		for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
-		{
-			if (ent->eclass == EntClass::worldspawn)
-			{
-				ent->RemoveFromList();
-				world = ent;
-				break;
-			}
-		}
-	}
-	catch (qe3_exception)
-	{
-		//ReportError(ex);
-		// don't need to free here, loaded map wasn't merged into the now-empty scene yet
-		return false;
-	}
-
-	// now merge the fully loaded data into the scene
-	elist.MergeListIntoList(&entities);
-	blist.MergeListIntoList(brActive);
-	SanityCheck();
-	return true;
-}
-
 
 void Map::SanityCheck()
 {
@@ -271,116 +406,6 @@ void Map::SanityCheck()
 #endif
 }
 
-
-/*
-================
-Map::LoadFromFile
-
-replace all current map data with the contents of a file
-
-load map
-load wads
-build brush data
-flush wads
-================
-*/
-void Map::LoadFromFile(const char *filename)
-{
-	char	temp[1024];
-	Entity	*ent;
-	bool	bSnapCheck = false;
-	qeBuffer between(0);
-
-	Sys_BeginWait();
-
-	// sikk---> make sure Grid Snap is off to insure complex brushes remain intact
-	if (g_qeglobals.bGridSnap)
-	{
-		g_qeglobals.bGridSnap = false;
-		bSnapCheck = true;
-	}
-	// <---sikk
-
-	WndMain_SetInspectorMode(W_CONSOLE);
-
-	Sys_ConvertDOSToUnixName(temp, filename);
-	Log::Print(_S("Map::LoadFromFile: %s\n") << temp);
-
-	SaveBetween(between);
-	Free();
-
-	qeBuffer buf;
-	if (IO_LoadFile(filename, buf) < 1)
-		Error(_S("Couldn't load %s!") << filename);
-
-	if (LoadFromFile_Parse((char*)*buf))
-	{
-		strcpy(name, filename);
-		hasFilename = true;
-
-		if (!world)
-		{
-			Log::Warning("No worldspawn in map! Creating new empty worldspawn ...");
-
-			world = new Entity();
-			world->SetKeyValue("classname", "worldspawn");
-		}
-
-		if (!*world->GetKeyValue("wad"))
-			Log::Warning("No \"wad\" key.");
-		else
-			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
-
-		for (Brush* b = brActive.Next(); b != &brActive; b = b->Next())
-			numBrushes++;
-		for (Entity* e = entities.Next(); e != &entities; e = e->Next())
-		{
-			if (e->IsPoint())
-				numBrushes--;
-			numEntities++;
-		}
-
-		Log::Print("--- LoadMapFile ---\n");
-		Log::Print(_S("%s\n")<< temp);
-		Log::Print(_S("%n brushes\n%n entities\n")<< numBrushes<< numEntities);
-
-		LoadBetween(between);
-		g_map.BuildBrushData();
-
-		// move the view to a start position
-		ent = g_map.FindEntity("classname", "info_player_start");
-		if (!ent)
-			ent = g_map.FindEntity("classname", "info_player_deathmatch");
-
-		g_vCamera.Reset();
-		g_vGrid[0].Center(vec3(0));
-
-		if (ent)
-		{
-			vec3 startOrg;
-			ent->GetKeyValueVector("origin", startOrg);
-			ent->GetKeyValueVector("origin", startOrg);
-			g_vCamera.SetOrigin(startOrg);
-			g_vGrid[0].Center(startOrg);
-			g_vCamera.Turn(ent->GetKeyValueFloat("angle"), true);
-		}
-
-		Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
-
-		WndMain_UpdateTitle();
-		RegionOff();
-	}
-
-	WndMain_UpdateBrushStatusBar();
-	WndMain_SetInspectorMode(W_TEXTURE);
-	WndMain_UpdateWindows(W_ALL);
-
-	if (bSnapCheck)	// sikk - turn Grid Snap back on if it was on before map load
-		g_qeglobals.bGridSnap = true;
-
-	Sys_EndWait();
-}
-
 /*
 ================
 Map::ImportFromFile
@@ -393,7 +418,7 @@ build brush data
 flush only wads added to wadstring
 ================
 */
-void Map::ImportFromFile(const char *filename)
+void Map::ImportFromFile(const std::string& filename)
 {
 	char	temp[1024];
 	bool	bSnapCheck = false;
@@ -402,8 +427,8 @@ void Map::ImportFromFile(const char *filename)
 
 	WndMain_SetInspectorMode(W_CONSOLE);
 
-	Sys_ConvertDOSToUnixName(temp, filename);
-	Log::Print(_S("Map::ImportFromFile: %s\n")<< temp);
+	//Sys_ConvertDOSToUnixName(temp, filename);
+	Log::Print(_S("Map::ImportFromFile: %s\n") << temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();
 
@@ -412,7 +437,7 @@ void Map::ImportFromFile(const char *filename)
 		cmdIM->File(filename);
 		g_cmdQueue.Complete(cmdIM);
 
-		if (!*world->GetKeyValue("wad"))
+		if (world->GetKeyValue("wad").empty())
 			Log::Warning("No \"wad\" key.");
 		else
 			Textures::LoadWadsFromWadstring(world->GetKeyValue("wad"));
@@ -431,79 +456,57 @@ void Map::ImportFromFile(const char *filename)
 	Sys_EndWait();
 }
 
+//================================================================
+
 /*
-================
-Map::SaveToFile
-
-write entire contents of the scene to a file
-================
+==================
+Map::SaveBetween
+==================
 */
-void Map::SaveToFile(const char *filename, bool use_region)
+void Map::SaveBetween(std::string& buf)
 {
-	std::ofstream	   *f;
-	char        temp[1024];
-
-	Sys_ConvertDOSToUnixName(temp, filename);
-
-	if (!use_region)
-	{
-		char backup[MAX_PATH];
-
-		// rename current to .bak
-		strcpy(backup, filename);
-		StripExtension(backup);
-		strcat(backup, ".bak");
-		_unlink(backup);
-		rename(filename, backup);
-	}
-
-	Log::Print(_S("Map::SaveToFile: %s\n") << filename);
-
-	f = new std::ofstream(filename);
-	if (!f)
-	{
-		Log::Print(_S("ERROR: Could not open %s\n") << filename);
+	if (!Selection::HasBrushes())
 		return;
-	}
 
-	if (use_region)
-		RegionAdd();
+	if (MessageBox(g_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
+		return;
 
-	WriteAll(*f, use_region);
-
-	f->close();
-
-	if (use_region)
-		RegionRemove();
-
-	Log::Print("Saved.\n");
-	WndMain_Status("Saved.", 0);
+	MapWriter mw;
+	std::stringstream sstr;
+	mw.WriteMap(*this, sstr, (int)MapWriter::BrushListFlag::SELECTED);
+	buf = sstr.str();	// TODO: so many copies between stringstream and this
 }
 
 /*
-================
-Map::ExportToFile
-
-write selected brushes and entities to a file
-================
+==================
+Map::LoadBetween
+==================
 */
-void Map::ExportToFile(const char *filename)
+bool Map::LoadBetween(const std::string& buf)
 {
-	std::ofstream	   *f;
+	if (buf.empty())
+		return false;		// nothing saved in it
 
-	Log::Print(_S("Map::ExportToFile: %s\n")<< filename);
+	// TODO: generalized CmdMergeMapText or something
 
-	f = new std::ofstream(filename);
-	if (!f)
+	MapParser parser(buf);
+	Entity elist;
+	Brush blist;
+	try { parser.Read(blist, elist); }
+	catch (qe3_exception)
 	{
-		Log::Print(_S("ERROR: Could not open %s\n")<< filename);
-		return;
+		while (elist.Next() != &elist)
+			delete elist.Next();
+		return false;
 	}
-	WriteSelected(*f);
-	f->close();
 
-	Log::Print(_S("Selection exported.\n")<< filename);
+	elist.MergeListIntoList(&entities);
+	blist.MergeListIntoList(g_brSelectedBrushes);	// select copied stuff	
+	Selection::Changed();
+
+	return true;
 }
+
 
 /*
 ================
@@ -527,16 +530,16 @@ write selected brushes and entities to the windows clipboard
 */
 void Map::Copy()
 {
-	HGLOBAL hglbCopy;
-	int copylen;
-
 	if (!Selection::HasBrushes())
 		return;
 	if (!OpenClipboard(g_hwndMain))
 		return;
 
+	HGLOBAL hglbCopy;
+	int copylen;
 	std::stringstream sstr;
-	WriteSelected(sstr);
+	MapWriter mw;
+	mw.WriteMap(*this, sstr, (int)MapWriter::BrushListFlag::SELECTED);
 
 	copylen = (int)sstr.tellp();
 	hglbCopy = GlobalAlloc(GMEM_MOVEABLE, copylen + 1);
@@ -572,160 +575,6 @@ void Map::Paste()
 }
 
 //================================================================
-
-/*
-================
-Map::Read
-
-parse the map data and link all brushes and entities to the provided lists
-================
-*/
-void Map::Read(const char *data, Brush &blist, Entity &elist)
-{
-	int numEntities;
-	Entity* ent;
-	Brush* next;
-	StartTokenParsing(data);
-	bool foundWorld = false;
-
-	numEntities = 0;
-
-	while (1)
-	{
-		ent = Entity::Parse(false);
-		if (!ent)
-			break;
-
-		if (!strcmp(ent->GetKeyValue("classname"), "worldspawn"))
-		{
-			if (foundWorld)
-				Log::Warning("Multiple worldspawn.");
-			foundWorld = true;
-
-			// add the worldspawn to the beginning of the entity list so it's easy to find
-			ent->AddToList(&elist, false);
-		}
-		else
-		{
-			// add the entity to the end of the entity list
-			ent->AddToList(&elist, true);
-			numEntities++;
-		}
-
-		// add all the brushes to the brush list
-		for (Brush* b = ent->brushes.ENext(); b != &ent->brushes; b = next)
-		{
-			next = b->ENext();
-			b->AddToList(blist);
-		}
-	}
-}
-
-/*
-================
-Map::WriteSelected
-
-map-print only selected brushes and entities to the buffer
-================
-*/
-void Map::WriteSelected(std::ostream &out)
-{
-	int count = 0;
-	Entity *e, *next;
-
-	// write world entity first
-	world->WriteSelected(out, count++);
-
-	// then write all other ents
-	for (e = entities.Next(); e != &entities; e = next)
-	{
-		next = e->Next();
-		/*
-		if (e->brushes.onext == &e->brushes)
-		{
-			assert(0);
-			delete e;	// no brushes left, so remove it
-		}
-		else
-			e->WriteSelected(out);
-		*/
-		if (e->brushes.ENext() != &e->brushes)
-			e->WriteSelected(out, count++);
-	}
-}
-
-/*
-================
-Map::WriteAll
-
-map-print all brushes and entities to the buffer
-================
-*/
-void Map::WriteAll(std::ostream &out, bool use_region)
-{
-	int count;
-	Entity *e, *next;
-
-	// write world entity first
-	world->Write(out, use_region);
-
-	// then write all other ents
-	count = 1;
-	for (e = entities.Next(); e != &entities; e = next)
-	{
-		out << "// entity " << count << "\n";
-		count++;
-		next = e->Next();
-
-		if (e->brushes.ENext() != &e->brushes)
-			e->Write(out, use_region);
-	}
-}
-
-/*
-==================
-Map::SaveBetween
-==================
-*/
-void Map::SaveBetween(qeBuffer &buf)
-{
-	int copylen;
-
-	if (!Selection::HasBrushes())
-		return;
-	if (MessageBox(g_hwndMain, "Copy selection to new map?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDNO)
-		return;
-
-	std::stringstream sstr;
-	WriteSelected(sstr);
-
-//	sstr.seekp(sstr.end);
-	copylen = (int)sstr.tellp();
-	buf.resize(copylen + 1);
-
-	char* cpbuf = (char*)*buf;
-	sstr.read(cpbuf, copylen);
-	cpbuf[copylen] = 0;
-}
-
-/*
-==================
-Map::LoadBetween
-==================
-*/
-bool Map::LoadBetween(qeBuffer &buf)
-{
-	if (!buf.size())
-		return false;		// nothing saved in it
-
-	if (ParseBufferMerge((char*)*buf))
-	{
-		//BuildBrushData(g_brSelectedBrushes);
-		Selection::Changed();
-		//modified = true;
-	}
-	return true;
-}
 
 //================================================================
 
@@ -853,7 +702,7 @@ void Map::RegionAdd()
 		return;
 
 	memset(&texdef, 0, sizeof(texdef));
-	strcpy(texdef.name, "REGION");
+	texdef.name = "REGION";
 
 	mins[0] = regionMins[0] - 16;
 	maxs[0] = regionMins[0] + 1;
@@ -923,7 +772,7 @@ Entity *Map::FindEntity(char *pszKey, char *pszValue)
 	pe = entities.Next();
 
 	for (; pe != nullptr && pe != &entities; pe = pe->Next())
-		if (!strcmp(pe->GetKeyValue(pszKey), pszValue))
+		if (pe->GetKeyValue(pszKey) == pszValue)
 			return pe;
 
 	return nullptr;

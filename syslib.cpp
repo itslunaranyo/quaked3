@@ -172,6 +172,30 @@ char *Sys_TranslateString (char *buf)
 	return buf2;
 }
 
+void Sys_TranslateString(std::string& str)
+{
+	std::string buf;
+	buf.reserve(str.length() * 1.1f);
+
+	int i, l;
+
+	l = str.length();
+	
+	for (i = 0; i < l; i++)
+	{
+		if (str[i] == '\r')
+		{
+			i++;
+			continue;
+		}
+		if (str[i] == '\n')
+			buf += "\r\n";
+		else
+			buf += str[i];
+	}
+
+	str = buf;
+}
 
 /*
 =============================================================

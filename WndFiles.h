@@ -6,7 +6,7 @@
 #define __WND_FILES_H__
 
 void	OpenDialog();
-void	SaveAsDialog();
+bool	SaveAsDialog();
 bool	ConfirmModified();
 void	ImportDialog();
 void	ExportDialog();

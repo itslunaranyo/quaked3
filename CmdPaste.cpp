@@ -4,6 +4,7 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "MapParser.h"
 #include "CmdPaste.h"
 #include "map.h"
 
@@ -55,12 +56,33 @@ void CmdPaste::Do_Impl()
 	}
 	// <---sikk
 
-	g_map.Read(cbdata, blist, elist);
+	MapParser parser(cbdata);
+	try
+	{
+		parser.Read(blist, elist);
+	}
+	catch (qe3_exception)
+	{
+		while (elist.Next() != &elist)
+			delete elist.Next();
+		GlobalUnlock(hglb);
+		CloseClipboard();
+		CmdError("Couldn't paste from clipboard");
+	}
 
 	for (Entity *ent = elist.Next(); ent != &elist; ent = ent->Next())
 	{
+		enext = ent->Next();
+		bool has_brushes = (ent->brushes.ENext() != &ent->brushes);
+		ent->eclass = EntClass::ForName(ent->GetKeyValue("classname"), has_brushes, false);
+
+		if (ent->eclass->IsPointClass())
+		{	// create a custom brush
+			ent->MakeBrush()->AddToList(blist);
+		}
+
 		// world brushes need to be merged into the existing worldspawn
-		if (ent->eclass == EntClass::worldspawn)
+		if (ent->IsWorld())
 		{
 			ent->RemoveFromList();
 			for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)

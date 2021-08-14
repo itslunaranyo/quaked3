@@ -7,18 +7,14 @@
 #include "CmdSetKeyvalue.h"
 #include "select.h"
 
-CmdSetKeyvalue::CmdSetKeyvalue(const char *key, const char *value) : Command("Set Keyvalue")
+CmdSetKeyvalue::CmdSetKeyvalue(const std::string& key, const std::string& value) : Command("Set Keyvalue")
 {
 	if (!key[0])
 		CmdError("No key specified");
-	if (!strcmp(key, "classname") && !value[0])
+	if (key == "classname" && value.empty())
 		CmdError("Cannot delete classname keyvalue (it is important)");
 
-	newKV.key.resize(strlen(key) + 1);
-	newKV.value.resize(strlen(value) + 1);
-
-	strcpy((char*)*newKV.key, key);
-	strcpy((char*)*newKV.value, value);
+	newKV.Set(key, value);
 }
 
 CmdSetKeyvalue::~CmdSetKeyvalue() {}
@@ -31,24 +27,22 @@ void CmdSetKeyvalue::AddEntity(Entity *e)
 
 	// cache the old keyvalues for undo
 	EPair* ep;
-	ep = e->GetEPair((char*)*newKV.key);
+	ep = e->GetEPair(newKV.GetKey());
 	if (ep)
-		kvchanges.emplace_back(e, ep->value);
+		kvchanges.emplace_back(e, ep->GetValue());
 	else
 		kvchanges.emplace_back(e, "");
 
 	state = LIVE;
 }
 
-CmdSetKeyvalue::keyvalue_change_s::keyvalue_change_s(Entity *_e, const qeBuffer &_v) : ent(_e)
+CmdSetKeyvalue::keyvalue_change_s::keyvalue_change_s(Entity* _e, const std::string& _v) : ent(_e)
 {
-	val.resize(_v.size());
-	strcpy((char*)*val, (char*)*_v);
+	val = _v;
 }
-CmdSetKeyvalue::keyvalue_change_s::keyvalue_change_s(Entity *_e, const char* _cv) : ent(_e)
+CmdSetKeyvalue::keyvalue_change_s::keyvalue_change_s(Entity* _e, const char* _cv) : ent(_e)
 {
-	val.resize(strlen(_cv) + 1);
-	strcpy((char*)*val, _cv);
+	val = _cv;
 }
 
 //==============================
@@ -63,60 +57,60 @@ in that group on Undo
 void CmdSetKeyvalue::SetNew()
 {
 	// special handling for the special keyvalues
-	if (!strcmp((char*)*newKV.key, "classname"))
+	if (newKV.GetKey() == "classname")
 	{
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
 			if (!kvcIt->ent->IsWorld())
-				kvcIt->ent->ChangeClassname((char*)*newKV.value);
+				kvcIt->ent->ChangeClassname(newKV.GetValue());
 		return;
 	}
 
-	if (!strcmp((char*)*newKV.key, "origin"))
+	if (newKV.GetKey() == "origin")
 	{
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
 		{
-			if (!newKV.value[0])	// origin key can be deleted from brush ents but not points
+			if (newKV.GetValue().empty())	// origin key can be deleted from brush ents but not points
 			{
 				if (kvcIt->ent->IsBrush())
-					kvcIt->ent->DeleteKeyValue((char*)*newKV.key);
+					kvcIt->ent->DeleteKeyValue("origin");
 				continue;
 			}
-			kvcIt->ent->SetKeyValue((char*)*newKV.key, (char*)*newKV.value);
+			kvcIt->ent->SetKeyValue("origin", newKV.GetValue());
 			if (kvcIt->ent->IsPoint())
 				kvcIt->ent->SetOriginFromKeyvalue();
 		}
 		return;
 	}
 
-	if (!newKV.value[0])	// no value specified, treat as delete
+	if (newKV.GetValue().empty())	// no value specified, treat as delete
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
-			kvcIt->ent->DeleteKeyValue((char*)*newKV.key);
+			kvcIt->ent->DeleteKeyValue(newKV.GetKey());
 	else
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
-			kvcIt->ent->SetKeyValue((char*)*newKV.key, (char*)*newKV.value);
+			kvcIt->ent->SetKeyValue(newKV.GetKey(), newKV.GetValue());
 }
 
 void CmdSetKeyvalue::SetOld()
 {
 	// special handling for the special keyvalues
-	if (!strcmp((char*)*newKV.key, "classname"))
+	if (newKV.GetKey() == "classname")
 	{
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
 			if (!kvcIt->ent->IsWorld())
-				kvcIt->ent->ChangeClassname((char*)*kvcIt->val);
+				kvcIt->ent->ChangeClassname(kvcIt->val);
 		return;
 	}
 
-	if (!strcmp((char*)*newKV.key, "origin"))
+	if (newKV.GetKey() == "origin")
 	{
 		for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
 		{
-			if (!kvcIt->val[0])
+			if (kvcIt->val.empty())
 			{
-				kvcIt->ent->DeleteKeyValue((char*)*newKV.key);
+				kvcIt->ent->DeleteKeyValue("origin");
 				continue;
 			}
-			kvcIt->ent->SetKeyValue((char*)*newKV.key, (char*)*kvcIt->val);
+			kvcIt->ent->SetKeyValue("origin", kvcIt->val);
 			if (kvcIt->ent->IsPoint())
 				kvcIt->ent->SetOriginFromKeyvalue();
 		}
@@ -124,10 +118,10 @@ void CmdSetKeyvalue::SetOld()
 	}
 
 	for (auto kvcIt = kvchanges.begin(); kvcIt != kvchanges.end(); ++kvcIt)
-		if (!kvcIt->val[0])	// had no value before, delete kv again
-			kvcIt->ent->DeleteKeyValue((char*)*newKV.key);
+		if (kvcIt->val.empty())	// had no value before, delete kv again
+			kvcIt->ent->DeleteKeyValue(newKV.GetKey());
 		else
-			kvcIt->ent->SetKeyValue((char*)*newKV.key, (char*)*kvcIt->val);
+			kvcIt->ent->SetKeyValue(newKV.GetKey(), kvcIt->val);
 }
 
 void CmdSetKeyvalue::Do_Impl() { SetNew(); }

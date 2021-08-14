@@ -6,12 +6,13 @@
 #define __COMMAND_SET_KEYVALUE_H__
 
 #include "qe3.h"
+#include "EPair.h"
 #include "Command.h"
 
 class CmdSetKeyvalue : public Command
 {
 public:
-	CmdSetKeyvalue(const char *key, const char *value);
+	CmdSetKeyvalue(const std::string& key, const std::string& value);
 	~CmdSetKeyvalue();
 
 	void AddEntity(Entity* e);
@@ -19,11 +20,11 @@ public:
 private:
 	struct keyvalue_change_s {
 		Entity* ent;
-		qeBuffer val;
-		keyvalue_change_s(Entity *_e, const qeBuffer &_v);
+		std::string val;
+		keyvalue_change_s(Entity *_e, const std::string&_v);
 		keyvalue_change_s(Entity *_e, const char *_cv);
 	};
-	EPair newKV;
+	EPair newKV; // todo: this can just be two strings
 	std::vector<keyvalue_change_s> kvchanges;
 
 	void SetNew();

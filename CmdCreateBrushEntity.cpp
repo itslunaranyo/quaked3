@@ -7,22 +7,35 @@
 #include "CmdCreateBrushEntity.h"
 #include "map.h"
 
-CmdCreateBrushEntity::CmdCreateBrushEntity(const char* classname) : Command("Create Brush Entity")
+CmdCreateBrushEntity::CmdCreateBrushEntity(const std::string& classname) : Command("Create Brush Entity")
 {
 	selectOnDo = true;
 	selectOnUndo = true;
 	modifiesSelection = true;
-	if (!strcmp(classname, "worldspawn"))
-		CmdError("Cannot create a new worldspawn entity.");
-
 	EntClass *ec = EntClass::ForName(classname, true, false);
-	ent = new Entity();
-	ent->eclass = ec;
-	ent->SetKeyValue("classname", classname);
-	cmdRPB.Destination(ent);
-
+	Init(ec);
 	state = LIVE;
 }
+
+CmdCreateBrushEntity::CmdCreateBrushEntity(EntClass* eclass) : Command("Create Brush Entity")
+{
+	selectOnDo = true;
+	selectOnUndo = true;
+	modifiesSelection = true;
+	Init(eclass);
+	state = LIVE;
+}
+
+void CmdCreateBrushEntity::Init(EntClass* eclass)
+{
+	if (eclass == EntClass::Worldspawn())
+		CmdError("Cannot create a new worldspawn entity.");
+
+	ent = new Entity();
+	ent->ChangeClass(eclass);
+	cmdRPB.Destination(ent);
+}
+
 
 CmdCreateBrushEntity::~CmdCreateBrushEntity()
 {

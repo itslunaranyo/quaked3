@@ -9,6 +9,7 @@
 
 class Entity;
 class Face;
+class TexDef;
 
 class Brush : public SlabAllocator<Brush>
 {
@@ -36,6 +37,7 @@ public:
 
 	void	RemoveFromList();
 	bool	IsLinked() const;
+	bool	IsOnList(Brush& list) const;
 	void	AddToList(Brush &list);
 	void	AddToListTail(Brush &list);
 	void	MergeListIntoList(Brush &dest, bool tail = false);	// donates all brushes to dest, leaving this brush empty

@@ -30,19 +30,18 @@ void Selection::HandleChange()
 {
 	if (!g_bSelectionChanged) return;
 
-	//DeselectFiltered();
-
 	vec3		vMin, vMax, vSize;
-	char		selectionstring[256];
-	char		*name;
 
 	if (HasBrushes())
 	{
 		GetBounds(vMin, vMax);
 		vSize = vMax - vMin;
-		name = g_brSelectedBrushes.Next()->owner->GetKeyValue("classname");
-		sprintf(selectionstring, "Selected: %s (%d %d %d)", name, (int)vSize[0], (int)vSize[1], (int)vSize[2]);
-		WndMain_Status(selectionstring, 3);
+
+		WndMain_Status(
+			(_S("Selected: %s (%v)")
+			<< g_brSelectedBrushes.Next()->owner->GetKeyValue("classname")
+			<< vSize), 
+			3);
 	}
 	else
 	{
@@ -132,13 +131,7 @@ Selection::IsBrushSelected
 */
 bool Selection::IsBrushSelected(const Brush* bSel)
 {
-	Brush* b;
-
-	for (b = g_brSelectedBrushes.Next(); (b != nullptr) && (b != &g_brSelectedBrushes); b = b->Next())
-		if (b == bSel)
-			return true;
-
-	return false;
+	return bSel->IsOnList(g_brSelectedBrushes);
 }
 
 /*
@@ -932,7 +925,7 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 		{
 			bnext = b->Next();
 			if (b->IsFiltered()) continue;
-			if (!strcmp(b->owner->GetKeyValue(szKey), szValue))
+			if (b->owner->GetKeyValue(szKey) == szValue)
 			{
 				SelectBrushSorted(b);
 				selected++;
@@ -946,7 +939,7 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 			bnext = b->Next();
 			if (b->IsFiltered()) continue;
 
-			if (strlen(b->owner->GetKeyValue(szKey)))
+			if (!b->owner->GetKeyValue(szKey).empty())
 			{
 				SelectBrushSorted(b);
 				selected++;
@@ -963,7 +956,7 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 
 			for (ep = b->owner->epairs; ep && !bFound; ep = ep->next)
 			{
-				if (ep->value == szValue)
+				if (ep->GetValue() == szValue)
 				{
 					SelectBrushSorted(b);
 					selected++;
@@ -1095,7 +1088,7 @@ void Selection::AllType()
 	{
 		next = b->Next();
 
-		if (!strcmp(b->owner->eclass->name, selected->owner->eclass->name))
+		if (b->owner->eclass->name == selected->owner->eclass->name)
 		{
 			SelectBrushSorted(b);
 		}
@@ -1279,7 +1272,7 @@ void Selection::NextBrushInGroup()
 	b = g_brSelectedBrushes.Next();
 	if (b != &g_brSelectedBrushes)
 	{
-		if (_strcmpi(b->owner->eclass->name, "worldspawn") != 0)
+		if (!b->owner->IsWorld())
 		{
 			e = b->owner;
 			DeselectAll();

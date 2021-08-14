@@ -9,9 +9,11 @@
 #include "WndCamera.h"
 #include "win_dlg.h"
 #include "CmdSetSpawnflag.h"
+#include "CmdSetKeyvalue.h"
 #include "CameraView.h"
 #include "select.h"
 #include "modify.h"
+#include "strlib.h"
 
 HWND g_hwndEntity;
 
@@ -65,7 +67,7 @@ void WndEntity::SelectEntityColor()
 	prevColor = (colorep && !colorep->mixed);
 	if (prevColor)
 	{
-		sscanf(colorep->kv.value.c_str(), "%f %f %f", &color[0], &color[1], &color[2]);
+		colorep->kv.SetValue(strlib::VecToStringNice(color));
 	}
 
 	if ( (prevColor && DoColorSelect(color, color)) || DoColorSelect(color))
@@ -421,9 +423,9 @@ void WndEntity::FillClassList()
 
 	SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_RESETCONTENT, 0, 0);
 
-	for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
+	for (auto ecIt = EntClass::cbegin(); ecIt != EntClass::cend(); ecIt++)
 	{
-		iIndex = SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)(*ecIt)->name);
+		iIndex = SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_ADDSTRING, 0, (LPARAM)(*ecIt)->name.data());
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETITEMDATA, iIndex, (LPARAM)(*ecIt));
 	}
 }
@@ -495,7 +497,7 @@ void WndEntity::UpdateListSel()
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, iIndex, 0);
 
 	if (pec)
-		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)Sys_TranslateString((char*)*pec->comments));
+		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)pec->comments.data());
 }
 
 /*
@@ -516,7 +518,7 @@ void WndEntity::UpdateUI()
 	{
 		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)"");
 		SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, -1, 0);
-		for (i = 0; i < MAX_FLAGS; i++)
+		for (i = 0; i < EntClass::MAX_FLAGS; i++)
 		{
 			HWND hwnd = w_hwndCtrls[ENT_CHECK1 + i];
 			// disable check box
@@ -527,22 +529,22 @@ void WndEntity::UpdateUI()
 	else
 	{
 		EntClass *pec = g_brSelectedBrushes.Next()->owner->eclass;
-		int nIndex = (int)SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name);
+		int nIndex = (int)SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pec->name.data());
 		if (nIndex != LB_ERR)
 			SendMessage(w_hwndCtrls[ENT_CLASSLIST], LB_SETCURSEL, nIndex, 0);
 
 		// Set up the description
-		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)Sys_TranslateString((char*)*pec->comments));
+		SendMessage(w_hwndCtrls[ENT_COMMENT], WM_SETTEXT, 0, (LPARAM)pec->comments.data());
 
 		// if a spawnflag has no name it doesn't exist
-		for (i = 0; i < MAX_FLAGS; i++)
+		for (i = 0; i < EntClass::MAX_FLAGS; i++)
 		{
 			HWND hwnd = w_hwndCtrls[ENT_CHECK1 + i];
-			const char* name = ev->GetFlagName(i);
-			if (*name)
+			const std::string_view name = ev->GetFlagName(i);
+			if (!name.empty())
 			{
 				EnableWindow(hwnd, TRUE);
-				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)name);
+				SendMessage(hwnd, WM_SETTEXT, 0, (LPARAM)name.data());
 			}
 			else
 			{
@@ -630,7 +632,7 @@ void WndEntity::ResizeControls()
 
 	if (nWidth > 600)
 	{
-		flagRows = MAX_FLAGS / 2;
+		flagRows = EntClass::MAX_FLAGS / 2;
 		flagCols = 2;
 		fold = flagRows * yCheck;
 		rectComment = WndEntRect(350, 0, 0, 0);
@@ -648,7 +650,7 @@ void WndEntity::ResizeControls()
 		rectClasses = WndEntRect(0, 0, 150, fold);
 		rectComment = WndEntRect(150, 0, 0, fold);
 
-		flagRows = MAX_FLAGS / 2;
+		flagRows = EntClass::MAX_FLAGS / 2;
 		flagCols = 2;
 		rectFlags = WndEntRect(-200, fold, 0, 0);
 
@@ -662,7 +664,7 @@ void WndEntity::ResizeControls()
 		rectComment = WndEntRect(0, fold / 2, 0, fold);
 
 		flagRows = 4;
-		flagCols = MAX_FLAGS / flagRows;
+		flagCols = EntClass::MAX_FLAGS / flagRows;
 		rectFlags = WndEntRect(0, fold, 0, fold + yCheck * flagRows);
 		rectProps = WndEntRect(0, rectFlags.top + rectFlags.bottom, 0, -110);
 
@@ -678,7 +680,7 @@ void WndEntity::ResizeControls()
 
 	x = rectFlags.left;
 	xCheck = rectFlags.right / flagCols;	// xCheck = width of a single check box
-	for (flagOffset = 0; flagOffset < MAX_FLAGS; flagOffset += flagRows)
+	for (flagOffset = 0; flagOffset < EntClass::MAX_FLAGS; flagOffset += flagRows)
 	{
 		y = rectFlags.top;
 		for (i = 0; i < flagRows; i++)
@@ -761,7 +763,7 @@ WndEntity::FlagChecked
 */
 void WndEntity::FlagChecked(int flag)
 {
-	if (flag < 1 || flag > MAX_FLAGS)
+	if (flag < 1 || flag > EntClass::MAX_FLAGS)
 		return;	// sanity check, no such flag
 
 	bool on = !(SendMessage(w_hwndCtrls[ENT_CHECK1 + flag - 1], BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -843,11 +845,11 @@ void WndEntity::EditKeyValue ()
 	// lunaran - get kv from view instead of redigesting it out of the field text
 	evep = (EntityView::entEpair_t*)SendMessage(w_hwndCtrls[ENT_PROPS], LB_GETITEMDATA, i, 0);
 	assert(evep);
-	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.key.c_str());
+	SendMessage(w_hwndCtrls[ENT_KEYFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.GetKey().c_str());
 	if (evep->mixed)
 		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)"");
 	else
-		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.value.c_str());
+		SendMessage(w_hwndCtrls[ENT_VALUEFIELD], WM_SETTEXT, 0, (LPARAM)evep->kv.GetValue().c_str());
 }
 
 /*
@@ -875,7 +877,7 @@ void WndEntity::CreateEntity()
 
 	ec = (EntClass *)SendMessage(hwnd, LB_GETITEMDATA, i, 0);
 
-	if (ec == EntClass::worldspawn)
+	if (ec == EntClass::Worldspawn())
 		return;	// just refuse silently here, they know what they did
 
 	if (!Selection::HasBrushes())
@@ -884,7 +886,8 @@ void WndEntity::CreateEntity()
 	}
 	else if (Selection::OnlyPointEntities() && ec->IsPointClass())
 	{
-		SetKeyValue("classname", ec->name);
+		auto cmdSKV = CmdSetKeyvalue("classname", ec->name.data());
+
 	}
 	else
 	{
@@ -918,9 +921,9 @@ void WndEntity::RefreshKeyValues()
 	for (auto pepIt = ev->ePairsFirst(); pepIt != ev->ePairsLast(); ++pepIt)
 	{
 		if (pepIt->mixed)
-			sprintf(sz, "%s\t%s", pepIt->kv.key.c_str(), mixedKVLabel);
+			sprintf(sz, "%s\t%s", pepIt->kv.GetKey().c_str(), mixedKVLabel);
 		else
-			sprintf(sz, "%s\t%s", pepIt->kv.key.c_str(), pepIt->kv.value.c_str());
+			sprintf(sz, "%s\t%s", pepIt->kv.GetKey().c_str(), pepIt->kv.GetValue().c_str());
 
 		ep = SendMessage(w_hwndCtrls[ENT_PROPS], LB_ADDSTRING, 0, (LPARAM)sz);
 		SendMessage(w_hwndCtrls[ENT_PROPS], LB_SETITEMDATA, ep, (LPARAM)&(*pepIt));	// lunaran - save the epair location too
@@ -937,7 +940,7 @@ Update the checkboxes to reflect the flag state of the entity
 */
 void WndEntity::FlagsFromEnt()
 {
-	for (int i = 0; i < MAX_FLAGS; i++)
+	for (int i = 0; i < EntClass::MAX_FLAGS; i++)
 	{
 		SendMessage(w_hwndCtrls[ENT_CHECK1 + i], BM_SETCHECK, ev->GetFlagState(i), 0);
 	}

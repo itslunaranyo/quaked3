@@ -22,6 +22,7 @@
 #include "WndEntity.h"
 #include "WndConsole.h"
 #include "WndSurf.h"
+#include "WndConfig.h"
 
 #include "Command.h"
 #include "map.h"
@@ -79,12 +80,7 @@ LONG WINAPI WndMain_Command(
 		OpenDialog();
 		break;
 	case ID_FILE_SAVE:
-		if (!g_map.hasFilename)
-			SaveAsDialog();
-		else
-			QE_SaveMap();
-		if (g_qeglobals.d_nPointfileDisplayList)
-			Pointfile_Clear();
+		QE_SaveMap();
 		break;
 	case ID_FILE_SAVEAS:
 		SaveAsDialog();
@@ -1082,7 +1078,7 @@ BOOL WndMain_UpdateMRU(WORD wId)
 		AddNewItem(g_lpMruMenu, (LPSTR)szFileName);
 
 		// Now perform opening this file !!!
-		g_map.LoadFromFile(szFileName);
+		g_map.Load(szFileName);
 	}
 	else
 	{

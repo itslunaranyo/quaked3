@@ -553,6 +553,23 @@ bool Brush::IsLinked() const
 
 /*
 =================
+Brush::IsOnList
+expensive
+=================
+*/
+bool Brush::IsOnList(Brush& list) const
+{
+	Brush* b;
+
+	for (b = list.Next(); (b != nullptr) && (b != &list); b = b->Next())
+		if (b == this)
+			return true;
+
+	return false;
+}
+
+/*
+=================
 Brush::AddToList
 =================
 */
@@ -705,7 +722,7 @@ void Brush::Draw ()
 		{
 			// set the texture for this face
 			tprev = face->texdef.tex;
-			glBindTexture(GL_TEXTURE_2D, face->texdef.tex->texture_number);
+			face->texdef.tex->glTex.Bind();
 		}
 
 //		glColor3fv(face->d_color);
@@ -878,7 +895,6 @@ void Brush::DrawEntityName ()
 {
 	int		i;
 	float	a, s, c;
-	char   *name;
 	vec3	mid;
 
 	if (!owner)
@@ -924,29 +940,29 @@ void Brush::DrawEntityName ()
 
 	if (g_cfgUI.ShowNames)
 	{
-		name = owner->GetKeyValue("classname");
+		std::string& name = owner->GetKeyValue("classname");
 // sikk---> Draw Light Styles
-		if (!strcmp(name, "light"))
+		if (name._Starts_with("light"))
 		{
 			char sz[24];
 			
-			if (*owner->GetKeyValue("style"))
+			if (!owner->GetKeyValue("style").empty())
 			{
-				sprintf(sz, "%s (style: %s)", owner->GetKeyValue("classname"), owner->GetKeyValue("style"));
+				sprintf(sz, "%s (style: %s)", owner->GetKeyValue("classname").c_str(), owner->GetKeyValue("style").c_str());
 				glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
 				glCallLists(strlen(sz), GL_UNSIGNED_BYTE, sz);
 			}
 			else
 			{
 				glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
-				glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
+				glCallLists(name.length(), GL_UNSIGNED_BYTE, name.data());
 			}
 		}
 // <---sikk
 		else
 		{
 			glRasterPos3f(mins[0] + 4, mins[1] + 4, mins[2] + 4);
-			glCallLists(strlen(name), GL_UNSIGNED_BYTE, name);
+			glCallLists(name.length(), GL_UNSIGNED_BYTE, name.data());
 		}
 	}
 }
@@ -958,35 +974,22 @@ Brush::DrawLight
 */
 void Brush::DrawLight()
 {
-	int		n, i;
-	float	fR, fG, fB;
+	int		i;
+	float	mag;
 	float	fMid;
-	bool	bTriPaint;
-	char   *strColor;
-	vec3	vTriColor;
+	vec3	color;
 	vec3	vCorners[4];
 	vec3	vTop, vBottom;
 	vec3	vSave;
 
-	bTriPaint = false;
+	color = vec3(1.0f);
 
-	vTriColor[0] = vTriColor[1] = vTriColor[2] = 1.0;
-
-	bTriPaint = true;
-
-	strColor = owner->GetKeyValue("_color");
-
-	if (strColor)
+	if(owner->GetKeyValueVector("_color", color))
 	{
-		n = sscanf(strColor,"%f %f %f", &fR, &fG, &fB);
-		if (n == 3)
-		{
-			vTriColor[0] = fR;
-			vTriColor[1] = fG;
-			vTriColor[2] = fB;
-		}
+		mag = max(color.x, max(color.y, color.z));
+		color /= mag;	// scale to a normalized light color
 	}
-	glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
+	glColor3f(color[0], color[1], color[2]);
   
 	fMid = mins[2] + (maxs[2] - mins[2]) / 2;
 
@@ -1013,35 +1016,28 @@ void Brush::DrawLight()
 	vBottom = vTop;
 	vBottom[2] = mins[2];
 
-	vSave = vTriColor;
+	vSave = color;
 
 	glBegin(GL_TRIANGLE_FAN);
 	glVertex3fv(&vTop.x);
 	for (i = 0; i <= 3; i++)
 	{
-		vTriColor[0] *= 0.95f;
-		vTriColor[1] *= 0.95f;
-		vTriColor[2] *= 0.95f;
-		glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
+		color *= 0.95f;
+		glColor3f(color[0], color[1], color[2]);
 		glVertex3fv(&vCorners[i].x);
 	}
 	glVertex3fv(&vCorners[0].x);
 	glEnd();
   
-	vTriColor = vSave;
-	vTriColor[0] *= 0.95f;
-	vTriColor[1] *= 0.95f;
-	vTriColor[2] *= 0.95f;
+	color = vSave * 0.95f;
 
 	glBegin(GL_TRIANGLE_FAN);
 	glVertex3fv(&vBottom.x);
 	glVertex3fv(&vCorners[0].x);
 	for (i = 3; i >= 0; i--)
 	{
-		vTriColor[0] *= 0.95f;
-		vTriColor[1] *= 0.95f;
-		vTriColor[2] *= 0.95f;
-		glColor3f(vTriColor[0], vTriColor[1], vTriColor[2]);
+		color *= 0.95f;
+		glColor3f(color[0], color[1], color[2]);
 		glVertex3fv(&vCorners[i].x);
 	}
 	glEnd();
@@ -1109,8 +1105,8 @@ Brush *Brush::Parse ()
 		// read the texturedef
 		GetToken(false);
 		StringTolower(g_szToken);
-		strncpy(f->texdef.name, g_szToken, MAX_TEXNAME - 1);
-		f->texdef.name[MAX_TEXNAME - 1] = 0;
+		f->texdef.name = g_szToken;
+		f->texdef.name.resize(MAX_TEXNAME);
 		GetToken(false);
 		f->texdef.shift[0] = atof(g_szToken);
 		GetToken(false);
@@ -1135,7 +1131,6 @@ Brush::Write
 void Brush::Write(std::ostream& out)
 {
 	int		i;
-	char	*pname;
 	char	ftxt[16];
 	Face	*fa;
 
@@ -1148,15 +1143,9 @@ void Brush::Write(std::ostream& out)
 			else
 				out << "( " << (int)fa->plane.pts[i][0] << " " << (int)fa->plane.pts[i][1] << " " << (int)fa->plane.pts[i][2] << " ) ";
 
-		pname = fa->texdef.name;
-		if (pname[0] == 0)
-			pname = "unnamed";
-
-		//CheckTexdef(fa, pname);	// sikk - Check Texdef - temp fix for Multiple Entity Undo Bug
-
 		// lunaran: moving to float shifts and rotations
 		FloatToString(fa->texdef.shift[0], ftxt);
-		out << pname << " " << ftxt;
+		out << (fa->texdef.name.empty() ? "unnamed" : fa->texdef.name) << " " << ftxt;
 		FloatToString(fa->texdef.shift[1], ftxt);
 		out << " " << ftxt << " ";
 		FloatToString(fa->texdef.rotate, ftxt);

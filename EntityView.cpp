@@ -18,11 +18,11 @@ EntityView::~EntityView()
 {
 }
 
-EntityView::entEpair_t* EntityView::FindKV(const char *key)
+EntityView::entEpair_t* EntityView::FindKV(const std::string& key)
 {
 	for (auto epIt = vPairs.begin(); epIt != vPairs.end(); ++epIt)
 	{
-		if (epIt->kv.key == key)
+		if (epIt->kv.GetKey() == key)
 			return &(*epIt);
 	}
 	return nullptr;
@@ -35,7 +35,7 @@ EntityView::UnionKV
 add a keyvalue to the pool, properly flagging it as mixed if it clashes
 =========================
 */
-EntityView::entEpair_t* EntityView::UnionKV(const char *key, const char *val)
+EntityView::entEpair_t* EntityView::UnionKV(const std::string& key, const std::string& val)
 {
 	entEpair_t* eep;
 	eep = FindKV(key);
@@ -53,7 +53,7 @@ EntityView::entEpair_t* EntityView::UnionKV(const char *key, const char *val)
 		// key is present and as mixed as it's going to get
 		return eep;
 	}
-	if (eep->kv.value != val)
+	if (eep->kv.GetValue() != val)
 	{
 		// key is present but value doesn't match, mark as mixed
 		eep->kv.SetValue(mixedkv);
@@ -63,11 +63,11 @@ EntityView::entEpair_t* EntityView::UnionKV(const char *key, const char *val)
 	return eep;
 }
 
-void EntityView::DeleteKV(const char *key)
+void EntityView::DeleteKV(const std::string& key)
 {
 	for (auto epIt = vPairs.begin(); epIt != vPairs.end(); ++epIt)
 	{
-		if (epIt->kv.key == key)
+		if (epIt->kv.GetKey() == key)
 		{
 			vPairs.erase(epIt);
 			return;
@@ -80,7 +80,7 @@ void EntityView::Reset()
 	vPairs.clear();
 	vClass = NULL;
 	vClassMixed = false;
-	memset(vFlags, 0, MAX_FLAGS * sizeof(entFlag_t));
+	memset(vFlags, 0, EntClass::MAX_FLAGS * sizeof(entFlag_t));
 }
 
 void EntityView::Refresh()
@@ -105,11 +105,11 @@ void EntityView::Refresh()
 		UnionFlagNames(eo->eclass);
 		for (ep = eo->epairs; ep; ep = ep->next)
 		{
-			if (ep->key == "spawnflags")
+			if (ep->GetKey() == "spawnflags")
 			{
 				UnionFlags(eo->GetKeyValueInt("spawnflags"), first);
 			}
-			UnionKV(ep->key.c_str(), ep->value.c_str());
+			UnionKV(ep->GetKey(), ep->GetValue());
 		}
 		first = false;
 	}
@@ -119,7 +119,7 @@ void EntityView::UnionFlags(int inFlags, bool first)
 {
 	int f;
 
-	for (int i = 0; i < MAX_FLAGS; i++)
+	for (int i = 0; i < EntClass::MAX_FLAGS; i++)
 	{
 		if (vFlags[i].state == EFS_MIXED)
 			continue;
@@ -138,18 +138,18 @@ void EntityView::UnionFlags(int inFlags, bool first)
 
 void EntityView::UnionFlagNames(EntClass *ec)
 {
-	for (int i = 0; i < MAX_FLAGS; i++)
+	for (int i = 0; i < EntClass::MAX_FLAGS; i++)
 	{
-		if (!*ec->flagnames[i])
+		if (ec->flagnames[i].empty())
 			continue;
-		if (!*vFlags[i].name)
+		if (vFlags[i].name.empty())
 		{
-			strncpy_s(vFlags[i].name, ec->flagnames[i], 32);
+			vFlags[i].name = ec->flagnames[i];
 			continue;
 		}
-		if (_stricmp(vFlags[i].name, ec->flagnames[i]))
+		if (vFlags[i].name != ec->flagnames[i])
 		{
-			strncpy(vFlags[i].name, "~\0", 2);
+			vFlags[i].name = "~";
 		}
 	}
 }

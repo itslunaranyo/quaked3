@@ -8,17 +8,20 @@
 #include "qe3.h"
 #include "Command.h"
 
+class EntClass;
+
 class CmdCreatePointEntity : public Command
 {
 public:
-	CmdCreatePointEntity(const char* classname, const vec3 origin);
+	CmdCreatePointEntity(const std::string& classname, const vec3 origin);
+	CmdCreatePointEntity(EntClass* eclass, const vec3 origin);
 	~CmdCreatePointEntity();
 
 	int EntityDelta() { return 1; };
 private:
 	EntClass* ec;
 	Entity *ent;
-	void CreatePointEntity(const char* classname, const vec3 origin);
+	void CreatePointEntity(EntClass* eclass, const vec3 origin);
 
 	void Do_Impl();
 	void Undo_Impl();

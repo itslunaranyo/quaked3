@@ -8,10 +8,13 @@
 #include "Command.h"
 #include "CmdReparentBrush.h"
 
+class EntClass;
+
 class CmdCreateBrushEntity : public Command
 {
 public:
-	CmdCreateBrushEntity(const char* classname);
+	CmdCreateBrushEntity(const std::string& classname);
+	CmdCreateBrushEntity(EntClass* eclass);
 	~CmdCreateBrushEntity();
 
 	void AddBrush(Brush* br);
@@ -19,6 +22,7 @@ public:
 
 	int EntityDelta() { return cmdRPB.EntityDelta(); };
 private:
+	void Init(EntClass* eclass);
 	CmdReparentBrush cmdRPB;
 	Entity *ent;
 

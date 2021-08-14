@@ -22,7 +22,7 @@ void Pointfile_Delete ()
 {
 	char name[1024];
 
-	strcpy(name, g_map.name);
+	strcpy(name, g_map.name.c_str());
 	StripExtension(name);
 	strcat(name, ".pts");
 
@@ -91,7 +91,7 @@ bool Pointfile_Check ()
 	FILE   *f;
 	vec3	v;
 
-	strcpy(name, g_map.name);
+	strcpy(name, g_map.name.c_str());
 	StripExtension(name);
 	strcat(name, ".pts");
 

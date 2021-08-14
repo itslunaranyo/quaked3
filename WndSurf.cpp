@@ -4,6 +4,7 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "win_dlg.h"
 #include "WndSurf.h"
 #include "TextureTool.h"
 #include "select.h"
@@ -42,7 +43,7 @@ WndSurf_AddToEditTexdef
 void WndSurf_AddToEditTexdef(Face* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
-	if (!(g_nEditSurfMixed & SFI_NAME) && (strcmp(f->texdef.name, g_texdefEdit.name)))
+	if (!(g_nEditSurfMixed & SFI_NAME) && (f->texdef.name != g_texdefEdit.name))
 		g_nEditSurfMixed |= SFI_NAME;
 
 	if (!(g_nEditSurfMixed & SFI_SHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
@@ -118,9 +119,7 @@ Set the window fields to mirror the edit texdef
 */
 void WndSurf_FromEditTexdef()
 {
-	char	sz[MAX_TEXNAME];
 	TexDef  *texdef;
-	//float	shiftxp, shiftyp;// , rotp;
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
@@ -131,7 +130,7 @@ void WndSurf_FromEditTexdef()
 	if (g_nEditSurfMixed & SFI_NAME)
 		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
 	else
-		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
+		SetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
 
 	// lunaran: trunc safety
 	//shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
@@ -139,34 +138,29 @@ void WndSurf_FromEditTexdef()
 	//rotp = texdef->rotate + ((texdef->rotate < 0) ? -0.01f : 0.01f);
 
 	if (g_nEditSurfMixed & SFI_SHIFTX)
-		sz[0] = 0;
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, "");
 	else
-		FloatToString(texdef->shift[0], sz);
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz);
+		SetDialogFloat(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, texdef->shift[0]);
 
 	if (g_nEditSurfMixed & SFI_SHIFTY)
-		sz[0] = 0;
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, "");
 	else
-		FloatToString(texdef->shift[1], sz);
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, sz);
+		SetDialogFloat(g_hwndSurfaceDlg, IDC_EDIT_VSHIFT, texdef->shift[1]);
 
 	if (g_nEditSurfMixed & SFI_SCALEX)
-		sz[0] = 0;
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, "");
 	else
-		FloatToString(texdef->scale[0], sz, 5);
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, sz);
+		SetDialogFloat(g_hwndSurfaceDlg, IDC_EDIT_HSCALE, texdef->scale[0]);
 
 	if (g_nEditSurfMixed & SFI_SCALEY)
-		sz[0] = 0;
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, "");
 	else
-		FloatToString(texdef->scale[1], sz, 5);
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, sz);
+		SetDialogFloat(g_hwndSurfaceDlg, IDC_EDIT_VSCALE, texdef->scale[1]);
 
 	if (g_nEditSurfMixed & SFI_ROTATE)
-		sz[0] = 0;
+		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, "");
 	else
-		FloatToString(texdef->rotate, sz);
-	SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, sz);
+		SetDialogFloat(g_hwndSurfaceDlg, IDC_EDIT_ROTATE, texdef->rotate);
 
 	SendMessage(g_hwndSurfaceDlg, WM_SETREDRAW, 1, 0);
 	InvalidateRect(g_hwndSurfaceDlg, NULL, TRUE);
@@ -183,12 +177,11 @@ Reads the window fields and changes relevant texdef members on selection
 void WndSurf_Apply()
 {
 	char		sz[MAX_TEXNAME];
+	std::string	name;
 	TexDef		texdef;
-	unsigned		mixed = 0;
+	unsigned	mixed = 0;
 
-	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, sz, 64);
-	strncpy(texdef.name, sz, MAX_TEXNAME);// -1);
-	texdef.name[MAX_TEXNAME - 1] = 0;
+	texdef.name = GetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE);
 	if (texdef.name[0] <= ' ')
 	{
 		texdef.tex = nullptr;

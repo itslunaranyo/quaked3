@@ -133,7 +133,7 @@ void CmdAddRemove::Do_Impl()
 	{
 		br = *brIt;
 		if (br->owner->brushes.ENext() == &br->owner->brushes &&
-			br->owner->GetEntClass() != EntClass::worldspawn)	// never delete worldspawn
+			br->owner->GetEntClass() != EntClass::Worldspawn())	// never delete worldspawn
 		{
 			RemovedEntity(br->owner);
 		}

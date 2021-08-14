@@ -35,7 +35,7 @@ private:
 	clock_t lastTexModTime;
 	Face *lastWrap, *lastWrap2;
 
-	std::vector<label_t> findHistory, replaceHistory;
+	std::vector<std::string> findHistory, replaceHistory;
 	enum sampleState_e {
 		TTSS_NONE = 0,
 		TTSS_FIND,
@@ -44,7 +44,7 @@ private:
 
 	void GetTexModCommand(texModType_t tm);
 	void UpdateFindReplaceHistories();
-	bool SelectWadDlg(char outFile[]);
+	bool SelectWadDlg(std::string& outstr);
 	void DoAddWad();
 };
 

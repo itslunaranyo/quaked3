@@ -410,8 +410,8 @@ void Face::ColorAndTexture()
 {
 	if (!texdef.tex)
 	{
-		if (!texdef.name[0])
-			strcpy_s(texdef.name, "none");
+		if (texdef.name.empty())
+			texdef.name = "none";
 
 		texdef.tex = Textures::ForName(texdef.name);
 	}

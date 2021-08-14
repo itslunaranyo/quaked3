@@ -26,7 +26,7 @@ public:
 	void MergeWads(bool merge);
 	void AdjustTargets(bool inc);
 	void MergeWorldKeys(worldKVMerge merge);
-	void File(const char* fname);
+	void File(const std::string& fname);
 
 	int BrushDelta() { return cmdAR.BrushDelta(); };
 	int EntityDelta() { return cmdAR.EntityDelta(); };
@@ -34,7 +34,7 @@ public:
 private:
 	CmdAddRemove cmdAR;
 	std::vector<CmdSetKeyvalue*> cmdWorldKVs;
-	qeBuffer filename;
+	std::string filename;
 	bool mergewads;
 	bool adjusttargets;
 	worldKVMerge mergekvs;

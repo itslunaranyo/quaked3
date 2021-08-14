@@ -14,6 +14,6 @@ public:
 inline void Error(const char* error) { throw qe3_exception(error); }
 
 const char* SEHExceptionString(DWORD code);
-void	CrashSave(const char* reason);
+int		CrashSave(const char* reason);
 void	Terminate(const char* badnews);
 

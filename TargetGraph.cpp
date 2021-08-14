@@ -161,7 +161,7 @@ void TargetGraph::Refresh(const Entity &elist)
 					if (!dest->IsTargetName())
 						continue;
 
-					if (!strcmp((char*)*src->value, (char*)*dest->value))
+					if (src->GetValue() == dest->GetValue())
 					{
 						//if (srcOK || dstOK ||
 						//	((g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path) && srcIsPath && dstIsPath))

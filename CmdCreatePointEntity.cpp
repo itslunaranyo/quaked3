@@ -12,15 +12,29 @@
 // which assumes that whatever classname it is asked to create as a point entity
 // is what was actually desired
 
-CmdCreatePointEntity::CmdCreatePointEntity(const char *classname, const vec3 origin) : ent(nullptr), Command("Create Point Entity")
+CmdCreatePointEntity::CmdCreatePointEntity(const std::string& classname, const vec3 origin) : ent(nullptr), Command("Create Point Entity")
 {
 	selectOnDo = true;
 	modifiesSelection = true;
 
-	if (!strcmp(classname, "worldspawn"))
+	if (classname == "worldspawn")
 		CmdError("Cannot create a new worldspawn entity.");
 
-	CreatePointEntity(classname, origin);
+	EntClass* ec = EntClass::ForName(classname, false, false);
+	CreatePointEntity(ec, origin);
+
+	state = LIVE;
+}
+
+CmdCreatePointEntity::CmdCreatePointEntity(EntClass* eclass, const vec3 origin) : ent(nullptr), Command("Create Point Entity")
+{
+	selectOnDo = true;
+	modifiesSelection = true;
+
+	if (eclass == EntClass::Worldspawn())
+		CmdError("Cannot create a new worldspawn entity.");
+
+	CreatePointEntity(eclass, origin);
 
 	state = LIVE;
 }
@@ -31,17 +45,11 @@ CmdCreatePointEntity::~CmdCreatePointEntity()
 		delete ent;
 }
 
-void CmdCreatePointEntity::CreatePointEntity(const char *classname, const vec3 origin)
+void CmdCreatePointEntity::CreatePointEntity(EntClass* eclass, const vec3 origin)
 {
-	EntClass* ec = EntClass::ForName(classname, false, false);
 	ent = new Entity();
-
-	ent->eclass = ec;
-	ent->SetKeyValue("classname", classname);
-
 	ent->SetKeyValueIVector("origin", origin);
-
-	ent->MakeBrush();
+	ent->ChangeClass(eclass);
 }
 
 //==============================

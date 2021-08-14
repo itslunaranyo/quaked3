@@ -21,19 +21,16 @@ ConfirmModified
 */
 bool ConfirmModified()
 {
-	char szMessage[128];
-
 	if (!g_cmdQueue.IsModified())
 		return true;
 
-	sprintf(szMessage, "Save Changes to %s?", g_map.name[0] ? g_map.name : "untitled");
-	switch (MessageBox(g_hwndMain, szMessage, "QuakeEd 3: Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION))
+	switch (MessageBox(g_hwndMain, 
+		_S("Save Changes to %s?") << (g_map.name.empty() ? "untitled" : g_map.name), 
+		"QuakeEd 3",
+		MB_YESNOCANCEL | MB_ICONEXCLAMATION))
 	{
 	case IDYES:
-		if (!g_map.hasFilename)
-			SaveAsDialog();
-		else
-			QE_SaveMap();
+		QE_SaveMap();
 		return true;
 	case IDNO:
 		return true;
@@ -49,15 +46,16 @@ static char szFile[_MAX_PATH];		// filename string
 static char szFileTitle[_MAX_FNAME];// file title string
 static char szMapFilter[260] = "QuakeEd Map (*.map)\0*.map\0\0";	// filter string for map files
 
+// TODO: fix this not going to the same folder no matter what
 OPENFILENAME CommonOFN(DWORD flags)
 {
 	OPENFILENAME ofn;			// common dialog box structure
 	memset(&ofn, 0, sizeof(OPENFILENAME));
 
-	strcpy(szDirName, g_project.mapPath);
+	strcpy(szDirName, g_project.mapPath.data());
 	if (strlen(szDirName) == 0)
 	{
-		strcpy(szDirName, g_project.basePath);
+		strcpy(szDirName, g_project.basePath.data());
 		strcat(szDirName, "/maps");
 	}
 	szFile[0] = '\0';
@@ -93,7 +91,7 @@ void OpenDialog()
 	WndMain_AddMRUItem(ofn.lpstrFile);
 
 	// Open the file
-	g_map.LoadFromFile(ofn.lpstrFile);
+	g_map.Load(ofn.lpstrFile);
 }
 
 /*
@@ -118,26 +116,23 @@ void ImportDialog()
 SaveAsDialog
 ==================
 */
-void SaveAsDialog()
+bool SaveAsDialog()
 {
 	OPENFILENAME ofn = CommonOFN(OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT);
 
 	// Display the Open dialog box. 
 	if (!GetSaveFileName(&ofn))
-		return;	// canceled
+		return false;
 
 	DefaultExtension(ofn.lpstrFile, ".map");
-	strcpy(g_map.name, ofn.lpstrFile);
+	g_map.name = ofn.lpstrFile;
 	g_map.hasFilename = true;
 
 	// Add the file to MRU
 	WndMain_AddMRUItem(ofn.lpstrFile);
 
-	QE_SaveMap();
+	return true;
 }
-
-
-
 
 /*
 ==================
@@ -154,5 +149,5 @@ void ExportDialog()
 
 	DefaultExtension(ofn.lpstrFile, ".map");
 
-	g_map.ExportToFile(ofn.lpstrFile);	// ignore region
+	g_map.SaveSelection(ofn.lpstrFile);	// ignore region
 }

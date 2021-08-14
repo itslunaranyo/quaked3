@@ -54,9 +54,9 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 				return false;
 
 			if (sampleState == TTSS_FIND)
-				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name);
+				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name.data());
 			else if (sampleState == TTSS_REPLACE)
-				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name);
+				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name.data());
 
 			//Crosshair(false);
 			hot = false;
@@ -193,11 +193,11 @@ bool TextureTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView 
 			{
 				if (sampleState == TTSS_FIND)
 				{
-					SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)tw->name);
+					SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)tw->name.data());
 				}
 				else if (sampleState == TTSS_REPLACE)
 				{
-					SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)tw->name);
+					SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)tw->name.data());
 				}
 				//Crosshair(false); // only works in MOUSEMOVE messages
 				hot = false;
@@ -338,12 +338,12 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		hwndReplaceDlg = hwndDlg;
 
 		for (auto fhIt = findHistory.rbegin(); fhIt != findHistory.rend(); ++fhIt)
-			SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, CB_ADDSTRING, 0, (LPARAM)fhIt->n);
+			SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, CB_ADDSTRING, 0, (LPARAM)fhIt->data());
 		for (auto rhIt = replaceHistory.rbegin(); rhIt != replaceHistory.rend(); ++rhIt)
-			SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, CB_ADDSTRING, 0, (LPARAM)rhIt->n);
+			SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, CB_ADDSTRING, 0, (LPARAM)rhIt->data());
 
 		SetFocus(GetDlgItem(hwndReplaceDlg, IDC_COMBO_TEXFIND));
-		SetDlgItemText(hwndReplaceDlg, IDC_COMBO_TEXFIND, texdef->name);
+		SetDialogText(hwndReplaceDlg, IDC_COMBO_TEXFIND, texdef->name);
 		bSelected = SendDlgItemMessage(hwndReplaceDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0) > 0;
 
 		SendDlgItemMessage(hwndReplaceDlg, IDC_TEXFIND_SAMPLE, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);
@@ -371,7 +371,7 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		case IDAPPLY:
 			UpdateFindReplaceHistories();
 			bSelected = SendDlgItemMessage(hwndReplaceDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0) > 0;
-			Surface::FindReplace(findHistory.back().n, replaceHistory.back().n, bSelected);// , false);
+			Surface::FindReplace(findHistory.back().data(), replaceHistory.back().data(), bSelected);// , false);
 			WndMain_UpdateWindows(W_CAMERA);
 			return TRUE;
 
@@ -482,10 +482,11 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 // ================================================================
 
 
-bool TextureTool::SelectWadDlg(char outFile[])
+bool TextureTool::SelectWadDlg(std::string& outstr)
 {
 	OPENFILENAME ofn;			// common dialog box structure
 	char szFile[_MAX_PATH];		// filename string
+	char outFile[_MAX_PATH];
 	char szFileTitle[_MAX_FNAME];// file title string
 
 	szFile[0] = 0;
@@ -498,7 +499,7 @@ bool TextureTool::SelectWadDlg(char outFile[])
 	ofn.nMaxFile = sizeof(szFile);
 	ofn.lpstrFileTitle = szFileTitle;
 	ofn.nMaxFileTitle = sizeof(szFileTitle);
-	ofn.lpstrInitialDir = g_project.wadPath;
+	ofn.lpstrInitialDir = g_project.wadPath.data();
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER;
 	ofn.lpstrTitle = "Select Wad File(s)";
 
@@ -509,7 +510,7 @@ bool TextureTool::SelectWadDlg(char outFile[])
 			char* rel, * lastSlash;
 			rel = szFile;
 			lastSlash = szFile;
-			for (unsigned i = 0; i < strlen(g_project.wadPath); i++)
+			for (unsigned i = 0; i < g_project.wadPath.length(); i++)
 			{
 				if (*rel == '\\') while (*(rel + 1) == '\\')
 					rel++;
@@ -538,6 +539,7 @@ bool TextureTool::SelectWadDlg(char outFile[])
 				*outc++ = *srcc++;
 			}
 			*outc = 0;
+			outstr = outFile;
 			return true;
 		}
 	}
@@ -546,13 +548,13 @@ bool TextureTool::SelectWadDlg(char outFile[])
 
 void TextureTool::DoAddWad()
 {
-	char wadfile[_MAX_PATH];
-	char wadstr[1024];
+	std::string wadfile, wadstr;
 	if (SelectWadDlg(wadfile))
 	{
 		Sys_BeginWait();
 		Textures::LoadWad(wadfile);
 
+		// TODO: don't ask if wad name is already in the key
 		// ask after to add to world wad key
 		if (MessageBox(g_hwndMain, "Add wad to worldspawn key?", "QuakeEd 3", MB_YESNO | MB_ICONQUESTION) == IDYES)
 		{

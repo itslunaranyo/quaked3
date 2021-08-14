@@ -229,9 +229,9 @@ lunaran TODO: confirmation box if target & targetname already clash before overw
 void Modify::ConnectEntities()
 {
 	Entity	*e1, *e2, *e;
-	char		*target, *tn;
+	std::string_view target, tn;
+	std::string newtarg;
 	Brush		*b;
-	char		newtarg[32];
 
 	b = g_brSelectedBrushes.Prev();
 	e1 = b->owner;
@@ -256,13 +256,13 @@ void Modify::ConnectEntities()
 	}
 
 	target = e1->GetKeyValue("target");
-	if (target && target[0])
-		strcpy(newtarg, target);
+	if (!target.empty())
+		newtarg = target;
 	else
 	{
 		target = e2->GetKeyValue("targetname");
-		if (target && target[0])
-			strcpy(newtarg, target);
+		if (!target.empty())
+			newtarg = target;
 		else
 		{
 			int maxtarg, targetnum;
@@ -271,14 +271,14 @@ void Modify::ConnectEntities()
 			for (e = g_map.entities.Next(); e != &g_map.entities; e = e->Next())
 			{
 				tn = e->GetKeyValue("targetname");
-				if (tn && tn[0])
+				if (!tn.empty())
 				{
-					targetnum = atoi(tn + 1);
+					targetnum = atoi(tn.data() + 1);
 					if (targetnum > maxtarg)
 						maxtarg = targetnum;
 				}
 			}
-			sprintf(newtarg, "t%d", maxtarg + 1);
+			newtarg = "t" + (maxtarg + 1);
 		}
 	}
 

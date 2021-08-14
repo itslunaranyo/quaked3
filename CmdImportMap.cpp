@@ -38,12 +38,11 @@ void CmdImportMap::MergeWorldKeys(worldKVMerge merge)
 	state = LIVE;
 }
 
-void CmdImportMap::File(const char *fname)
+void CmdImportMap::File(const std::string& fname)
 {
 	if (state != LIVE && state != NOOP) return;
 
-	filename.resize(strlen(fname) + 1);
-	strcpy(filename.c_str(), fname);
+	filename = fname;
 	state = LIVE;
 }
 
@@ -51,27 +50,26 @@ void CmdImportMap::File(const char *fname)
 
 struct targetLink
 {
-	targetLink(const char* n);
+	targetLink(const std::string& n);
 
-	qeBuffer name;
+	std::string name;
 	std::vector<EPair*> pairs;
 
 	void incrementName();
 };
 
-targetLink::targetLink(const char *n)
+targetLink::targetLink(const std::string& n)
 {
-	name.resize(strlen(n) + 8);
-	strcpy(name.c_str(), n);
+	name = n;
 }
 
 void targetLink::incrementName()
 {
 	int increment;
 	char* num;
-	num = name.c_str();
+	num = name.data();
 	num += strlen(num);
-	while (*(num - 1) >= '0' && *(num - 1) <= '9' && (num - 1) != name.c_str())
+	while (*(num - 1) >= '0' && *(num - 1) <= '9' && (num - 1) != name.data())
 		--num;
 
 	if (*num == 0)
@@ -98,7 +96,7 @@ void CmdImportMap::Do_Impl()
 	Entity elist;
 	CmdSetKeyvalue *cmdKV;
 
-	std::vector<char*> mapnames;
+	std::vector<const char*> mapnames;
 	std::vector<targetLink*> collisions;
 
 	if (!filename.size() || filename[0] == 0)
@@ -112,8 +110,7 @@ void CmdImportMap::Do_Impl()
 	}
 	// <---sikk
 
-	IO_LoadFile(filename.c_str(), buf);
-	g_map.Read(buf.c_str(), blist, elist);
+	g_map.LoadFromFile(filename, elist, blist);
 
 	// list all the unique target/targetname values in the current map
 	if (adjusttargets)
@@ -127,14 +124,14 @@ void CmdImportMap::Do_Impl()
 					bool dupe = false;
 					for (auto mnIt = mapnames.begin(); mnIt != mapnames.end(); ++mnIt)
 					{
-						if (!strcmp(*mnIt, kv->value.c_str()))
+						if (*mnIt == kv->GetValue())
 						{
 							dupe = true;
 							break;
 						}
 					}
 					if (!dupe)
-						mapnames.push_back(kv->value.c_str());
+						mapnames.push_back(kv->GetValue().c_str());
 				}
 			}
 		}
@@ -144,9 +141,17 @@ void CmdImportMap::Do_Impl()
 	// process the imported entities for addition to the scene
 	for (Entity *ent = elist.Next(); ent != &elist; ent = enext)
 	{
-		// world brushes and keyvalues need to be merged into the existing worldspawn
 		enext = ent->Next();
-		if (ent->eclass == EntClass::worldspawn)
+		bool has_brushes = (ent->brushes.ENext() != &ent->brushes);
+		ent->eclass = EntClass::ForName(ent->GetKeyValue("classname"), has_brushes, false);
+
+		if (ent->eclass->IsPointClass())
+		{	// create a custom brush
+			ent->MakeBrush()->AddToList(blist);
+		}
+
+		// world brushes and keyvalues need to be merged into the existing worldspawn
+		if (ent->IsWorld())
 		{
 			ent->RemoveFromList();
 			for (b = ent->brushes.ENext(); b != &ent->brushes; b = next)
@@ -160,11 +165,11 @@ void CmdImportMap::Do_Impl()
 			for (EPair* kv = ent->epairs; kv; kv = kv->next)
 			{
 				// merge the wad key somewhat intelligently
-				if (!strcmp(kv->key.c_str(), "wad") && mergewads)
+				if (kv->GetKey() == "wad" && mergewads)
 				{
-					char outwadkey[1024];
-					char* worldwads = g_map.world->GetKeyValue("wad");
-					Textures::MergeWadStrings(worldwads, kv->value.c_str(), outwadkey);
+					std::string outwadkey;
+					std::string worldwads = g_map.world->GetKeyValue("wad");
+					Textures::MergeWadStrings(worldwads, kv->GetValue(), outwadkey);
 					cmdKV = new CmdSetKeyvalue("wad", outwadkey);
 					cmdKV->AddEntity(g_map.world);
 					cmdWorldKVs.push_back(cmdKV);
@@ -174,9 +179,9 @@ void CmdImportMap::Do_Impl()
 				{
 					if (mergekvs == KVM_IGNORE) continue;
 					if (mergekvs == KVM_OVERWRITE ||
-						mergekvs == KVM_ADD && g_map.world->GetKeyValue(kv->key.c_str())[0] == 0)
+						mergekvs == KVM_ADD && g_map.world->GetKeyValue(kv->GetKey())[0] == 0)
 					{
-						cmdKV = new CmdSetKeyvalue(kv->key.c_str(), kv->value.c_str());
+						cmdKV = new CmdSetKeyvalue(kv->GetKey(), kv->GetValue());
 						cmdKV->AddEntity(g_map.world);
 						cmdWorldKVs.push_back(cmdKV);
 					}
@@ -196,17 +201,17 @@ void CmdImportMap::Do_Impl()
 				// o(n2) complexity here we come
 				for (auto mnIt = mapnames.begin(); mnIt != mapnames.end(); ++mnIt)
 				{
-					if (!strcmp(*mnIt, kv->value.c_str()))
+					if (*mnIt == kv->GetValue())
 					{
 						// now find it in the collision list, or add it
 						for (auto ctlIt = collisions.begin(); ctlIt != collisions.end(); ++ctlIt)
 						{
-							if (!strcmp((*ctlIt)->name.c_str(), kv->value.c_str()))
+							if ((*ctlIt)->name == kv->GetValue())
 								tlink = *ctlIt;
 						}
 						if (!tlink)
 						{
-							tlink = new targetLink(kv->value.c_str());
+							tlink = new targetLink(kv->GetValue());
 							collisions.push_back(tlink);
 						}
 						tlink->pairs.push_back(kv);

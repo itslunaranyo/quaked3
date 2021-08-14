@@ -8,6 +8,7 @@
 #include "Brush.h"
 #include "Entity.h"
 #include "TargetGraph.h"
+#include <time.h>
 
 // the state of the current world that all views are displaying
 
@@ -18,7 +19,7 @@ public:
 	~Map() {};
 
 	// PER MAP
-	char		name[MAX_PATH];
+	std::string	name;
 	bool		hasFilename;	// has this map ever been saved?
 	int			numBrushes, numEntities, numTextures;
 	Entity		*world;			// the world entity is NOT included in the entities chain
@@ -37,14 +38,22 @@ public:
 
 
 	void	New();
+	void	Save();	// does not change name
+	void	Save(const std::string& filename);	// changes map name to filename
+	void	SaveSelection(const std::string& filename);
+	void	Load(const std::string& filename);
+
+	void	Free();
+	Entity* CreateWorldspawn();
 	void	BuildBrushData(Brush &blist);
 	void	BuildBrushData();
 
 	void	SanityCheck();
-	void	LoadFromFile(const char* filename);
-	void	SaveToFile(const char* filename, bool use_region);
-	void	ImportFromFile(const char* filename);
-	void	ExportToFile(const char* filename);
+	bool	LoadFromFile(const std::string& filename, Entity& elist, Brush& blist);
+	void	ImportFromFile(const std::string& filename);
+	void	SaveBetween(std::string& buf);
+	bool	LoadBetween(const std::string& buf);
+
 	void	Cut();
 	void	Copy();
 	void	Paste();
@@ -63,19 +72,10 @@ public:
 	Entity* FindEntity(char *pszKey, int iValue);
 
 	bool	IsBrushFiltered(Brush *b);
-	void	Read(const char* data, Brush& blist, Entity& elist);
 private:
 	void	RegionAdd();
 	void	RegionRemove();
 
-	void	Free();
-	void	SaveBetween(qeBuffer& buf);
-	bool	LoadBetween(qeBuffer& buf);
-
-	bool	ParseBufferMerge(const char *data);
-	bool	LoadFromFile_Parse(const char *data);
-	void	WriteSelected(std::ostream &out);
-	void	WriteAll(std::ostream &out, bool use_region);
 };
 
 extern Map	g_map;

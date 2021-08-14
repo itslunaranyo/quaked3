@@ -4,6 +4,7 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "TextureGroup.h"
 #include "TextureView.h"
 #include "Tool.h"
 
@@ -77,7 +78,7 @@ void TextureView::ArrangeGroup(TextureGroup &txGrp)
 
 	for (q = txGrp.first; q; q = q->next)
 	{
-		if (Textures::texMap[label_t(q->name)] != q)
+		if (Textures::texMap[q->name] != q)
 			continue;
 
 		// go to the next row unless the texture is the first on the row
@@ -382,7 +383,7 @@ TextureView::UpdateStatus
 void TextureView::UpdateStatus(TexDef* texdef)
 {
 	char		sz[256];
-	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name, texdef->tex->width, texdef->tex->height);
+	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name.c_str(), texdef->tex->width, texdef->tex->height);
 	WndMain_Status(sz, 3);
 }
 
@@ -481,6 +482,6 @@ texcmp
 */
 int texcmp(Texture* a, Texture* b)
 {
-	return strcmp(a->name, b->name);
+	return (a->name < b->name);
 }
 

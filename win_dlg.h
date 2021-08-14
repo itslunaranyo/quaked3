@@ -6,6 +6,13 @@
 
 extern HWND g_hwndSetKeyvalsDlg;
 
+std::string GetDialogText(HWND hDlg, int dlgItem);
+int GetDialogInt(HWND hDlg, int dlgItem);
+double GetDialogFloat(HWND hDlg, int dlgItem);
+BOOL SetDialogText(HWND hDlg, int dlgItem, std::string& str);
+BOOL SetDialogInt(HWND hDlg, int dlgItem, int i);
+BOOL SetDialogFloat(HWND hDlg, int dlgItem, double f);
+
 bool DoColorSelect(vec3 &rgbOut);
 bool DoColorSelect(const vec3 rgbIn, vec3 &rgbOut);
 void DoFindBrush();

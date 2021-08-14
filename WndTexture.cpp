@@ -4,6 +4,7 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "TextureGroup.h"
 #include "WndTexture.h"
 #include "TextureView.h"
 #include "TexBrowserRenderer.h"
@@ -238,7 +239,7 @@ void WndTexture::MouseOver(const int x, const int y)
 	tex = texv->TexAtCursorPos(x, y);
 	if (tex)
 	{
-		sprintf(texstring, "%s (%dx%d)", tex->name, tex->width, tex->height);
+		sprintf(texstring, "%s (%dx%d)", tex->name.c_str(), tex->width, tex->height);
 		WndMain_Status(texstring, 0);
 		return;
 	}

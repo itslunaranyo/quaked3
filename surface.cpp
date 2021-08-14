@@ -320,8 +320,7 @@ void Surface::ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags)
 	{
 		if (!(flags & SFI_NAME))
 		{
-			strncpy(dst.name, src.name, MAX_TEXNAME);
-			dst.tex = src.tex;
+			dst.Set(src.tex);
 			if (&dst != &g_qeglobals.d_workTexDef)
 			{
 				dst.tex->Use();

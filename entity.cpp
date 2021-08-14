@@ -4,14 +4,18 @@
 
 #include "pre.h"
 #include "qe3.h"
-#include "map.h"
+#include "cfgvars.h"
+#include "strlib.h"
+#include "StringFormatter.h"
+//#include "map.h"
 #include "select.h"
-#include "CameraView.h"
+//#include "CameraView.h"
 #include "CmdCreateBrushEntity.h"
 #include "CmdCreatePointEntity.h"
-#include "parse.h"
+//#include "parse.h"
 #include "win_dlg.h"
-#include <iostream>
+//#include <iostream>
+
 #include <glm/gtc/matrix_transform.hpp>
 
 Entity::Entity() :
@@ -20,7 +24,6 @@ Entity::Entity() :
 {
 	brushes.owner = this;
 }
-
 
 /*
 ===============
@@ -51,6 +54,10 @@ Entity::~Entity()
 
 
 //===================================================================
+
+bool Entity::IsPoint() const { return (eclass->IsPointClass()); }
+bool Entity::IsBrush() const { return !(eclass->IsPointClass()); }
+bool Entity::IsWorld() const { return (eclass == EntClass::Worldspawn()); }
 
 /*
 ==============
@@ -89,20 +96,18 @@ void Entity::SetSpawnflagFilter()
 Entity::SetKeyValue
 ==============
 */
-void Entity::SetKeyValue(const char *key, const char *value)
+void Entity::SetKeyValue(const std::string& key, const std::string& value)
 {
 	EPair	*ep;
 	//int vlen = strlen(value);
 
-	if (!key || !key[0])
+	if (key.empty())
 		return;
 
 	for (ep = epairs; ep; ep = ep->next)
 	{
-		if (ep->key == key)
+		if (ep->GetKey() == key)
 		{
-			//if ((int)ep->value.size() <= vlen)
-			//	ep->value.resize(vlen + 8);
 			ep->SetValue(value);
 			break;
 		}
@@ -112,18 +117,13 @@ void Entity::SetKeyValue(const char *key, const char *value)
 		ep = new EPair();
 		ep->next = epairs;
 		epairs = ep;
-		//ep->key.resize(strlen(key) + 8);
-		//strcpy((char*)*ep->key, key);
-		//ep->value.resize(vlen + 8);
 		ep->SetKey(key);
 		ep->SetValue(value);
 	}
 
-	//strcpy((char*)*ep->value, value);
-
 	// this has to go here and not in SetSpawnflag because the user could enter
 	// the number directly into the keyvalue instead of ticking the boxes
-	if (!strcmp(key, "spawnflags"))
+	if (key == "spawnflags")
 		SetSpawnflagFilter();
 }
 
@@ -132,7 +132,7 @@ void Entity::SetKeyValue(const char *key, const char *value)
 Entity::SetKeyValue
 ==============
 */
-void Entity::SetKeyValue(const char *key, const float fvalue)
+void Entity::SetKeyValue(const std::string& key, const float fvalue)
 {
 	char sz[64];
 	sprintf(sz, "%f", fvalue);
@@ -144,7 +144,7 @@ void Entity::SetKeyValue(const char *key, const float fvalue)
 Entity::SetKeyValue
 ==============
 */
-void Entity::SetKeyValue(const char *key, const int ivalue)
+void Entity::SetKeyValue(const std::string& key, const int ivalue)
 {
 	char sz[64];
 	sprintf(sz, "%i", ivalue);
@@ -156,12 +156,9 @@ void Entity::SetKeyValue(const char *key, const int ivalue)
 Entity::SetKeyValueFVector
 ==============
 */
-void Entity::SetKeyValueFVector(const char *key, const vec3 vec)
+void Entity::SetKeyValueFVector(const std::string& key, const vec3 vec)
 {
-	char szVec[128];
-
-	VecToString(vec, szVec);
-	SetKeyValue(key, szVec);
+	SetKeyValue(key, strlib::VecToString(vec));
 }
 
 /*
@@ -169,11 +166,10 @@ void Entity::SetKeyValueFVector(const char *key, const vec3 vec)
 Entity::SetKeyValueIVector
 ==============
 */
-void Entity::SetKeyValueIVector(const char *key, const vec3 vec)
+void Entity::SetKeyValueIVector(const std::string& key, const vec3 vec)
 {
-	char szVec[128];
-	sprintf(szVec, "%d %d %d", (int)roundf(vec[0]), (int)roundf(vec[1]), (int)roundf(vec[2]));
-	SetKeyValue(key, szVec);
+	vec3 iv = glm::round(vec);
+	SetKeyValue(key, strlib::VecToStringNice(iv, 0));
 }
 
 /*
@@ -181,10 +177,10 @@ void Entity::SetKeyValueIVector(const char *key, const vec3 vec)
 Entity::GetEPair
 ==============
 */
-EPair *Entity::GetEPair(const char * key) const
+EPair *Entity::GetEPair(const std::string& key) const
 {
 	for (EPair *ep = epairs; ep; ep = ep->next)
-		if (ep->key == key)
+		if (ep->GetKey() == key)
 			return ep;
 
 	return nullptr;
@@ -196,13 +192,13 @@ EPair *Entity::GetEPair(const char * key) const
 Entity::GetKeyValue
 ==============
 */
-char *Entity::GetKeyValue(const char *key) const
+std::string Entity::GetKeyValue(const std::string& key) const
 {
 	EPair	*ep;
 
 	for (ep = epairs; ep; ep = ep->next)
-		if (ep->key == key)
-			return (char*)*ep->value;
+		if (ep->GetKey() == key)
+			return ep->GetValue();
 	return "";
 }
 
@@ -211,11 +207,11 @@ char *Entity::GetKeyValue(const char *key) const
 Entity::GetKeyValueFloat
 ==============
 */
-float Entity::GetKeyValueFloat(const char *key) const
+float Entity::GetKeyValueFloat(const std::string& key) const
 {
-	char* cv = GetKeyValue(key);
-	if (!*cv) return 0.0;
-	return atof(cv);
+	auto cv = GetKeyValue(key);
+	if (cv.empty()) return 0.0;
+	return std::stof(cv);
 }
 
 /*
@@ -223,11 +219,11 @@ float Entity::GetKeyValueFloat(const char *key) const
 Entity::GetKeyValueInt
 ==============
 */
-int Entity::GetKeyValueInt(const char *key) const
+int Entity::GetKeyValueInt(const std::string& key) const
 {
-	char* cv = GetKeyValue(key);
-	if (!*cv) return 0.0;
-	return atoi(cv);
+	auto cv = GetKeyValue(key);
+	if (cv.empty()) return 0;
+	return std::stoi(cv);
 }
 
 /*
@@ -235,13 +231,10 @@ int Entity::GetKeyValueInt(const char *key) const
 Entity::GetKeyValueVector
 ==============
 */
-bool Entity::GetKeyValueVector(const char *key, vec3 &out) const
+bool Entity::GetKeyValueVector(const std::string& key, vec3 &out) const
 {
-	char *cv = GetKeyValue(key);
-	if (!*cv)
-		return false;
-	sscanf(cv, "%f %f %f", &out[0], &out[1], &out[2]);
-	return true;
+	auto cv = GetKeyValue(key);
+	return strlib::StringToVec(cv, out);
 }
 
 /*
@@ -249,13 +242,13 @@ bool Entity::GetKeyValueVector(const char *key, vec3 &out) const
 Entity::DeleteKeyValue
 ==============
 */
-void Entity::DeleteKeyValue(const char *key)
+void Entity::DeleteKeyValue(const std::string& key)
 {
 	EPair	**ep, *next;
 
-	if (!strcmp(key, "origin") && IsPoint())
+	if ((key == "origin") && IsPoint())
 	{
-		Log::Warning("Point entities must have an origin.");
+		Log::Warning("Point entities must have an origin");
 		Sys_Beep();
 		return;
 	}
@@ -263,7 +256,7 @@ void Entity::DeleteKeyValue(const char *key)
 	while (*ep)
 	{
 		next = *ep;
-		if (next->key == key)
+		if (next->GetKey() == key)
 		{
 			*ep = next->next;
 			delete next;
@@ -282,7 +275,7 @@ Entity::IsFiltered
 bool Entity::IsFiltered() const
 {
 	if (g_cfgUI.ViewFilter & (showflags | eclass->showFlags))
-		return true;
+	 	return true;
 
 	return false;
 }
@@ -314,7 +307,6 @@ vec3 Entity::GetCenter() const
 //===================================================================
 
 
-// sikk---> Undo/Redo
 /*
 ===============
 Entity::FreeEpairs
@@ -334,9 +326,6 @@ void Entity::FreeEpairs ()
 	epairs = nullptr;
 	SetSpawnflagFilter();
 }
-
-
-
 
 /*
 =================
@@ -422,281 +411,6 @@ void Entity::MergeListIntoList(Entity *dest, bool tail)
 	}
 
 	prev = next = this;
-}
-
-
-/*
-=================
-EPair::ParseEpair
-=================
-*/
-EPair *EPair::ParseEpair()
-{
-	EPair	*e;
-	
-	e = new EPair();
-	e->SetKey(g_szToken);
-	GetToken(false);
-	e->SetValue(g_szToken);
-	return e;
-}
-
-/*
-=================
-EPair::IsTarget
-
-check for all the ways an entity can have an outgoing target reference
-(target/target2/3/4/killtarget/whatever silly ones arcadim added)
-=================
-*/
-bool EPair::IsTarget()
-{
-	char *c;
-	c = (char*)*key;
-
-	// in non-extended mode, only 'target' is valid
-	if (!g_project.extTargets)
-		return (strcmp(c, "target") == 0);
-
-	// in extended mode, any kv with 'target' (but not 'targetname') in it is a valid target source
-	while (*c)
-	{
-		if (*c == 't')
-		{
-			if (!strncmp(c, "target", 6))
-			{
-				if (!strncmp(c + 6, "name", 4))
-					return false;
-				return true;
-			}
-		}
-		++c;
-	}
-	return false;
-}
-
-/*
-=================
-EPair::IsTargetName
-
-check for all the ways an entity can have an incoming target reference,
-which so far thankfully all start with 'targetname'
-=================
-*/
-bool EPair::IsTargetName()
-{
-	char *c;
-	c = (char*)*key;
-	if (!strncmp(c, "target", 6))
-	{
-		if (!strncmp(c + 6, "name", 4))
-		{
-			// in extended mode, any 'targetname' w/suffix is a valid target destination
-			if (g_project.extTargets || (*(c + 10) == 0))
-				return true;
-			return false;
-		}
-	}
-	return false;
-}
-
-/*
-================
-EPair::SetKey
-
-maintain safe buffer padding
-================
-*/
-void EPair::SetKey(const char *k)
-{
-	assert(*k);
-	int klen = strlen(k);
-	if ((int)key.size() <= klen)
-		key.resize(klen + 8);
-	strcpy(key.c_str(), k);
-}
-
-/*
-================
-EPair::SetValue
-
-maintain safe buffer padding
-================
-*/
-void EPair::SetValue(const char *v)
-{
-	int vlen = strlen(v);
-	if ((int)value.size() <= vlen)
-		value.resize(vlen + 8);
-	strcpy(value.c_str(), v);
-}
-
-/*
-================
-Entity::Parse
-
-If onlypairs is set, the classname info will not be looked up, and the entity
-will not be added to the global list.  Used for parsing the project.
-================
-*/
-Entity *Entity::Parse (bool onlypairs)
-{
-	Entity		*ent;
-	EntClass	*e;
-	Brush		*b;
-	EPair		*ep;
-	bool		has_brushes;
-
-	if (!GetToken(true))
-		return NULL;
-
-	if (strcmp(g_szToken, "{"))
-		Error("Entity_Parse: { not found.");
-	
-	ent = new Entity();
-
-	do
-	{
-		if (!GetToken(true))
-			Error("Entity_Parse: EOF without closing brace.");
-		if (!strcmp(g_szToken, "}"))
-			break;
-		if (!strcmp(g_szToken, "{"))
-		{
-			b = Brush::Parse();
-			// add to the end of the entity chain
-			ent->LinkBrush(b, true);
-		}
-		else
-		{
-			ep = EPair::ParseEpair();
-			ep->next = ent->epairs;
-			ent->epairs = ep;
-		}
-	} while (1);
-
-	if (onlypairs)
-		return ent;
-
-	if (ent->brushes.ENext() == &ent->brushes)
-		has_brushes = false;
-	else
-		has_brushes = true;
-
-	ent->SetSpawnflagFilter();
-
-	// lunaran - this now creates fixed/non-fixed entclasses on the fly for point entities
-	// with brushes or brush entities without any, so that all the downstream code Just Works
-	e = EntClass::ForName(ent->GetKeyValue("classname"), has_brushes, false);
-	ent->eclass = e;
-
-	if (e->IsPointClass())
-	{	// create a custom brush
-		ent->MakeBrush();
-	}
-
-	// lunaran - entities do not add their brushes to a list by default now, map::load/save/etc does it
-	// this is to keep loads/pastes/etc isolated until the parse is complete for exception guarantee
-	return ent;
-}
-
-
-/*
-============
-Entity::Write
-============
-*/
-void Entity::Write(std::ostream &out, bool use_region)
-{
-	EPair	*ep;
-	Brush	*b;
-	int		count;
-
-	if (use_region)
-	{
-		// in region mode, save the camera position as playerstart
-		if (!strcmp(GetKeyValue("classname"), "info_player_start"))
-		{
-			vec3 cOrg = g_vCamera.GetOrigin();
-			out << "{\n";
-			out << "\"classname\" \"info_player_start\"\n";
-			out << "\"origin\" \"" << (int)cOrg.x << " " <<
-									(int)cOrg.y << " " <<
-									(int)cOrg.z << "\"\n";
-			out << "\"angle\" \"" << (int)g_vCamera.GetAngles()[YAW] << "\"\n";
-			out << "}\n";
-			return;
-		}
-
-		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
-			if (!g_map.IsBrushFiltered(b))
-				break;	// got one
-
-		if (b == &brushes)
-			return;	// nothing visible
-	}
-
-	out << "{\n";
-	for (ep = epairs; ep; ep = ep->next)
-		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
-
-	if (IsBrush())
-	{
-		count = 0;
-		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
-		{
-			if (!use_region || !g_map.IsBrushFiltered(b))
-			{
-				out << "// brush " << count << "\n";
-				count++;
-				b->Write(out);
-			}
-		}
-	}
-	out << "}\n";
-}
-
-/*
-=================
-Entity::WriteSelected
-=================
-*/
-void Entity::WriteSelected(std::ostream &out, int n)
-{
-	Brush	*b;
-	EPair	*ep;
-	int		count;
-
-	// a .map with no worldspawn is broken, so always write worldspawn even if it's empty
-	if (eclass == EntClass::worldspawn)
-		b = brushes.ENext();
-	else
-		for (b = brushes.ENext(); b != &brushes; b = b->ENext())
-			if (Selection::IsBrushSelected(b))
-				break;
-
-	if (b == &brushes)
-		return;		// no part of this entity selected, don't write it at all
-
-	out << "// entity " << n << "\n";
-	out << "{\n";
-	for (ep = epairs; ep; ep = ep->next)
-		out << "\"" << (char*)*ep->key << "\" \"" << (char*)*ep->value << "\"\n";
-
-	if (IsBrush())
-	{
-		count = 0;
-		for (b; b != &brushes; b = b->ENext())
-		{
-			if (Selection::IsBrushSelected(b))
-			{
-				out << "// brush " << count << "\n";
-				count++;
-				b->Write(out);
-			}
-		}
-	}
-	out << "}\n";
 }
 
 /*
@@ -809,7 +523,7 @@ bool Entity::Create (EntClass *ecIn)
 		g_brSelectedBrushes.Next()->owner->IsPoint())		// it is a fixedsize brush
 	{
 		e = g_brSelectedBrushes.Next()->owner;
-		e->ChangeClassname(ecIn);
+		e->ChangeClass(ecIn);
 		WndMain_UpdateWindows(W_SCENE);
 		Selection::Changed();
 		return true;
@@ -826,7 +540,7 @@ bool Entity::Create (EntClass *ecIn)
 	{
 		if (Selection::OneBrushEntity())
 		{
-			g_brSelectedBrushes.Next()->owner->ChangeClassname(ecIn);
+			g_brSelectedBrushes.Next()->owner->ChangeClass(ecIn);
 			WndMain_UpdateWindows(W_SCENE);
 			Selection::Changed();
 			return true;
@@ -860,9 +574,9 @@ bool Entity::Create (EntClass *ecIn)
 Entity::ChangeClassname
 ===========
 */
-void Entity::ChangeClassname(EntClass* ec)
+void Entity::ChangeClass(EntClass* ec)
 {
-	assert(ec != EntClass::worldspawn);
+	assert(ec != EntClass::Worldspawn());
 	eclass = ec;
 	SetKeyValue("classname", ec->name);
 
@@ -873,13 +587,13 @@ void Entity::ChangeClassname(EntClass* ec)
 	}
 }
 
-void Entity::ChangeClassname(const char *classname)
+void Entity::ChangeClassname(const std::string& classname)
 {
 	// lunaran TODO: jesus christ there has to be a better way
 	bool hasbrushes = (brushes.ENext()->faces->texdef.tex->name[0] != '#');
 
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
-	ChangeClassname(ec);
+	ChangeClass(ec);
 }
 
 /*
@@ -924,7 +638,7 @@ void Entity::LinkBrush(Brush *b, bool tail)
 		_brush_ent_accessor::LinkToEntity(b, this);
 }
 
-void Entity::UnlinkBrush (Brush *b, bool preserveOwner)
+void Entity::UnlinkBrush(Brush *b, bool preserveOwner)
 {
 	if (!b->owner || b->ENext() == b || b->EPrev() == b)
 		Error("Entity::UnlinkBrush: Not currently linked.");

@@ -3,18 +3,24 @@
 //==============================
 
 #include "pre.h"
-#include "qe3.h"
-#include "parse.h"
-#include <fstream>
+#include "qedefs.h"
+#include "strlib.h"
+#include "cmdlib.h"
+#include "Config.h"
+#include "ConfigReader.h"
+#include "WndConfig.h"
+
 #include <algorithm>
 
-QEConfig::QEConfig() { /*Defaults();*/ }
-QEConfig::~QEConfig() {}
+Config::Config() { /*Defaults();*/ }
+Config::~Config() {}
 
 qecfgUI_t g_cfgUI;
 qecfgEditor_t g_cfgEditor;
 qecfgProject_t g_project;
 qecfgColors_t g_colors;
+
+Config	g_qeconfig;
 
 // here we are, a big dumbass flat global list of cvars, just like every id engine
 
@@ -69,7 +75,7 @@ ConfigVarBool	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 1);
 #else
 ConfigVarBool	cfgv_LogConsole(g_cfgEditor.LogConsole, "LogConsole", 0);
 #endif
-ConfigVarInt	cfgv_LoadLastMap(g_cfgEditor.LoadLastMap, "LoadLastMap", 0);
+ConfigVarBool	cfgv_LoadLastMap(g_cfgEditor.LoadLastMap, "LoadLastMap", 0);
 ConfigVarInt	cfgv_AutosaveTime(g_cfgEditor.AutosaveTime, "AutosaveTime", 5);
 ConfigVarBool	cfgv_Autosave(g_cfgEditor.Autosave, "Autosave", 1);
 
@@ -106,26 +112,17 @@ ConfigVar* const cfgEditorVars[] = {
 };
 const int cfgEditorVarCount = sizeof(cfgEditorVars) / sizeof(ConfigVar*);
 
-void ConfigVar::Read(Entity &epc)
-{
-	EPair* ep = epc.GetEPair(name);
-	if (!ep) return;
-	ReadPair(*ep);
-}
-
 void ConfigVarInt::Write(std::ofstream &f)		{ f << "\"" << name << "\" \"" << val << "\"\n"; }
 void ConfigVarBool::Write(std::ofstream &f)		{ f << "\"" << name << "\" \"" << (val ? "1" : "0") << "\"\n"; }
 void ConfigVarFloat::Write(std::ofstream &f)	{ f << "\"" << name << "\" \"" << val << "\"\n"; }
 void ConfigVarString::Write(std::ofstream &f)	{ f << "\"" << name << "\" \"" << val << "\"\n"; }
-//void ConfigVarProject::Write(std::ofstream &f) {}
 
-void ConfigVarInt::ReadPair(EPair &ep)		{ val = (sscanf((char*)*ep.value, "%i", &val) == 1) ? val : defaultVal; }
-void ConfigVarBool::ReadPair(EPair &ep)		{ int x; val = (sscanf((char*)*ep.value, "%i", &x) == 1) ? (x != 0) : defaultVal; }
-void ConfigVarFloat::ReadPair(EPair &ep)	{ val = (sscanf((char*)*ep.value, "%f", &val) == 1) ? val : defaultVal; }
-void ConfigVarString::ReadPair(EPair &ep)	{ Set((char*)*ep.value); }
-//void ConfigVarProject::Read(Entity &epc) {}
+void ConfigVarInt::Read(ConfigReader& cfgFile)		{ cfgFile.ReadInt(name, val); }
+void ConfigVarBool::Read(ConfigReader& cfgFile)		{ cfgFile.ReadBool(name, val); }
+void ConfigVarFloat::Read(ConfigReader& cfgFile)	{ cfgFile.ReadFloat(name, val); }
+void ConfigVarString::Read(ConfigReader& cfgFile)	{ cfgFile.ReadString(name, val); }
 
-void QEConfig::Defaults()
+void Config::Defaults()
 {
 	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Reset();
@@ -141,45 +138,21 @@ void QEConfig::Defaults()
 	ExpandProjectPaths();
 }
 
-EPair *QEConfig::ParseCfgPairs()
+bool Config::ParseUI(ConfigReader& cfgFile)
 {
-	EPair *epnext, *ep;
-	ep = nullptr;
-	epnext = nullptr;
-	while (1)
-	{
-		if (!GetToken(true))
-			break;
-		if (g_szToken[0] == '[')
-			break;
-		ep = EPair::ParseEpair();
-		ep->next = epnext;
-		epnext = ep;
-	} 
-	return ep;
-}
-
-bool QEConfig::ParseUI()
-{
-	Entity ent;
-	ent.epairs = ParseCfgPairs();
 	for (int i = 0; i < sizeof(cfgUIVars) / sizeof(cfgUIVars[0]); i++)
 	{
-		cfgUIVars[i]->Read(ent);
+		cfgUIVars[i]->Read(cfgFile);
 	}
 	return false;
 }
 
-bool QEConfig::ParseEditor()
+bool Config::ParseEditor(ConfigReader& cfgFile)
 {
-	Entity ent;
-	ent.epairs = ParseCfgPairs();
-
 	for (int i = 0; i < sizeof(cfgEditorVars)/sizeof(cfgEditorVars[0]); i++)
 	{
-		cfgEditorVars[i]->Read(ent);
+		cfgEditorVars[i]->Read(cfgFile);
 	}
-
 	return false;
 }
 
@@ -192,110 +165,107 @@ bool QEConfig::ParseEditor()
 =====================================================================
 */
 
-void QEConfig::ExpandProjectPaths()
+void Config::ExpandProjectPaths()
 {
 	ExpandProjectPaths(*projectPresets.begin(), g_project);
 }
 
-void QEConfig::ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest, const char quakePath[])
+void Config::ExpandProjectPaths(qecfgProject_t &src, qecfgProject_t &dest, const std::string& qPath)
 {
-	if (!quakePath)
-		quakePath = g_cfgEditor.QuakePath;
 	//auto prj = projectPresets.begin();
-	strncpy(dest.name, src.name, MAX_PROJNAME);
-	ExpandProjectPath(src.basePath, dest.basePath, quakePath, true);
-	ExpandProjectPath(src.mapPath, dest.mapPath, quakePath, true);
-	ExpandProjectPath(src.autosaveFile, dest.autosaveFile, quakePath);
-	ExpandProjectPath(src.entityFiles, dest.entityFiles, quakePath);
-	ExpandProjectPath(src.wadPath, dest.wadPath, quakePath, true);
-	ExpandProjectPath(src.defaultWads, dest.defaultWads, quakePath);
-	ExpandProjectPath(src.paletteFile, dest.paletteFile, quakePath);
+	dest.name = src.name;
+	ExpandProjectPath(src.basePath, dest.basePath, qPath, true);
+	ExpandProjectPath(src.mapPath, dest.mapPath, qPath, true);
+	ExpandProjectPath(src.autosaveFile, dest.autosaveFile, qPath);
+	ExpandProjectPath(src.entityFiles, dest.entityFiles, qPath);
+	ExpandProjectPath(src.entityFiles2, dest.entityFiles2, qPath);
+	ExpandProjectPath(src.wadPath, dest.wadPath, qPath, true);
+	ExpandProjectPath(src.defaultWads, dest.defaultWads, qPath);
+	ExpandProjectPath(src.paletteFile, dest.paletteFile, qPath);
 
 	dest.extTargets = src.extTargets;
 }
 
-void QEConfig::ExpandProjectPath(char *src, char *dest, const char quakePath[], bool dir)
+void Config::ExpandProjectPath(const std::string& src, std::string& dest, const std::string& qPath, bool dir)
 {
-	char *s, *d, *ds;
-	s = src;
-	d = dest;
-	ds = dest;
+	std::string path = src;
+	size_t ofs = 0, last = 0;
+	size_t srclen = src.size();
 
-	while (*s)
+	dest.clear();
+	dest.reserve(srclen * 2);
+
+	while (ofs < srclen)
 	{
-		if (*s == '\\' || *s == '/')
+		if (!(src[ofs] == '$' || src[ofs] == '\\' || src[ofs] == '/'))
 		{
-			if (*ds != '/')
-				*d++ = '/';
-			while (*s == '\\' || *s == '/')
-				s++;
+			++ofs;
+			continue;
 		}
-		else if (*s == '$')
+		dest.append(&src[last], ofs - last);
+		if (src[ofs] == '\\' || src[ofs] == '/')
 		{
-			if (!strncmp(s, "$QUAKE", 6))
+			if (!strlib::EndsWith(dest,"/"))
+				dest.append("/");
+			while (src[ofs] == '\\' || src[ofs] == '/')
 			{
-				strcpy(d, quakePath);
-				d += strlen(quakePath);
-				if (*(d-1) != '/')
-					*d++ = '/';
-				s += 6;
+				++ofs;
+				if (ofs == srclen)
+					break;
 			}
-			else if (!strncmp(s, "$QE3", 4))
-			{
-				// $QE3 is just cwd, skip the characters
-				s += 4;
-				while (*s == '\\' || *s == '/')
-					*s++;
-				*d++ = '.';
-				*d++ = '/';
-			}
-			else
-			{
-				*d++ = *s++;
-			}
+			last = ofs;
+			continue;
 		}
-		else
-			*d++ = *s++;
-		ds = d - 1;
+		++ofs;
+		if (std::strncmp(&src[ofs], "QUAKE", 5) == 0)
+		{
+			dest.append(qPath);
+			ofs += 5;
+			last = ofs;
+			continue;
+		}
+		if (std::strncmp(&src[ofs], "QE3", 3) == 0)
+		{
+			dest.append(g_qePath);
+			ofs += 3;
+			last = ofs;
+			continue;
+		}
 	}
-	if (dir && (*(d - 1) != '/'))
-	{
-		*d++ = '/';
-	}
-	*d = 0;
+	dest.append(&src[last], ofs - last);
+
+	if (dir && dest[dest.size() - 1] != '/')
+		dest.append("/");
+
+	// path.replace("$QUAKE", g_cfgEditor.QuakePath);
+	// path.replace("$QE3", QDir::currentPath());
+	// path.replace('\\','/');
+	// path.replace("//","/");
+	
+	//dest = path;
 }
 
-bool QEConfig::ParseProject()
+bool Config::ParseProject(ConfigReader& cfgFile)
 {
-	Entity ent;
 	qecfgProject_t proj;
-	EPair* ep;
 
-	ent.epairs = ParseCfgPairs();
-	if ((ep = ent.GetEPair("name")) != nullptr)
-		strncpy(proj.name, (char*)*ep->value, MAX_PROJNAME);
-	if ((ep = ent.GetEPair("basePath")) != nullptr)
-		strncpy(proj.basePath, (char*)*ep->value, _MAX_DIR);
-	if ((ep = ent.GetEPair("mapPath")) != nullptr)
-		strncpy(proj.mapPath, (char*)*ep->value, _MAX_DIR);
-	if ((ep = ent.GetEPair("autosaveFile")) != nullptr)
-		strncpy(proj.autosaveFile, (char*)*ep->value, _MAX_FNAME);
-	if ((ep = ent.GetEPair("entityFiles")) != nullptr)
-		strncpy(proj.entityFiles, (char*)*ep->value, _MAX_FNAME);
-	if ((ep = ent.GetEPair("wadPath")) != nullptr)
-		strncpy(proj.wadPath, (char*)*ep->value, _MAX_DIR);
-	if ((ep = ent.GetEPair("defaultWads")) != nullptr)
-		strncpy(proj.defaultWads, (char*)*ep->value, _MAX_FNAME);
-	if ((ep = ent.GetEPair("paletteFile")) != nullptr)
-		strncpy(proj.paletteFile, (char*)*ep->value, _MAX_FNAME);
+	cfgFile.ReadString("name", proj.name);
+	cfgFile.ReadString("basePath", proj.basePath);
+	cfgFile.ReadString("mapPath", proj.mapPath);
+	cfgFile.ReadString("autosaveFile", proj.autosaveFile);
+	cfgFile.ReadString("entityFiles", proj.entityFiles);
+	cfgFile.ReadString("entityFiles2", proj.entityFiles2);
+	cfgFile.ReadString("wadPath", proj.wadPath);
+	cfgFile.ReadString("defaultWads", proj.defaultWads);
+	cfgFile.ReadString("paletteFile", proj.paletteFile);
 
-	proj.extTargets = ent.GetKeyValueInt("extTargets") != 0;
+	cfgFile.ReadBool("extTargets", proj.extTargets);
 
 	projectPresets.push_back(proj);
 	return false;
 }
 
-bool QEConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
+void Config::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 {
 	f << "\"name\" \"" << proj.name << "\"\n";
 	f << "\"basePath\" \"" << proj.basePath << "\"\n";
@@ -306,10 +276,8 @@ bool QEConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 	f << "\"defaultWads\" \"" << proj.defaultWads << "\"\n";
 	f << "\"paletteFile\" \"" << proj.paletteFile << "\"\n";
 
-	f << "\"extTargets\" \"" << (proj.extTargets ? "1" : "0" ) << "\"\n";
-	return true;
+	f << "\"extTargets\" \"" << (proj.extTargets ? "1" : "0") << "\"\n";
 }
-
 
 /*
 =====================================================================
@@ -319,64 +287,46 @@ bool QEConfig::WriteProject(std::ofstream &f, qecfgProject_t &proj)
 =====================================================================
 */
 
-bool QEConfig::ParseColors(qecfgColors_t &colors)
+bool Config::ParseColors(ConfigReader& cfgFile, qecfgColors_t &colors)
 {
-	Entity ent;
-	EPair* ep;
-	ent.epairs = ParseCfgPairs();
-	
-	if ((ep = ent.GetEPair("name")) != nullptr)
-		strncpy(colors.name, (char*)*ep->value, MAX_PROJNAME);
+	cfgFile.ReadString("name", colors.name);
 
-	ent.GetKeyValueVector("brush", colors.brush);
-	ent.GetKeyValueVector("selection", colors.selection);
-	ent.GetKeyValueVector("tool", colors.tool);
-	ent.GetKeyValueVector("camBackground", colors.camBackground);
-	ent.GetKeyValueVector("camGrid", colors.camGrid);
-	ent.GetKeyValueVector("gridBackground", colors.gridBackground);
-	ent.GetKeyValueVector("gridMinor", colors.gridMinor);
-	ent.GetKeyValueVector("gridMajor", colors.gridMajor);
-	ent.GetKeyValueVector("gridBlock", colors.gridBlock);
-	ent.GetKeyValueVector("gridText", colors.gridText);
-	ent.GetKeyValueVector("texBackground", colors.texBackground);
-	ent.GetKeyValueVector("texText", colors.texText);
+	cfgFile.ReadVec3("brush", colors.brush);
+	cfgFile.ReadVec3("selection", colors.selection);
+	cfgFile.ReadVec3("tool", colors.tool);
+	cfgFile.ReadVec3("camBackground", colors.camBackground);
+	cfgFile.ReadVec3("camGrid", colors.camGrid);
+	cfgFile.ReadVec3("gridBackground", colors.gridBackground);
+	cfgFile.ReadVec3("gridMinor", colors.gridMinor);
+	cfgFile.ReadVec3("gridMajor", colors.gridMajor);
+	cfgFile.ReadVec3("gridBlock", colors.gridBlock);
+	cfgFile.ReadVec3("gridText", colors.gridText);
+	cfgFile.ReadVec3("texBackground", colors.texBackground);
+	cfgFile.ReadVec3("texText", colors.texText);
 
 	return false;
 }
 
-void QEConfig::WriteColor(std::ofstream &f, qecfgColors_t &col)
+void Config::WriteColor(std::ofstream &f, qecfgColors_t &col)
 {
-	char vec[64];
+	std::string vec;
 
 	f << "\"name\" \"" << col.name << "\"\n";
-
-	VecToString(col.brush, vec);
-	f << "\"brush\" \"" << vec << "\"\n";
-	VecToString(col.selection, vec);
-	f << "\"selection\" \"" << vec << "\"\n";
-	VecToString(col.tool, vec);
-	f << "\"tool\" \"" << vec << "\"\n";
-	VecToString(col.camBackground, vec);
-	f << "\"camBackground\" \"" << vec << "\"\n";
-	VecToString(col.camGrid, vec);
-	f << "\"camGrid\" \"" << vec << "\"\n";
-	VecToString(col.gridBackground, vec);
-	f << "\"gridBackground\" \"" << vec << "\"\n";
-	VecToString(col.gridMinor, vec);
-	f << "\"gridMinor\" \"" << vec << "\"\n";
-	VecToString(col.gridMajor, vec);
-	f << "\"gridMajor\" \"" << vec << "\"\n";
-	VecToString(col.gridBlock, vec);
-	f << "\"gridBlock\" \"" << vec << "\"\n";
-	VecToString(col.gridText, vec);
-	f << "\"gridText\" \"" << vec << "\"\n";
-	VecToString(col.texBackground, vec);
-	f << "\"texBackground\" \"" << vec << "\"\n";
-	VecToString(col.texText, vec);
-	f << "\"texText\" \"" << vec << "\"\n";
+	f << "\"brush\" \"" <<			strlib::VecToString(col.brush) << "\"\n";
+	f << "\"selection\" \"" <<		strlib::VecToString(col.selection) << "\"\n";
+	f << "\"tool\" \"" <<			strlib::VecToString(col.tool) << "\"\n";
+	f << "\"camBackground\" \"" <<	strlib::VecToString(col.camBackground) << "\"\n";
+	f << "\"camGrid\" \"" <<		strlib::VecToString(col.camGrid) << "\"\n";
+	f << "\"gridBackground\" \"" <<	strlib::VecToString(col.gridBackground) << "\"\n";
+	f << "\"gridMinor\" \"" <<		strlib::VecToString(col.gridMinor) << "\"\n";
+	f << "\"gridMajor\" \"" <<		strlib::VecToString(col.gridMajor) << "\"\n";
+	f << "\"gridBlock\" \"" <<		strlib::VecToString(col.gridBlock) << "\"\n";
+	f << "\"gridText\" \"" <<		strlib::VecToString(col.gridText) << "\"\n";
+	f << "\"texBackground\" \"" <<	strlib::VecToString(col.texBackground) << "\"\n";
+	f << "\"texText\" \"" <<		strlib::VecToString(col.texText) << "\"\n";
 }
 
-void QEConfig::StandardColorPresets()
+void Config::StandardColorPresets()
 {
 	colorPresets.reserve(colorPresets.size() + 10);
 	colorPresets.push_back({ "QE/Radiant",
@@ -516,19 +466,19 @@ void QEConfig::StandardColorPresets()
 =====================================================================
 */
 
-bool QEConfig::Load()
+bool Config::Load()
 {
-	qeBuffer cfgbuf;
-	char	cfgpath[MAX_PATH];
+	std::string cfgPath, cfgNextLine;
 	bool	haveProject, haveColors, haveColorPresets;
 
-	strcpy(cfgpath, g_qePath);
 #ifdef _DEBUG
-	strcpy(cfgpath + strlen(g_qePath), "\\qe3d.cfg");
+	cfgPath = g_qePath + "/qe3d.cfg";
 #else
-	strcpy(cfgpath + strlen(g_qePath), "\\qe3.cfg");
+	cfgPath = g_qePath + "/qe3.cfg";
 #endif
-	if (IO_LoadFile(cfgpath, cfgbuf) < 1)
+
+	ConfigReader cfgFile;
+	if (!cfgFile.Open(cfgPath) || cfgFile.Empty())
 	{
 		// cfg doesn't exist, do first run dialog song and dance
 		projectPresets.emplace_back();	// add one default project
@@ -545,39 +495,29 @@ bool QEConfig::Load()
 	haveColors = false; 
 	haveColorPresets = false;
 
-	StartTokenParsing((char*)*cfgbuf);
-	GetToken(true);
-	while (*g_szToken)
+	while (cfgFile.ReadSection())
 	{
-		if (g_szToken[0] == '[')
+		if (cfgFile.currentSection() == "editor")
+			ParseEditor(cfgFile);
+		else if (cfgFile.currentSection() == "ui")
+			ParseUI(cfgFile);
+		else if (cfgFile.currentSection() == "project")
 		{
-			if (!strcmp(g_szToken, "[editor]"))
-				ParseEditor();
-			else if (!strcmp(g_szToken, "[ui]"))
-				ParseUI();
-			else if (!strcmp(g_szToken, "[project]"))
-			{
-				haveProject = true;
-				ParseProject();
-			}
-			else if (!strcmp(g_szToken, "[colors]"))
-			{
-				haveColors = true;
-				ParseColors(g_colors);
-			}
-			else if (!strcmp(g_szToken, "[colorpreset]"))
-			{
-				haveColorPresets = true;
-				colorPresets.push_back(g_colors);
-				ParseColors(*colorPresets.rbegin());
-			}
+			haveProject = true;
+			ParseProject(cfgFile);
 		}
-		else
+		else if (cfgFile.currentSection() == "colors")
 		{
-			Log::Warning(_S("Unrecognized token in qe3.cfg: %s") << g_szToken);
-			GetToken(true);
+			haveColors = true;
+			ParseColors(cfgFile, g_colors);
 		}
-	}
+		else if (cfgFile.currentSection() == "colorpreset")
+		{
+			haveColorPresets = true;
+			colorPresets.push_back(g_colors);
+			ParseColors(cfgFile, *colorPresets.rbegin());
+		}
+	};
 
 	if (!haveColorPresets)
 		StandardColorPresets();
@@ -598,7 +538,7 @@ bool QEConfig::Load()
 		{
 			for (int i = 1; i < g_nArgC; i++)
 			{
-				if (!_stricmp(g_pszArgV[i], projIt->name))
+				if (projIt->name == g_pszArgV[i])
 				{
 					std::rotate(projectPresets.begin(), projIt, projIt + 1);
 					break;
@@ -606,22 +546,23 @@ bool QEConfig::Load()
 			}
 		}
 	}
+
 	ExpandProjectPaths();
 	return true;
 }
 
-void QEConfig::Save()
+void Config::Save()
 {
-	char	cfgpath[MAX_PATH];
+	std::string cfgpath = g_qePath;
 
-	strcpy(cfgpath, g_qePath);
 #ifdef _DEBUG
-	strcpy(cfgpath + strlen(g_qePath), "\\qe3d.cfg");
+	cfgpath += "\\qe3d.cfg";
 #else
-	strcpy(cfgpath + strlen(g_qePath), "\\qe3.cfg");
+	cfgpath += "\\qe3.cfg";
 #endif
 
 	std::ofstream fs(cfgpath);
+
 	fs << "[editor]\n";
 	for (int i = 0; i < cfgEditorVarCount; i++)
 		cfgEditorVars[i]->Write(fs);

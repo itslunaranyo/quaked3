@@ -4,12 +4,31 @@
 
 #include "pre.h"
 #include "qe3.h"
+#include "texture.h"
+#include "Textures.h"
+#include "texdef.h"
 
 
 TexDef::TexDef() : tex(nullptr), shift(), rotate(0)
 {
 	name[0] = 0;
 	scale[0] = scale[1] = g_qeglobals.d_fDefaultTexScale;
+}
+
+void TexDef::Set(Texture* stx)
+{
+	tex = stx; 
+	name = tex->name;
+}
+void TexDef::Set(const char* txn)
+{
+	name = std::string(txn); 
+	tex = Textures::ForName(name);
+}
+void TexDef::Set(const std::string& txn)
+{
+	name = txn; 
+	tex = Textures::ForName(name);
 }
 
 void TexDef::Clamp()

@@ -12,7 +12,7 @@ alert the user and try to save the scene to a crash file if an unrecoverable
 exception makes it all the way to the top
 =================
 */
-void CrashSave(const char* reason)
+int CrashSave(const char* reason)
 {
 	static bool crashSaving = false;
 	std::string badnews = reason;
@@ -32,7 +32,7 @@ void CrashSave(const char* reason)
 	//sprintf(crashmap, "%s\\crash.%i%i%i%i%i%i.map", g_qePath, time.wHour, time.wMinute, time.wSecond, time.wDay, time.wMonth, time.wYear);
 	crashmap = std::string(_S("%s\\crash.%i%i%i%i%i%i.map") << g_qePath << time.wHour << time.wMinute << time.wSecond << time.wDay << time.wMonth << time.wYear);
 	try {
-		g_map.SaveToFile(crashmap.c_str(), false);
+		g_map.Save(crashmap.c_str());
 		//sprintf(badnews, "%s\r\nMap written to %s.", reason, crashmap);
 		badnews += std::string(_S("\r\nMap written to %s.")  << crashmap);
 	}
@@ -43,6 +43,7 @@ void CrashSave(const char* reason)
 	}
 
 	Terminate(badnews.c_str());
+	return 0;
 }
 
 void Terminate(const char* badnews)

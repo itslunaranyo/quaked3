@@ -6,6 +6,8 @@
 //==============================
 
 #include "SlabAllocator.h"
+#include "Plane.h"
+#include "TexDef.h"
 
 // the normals on planes point OUT of the brush
 #define	MAXPOINTS	16

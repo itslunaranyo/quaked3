@@ -4,56 +4,58 @@
 //	entclass.h
 //==============================
 
-#define	MAX_FLAGS	16
-
-// lunaran TODO: too much static shit in this class
+#include "TexDef.h"
+#include <map>
 
 class EntClass
 {
 public:
 	EntClass();
+	EntClass(std::string_view& _n);
 	EntClass(const EntClass& other);
 	~EntClass();
 
-	char			name[64];
-	typedef enum {
+	std::string		name;
+	vec3			mins, maxs;
+	vec3			color;
+	TexDef			texdef;	// TODO: god this is unneccesary
+	static const int MAX_FLAGS = 16;
+	std::string		flagnames[MAX_FLAGS];
+	std::string		comments;
+
+	enum eclass_form_e {
 		ECF_POINT	= 0x0001,
 		ECF_BRUSH	= 0x0002,
 		ECF_HACKED	= 0x0004,	// is supposed to be the opposite form
 		ECF_UNKNOWN	= 0x0008,
 		ECF_ANGLE	= 0x0010
-	} eclass_form_e;
+	};
+	unsigned int	form, showFlags;
 
-	int				form;
-	vec3			mins, maxs;
-	vec3			color;
-	TexDef			texdef;
-	qeBuffer		comments;
-	char			flagnames[MAX_FLAGS][32];
-	unsigned int	showFlags;
+	bool			IsPointClass() const { return !!(form & ECF_POINT); }
 
-	bool			IsPointClass() { return !!(form & ECF_POINT); }
-	static EntClass	*ForName(const char *name, bool has_brushes, bool strict);
-	void			AddToClassList();
+	static EntClass* ForName(const std::string& name, const bool has_brushes, const bool strict);
+	static const EntClass* Worldspawn() { return worldspawn; }
 
-	static void		InitForSourceDirectory(const char *path);
-	static void		Clear();
-	static void		Sort();
-	static bool		eccmp(const EntClass* a, const EntClass* b) { return (strcmp(a->name, b->name) < 0); }
-	static std::vector<EntClass*>::iterator begin() { return entclasses.begin(); }
-	static std::vector<EntClass*>::iterator end() { return entclasses.end(); }
-	static EntClass	*worldspawn;
+	static std::vector<EntClass*>::const_iterator cbegin() { return entclasses.cbegin(); }
+	static std::vector<EntClass*>::const_iterator cend() { return entclasses.cend(); }
 
 private:
-	static void		ScanFile(const char *filename);
-	static EntClass	*InitFromText(char *text);
-	static EntClass	*InitFromTextAndAdd(char *text);
+	friend class EntClassInitializer;
+
+	static void		Reset();
+	static void		Sort();
 	static EntClass *CreateOppositeForm(EntClass* e);
 
-	static std::vector<EntClass*> pointclasses;
-	static std::vector<EntClass*> brushclasses;
+	void			AddToClassList();
+
+	static std::map<std::string, EntClass*> pointclasses;
+	static std::map<std::string, EntClass*> brushclasses;
 	static std::vector<EntClass*> entclasses;
+	static EntClass *worldspawn;
 	static EntClass	*badclass;
+	static std::vector<EntClass*>::iterator begin() { return entclasses.begin(); }
+	static std::vector<EntClass*>::iterator end() { return entclasses.end(); }
 };
 
 

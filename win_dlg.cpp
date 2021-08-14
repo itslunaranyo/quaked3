@@ -13,11 +13,47 @@
 #include "WndEntity.h"
 #include "modify.h"
 #include "transform.h"
+#include "strlib.h"
 
 #pragma warning(disable: 4800)	// 'LRESULT': forcing value to bool 'true' or 'false' (performance warning)
 
 HWND g_hwndSetKeyvalsDlg;
 
+
+std::string GetDialogText(HWND hDlg, int dlgItem)
+{
+	char buf[1024];
+	GetDlgItemText(hDlg, dlgItem, buf, 1024);
+	return std::string(buf);
+}
+int GetDialogInt(HWND hDlg, int dlgItem)
+{
+	char buf[64];
+	GetDlgItemText(hDlg, dlgItem, buf, 64);
+	return atoi(buf);
+}
+double GetDialogFloat(HWND hDlg, int dlgItem)
+{
+	char buf[128];
+	GetDlgItemText(hDlg, dlgItem, buf, 128);
+	return atof(buf);
+}
+
+BOOL SetDialogText(HWND hDlg, int dlgItem, std::string& str)
+{
+	return SetDlgItemText(hDlg, dlgItem, str.data());
+}
+BOOL SetDialogInt(HWND hDlg, int dlgItem, int i)
+{
+	char buf[64];
+	sprintf_s(buf, "%i", i);
+	return SetDlgItemText(hDlg, dlgItem, buf);
+}
+BOOL SetDialogFloat(HWND hDlg, int dlgItem, double f)
+{
+	std::string buf = strlib::DoubleToStringNice(f);
+	return SetDialogText(hDlg, dlgItem, buf);
+}
 
 /*
 =====================================================================
@@ -94,7 +130,7 @@ INT_PTR CALLBACK AboutDlgProc(
 		char	szExtensionscopy[16384];
 		char	*psz;
 
-		SetDlgItemText(hwndDlg, IDC_ABOUT_APPNAME, g_qeAppName);
+		SetDialogText(hwndDlg, IDC_ABOUT_APPNAME, g_qeAppName);
 
 		sprintf(szTemp, "Renderer:\t%s", glGetString(GL_RENDERER));
 		SetDlgItemText(hwndDlg, IDC_ABOUT_GLRENDERER, szTemp);
@@ -995,14 +1031,14 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 
 	SendMessage(hwnd, LB_RESETCONTENT, 0, 0);
 
-	for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
+	for (auto ecIt = EntClass::cbegin(); ecIt != EntClass::cend(); ecIt++)
 	{
 		pec = *ecIt;
 		if (pec->IsPointClass())
 		{
 			if (bPointbased)
 			{
-				index = SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)pec->name);
+				index = SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)pec->name.data());
 				SendMessage(hwnd, LB_SETITEMDATA, index, (LPARAM)pec);
 			}
 		}
@@ -1010,7 +1046,7 @@ void FillEntityListbox (HWND hwnd, bool bPointbased, bool bBrushbased)
 		{
 			if (bBrushbased)
 			{
-				index = SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)pec->name);
+				index = SendMessage(hwnd, LB_ADDSTRING, 0, (LPARAM)pec->name.data());
 				SendMessage(hwnd, LB_SETITEMDATA, index, (LPARAM)pec);
 			}
 		}
@@ -1028,9 +1064,9 @@ bool ConfirmClassnameHack(EntClass *desired)
 	char	text[768];
 
 	if (desired->IsPointClass())
-		sprintf(text, "%s is a point entity. Are you sure you want to\ncreate one out of the selected brushes?", desired->name);
+		sprintf(text, "%s is a point entity. Are you sure you want to\ncreate one out of the selected brushes?", desired->name.c_str());
 	else
-		sprintf(text, "%s is a brush-based entity. Are you sure you want to create one with no brushes?", desired->name);
+		sprintf(text, "%s is a brush-based entity. Are you sure you want to create one with no brushes?", desired->name.c_str());
 
 	return (MessageBox(g_hwndMain, text, "QuakeEd 3: Confirm Entity Creation", MB_OKCANCEL | MB_ICONQUESTION) == IDOK);
 }
@@ -1179,15 +1215,15 @@ INT_PTR CALLBACK MapInfoDlgProc (
 			else
 				nTotalBrushEnts++;
 
-			if (!strncmp(pBrush->faces->texdef.name, "sky", 3))
+			if (pBrush->faces->texdef.name._Starts_with("sky"))
 				nSkyBrushes++;
-			if (pBrush->faces->texdef.name[0] == '*')
+			if (pBrush->faces->texdef.name._Starts_with("*"))
 				nWaterBrushes++;
-			if (!strncmp(pBrush->faces->texdef.name, "clip", 4))
+			if (pBrush->faces->texdef.name._Starts_with("clip"))
 				nClipBrushes++;
 		}
 
-		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++) 
+		for (auto ecIt = EntClass::cbegin(); ecIt != EntClass::cend(); ecIt++) 
 		{
 			pEClass = *ecIt;
 			for (pEntity = g_map.entities.Next(); pEntity != &g_map.entities; pEntity = pEntity->Next())
@@ -1196,7 +1232,7 @@ INT_PTR CALLBACK MapInfoDlgProc (
 
 			if (nCount)
 			{
-				sprintf(sz, "%s\t%d", pEClass->name, nCount);
+				sprintf(sz, "%s\t%d", pEClass->name.c_str(), nCount);
 				SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)(LPCTSTR)sz);
 				nCount = 0;
 			}
@@ -1305,11 +1341,11 @@ void AddTreeViewItems (HWND hWnd, Entity *pEntArray[], int nCount)
 
 
 	// add root item
-	hTRoot = AddOneItem(hWnd, TVI_ROOT, (HTREEITEM)TVI_ROOT, pEntArray[0]->eclass->name, pEntArray[0]);
+	hTRoot = AddOneItem(hWnd, TVI_ROOT, (HTREEITEM)TVI_ROOT, pEntArray[0]->eclass->name.data(), pEntArray[0]);
 	
 	// then add all valid array elements as subitems
 	for (i = 0; i < nCount; i++)
-		AddOneItem(hWnd, hTRoot, (HTREEITEM)TVI_LAST, pEntArray[i]->eclass->name, pEntArray[i]);
+		AddOneItem(hWnd, hTRoot, (HTREEITEM)TVI_LAST, pEntArray[i]->eclass->name.data(), pEntArray[i]);
 }
 
 /*
@@ -1324,6 +1360,7 @@ void OnSelectionChange (HWND hTree, HWND hList)
 	LVITEM			lvItem;
 	Entity       *pEntity;
 	EPair        *pEpair;
+	std::string temp;
 
 	// If root item is selected, clear List Control and return
 	if (TreeView_GetChild(hTree, hItem))
@@ -1348,12 +1385,14 @@ void OnSelectionChange (HWND hTree, HWND hList)
 		{
 			lvItem.iItem = 0;
 			lvItem.iSubItem = 0;
-			lvItem.pszText = (char*)*pEpair->key;
+			temp = pEpair->GetKey();
+			lvItem.pszText = temp.data();
 			ListView_InsertItem(hList, &lvItem);
 
 			lvItem.iItem = 0;
 			lvItem.iSubItem = 1;
-			lvItem.pszText = (char*)*pEpair->value;
+			temp = pEpair->GetValue();
+			lvItem.pszText = temp.data();
 			ListView_SetItem(hList, &lvItem);
 		}
 	}
@@ -1472,12 +1511,12 @@ INT_PTR CALLBACK EntityInfoDlgProc (
 		ListView_DeleteColumn(hList, 2);
 
 		// add worldspawn entity first
-		hTRoot = AddOneItem(hTree, TVI_ROOT, (HTREEITEM)TVI_ROOT, g_map.world->eclass->name, g_map.world);
-		AddOneItem(hTree, hTRoot, (HTREEITEM)TVI_LAST, g_map.world->eclass->name, g_map.world);
+		hTRoot = AddOneItem(hTree, TVI_ROOT, (HTREEITEM)TVI_ROOT, g_map.world->eclass->name.data(), g_map.world);
+		AddOneItem(hTree, hTRoot, (HTREEITEM)TVI_LAST, g_map.world->eclass->name.data(), g_map.world);
 
 		// Nested for loop to group entites. Take each avalible entity class
 		// and check them with all active entites, pulling matches into an array.
-		for (auto ecIt = EntClass::begin(); ecIt != EntClass::end(); ecIt++)
+		for (auto ecIt = EntClass::cbegin(); ecIt != EntClass::cend(); ecIt++)
 		{
 			pEClass = *ecIt;
 			for (pEntity = g_map.entities.Next(); pEntity != &g_map.entities; pEntity = pEntity->Next())

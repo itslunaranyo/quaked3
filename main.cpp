@@ -11,9 +11,10 @@
 #include "WndConsole.h"
 #include "WndSurf.h"
 #include "win_dlg.h"
+#include "IO.h"
 
-char	g_qeAppName[64];
-char	g_qePath[MAX_PATH];
+std::string g_qeAppName;
+std::string g_qePath;
 
 /*
 ==============
@@ -89,7 +90,7 @@ void Main_Init()
 	}
 	catch (std::exception &ex)
 	{
-		QE_Exit(ex.what());
+		Terminate(ex.what());
 	}
 #endif
 }
@@ -181,6 +182,20 @@ void Main_Loop()
 	}
 }
 
+BOOL Main_Exec()
+{
+#ifndef _DEBUG
+	__try {
+#endif
+		Main_Loop();
+#ifndef _DEBUG
+	}
+	__except (CrashSave(SEHExceptionString(GetExceptionCode()))) {
+		return FALSE;
+	}
+#endif
+	return TRUE;
+}
 
 /*
 ==================
@@ -200,7 +215,7 @@ int WINAPI WinMain (
 
 	InitCommonControls ();
 
-	GetCurrentDirectory(MAX_PATH - 1, g_qePath);
+	g_qePath = IO::GetAppPath();
 
 	if (lpCmdLine && strlen(lpCmdLine))
 	{
@@ -216,15 +231,5 @@ int WINAPI WinMain (
 	Main_Init();
 	WndSplash_Destroy();
 
-#ifndef _DEBUG
-	__try {
-#endif
-		Main_Loop();
-#ifndef _DEBUG
-	} __except (CrashSave(SEHExceptionString(GetExceptionCode()))) {
-		return FALSE;
-	}
-#endif
-
-	return TRUE;
+	return Main_Exec();
 }

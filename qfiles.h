@@ -41,46 +41,4 @@
 #define	MAX_KEY		32
 #define	MAX_VALUE	1024
 
-//  .MIP file format
-#define	TYP_MIPTEX	68
-#define	MIPLEVELS	4
-
-
-//=============================================================================
-
-typedef struct miptex_s
-{
-	char		name[MAX_TEXNAME];
-	unsigned	width, height;
-	unsigned	offsets[MIPLEVELS];	// four mip maps stored
-} miptex_t;
-
-
-/*
-==============================================================================
-
-	Quake .WAD file format
-	from wad.h
-
-==============================================================================
-*/
-
-typedef struct
-{
-	char	identification[4];	// should be WAD2 or 2DAW
-	int		numlumps;
-	int		infotableofs;
-} wadinfo_t;
-
-typedef struct
-{
-	int		filepos;
-	int		disksize;
-	int		size;				// uncompressed
-	char	type;
-	char	compression;
-	char	pad1, pad2;
-	char	name[16];			// must be null terminated
-} lumpinfo_t;
-
 #endif

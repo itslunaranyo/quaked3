@@ -5,7 +5,10 @@
 #include "pre.h"
 #include "qe3.h"
 #include "map.h"
+#include "WndConfig.h"
 #include "win_dlg.h"
+#include "strlib.h"
+#include "IO.h"
 #include "Command.h"
 #include <algorithm>
 #include <Shlobj.h>
@@ -53,8 +56,9 @@ void WndCfg_FormatPath(char* dst, char* src)
 
 	Sys_ConvertDOSToUnixName(szTemp, src);
 
-	if (!_strnicmp(szTemp, g_cfgEditor.QuakePath, strlen(g_cfgEditor.QuakePath)))
-		sprintf(dst, "$QUAKE/%s", &szTemp[strlen(g_cfgEditor.QuakePath)]);
+	//if (!_strnicmp(szTemp, g_cfgEditor.QuakePath, strlen(g_cfgEditor.QuakePath)))
+	if (strlib::StartsWith(szTemp, g_cfgEditor.QuakePath))
+		sprintf(dst, "$QUAKE/%s", &szTemp[g_cfgEditor.QuakePath.length()]);
 	else
 		strcpy(dst, szTemp);
 }
@@ -295,13 +299,13 @@ void WndCfg_ProjectComboChanged()
 	int i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
 
 	qecfgProject_t &prj = g_qeconfig.projectPresets[i];
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_ENTITYFILES, prj.entityFiles);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads);
-	SetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile);
+	SetDialogText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath);
+	SetDialogText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath);
+	SetDialogText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile);
+	SetDialogText(hwndCfgProject, IDC_EDIT_ENTITYFILES, prj.entityFiles);
+	SetDialogText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath);
+	SetDialogText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads);
+	SetDialogText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile);
 
 	SendDlgItemMessage(hwndCfgProject, IDC_CHECK_EXTTARGETS, BM_SETCHECK, (prj.extTargets ? BST_CHECKED : BST_UNCHECKED), 0);	
 }
@@ -317,10 +321,10 @@ reinitializing the editor/project state is necessary
 */
 bool WndCfg_ProjectsDifferent(qecfgProject_t &a, qecfgProject_t &b)
 {
-	if (strcmp(a.name, b.name)) return true;
-	if (strcmp(a.basePath, b.basePath)) return true;
-	if (strcmp(a.entityFiles, b.entityFiles)) return true;
-	if (strcmp(a.paletteFile, b.paletteFile)) return true;
+	if (a.name != b.name) return true;
+	if (a.basePath != b.basePath) return true;
+	if (a.entityFiles != b.entityFiles) return true;
+	if (a.paletteFile != b.paletteFile) return true;
 	return false;
 }
 
@@ -352,13 +356,12 @@ void WndCfg_CheckProjectAlteration()
 			}
 			SendMessage(g_hwndMain, WM_COMMAND, 0, ID_FILE_SAVE);
 		}
-		char szMapTemp[_MAX_FNAME];
-		szMapTemp[0] = 0;
+		std::string maptemp;
 		if (g_map.hasFilename)
-			strncpy(szMapTemp, g_map.name, _MAX_FNAME);
+			maptemp = g_map.name;
 		QE_InitProject();
-		if (*szMapTemp)
-			g_map.LoadFromFile(szMapTemp);
+		if (!maptemp.empty())
+			g_map.Load(maptemp);
 	}
 }
 
@@ -373,7 +376,7 @@ void WndCfg_ProjectPresetsToWnd()
 	if (g_qeconfig.projectPresets.empty())
 		return;
 	for (auto prjIt = g_qeconfig.projectPresets.begin(); prjIt != g_qeconfig.projectPresets.end(); ++prjIt)
-		SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_ADDSTRING, 0, (LPARAM)prjIt->name);
+		SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_ADDSTRING, 0, (LPARAM)prjIt->name.data());
 	qecfgProject_t &prj = *g_qeconfig.projectPresets.begin();
 	SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_SETCURSEL, 0, 0);
 	WndCfg_ProjectComboChanged();
@@ -387,8 +390,7 @@ ConfigNewProjDlgProc
 */
 INT_PTR CALLBACK ConfigNewProjDlgProc( HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
-	char sz[256];
-	sz[0] = 0;
+	std::string nm;
 
 	switch (uMsg)
 	{
@@ -399,14 +401,14 @@ INT_PTR CALLBACK ConfigNewProjDlgProc( HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_EDIT_NEWNAME, sz, 255);
-			if (!*sz)
+			nm = GetDialogText(hwndDlg, IDC_EDIT_NEWNAME);
+			if (nm.empty())
 			{
 				EndDialog(hwndDlg, 0);
 				break;
 			}
 			g_qeconfig.projectPresets.emplace_back();
-			strcpy(g_qeconfig.projectPresets.back().name, sz);
+			g_qeconfig.projectPresets.back().name = nm;
 			WndCfg_ProjectPresetsToWnd();
 			SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_SETCURSEL, (WPARAM)g_qeconfig.projectPresets.size() - 1, 0);
 			WndCfg_ProjectComboChanged();
@@ -439,12 +441,14 @@ WndCfg_DoDeleteProject
 */
 void WndCfg_DoDeleteProject()
 {
-	char szMsg[256];
 	int i = SendDlgItemMessage(hwndCfgProject, IDC_COMBO_PROJECT, CB_GETCURSEL, 0, 0);
 	if (i == -1)
 		return;
-	sprintf(szMsg, "Are you sure you want to delete project %s?", g_qeconfig.projectPresets[i].name);
-	if (MessageBox(g_hwndMain, szMsg, "QuakeEd 3: Confirm Project Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
+	if (MessageBox(g_hwndMain, 
+		_S("Are you sure you want to delete project %s?") << g_qeconfig.projectPresets[i].name, 
+		"QuakeEd 3: Confirm Project Delete", 
+		MB_YESNO | MB_ICONQUESTION) 
+		== IDNO)
 		return;
 
 	g_qeconfig.projectPresets.erase(g_qeconfig.projectPresets.begin() + i);
@@ -550,7 +554,7 @@ void WndCfg_FillColorCombo()
 
 	SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_ADDSTRING, 0, (LPARAM)"Current");
 	for (auto colIt = g_qeconfig.colorPresets.begin(); colIt != g_qeconfig.colorPresets.end(); ++colIt)
-		SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_ADDSTRING, 0, (LPARAM)colIt->name);
+		SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_ADDSTRING, 0, (LPARAM)colIt->name.data());
 
 	SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_SETCURSEL, 0,0);
 }
@@ -575,8 +579,8 @@ void WndCfg_SelectColor(int btnIDD)
 
 INT_PTR CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	char sz[MAX_PROJNAME];
-	sz[0] = 0;
+	std::string buf;
+
 	int i;
 	switch (uMsg)
 	{
@@ -587,8 +591,8 @@ INT_PTR CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 		switch (LOWORD(wParam))
 		{
 		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_EDIT_NEWNAME, sz, MAX_PROJNAME-1);
-			if (!*sz)
+			buf = GetDialogText(hwndDlg, IDC_EDIT_NEWNAME);
+			if (buf.empty())
 			{
 				EndDialog(hwndDlg, 0);
 				break;
@@ -599,7 +603,7 @@ INT_PTR CALLBACK ConfigSaveColorsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 			else if (i > 0)
 				g_qeconfig.colorPresets.push_back(g_qeconfig.colorPresets[i-1]);
 			WndCfg_WndToColors(g_qeconfig.colorPresets.back());
-			strcpy(g_qeconfig.colorPresets.back().name, sz);
+			g_qeconfig.colorPresets.back().name = buf;
 
 			EndDialog(hwndDlg, 1);
 			WndCfg_ColorsToWnd();
@@ -621,13 +625,11 @@ void WndCfg_DoSaveColors()
 
 void WndCfg_DoDeleteColors() 
 {
-	char szMsg[256];
-
 	int i = SendDlgItemMessage(hwndCfgColor, IDC_COMBO_COLOR, CB_GETCURSEL, 0, 0);
 	if (i < 1)
 		return;
-	sprintf(szMsg, "Are you sure you want to delete color preset %s?", g_qeconfig.colorPresets[i-1].name);
-	if (MessageBox(g_hwndMain, szMsg, "QuakeEd 3: Confirm Preset Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
+	if (MessageBox(g_hwndMain, _S("Are you sure you want to delete color preset %s?") << g_qeconfig.colorPresets[i - 1].name, 
+		"QuakeEd 3: Confirm Preset Delete", MB_YESNO | MB_ICONQUESTION) == IDNO)
 		return;
 
 	g_qeconfig.colorPresets.erase(g_qeconfig.colorPresets.begin() + i - 1);
@@ -708,7 +710,7 @@ void WndCfg_ConfigToWnd()
 
 	// --------------------------------
 	// Editor
-	SetDlgItemText(hwndCfgEditor, IDC_EDIT_GAMEPATH, g_cfgEditor.QuakePath);
+	SetDialogText(hwndCfgEditor, IDC_EDIT_GAMEPATH, g_cfgEditor.QuakePath);
 
 	sprintf(sz, "%d", (int)g_cfgEditor.UndoLevels);
 	SetDlgItemText(hwndCfgEditor, IDC_EDIT_UNDOLEVELS, sz);
@@ -753,20 +755,15 @@ WndCfg_WndToConfigEditor
 */
 void WndCfg_WndToConfigEditor(qecfgEditor_t &cfgEd)
 {
-	char	sz[128];
-
-	GetDlgItemText(hwndCfgEditor, IDC_EDIT_GAMEPATH, cfgEd.QuakePath, 255);
+	cfgEd.QuakePath = GetDialogText(hwndCfgEditor, IDC_EDIT_GAMEPATH);
 
 	cfgEd.Autosave = SendDlgItemMessage(hwndCfgEditor, IDC_CHECK_AUTOSAVE, BM_GETCHECK, 0, 0) != 0;
-	GetDlgItemText(hwndCfgEditor, IDC_EDIT_AUTOSAVE, sz, 4);
-	cfgEd.AutosaveTime = atoi(sz);
+	cfgEd.AutosaveTime = GetDialogInt(hwndCfgEditor, IDC_EDIT_AUTOSAVE);
 
-	GetDlgItemText(hwndCfgEditor, IDC_EDIT_UNDOLEVELS, sz, 4);
-	cfgEd.UndoLevels = atoi(sz);
+	cfgEd.UndoLevels = GetDialogInt(hwndCfgEditor, IDC_EDIT_UNDOLEVELS);
 	g_cmdQueue.SetSize((int)cfgEd.UndoLevels);
 
-	GetDlgItemText(hwndCfgEditor, IDC_COMBO_MAPSIZE, sz, 8);
-	cfgEd.MapSize = atoi(sz);
+	cfgEd.MapSize = GetDialogInt(hwndCfgEditor, IDC_COMBO_MAPSIZE);
 
 	cfgEd.CloneStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CLONESTYLE, CB_GETCURSEL, 0, 0);
 	cfgEd.CameraMoveStyle = SendDlgItemMessage(hwndCfgEditor, IDC_COMBO_CAMSTYLE, CB_GETCURSEL, 0, 0);
@@ -799,15 +796,14 @@ WndCfg_WndToConfigProject
 */
 void WndCfg_WndToConfigProject(qecfgProject_t &prj)
 {
-	GetDlgItemText(hwndCfgProject, IDC_COMBO_PROJECT, prj.name, MAX_PROJNAME);
-
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH, prj.basePath, _MAX_DIR);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY, prj.mapPath, _MAX_DIR);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP, prj.autosaveFile, _MAX_FNAME);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_ENTITYFILES, prj.entityFiles, _MAX_FNAME);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY, prj.wadPath, _MAX_DIR);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_DEFAULTWADS, prj.defaultWads, _MAX_FNAME);
-	GetDlgItemText(hwndCfgProject, IDC_EDIT_PALETTEFILE, prj.paletteFile, _MAX_FNAME);
+	prj.name = GetDialogText(hwndCfgProject, IDC_COMBO_PROJECT);
+	prj.basePath = GetDialogText(hwndCfgProject, IDC_EDIT_GAMEBASEPATH);
+	prj.mapPath = GetDialogText(hwndCfgProject, IDC_EDIT_MAPSDIRECTORY);
+	prj.autosaveFile = GetDialogText(hwndCfgProject, IDC_EDIT_AUTOSAVEMAP);
+	prj.entityFiles = GetDialogText(hwndCfgProject, IDC_EDIT_ENTITYFILES);
+	prj.wadPath = GetDialogText(hwndCfgProject, IDC_EDIT_TEXTUREDIRECTORY);
+	prj.defaultWads = GetDialogText(hwndCfgProject, IDC_EDIT_DEFAULTWADS);
+	prj.paletteFile = GetDialogText(hwndCfgProject, IDC_EDIT_PALETTEFILE);
 
 	prj.extTargets = SendDlgItemMessage(hwndCfgProject, IDC_CHECK_EXTTARGETS, BM_GETCHECK, 0, 0) != 0;
 
@@ -858,12 +854,12 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	cfgOK = true;
 
 	// Editor
-	if (!strlen(cfgCtx.cfgEd.QuakePath))
+	if (cfgCtx.cfgEd.QuakePath.empty())
 	{
 		DLGERRCOPY(ERR_NOQUAKEDIR);
 		cfgOK = false;
 	}
-	else if ( !IO_FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && !IO_FileExists(cfgCtx.cfgEd.QuakePath, "ID1/PAK0.PAK"))
+	else if ( !IO::FileExists(cfgCtx.cfgEd.QuakePath, "id1/pak0.pak") && !IO::FileExists(cfgCtx.cfgEd.QuakePath, "ID1/PAK0.PAK"))
 	{
 		DLGERRCOPY(ERR_BADQUAKEDIR);
 		cfgOK = false;
@@ -872,13 +868,13 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 	// UI
 
 	// Project
-	if (!strlen(cfgCtx.cfgProj.basePath))
+	if (cfgCtx.cfgProj.basePath.empty())
 	{
 		DLGERRCOPY(ERR_NOBASEPATH);
 		cfgOK = false;
 	}
 
-	if (!strlen(cfgCtx.cfgProj.mapPath))
+	if (cfgCtx.cfgProj.mapPath.empty())
 	{
 		DLGERRCOPY(ERR_NOMAPSPATH);
 		cfgOK = false;
@@ -886,30 +882,41 @@ bool WndCfg_VerifyConfig(cfgContext_t cfgCtx)
 
 	if (cfgCtx.cfgEd.Autosave)
 	{
-		if (!strlen(cfgCtx.cfgProj.autosaveFile) || IsPathDirectory(projTest.autosaveFile))
+		if (cfgCtx.cfgProj.autosaveFile.empty() || IO::DirExists(projTest.autosaveFile))
 		{
 			DLGERRCOPY(ERR_NOAUTOSAVE);
 			cfgOK = false;
 		}
 	}
 
-	if (!strlen(cfgCtx.cfgProj.entityFiles) || IsPathDirectory(projTest.entityFiles))
+	if (cfgCtx.cfgProj.entityFiles.empty() || IO::DirExists(projTest.entityFiles))
 	{
 		DLGERRCOPY(ERR_NODEFS);
 		cfgOK = false;
 	}
-	else if (!IO_FileExists(projTest.entityFiles))
+	else
 	{
-		DLGERRCOPY(ERR_BADDEFS);
-		cfgOK = false;
+		if (projTest.entityFiles.find("*") != -1)
+		{
+			if (!IO::FileWithExtensionExists(projTest.entityFiles))
+			{
+				DLGERRCOPY(ERR_BADDEFS);
+				cfgOK = false;
+			}
+		}
+		else if (!IO::FileExists(projTest.entityFiles))
+		{
+			DLGERRCOPY(ERR_BADDEFS);
+			cfgOK = false;
+		}
 	}
 
-	if (!strlen(cfgCtx.cfgProj.wadPath))
+	if (cfgCtx.cfgProj.wadPath.empty())
 	{
 		DLGERRCOPY(ERR_NOTEX);
 		cfgOK = false;
 	}
-	else if (!IO_FileWithExtensionExists(projTest.wadPath, "wad"))
+	else if (!IO::FileWithExtensionExists(projTest.wadPath, "wad"))
 	{
 		DLGERRCOPY(ERR_BADTEX);
 		cfgOK = false;
@@ -975,7 +982,6 @@ catch-all proc for all config subpanes
 INT_PTR CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	int nAutosave, nUndoLevel;
-	char sz[256];
 
 	switch (uMsg)
 	{
@@ -1103,33 +1109,25 @@ INT_PTR CALLBACK ConfigSubDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			case IDC_SPIN_UNDOLEVELS:
 				if (((LPNMUPDOWN)lParam)->iDelta < 0)
 				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 255);
-					nUndoLevel = min(1024, atoi(sz) + 1);
-					sprintf(sz, "%d", nUndoLevel);
-					SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
+					nUndoLevel = min(1024, GetDialogInt(hwndDlg, IDC_EDIT_UNDOLEVELS) + 1);
+					SetDialogInt(hwndDlg, IDC_EDIT_UNDOLEVELS, nUndoLevel);
 				}
 				else
 				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz, 255);
-					nUndoLevel = max(1, atoi(sz) - 1);
-					sprintf(sz, "%d", nUndoLevel);
-					SetDlgItemText(hwndDlg, IDC_EDIT_UNDOLEVELS, sz);
+					nUndoLevel = max(1, GetDialogInt(hwndDlg, IDC_EDIT_UNDOLEVELS) - 1);
+					SetDialogInt(hwndDlg, IDC_EDIT_UNDOLEVELS, nUndoLevel);
 				}
 				break;
 			case IDC_SPIN_AUTOSAVE:
 				if (((LPNMUPDOWN)lParam)->iDelta < 0)
 				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 255);
-					nAutosave = min(60, atoi(sz) + 1);
-					sprintf(sz, "%d", nAutosave);
-					SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
+					nAutosave = min(60, GetDialogInt(hwndDlg, IDC_EDIT_AUTOSAVE) + 1);
+					SetDialogInt(hwndDlg, IDC_EDIT_AUTOSAVE, nAutosave);
 				}
 				else
 				{
-					GetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz, 255);
-					nAutosave = max(1, atoi(sz) - 1);
-					sprintf(sz, "%d", nAutosave);
-					SetDlgItemText(hwndDlg, IDC_EDIT_AUTOSAVE, sz);
+					nAutosave = max(1, GetDialogInt(hwndDlg, IDC_EDIT_AUTOSAVE) - 1);
+					SetDialogInt(hwndDlg, IDC_EDIT_AUTOSAVE, nAutosave);
 				}
 				break;
 			}

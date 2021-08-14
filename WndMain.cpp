@@ -70,11 +70,15 @@ INT_PTR CALLBACK SplashDlgProc(
 
 void WndSplash_Create()
 {
+#ifndef _DEBUG
 	g_hwndSplash = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_SPLASH), g_hwndMain, SplashDlgProc);
+#endif
 }
 void WndSplash_Destroy() 
 {
+#ifndef _DEBUG
 	DestroyWindow(g_hwndSplash);
+#endif
 }
 
 /*
@@ -533,14 +537,11 @@ WndMain_UpdateTitle
 */
 void WndMain_UpdateTitle()
 {
-	char tmp[512];
-
-	sprintf_s(tmp, "%s - [%s%s]", 
-		g_qeAppName, 
-		g_map.hasFilename ? g_map.name : "unnamed",
-		g_cmdQueue.IsModified() ? " *" : "");
-
-	SetWindowText(g_hwndMain, tmp);
+	SetWindowText(g_hwndMain, 
+		_S("%s - [%s%s]") 
+		<< g_qeAppName
+		<< (g_map.hasFilename ? g_map.name : "unnamed")
+		<< (g_cmdQueue.IsModified() ? " *" : ""));
 }
 
 /*
@@ -727,9 +728,9 @@ void WndMain_Create()
 	WndMain_UpdateTitle();
 
 #ifdef _DEBUG
-	sprintf(g_qeAppName, "QuakeEd 3.%i DEBUG (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
+	g_qeAppName = std::string(_S("QuakeEd 3.%i DEBUG (build %i)") << QE_VERSION_MINOR << QE_VERSION_BUILD);
 #else
-	sprintf(g_qeAppName, "QuakeEd 3.%i (build %i)", QE_VERSION_MINOR, QE_VERSION_BUILD);
+	g_qeAppName = std::string(_S("QuakeEd 3.%i (build %i)") << QE_VERSION_MINOR << QE_VERSION_BUILD);
 #endif
 
 	WndMain_LoadStateForWindow(g_hwndMain, "MainWindow");

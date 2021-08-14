@@ -25,12 +25,14 @@
 
 #include "WndMain.h"
 
+#include "texture.h"
 #include "textures.h"
 #include "texdef.h"
 #include "plane.h"
 #include "face.h"
 #include "brush.h"
 #include "entclass.h"
+#include "EPair.h"
 #include "entity.h"
 
 
@@ -64,9 +66,6 @@ typedef struct
 extern qeglobals_t g_qeglobals;
 extern double	g_deltaTime;
 
-extern char		g_qeAppName[64];
-extern char		g_qePath[MAX_PATH];
-
 extern HWND		g_hwndMain;
 
 /*
@@ -95,11 +94,5 @@ char   *QE_ExpandProjectPath (char *p);
 vec3	pointOnGrid(const vec3 point);
 vec3	AxisForVector(const vec3 &v);		// TODO: mathlib
 vec3	AxializeVector(const vec3 &v);
-
-// WndConfig.c
-void DoConfigWindow();
-void DoConfigWindowProject();
-bool SelectDir(HWND h, bool format, char* title);
-
 
 #endif
