@@ -436,7 +436,8 @@ bool QE_KeyDown (int key)
 		PostMessage(g_hwndMain, WM_COMMAND, ID_TEXTURES_LOCK, 0);
 		break;
 	case 'M':
-		PostMessage(g_hwndMain, WM_COMMAND, ID_FILE_IMPORTMAP, 0);
+		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CSGMERGE, 0);
+		//PostMessage(g_hwndMain, WM_COMMAND, ID_FILE_IMPORTMAP, 0);
 		break;
 	case 'N':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ENTITY, 0);

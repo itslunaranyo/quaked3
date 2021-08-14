@@ -224,7 +224,7 @@ BEGIN
         BEGIN
             MENUITEM "CSG &Hollow\tAlt+H",          ID_SELECTION_CSGHOLLOW
             MENUITEM "CSG &Subtract\tAlt+S",        ID_SELECTION_CSGSUBTRACT
-            MENUITEM "CSG &Merge\tAlt+M",           ID_SELECTION_CSGMERGE
+            MENUITEM "CSG &Merge\tM",               ID_SELECTION_CSGMERGE
         END
         MENUITEM SEPARATOR
         POPUP "&Primitives"
