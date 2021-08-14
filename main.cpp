@@ -77,6 +77,7 @@ void Main_Init()
 		Log::Init();
 		time(&lTime);
 		Log::Print(_S("%s\nSesson Started: %s\n")<< g_qeAppName<< ctime(&lTime));
+		Log::Print(_S("Running in %s\n")<< g_qePath);
 
 		WndMain_Create();
 
