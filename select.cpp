@@ -39,7 +39,7 @@ void Selection::HandleChange()
 		vSize = g_vMaxs - g_vMins;
 
 		WndMain_Status(
-			(_S("Selected: %s (%v0)")
+			(_S("Selected: %s (%0)")
 			<< g_brSelectedBrushes.Next()->owner->GetKeyValue("classname")
 			<< vSize), 
 			3);

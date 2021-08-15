@@ -197,9 +197,9 @@ void WndCamera::MouseMoved(const int x, const int y, const int buttons)
 			vec3	size;
 			size = t.brush->maxs - t.brush->mins;
 			if (t.brush->owner->IsPoint())
-				camstring = (_S("%s (%0v)") << t.brush->owner->eclass->name << size).Emit();
+				camstring = (_S("%s (%0)") << t.brush->owner->eclass->name << size).Emit();
 			else
-				camstring = (_S("%s (%0v) %s") << t.brush->owner->eclass->name << size << t.face->texdef.name).Emit();
+				camstring = (_S("%s (%0) %s") << t.brush->owner->eclass->name << size << t.face->texdef.name).Emit();
 		}
 		else
 			camstring = "";
