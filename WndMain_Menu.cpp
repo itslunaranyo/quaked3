@@ -378,7 +378,8 @@ LONG WINAPI WndMain_Command(
 		for (int i = 0; i < 4; i++)
 			g_vGrid[i].PositionView();
 		g_vCamera.PositionCenter();
-		WndMain_UpdateWindows(W_XY | W_CAMERA);
+		g_vZ.PositionCenter();
+		WndMain_UpdateWindows(W_SCENE);
 		break;
 
 	case ID_VIEW_NEXTVIEW:

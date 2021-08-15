@@ -76,6 +76,17 @@ void ZView::Scroll(float amt)
 
 /*
 ============
+ZView::PositionCenter
+============
+*/
+void ZView::PositionCenter()
+{
+	vec3 sorg = Selection::GetTrueMid();
+	origin.z = sorg.z;
+}
+
+/*
+============
 ZView::Resize
 ============
 */

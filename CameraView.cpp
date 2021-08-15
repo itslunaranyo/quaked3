@@ -34,18 +34,13 @@ CameraView::PositionCenter
 */
 void CameraView::PositionCenter ()
 {
-	Brush *b;
+	vec3 smins, smaxs, sorg, dir;
+	Selection::GetBounds(smins, smaxs);
+	sorg = (smins + smaxs) * 0.5f;
+	dir = normalize(origin - sorg);
 
-	b = g_brSelectedBrushes.Next();
-	if (b && b->Next() != b)
-	{
-		origin[0] = b->mins[0] - 64;
-		origin[1] = b->mins[1] - 64;
-		origin[2] = b->mins[2] + 64;
-		angles[0] = -22.5;
-		angles[1] = 45;
-		angles[2] = 0;
-	}
+	origin = sorg + dir * (float)(VectorLength(smaxs - smins) * 0.5f + 64.0f);
+	PointAt(sorg);
 	BuildMatrix();
 }
 // <---sikk

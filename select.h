@@ -45,6 +45,7 @@ namespace Selection
 {
 	extern select_t		g_selMode;
 	extern std::vector<Face*> faces;
+	extern vec3	g_vMins, g_vMaxs;
 
 	void	Changed();
 	void	HandleChange();
@@ -82,6 +83,7 @@ namespace Selection
 	void	SelectAll();	// sikk - Select All
 	void	DeselectFiltered();
 	void	DeselectAll();
+	bool	CalcBounds();
 	bool	GetBounds(vec3 &mins, vec3 &maxs);
 	vec3	GetTrueMid();
 	vec3	GetMid();

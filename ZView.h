@@ -21,6 +21,7 @@ public:
 	void	ScaleDown();
 	void	ResetScale();
 	void	Scroll(float amt);
+    void	PositionCenter();
 	void	Resize(const int w, const int h);
 	void	Scale(float sc);
 	void	ScreenToWorld(int x, int y, vec3 &point);

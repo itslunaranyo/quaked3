@@ -15,6 +15,7 @@ Brush	g_brSelectedBrushes;	// highlighted
 bool	g_bSelectionChanged;
 select_t	Selection::g_selMode;
 std::vector<Face*> Selection::faces;
+vec3	Selection::g_vMins, Selection::g_vMaxs;
 
 void Selection::Changed() { g_bSelectionChanged = true;  }
 
@@ -30,15 +31,15 @@ void Selection::HandleChange()
 {
 	if (!g_bSelectionChanged) return;
 
-	vec3		vMin, vMax, vSize;
+	vec3 vSize;
 
 	if (HasBrushes())
 	{
-		GetBounds(vMin, vMax);
-		vSize = vMax - vMin;
+		CalcBounds();
+		vSize = g_vMaxs - g_vMins;
 
 		WndMain_Status(
-			(_S("Selected: %s (%v)")
+			(_S("Selected: %s (%v0)")
 			<< g_brSelectedBrushes.Next()->owner->GetKeyValue("classname")
 			<< vSize), 
 			3);
@@ -829,12 +830,12 @@ void Selection::DeselectAll()
 
 /*
 ===============
-Selection::GetBounds
+Selection::CalcBounds
 ===============
 */
-bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
+bool Selection::CalcBounds()
 {
-	ClearBounds(mins, maxs);
+	ClearBounds(g_vMins, g_vMaxs);
 
 	if (IsEmpty())
 		return false;
@@ -843,8 +844,8 @@ bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
 	{
 		for (Brush *b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 		{
-			mins = glm::min(mins, b->mins);
-			maxs = glm::max(maxs, b->maxs);
+			g_vMins = glm::min(g_vMins, b->mins);
+			g_vMaxs = glm::max(g_vMaxs, b->maxs);
 		}
 	}
 	else if (NumFaces())
@@ -853,11 +854,26 @@ bool Selection::GetBounds(vec3 &mins, vec3 &maxs)
 		{
 			for (int i = 0; i < (*fIt)->GetWinding()->numpoints; i++)
 			{
-				mins = glm::min(mins, (*fIt)->GetWinding()->points[i].point);
-				maxs = glm::max(maxs, (*fIt)->GetWinding()->points[i].point);
+				g_vMins = glm::min(g_vMins, (*fIt)->GetWinding()->points[i].point);
+				g_vMaxs = glm::max(g_vMaxs, (*fIt)->GetWinding()->points[i].point);
 			}
 		}
 	}
+	return true;
+}
+
+/*
+===============
+Selection::GetBounds
+===============
+*/
+bool Selection::GetBounds(vec3& mins, vec3& maxs)
+{
+	if (IsEmpty())
+		return false;
+
+	mins = g_vMins;
+	maxs = g_vMaxs;
 	return true;
 }
 
