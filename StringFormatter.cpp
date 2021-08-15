@@ -45,7 +45,11 @@ std::string StringFormatter::Emit()
 
 int StringFormatter::Precision()
 {
-	return std::atoi(&format[ipct - 1]);
+	if (format[ipct - 1] == '0')
+		return 0;
+	int i = std::atoi(&format[ipct - 1]);
+	if (i == 0) return -1;
+	return i;
 }
 
 void StringFormatter::Put(const char* str)
@@ -88,7 +92,7 @@ StringFormatter& StringFormatter::operator<<(const float& f)
 	int prec = Precision();
 	char buf[128];
 	char fmt[16] = "%f";
-	if (prec > 0)
+	if (prec >= 0)
 		std::snprintf(fmt, 16, "%%1.%df", prec);
 	std::snprintf(buf, 64, fmt, f);
 	Put(buf);
@@ -100,7 +104,7 @@ StringFormatter& StringFormatter::operator<<(const double& d)
 	int prec = Precision();
 	char buf[512];
 	char fmt[16] = "%lf";
-	if (prec > 0)
+	if (prec >= 0)
 		std::snprintf(fmt, 16, "%%1.%df", prec);
 	std::snprintf(buf, 512, fmt, d);
 	Put(buf);
@@ -110,7 +114,7 @@ StringFormatter& StringFormatter::operator<<(const double& d)
 StringFormatter& StringFormatter::operator<<(const vec3& v)
 {
 	int prec = Precision();
-	if (prec)
+	if (prec >= 0)
 		Put(strlib::VecToStringNice(v,prec));
 	else
 		Put(strlib::VecToString(v));
@@ -120,7 +124,7 @@ StringFormatter& StringFormatter::operator<<(const vec3& v)
 StringFormatter& StringFormatter::operator<<(const dvec3& v)
 {
 	int prec = Precision();
-	if (prec)
+	if (prec >= 0)
 		Put(strlib::DVecToStringNice(v, prec));
 	else
 		Put(strlib::DVecToString(v));
