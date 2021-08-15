@@ -120,18 +120,19 @@ std::string DoubleToStringNice(const double f, const int dec, const bool noTrunc
 	str.resize(p);
 	std::sprintf(&str[0], fmt, f);
 
-	for (p; p > 0; --p)
+	for (--p; p > 0; --p)
 	{
 		if (str[p] == '0') continue;
 		if (str[p] == '.')
 		{
 			if (noTrunc)
 				p += dec;
+			--p;
 			break;
 		}
 		break;
 	}
-	str.resize(p);
+	str.resize(p + 1);
 	return str;
 }
 
