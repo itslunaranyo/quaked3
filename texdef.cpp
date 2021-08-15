@@ -8,10 +8,12 @@
 #include "Textures.h"
 #include "texdef.h"
 
-
-TexDef::TexDef() : tex(nullptr), shift(), rotate(0)
+void TexDef::Reset()
 {
-	name[0] = 0;
+	tex = nullptr;
+	name = "";
+	rotate = { 0 };
+	shift[0] = shift[1] = 0;
 	scale[0] = scale[1] = g_qeglobals.d_fDefaultTexScale;
 }
 

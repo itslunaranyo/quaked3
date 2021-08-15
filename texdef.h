@@ -10,8 +10,9 @@ class Texture;
 class TexDef
 {
 public:
-	TexDef();
+	TexDef() { Reset(); }
 
+	void	Reset();
 	void	Set(Texture* stx);
 	void	Set(const char* txn);
 	void	Set(const std::string& txn);

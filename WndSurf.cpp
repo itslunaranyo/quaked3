@@ -31,7 +31,7 @@ WndSurf_ClearEditTexdef
 */
 void WndSurf_ClearEditTexdef()
 {
-	memset(&g_texdefEdit, 0, sizeof(g_texdefEdit));
+	g_texdefEdit.Reset();
 	g_nEditSurfMixed = 0;
 }
 
@@ -123,7 +123,6 @@ void WndSurf_FromEditTexdef()
 
 	// sikk - So Dialog is updated with texture info from first selected face
 	texdef = &g_texdefEdit;
-	texdef->name[MAX_TEXNAME - 1] = 0;
 
 	SendMessage(g_hwndSurfaceDlg, WM_SETREDRAW, 0, 0);
 
