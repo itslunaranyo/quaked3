@@ -80,7 +80,8 @@ void EntityView::Reset()
 	vPairs.clear();
 	vClass = NULL;
 	vClassMixed = false;
-	memset(vFlags, 0, EntClass::MAX_FLAGS * sizeof(entFlag_t));
+	for (int i = 0; i < EntClass::MAX_FLAGS; ++i)
+		vFlags[i].Reset();
 }
 
 void EntityView::Refresh()

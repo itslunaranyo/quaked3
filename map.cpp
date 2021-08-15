@@ -701,7 +701,7 @@ void Map::RegionAdd()
 	if (!regionActive)
 		return;
 
-	memset(&texdef, 0, sizeof(texdef));
+	texdef.Reset();
 	texdef.name = "REGION";
 
 	mins[0] = regionMins[0] - 16;

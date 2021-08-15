@@ -37,6 +37,7 @@ private:
 	};
 	struct entFlag_t {
 		entFlag_t() : name(""), state(EFS_NO) {};
+		void Reset() { name = ""; state = EFS_NO; }
 		std::string_view name;
 		entFlagState_t state;
 	};
