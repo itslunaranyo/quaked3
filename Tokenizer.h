@@ -11,6 +11,7 @@ public:
 	Tokenizer(const std::string_view _str) : str(_str) {};
 	~Tokenizer() {};
 
+	void SplitBy(const char* ch) { splits.append(ch); }
 	void SplitParens() { splits.append("()"); }
 	void SplitCode() { splits.append("(),;"); }
 	void DoubleQuotedTokens(bool b = true) { dblQuotedTokens = b; }

@@ -572,12 +572,14 @@ Textures::LoadWadsFromWadstring
 void Textures::LoadWadsFromWadstring(const std::string& wadstring)
 {
 	std::string w = wadstring;
-	std::replace(w.begin(), w.end(), ';', ' ');
-	Tokenizer tkr(w);
+	Tokenizer tkr(wadstring);
+	tkr.SplitBy(";");
 
 	while(!tkr.AtEnd())
 	{
-		Textures::LoadWad(std::string(tkr.Next()));
+		w = std::string(tkr.Next());
+		if (!w.empty() && w != ";")
+			Textures::LoadWad(w);
 	}
 
 	LibraryChanged();
