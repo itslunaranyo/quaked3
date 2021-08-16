@@ -209,7 +209,6 @@ void QE_Init ()
 		RegCloseKey(hKey);
 	}
 
-	g_qeconfig.Load();
 	Textures::Init();
 	QE_InitProject();
 

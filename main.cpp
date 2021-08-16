@@ -79,6 +79,8 @@ void Main_Init()
 		Log::Print(_S("%s\nSesson Started: %s\n")<< g_qeAppName<< ctime(&lTime));
 		Log::Print(_S("Running in %s\n")<< g_qePath);
 
+		g_qeconfig.Load();
+
 		WndMain_Create();
 
 		GLenum glewerr = glewInit();
