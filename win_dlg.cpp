@@ -9,6 +9,7 @@
 #include "map.h"
 #include "CameraView.h"
 #include "GridView.h"
+#include "ZView.h"
 #include "CmdImportMap.h"
 #include "WndEntity.h"
 #include "modify.h"
@@ -1430,6 +1431,7 @@ void OnSelect (HWND hTree)
 	for (int i = 0; i < 4; i++)
 		g_vGrid[i].PositionView();
 	g_vCamera.PositionCenter();
+	g_vZ.PositionCenter();
 	WndMain_ForceUpdateWindows(W_SCENE);
 }
 
