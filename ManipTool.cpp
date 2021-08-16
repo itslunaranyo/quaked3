@@ -130,7 +130,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wn
 		case ID_NUDGE_RIGHT:
 			mc = v.GetMouseContext(0,0);
 			Nudge(LOWORD(wParam), mc.right, mc.up);
-			WndMain_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 			return true;
 		default:
 			return false;
@@ -145,7 +145,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wn
 		v.ScreenToWorld(mx, my, x, y);
 		mc = v.GetMouseContext(mx, my);
 		DragStart2D(mc, v.GetAxis());
-		WndMain_UpdateWindows(W_SCENE);
+		WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 		return true;
 
 	case WM_MOUSEMOVE:
@@ -156,7 +156,7 @@ bool ManipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wn
 			v.ScreenToWorld(mx, my, x, y);
 			mc = v.GetMouseContext(mx, my);
 			DragMove(mc, mc.org);
-			WndMain_UpdateWindows(W_SCENE);
+			WndMain_UpdateWindows(W_SCENE | W_ENTITY);
 			return true;
 		}
 		return false;
