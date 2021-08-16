@@ -11,14 +11,16 @@ struct qecfgUI_t
 {
 	int		TextureMode;	// filtering
 	int		DrawMode;		// wireframe/flat/textured
-	float	Gamma;
-	float	Brightness;
-
+	int		ViewFilter;
 	int		Stipple;
 	int		RadiantLights;
 
-	int		ViewFilter;
+	float	Gamma;
+	float	Brightness;
+
 	int		PathlineMode;
+	bool	HideUnusedTextures;
+
 	bool	ShowAxis;
 	bool	ShowBlocks;
 	bool	ShowCameraGrid;

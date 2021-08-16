@@ -21,16 +21,19 @@ void TexDef::Set(Texture* stx)
 {
 	tex = stx; 
 	name = tex->name;
+	tex->Use();
 }
 void TexDef::Set(const char* txn)
 {
 	name = std::string(txn); 
 	tex = Textures::ForName(name);
+	tex->Use();
 }
 void TexDef::Set(const std::string& txn)
 {
 	name = txn; 
 	tex = Textures::ForName(name);
+	tex->Use();
 }
 
 void TexDef::Clamp()

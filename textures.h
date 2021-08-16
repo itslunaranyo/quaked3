@@ -24,9 +24,6 @@ namespace Textures
 	void ReloadAll();
 	void RefreshUsedStatus();
 	void FlushAll();
-	void FlushUnused();
-	void FlushUnused(TextureGroup* tg);
-	void FlushUnusedFromWadstring(const std::string& wadstring);
 
 	Texture* CreateSolid(const std::string& name);
 	Texture* MakeNullTexture();
@@ -47,7 +44,6 @@ namespace Textures
 	void MenuLoadWad(const std::string& menuwad);
 	void MenuReloadAll();
 	void MenuReloadGroup(TextureGroup* tg);
-	void MenuFlushUnused();
 
 	void SetTextureMode(const int mode);
 	void SetDrawMode(const int mode);

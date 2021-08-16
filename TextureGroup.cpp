@@ -8,7 +8,7 @@
 TextureGroup::TextureGroup
 ==================
 */
-TextureGroup::TextureGroup() : first(nullptr), numTextures(0), flushed(false), name("?"), id(rand())
+TextureGroup::TextureGroup() : first(nullptr), numTextures(0), name("?"), id(rand())
 {	
 }
 
@@ -117,41 +117,6 @@ void TextureGroup::Add(Texture* tx)
 		qtex = qtex->next;
 	}
 	qtex->next = tx;
-}
-
-/*
-==================
-TextureGroup::FlushUnused
-==================
-*/
-void TextureGroup::FlushUnused()
-{
-	Texture* head, * cur, * temp, * prev;
-	head = cur = first;
-	prev = nullptr;
-	while (cur)
-	{
-		if (!cur->used)
-		{
-			temp = cur;
-			if (head == cur)
-				head = cur->next;
-			if (prev)
-				prev->next = cur->next;
-			cur = cur->next;
-			if (Textures::texMap[temp->name] == temp)	// don't nuke textures from other wads by the same name
-				Textures::texMap[temp->name] = nullptr;
-			delete temp;
-			numTextures--;
-		}
-		else
-		{
-			prev = cur;
-			cur = cur->next;
-		}
-	}
-	first = head;
-	flushed = true;
 }
 
 /*

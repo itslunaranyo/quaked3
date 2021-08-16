@@ -1,8 +1,11 @@
 #include "pre.h"
 #include "qedefs.h"
+#include "cfgvars.h"
 #include "qfiles.h"
 #include "strlib.h"
+#include "texdef.h"
 #include "Texture.h"
+#include "TextureView.h"
 
 
 /*
@@ -21,6 +24,14 @@ Texture::Texture(int w, int h, const std::string& n, vec3 c, const char* texData
 	}
 	strlib::ToLower(name);
 	SetFlags();
+}
+
+void Texture::Use()
+{
+	if (!used && g_cfgUI.HideUnusedTextures)
+		g_vTexture.Refresh();
+
+	used = true;
 }
 
 /*

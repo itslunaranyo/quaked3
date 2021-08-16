@@ -54,9 +54,7 @@ void WndTexture::DoPopupMenu(int x, int y)
 	GetCursorPos(&point);
 	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), mnum);
 
-	//bool flushed = twg->tg->flushed;
-	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
-	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_LOADCOMPLETELY, !flushed);
+	WndMain_CheckMenuItem(hMenu, ID_TEXTURES_HIDEUNUSED, g_cfgUI.HideUnusedTextures);
 
 	retval = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_NONOTIFY | TPM_RETURNCMD | TPM_RIGHTBUTTON, point.x, point.y, 0, wHwnd, NULL);
 

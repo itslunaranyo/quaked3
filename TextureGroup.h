@@ -44,12 +44,10 @@ public:
 	int	numTextures;
 	int id;
 	std::string name;
-	bool flushed;
 
 	Texture* ForName(const std::string& name);
 	Texture* ByColor(const vec3 oc);
 	void ClearUsed();
-	void FlushUnused();
 	void Flush();
 	void Add(Texture* tx);
 private:

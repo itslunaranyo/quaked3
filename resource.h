@@ -191,6 +191,8 @@
 #define IDC_CHECK_VFEEXCLUSIVE          1256
 #define IDC_CHECK_RADIANTLIGHTS         1257
 #define IDC_CHECK_LOADLASTPROJECT       1258
+#define IDC_CHECK_RADIANTLIGHTS2        1258
+#define IDC_CHECK_HIDEUNUSEDTEX         1258
 #define IDC_CHECK_BRUSHPRECISION        1259
 #define IDC_CHECK_SORTTEXBYWAD          1260
 #define IDC_EDIT_SCALEX                 1263
@@ -320,7 +322,6 @@
 #define ID_VIEW_SHOWBLOCKS              40143
 #define ID_GRID_128                     40145
 #define ID_TEXTURES_FLUSH_ALL           40147
-#define ID_TEXTURES_FLUSH_UNUSED        40148
 #define ID_VIEW_SHOWSKY                 40149
 #define ID_TEXTURES_UPDATEMENU          40150
 #define ID_TEXTURES_LOCK                40151
@@ -518,7 +519,6 @@
 #define ID_NUDGE_LEFT                   40488
 #define ID_CONTEXT_RELOAD               40488
 #define ID_NUDGE_RIGHT                  40489
-#define ID_CONTEXT_FLUSHUNUSED          40489
 #define ID_TEXTURES_RELOAD              40490
 #define ID_CONTEXT_LOADCOMPLETELY       40490
 #define ID_VIEW_FILTER_POPUP            40491
@@ -527,7 +527,6 @@
 #define ID_TEXTURE_HIDEUNUSED           40496
 #define ID_TEXTURES_HIDEUNUSED          40497
 #define ID_TEXTURES_LOADCOMPLETELY      40498
-#define ID_TEXTURES_FLUSHUNUSED         40499
 #define ID_TEXTURES_RELOADWAD           40500
 #define ID_TEXTURE_SELECTMATCHING       40501
 #define ID_TEXTURE_REPLACEMATCHING      40502

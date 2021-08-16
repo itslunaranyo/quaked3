@@ -81,6 +81,9 @@ void TextureView::ArrangeGroup(TextureGroup &txGrp)
 		if (Textures::texMap[q->name] != q)
 			continue;
 
+		if (g_cfgUI.HideUnusedTextures && !q->used)
+			continue;
+
 		// go to the next row unless the texture is the first on the row
 		if (curRowHeight)
 		{
@@ -147,6 +150,7 @@ void TextureView::Arrange()
 			// id is required to provide a soft (ie not pointer-based) link between layout and 
 			// texturegroup. texturegroups can have been flushed & deleted by the time we get to
 			// this point, so no twg->tg dereference is safe.
+			// TODO: reevaluate now that flushing is gone
 			foldedGroups.push_back(twgIt->tgID);
 		}
 	}
@@ -416,7 +420,7 @@ void TextureView::ChooseFirstTexture()
 	{
 		if (twgIt->tg == &Textures::group_unknown) continue;
 		
-		tex = twgIt->layout.front().tex;
+		tex = twgIt->tg->first;// layout.front().tex;
 		break;
 	}
 	if (!tex) return;

@@ -20,7 +20,7 @@ public:
 	bool		used;			// true = is present on the level
 	unsigned	showflags;
 
-	inline void	Use() { used = true; }
+	void	Use();
 private:
-	void		SetFlags();
+	void	SetFlags();
 };

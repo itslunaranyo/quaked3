@@ -463,7 +463,7 @@ bool QE_KeyDown (int key)
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_TEXTURE, 0);
 		break;
 	case 'U':
-		PostMessage(g_hwndMain, WM_COMMAND, ID_TEXTURES_SHOWINUSE, 0);
+		PostMessage(g_hwndMain, WM_COMMAND, ID_TEXTURES_HIDEUNUSED, 0);
 		break;
 	case 'X':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);

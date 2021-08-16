@@ -225,9 +225,13 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (LOWORD(wParam))
 		{
-		/*
-		ID_TEXTURES_HIDEUNUSED
-		*/
+		case ID_TEXTURES_HIDEUNUSED:
+			WndMain_SetInspectorMode(W_TEXTURE);
+			//Textures::RefreshUsedStatus();
+			g_cfgUI.HideUnusedTextures = !g_cfgUI.HideUnusedTextures;
+			g_vTexture.Refresh();
+			WndMain_UpdateWindows(W_TEXTURE);
+			return true;
 		case ID_TEXTURES_REPLACEALL:
 			FindTextureDialog();
 			return true;
@@ -235,11 +239,6 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Sys_BeginWait();
 			WndMain_SetInspectorMode(W_TEXTURE);
 			Textures::MenuReloadAll();
-			WndMain_UpdateWindows(W_TEXTURE);
-			break;
-		case ID_TEXTURES_HIDEUNUSED:
-			WndMain_SetInspectorMode(W_TEXTURE);
-			Textures::RefreshUsedStatus();
 			WndMain_UpdateWindows(W_TEXTURE);
 			break;
 

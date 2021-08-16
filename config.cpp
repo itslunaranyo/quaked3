@@ -33,6 +33,7 @@ ConfigVarInt	cfgv_RadiantLights(g_cfgUI.RadiantLights, "RadiantLights", 1);
 ConfigVarFloat	cfgv_Gamma(g_cfgUI.Gamma, "Gamma", 1.0f);
 ConfigVarFloat	cfgv_Brightness(g_cfgUI.Brightness, "Brightness", 1.0f);
 ConfigVarInt	cfgv_PathlineMode(g_cfgUI.PathlineMode, "PathMode", 1);
+ConfigVarBool	cfgv_HideUnusedTextures(g_cfgUI.HideUnusedTextures, "HideUnusedTextures", 1);
 
 ConfigVarBool	cfgv_ShowAxis(g_cfgUI.ShowAxis, "ShowAxis", 0);
 ConfigVarBool	cfgv_ShowBlocks(g_cfgUI.ShowBlocks, "ShowBlocks", 0);
@@ -54,6 +55,7 @@ ConfigVar* const cfgUIVars[] = {
 	&cfgv_Gamma,
 	&cfgv_Brightness,
 	&cfgv_PathlineMode,
+	&cfgv_HideUnusedTextures,
 
 	&cfgv_ShowAxis,
 	&cfgv_ShowBlocks,

@@ -854,6 +854,8 @@ void WndMain_UpdateMenuFilters(HMENU hMenu)
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_SHOWWORKZONE, g_cfgUI.ShowWorkzone);
 	WndMain_CheckMenuItem(hMenu, ID_VIEW_SHOWANGLES, g_cfgUI.ShowAngles);
 
+	WndMain_CheckMenuItem(hMenu, ID_TEXTURES_HIDEUNUSED, g_cfgUI.HideUnusedTextures);
+
 	WndMain_CheckMenuItem(hMenu, ID_TARGETLINES_ALL, g_cfgUI.PathlineMode == TargetGraph::tgm_all);
 	WndMain_CheckMenuItem(hMenu, ID_TARGETLINES_SEL, g_cfgUI.PathlineMode == TargetGraph::tgm_selected);
 	WndMain_CheckMenuItem(hMenu, ID_TARGETLINES_SELPATH, g_cfgUI.PathlineMode == TargetGraph::tgm_selected_path);

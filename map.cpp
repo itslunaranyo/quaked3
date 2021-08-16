@@ -155,7 +155,6 @@ replace all current map data with the contents of a file
 load map
 load wads
 build brush data
-flush wads
 ================
 */
 void Map::Load(const std::string& filename)
@@ -256,7 +255,6 @@ void Map::Load(const std::string& filename)
 	WndMain_UpdateTitle();
 	RegionOff();
 
-	Textures::FlushUnused();	// should be FlushUnusedFromWadstring technically but those are the only wads loaded yet
 	SanityCheck();
 
 	WndMain_UpdateWindows(W_ALL);
@@ -415,7 +413,6 @@ merge the contents of a file into the current map data
 load map
 reload current wads + load wads added to wadstring
 build brush data
-flush only wads added to wadstring
 ================
 */
 void Map::ImportFromFile(const std::string& filename)

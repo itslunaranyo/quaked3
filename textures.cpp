@@ -181,60 +181,6 @@ void Textures::FlushAll()
 	LibraryChanged();
 }
 
-/*
-==================
-Textures::FlushUnused
-==================
-*/
-void Textures::FlushUnused()
-{
-	group_unknown.FlushUnused();
-	for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
-	{
-		(*tgIt)->FlushUnused();
-	}
-	
-	LibraryChanged();
-}
-
-/*
-==================
-Textures::FlushUnused
-==================
-*/
-void Textures::FlushUnused(TextureGroup *tg)
-{
-	if (!tg) return;
-	RefreshUsedStatus();
-	tg->FlushUnused();
-
-	LibraryChanged();
-}
-
-
-/*
-==================
-Textures::FlushUnusedFromWadstring
-==================
-*/
-void Textures::FlushUnusedFromWadstring(const std::string& wadstring)
-{
-	std::string w = wadstring;
-	std::replace(w.begin(), w.end(), ';', ' ');
-	Tokenizer tkr(w);
-
-	while(!tkr.AtEnd())
-	{
-		auto wad = tkr.Next();
-		for (auto tgIt = groups.begin(); tgIt != groups.end(); tgIt++)
-		{
-			if (wad == (*tgIt)->name)
-				(*tgIt)->FlushUnused();
-		}
-	}
-
-	LibraryChanged();
-}
 
 /*
 ==================
@@ -502,9 +448,6 @@ void Textures::ReloadGroup(std::vector<TextureGroup*>::iterator tgIt)
 	oldwad->numTextures = newwad->numTextures;
 	delete newwad;	// will now take oldwad's textures with it
 
-	if (oldwad->flushed)
-		oldwad->FlushUnused();
-
 	Textures::AddToNameMap(oldwad);
 
 	LibraryChanged();
@@ -704,17 +647,6 @@ void Textures::MenuReloadGroup(TextureGroup* tg)
 {
 	ReloadGroup(tg);
 	g_map.BuildBrushData();
-}
-
-/*
-==================
-Textures::MenuFlushUnused
-==================
-*/
-void Textures::MenuFlushUnused()
-{
-	RefreshUsedStatus();
-	FlushUnused();
 }
 
 
