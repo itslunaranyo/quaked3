@@ -25,11 +25,11 @@ public:
 	bool	mouseWithin;
 
 	inline void BringToTop()	{ BringWindowToTop(wHwnd); }
-	inline void Focus()			{ SetFocus(wHwnd); BringToTop(); }
+	inline void Focus()			{ SetFocus(wHwnd); BringToTop(); OnFocus(); }
 	inline bool HasFocus()		{ return (GetFocus() == wHwnd); }
 	inline bool IsOpen()		{ return IsWindowVisible(wHwnd) > 0; }
 	inline bool IsOnTop()		{ return GetTopWindow(g_hwndMain) == wHwnd; }
-	inline void Show()			{ ShowWindow(wHwnd, SW_SHOW); BringToTop(); }
+	inline void Show()			{ ShowWindow(wHwnd, SW_SHOW); BringToTop(); OnShow(); }
 	inline void Hide()			{ ShowWindow(wHwnd, SW_HIDE); }
 	void Toggle();
 	void Swap(Window &other);
@@ -50,6 +50,8 @@ protected:
 	virtual int OnDestroy();
 	virtual int OnPaint();
 	virtual int OnResized();
+	virtual void OnShow() {};
+	virtual void OnFocus() {};
 	void MoveRect(HWND hwnd, RECT r);
 	void MoveRect(HWND hwnd, int left, int top, int right, int bottom);
 	struct wndPos_t {

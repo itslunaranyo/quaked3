@@ -22,13 +22,14 @@ public:
 	void	Initialize();
 
 	void	DoPopupMenu(int x, int y);
-
+	void	UpdateTitle();
 	int		OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void	MouseDown(const int x, const int y, const int btndown, const int buttons);
 	void	MouseUp(const int x, const int y, const int btnup, const int buttons);
 	void	MouseMoved(const int x, const int y, const int buttons);
 	void	MouseOver(const int x, const int y);
 private:
+	void	OnShow();
 	TexBrowserRenderer* tbr;
 	int		OnResized();
 	void	Render();

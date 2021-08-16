@@ -30,13 +30,20 @@ void WndTexture::Initialize()
 	v = texv;
 	Create();
 
-	SetTitle("Textures");
+	UpdateTitle();
 	g_hwndTexture = wHwnd;
 
 	tbr = new TexBrowserRenderer(*texv);
 	r = tbr;
 }
 
+void WndTexture::UpdateTitle()
+{
+	if (g_cfgUI.HideUnusedTextures)
+		SetTitle("Textures (used)");
+	else
+		SetTitle("Textures");
+}
 
 void WndTexture::DoPopupMenu(int x, int y)
 {
@@ -250,6 +257,11 @@ void WndTexture::MouseOver(const int x, const int y)
 	}
 	sprintf(texstring, "");
 	WndMain_Status(texstring, 0);
+}
+
+void WndTexture::OnShow()
+{
+	UpdateTitle();
 }
 
 void WndTexture::MouseUp(const int x, const int y, const int btnup, const int buttons)
