@@ -4,12 +4,10 @@
 #ifndef __SELECT_H__
 #define __SELECT_H__
 
-#define	DIST_START	999999
-
 #define	SF_SELECTED_ONLY	0x0001
 #define	SF_ENTITIES_FIRST	0x0002
 #define	SF_FACES			0x0004
-#define SF_CYCLE			0x0008	// sikk - Single Selection Cycle(Shift+Alt+LMB)
+#define SF_CYCLE			0x0008
 #define SF_NOFIXEDSIZE		0x0010	// lunaran - avoid selecting the 'faces' on entity brushes
 #define SF_EXCLUSIVE		0x0020	// always deselect all first
 #define SF_SELECTED			0x0040
@@ -25,14 +23,17 @@ typedef enum
 	sel_component
 } select_t;
 
-typedef struct trace_s
+struct trace_t
 {
 	Brush	*brush;
 	Face	*face;
 	float	dist;
 	bool	selected;
-	trace_s() : brush(nullptr), face(nullptr), dist(0), selected(false) {};
-} trace_t;
+	void clear() { memset(this, 0, sizeof(trace_t)); }
+	trace_t() { clear(); }
+	trace_t(Brush* b, Face* f, float d, bool s) :
+		brush(b), face(f), dist(d), selected(s) {};
+};
 
 //========================================================================
 

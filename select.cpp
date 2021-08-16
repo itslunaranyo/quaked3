@@ -217,6 +217,7 @@ void Selection::HandleBrush (Brush *brush, bool bComplete)
 		// select complete entity on first click
 		if (!e->IsWorld() && bComplete == true)
 		{
+			/*
 			for (b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
 			{
 				if (b->owner != e) continue;
@@ -227,7 +228,7 @@ void Selection::HandleBrush (Brush *brush, bool bComplete)
 				brush->AddToList(*b);	// add next to its partners to minimize entity fragmentation in the list
 				Selection::Changed();
 				return;
-			}
+			}*/
 			// current entity is not selected at all, select the whole thing
 			for (b = e->brushes.ENext(); b != &e->brushes; b = b->ENext())
 			{
@@ -462,9 +463,8 @@ Test_BrushFilter
 */
 bool Test_BrushFilter(Brush *brush, int flags)
 {
-	if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
-	//if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsBrush())
-		return false;
+//	if ((flags & SF_ENTITIES_FIRST) && brush->owner->IsWorld())
+//		return false;
 	if (flags & (SF_NOFIXEDSIZE | SF_FACES) && brush->owner->IsPoint())
 		return false;
 	if (brush->IsFiltered())
@@ -475,56 +475,66 @@ bool Test_BrushFilter(Brush *brush, int flags)
 /*
 ===============
 Selection::TestRay
+
+two selection priorities along a ray: distance, and 'rank' (point/bmodel/world)
+- point entities > brush entities > worldspawn
+- distance is the higher priority unless SF_ENTITIES_FIRST
+- return best trace unless SF_CYCLE, then return next best trace after the lowest already-selected brush on the ray
 ===============
 */
 trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 {
 	Brush	*brush;
 	Face	*face;
-	float	dist;
-	trace_t	t;
-	int		rank, t_rank;	// point entities > brush entities > worldspawn
+	trace_t bestP, bestB, bestW;
+	float	dist, pMin = 0, bMin = 0, wMin = 0;
 
-	// single selection cycle:
-	// find the first unselected brush behind the first selected brush
+	const int DIST_START = g_cfgEditor.MapSize * 2;	// exceed longest diagonal
+
+	bestP.dist = DIST_START;
+	bestB.dist = DIST_START;
+	bestW.dist = DIST_START;
+
 	if (flags & SF_CYCLE && HasBrushes())
 	{
-		memset(&t, 0, sizeof(t));
-		t.dist = DIST_START;
+		trace_t	lastS;
 
-		vec3 org;
-		float bestdist = DIST_START;
 		for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
-			if (dist > 0 && dist < bestdist)
-				bestdist = dist;
+			if (!face || !dist)
+				continue;
+			if (dist > lastS.dist)	// furthest
+				lastS = { brush, face, dist, true };
 		}
-		org = origin + glm::normalize(dir) * bestdist;
-		for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
+
+		if (lastS.brush)
 		{
-			if (!Test_BrushFilter(brush, flags))
-				continue;
-			face = brush->RayTest(org, dir, &dist);
-			if (!face)
-				continue;
-			if (dist > 0 && dist < t.dist)
+			if (flags & SF_ENTITIES_FIRST)
 			{
-				t.dist = dist;
-				t.brush = brush;
-				t.face = face;
-				t.selected = false;
+				if (lastS.brush->owner->IsPoint())
+				{
+					pMin = lastS.dist;
+				}
+				else if (!lastS.brush->owner->IsWorld())
+				{
+					pMin = DIST_START;
+					bMin = lastS.dist;
+				}
+				else
+				{
+					pMin = bMin = DIST_START;
+					wMin = lastS.dist;
+				}
 			}
+			else
+				pMin = bMin = wMin = lastS.dist;
 		}
-		if (t.brush) return t;
 	}
 
-	memset(&t, 0, sizeof(t));
-	t_rank = 3;
-	t.dist = DIST_START;
-
+	// search unselected
 	if (!(flags & SF_SELECTED_ONLY))
 	{
 		for (brush = g_map.brActive.Next(); brush != &g_map.brActive; brush = brush->Next())
@@ -532,60 +542,79 @@ trace_t Selection::TestRay(const vec3 origin, const vec3 dir, int flags)
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
-			if (!face)
+			if (!face || !dist)
 				continue;
 
-			rank = 3;
-			if (flags & SF_ENTITIES_FIRST)
+			if (brush->owner->IsPoint())
 			{
-				if (brush->owner->IsPoint()) rank = 1;
-				else if (!brush->owner->IsWorld()) rank = 2;
+				if (dist < bestP.dist && dist > pMin)
+					bestP = { brush, face, dist, false };
 			}
-
-			if (rank < t_rank || (rank == t_rank && dist > 0 && dist < t.dist))
+			else if (!brush->owner->IsWorld())
 			{
-				t_rank = rank;
-				t.dist = dist;
-				t.brush = brush;
-				t.face = face;
-				t.selected = false;
+				if (dist < bestB.dist && dist > bMin)
+					bestB = { brush, face, dist, false };
+			}
+			else
+			{
+				if (dist < bestW.dist && dist > wMin)
+					bestW = { brush, face, dist, false };
 			}
 		}
 	}
 
-	if (!(flags & SF_FACES))
+	// search selection
+	if ((flags & (SF_FACES|SF_CYCLE)) == 0)
 	{
 		for (brush = g_brSelectedBrushes.Next(); brush != &g_brSelectedBrushes; brush = brush->Next())
 		{
 			if (!Test_BrushFilter(brush, flags))
 				continue;
 			face = brush->RayTest(origin, dir, &dist);
-			if (!face)
+			if (!face || !dist)
 				continue;
 
-			rank = 3;
-			if (flags & SF_ENTITIES_FIRST)
+			if (brush->owner->IsPoint())
 			{
-				if (brush->owner->IsPoint()) rank = 1;
-				else if (!brush->owner->IsWorld()) rank = 2;
+				if (dist < bestP.dist && dist > pMin)
+					bestP = { brush, face, dist, true };
 			}
-
-			if (rank < t_rank || (rank == t_rank && dist > 0 && dist < t.dist))
+			else if (!brush->owner->IsWorld())
 			{
-				t_rank = rank;
-				t.dist = dist;
-				t.brush = brush;
-				t.face = face;
-				t.selected = true;
+				if (dist < bestB.dist && dist > bMin)
+					bestB = { brush, face, dist, true };
+			}
+			else
+			{
+				if (dist < bestW.dist && dist > wMin)
+					bestW = { brush, face, dist, true };
 			}
 		}
 	}
 
-	// if entities first, but didn't find any, check regular
-	if ((flags & SF_ENTITIES_FIRST) && !t.brush)
-		return TestRay(origin, dir, flags - SF_ENTITIES_FIRST);
+	if (flags & SF_ENTITIES_FIRST)
+	{
+		if (bestP.brush)
+			return bestP;
+		if (bestB.brush)
+			return bestB;
+		if (bestW.brush)
+			return bestW;
+	}
+	else
+	{
+		if (bestP.dist < bestB.dist && bestP.dist < bestW.dist)
+			return bestP;
+		if (bestB.dist < bestW.dist)
+			return bestB;
+		if (bestW.dist < DIST_START)
+			return bestW;
+	}
 
-	return t;
+	if (flags & SF_CYCLE)	// loop to beginning
+		return TestRay(origin, dir, flags - SF_CYCLE);
+
+	return bestW;
 }
 
 
@@ -686,8 +715,6 @@ trace_t Selection::TestPoint(const vec3 origin, int flags)
 {
 	trace_t t;
 	Brush* brush;
-
-	memset(&t, 0, sizeof(t));
 
 	if (!(flags & SF_SELECTED_ONLY))
 	{
