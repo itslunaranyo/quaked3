@@ -374,12 +374,15 @@ LONG WINAPI WndMain_Command(
 		WndMain_UpdateWindows(W_SCENE);
 		break;
 
-	case ID_VIEW_CENTERONSELECTION:	// sikk - Center Views on Selection
-		for (int i = 0; i < 4; i++)
-			g_vGrid[i].PositionView();
-		g_vCamera.PositionCenter();
-		g_vZ.PositionCenter();
-		WndMain_UpdateWindows(W_SCENE);
+	case ID_VIEW_CENTERONSELECTION:
+		if (Selection::HasBrushes())
+		{
+			for (int i = 0; i < 4; i++)
+				g_vGrid[i].PositionView();
+			g_vCamera.PositionCenter();
+			g_vZ.PositionCenter();
+			WndMain_UpdateWindows(W_SCENE);
+		}
 		break;
 
 	case ID_VIEW_NEXTVIEW:
