@@ -86,12 +86,9 @@ GridView::PositionView
 */
 void GridView::PositionView()
 {
-	Brush	   *b;
-
-	b = g_brSelectedBrushes.Next();
-	if (b && b->Next() != b)
+	if (Selection::HasBrushes())
 	{
-		Center(b->mins + (b->maxs - b->mins) * 0.5f);
+		Center(Selection::GetTrueMid());
 	}
 	else
 	{
