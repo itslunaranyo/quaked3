@@ -261,9 +261,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Default Texture Scale...",   ID_TEXTURES_DEFAULTSCALE
         MENUITEM SEPARATOR
-        MENUITEM "Flush &Unused",               ID_TEXTURES_FLUSH_UNUSED
-        MENUITEM "S&how In Use\tU",             ID_TEXTURES_SHOWINUSE
-        MENUITEM "&Refresh Loaded",             ID_TEXTURES_RELOAD
+        MENUITEM "Hide &Unused\tU",             ID_TEXTURES_HIDEUNUSED
+        MENUITEM "&Reload Wads",                ID_TEXTURES_RELOAD
         MENUITEM SEPARATOR
         MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
         MENUITEM SEPARATOR
@@ -421,13 +420,30 @@ END
 
 IDR_CONTEXT_TEXGRP MENU
 BEGIN
-    POPUP "Context"
+    POPUP "Default"
     BEGIN
-        MENUITEM "Reload",                      ID_CONTEXT_RELOAD
-        MENUITEM "Flush Unused",                ID_CONTEXT_FLUSHUNUSED
-        MENUITEM "Load Completely",             ID_CONTEXT_LOADCOMPLETELY
-        MENUITEM SEPARATOR
+        MENUITEM "Hide &Unused\tU",             ID_TEXTURES_HIDEUNUSED
         MENUITEM "Load/&Add Wad...",            ID_TEXTURES_ADDWAD
+        MENUITEM SEPARATOR
+        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
+    END
+    POPUP "Wad"
+    BEGIN
+        MENUITEM "Hide &Unused\tU",             ID_TEXTURES_HIDEUNUSED
+        MENUITEM "Load/&Add Wad...",            ID_TEXTURES_ADDWAD
+        MENUITEM "&Reload Wad",                 ID_TEXTURES_RELOADWAD
+        MENUITEM SEPARATOR
+        MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
+    END
+    POPUP "Texture"
+    BEGIN
+        MENUITEM "Hide &Unused\tU",             ID_TEXTURES_HIDEUNUSED
+        MENUITEM "Load/&Add Wad...",            ID_TEXTURES_ADDWAD
+        MENUITEM "&Reload Wad",                 ID_TEXTURES_RELOADWAD
+        MENUITEM SEPARATOR
+        MENUITEM "&Select Matching",            ID_TEXTURES_SELECTMATCHINGCTX
+        MENUITEM "Replace &Matching...",        ID_TEXTURES_REPLACEMATCHINGCTX
+        MENUITEM SEPARATOR
         MENUITEM "Reset &Window Scale",         ID_TEXTURES_RESETSCALE
     END
 END

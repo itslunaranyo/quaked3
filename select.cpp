@@ -989,26 +989,26 @@ void Selection::MatchingKeyValue(const char *szKey, const char *szValue)
 }
 // <---sikk
 
-// sikk---> Select Matching Textures
 /*
 ===============
 Selection::MatchingTextures
 ===============
 */
-void Selection::MatchingTextures()
+void Selection::MatchingTextures(Texture *txfind)
 {
 	Brush	*b, *next;
 	Face	*f;
 	TexDef	*texdef;
-	Texture	*txfind;
 	int selected = 0;
 
-	if (!faces.empty())
-		texdef = &(*faces.begin())->texdef;
-	else
-		texdef = &g_qeglobals.d_workTexDef;
-
-	txfind = texdef->tex;
+	if (txfind == nullptr)
+	{
+		if (!faces.empty())
+			texdef = &(*faces.begin())->texdef;
+		else
+			texdef = &g_qeglobals.d_workTexDef;
+		txfind = texdef->tex;
+	}
 
 	DeselectAll();
 
@@ -1030,8 +1030,6 @@ void Selection::MatchingTextures()
 	else
 		Log::Print(_S("No visible faces with %s found\n") << txfind->name);
 }
-// <---sikk
-
 
 /*
 ================

@@ -225,6 +225,9 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (LOWORD(wParam))
 		{
+		/*
+		ID_TEXTURES_HIDEUNUSED
+		*/
 		case ID_TEXTURES_REPLACEALL:
 			FindTextureDialog();
 			return true;
@@ -234,12 +237,7 @@ bool TextureTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Textures::MenuReloadAll();
 			WndMain_UpdateWindows(W_TEXTURE);
 			break;
-		case ID_TEXTURES_FLUSH_UNUSED:
-			WndMain_SetInspectorMode(W_TEXTURE);
-			Textures::MenuFlushUnused();
-			WndMain_UpdateWindows(W_TEXTURE);
-			break;
-		case ID_TEXTURES_SHOWINUSE:
+		case ID_TEXTURES_HIDEUNUSED:
 			WndMain_SetInspectorMode(W_TEXTURE);
 			Textures::RefreshUsedStatus();
 			WndMain_UpdateWindows(W_TEXTURE);
@@ -386,7 +384,7 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 	return FALSE;
 }
 
-void TextureTool::FindTextureDialog()
+void TextureTool::FindTextureDialog(Texture* f)
 {
 	if (hwndReplaceDlg)
 	{
@@ -397,6 +395,8 @@ void TextureTool::FindTextureDialog()
 	// lunaran: modeless f&r dialog
 	hwndReplaceDlg = CreateDialog(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDD_FINDREPLACE), g_hwndMain, FindTextureDlgProc);
 	ShowWindow(hwndReplaceDlg, SW_SHOW);
+	if (f)
+		SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)f->name.data());
 }
 
 

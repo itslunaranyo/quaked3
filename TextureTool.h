@@ -23,7 +23,7 @@ public:
 	void SelectionChanged();
 
 	bool InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void FindTextureDialog();
+	void FindTextureDialog(Texture* f = nullptr);
 
 	void FitTexture(float x, float y);
 	void ShiftTexture(int x, int y);

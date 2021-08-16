@@ -89,7 +89,7 @@ namespace Selection
 	vec3	GetMid();
 
 	void	MatchingKeyValue(const char *szKey, const char *szValue);	// sikk - Select Matching Key/Value
-	void	MatchingTextures();	// sikk - Select All Matching Textures
+	void	MatchingTextures(Texture* txfind = nullptr);
 
 	void	Invert();
 	void	AllType();	// sikk - Select All Type

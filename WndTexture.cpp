@@ -9,6 +9,8 @@
 #include "TextureView.h"
 #include "TexBrowserRenderer.h"
 #include "Tool.h"
+#include "TextureTool.h"
+#include "select.h"
 
 HWND g_hwndTexture;
 
@@ -40,12 +42,17 @@ void WndTexture::DoPopupMenu(int x, int y)
 {
 	HMENU	hMenu;
 	POINT	point;
-	int		retval;
+	int		mnum, retval;
 
+	Texture* tx = texv->TexAtCursorPos(x, y);
 	TextureGroup* tg = texv->TexGroupAtCursorPos(x, y);
-	if (!tg) return;
+	
+	if (tx) mnum = 2;
+	else if (tg) mnum = 1;
+	else mnum = 0;
+
 	GetCursorPos(&point);
-	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), 0);
+	hMenu = GetSubMenu(LoadMenu(g_qeglobals.d_hInstance, MAKEINTRESOURCE(IDR_CONTEXT_TEXGRP)), mnum);
 
 	//bool flushed = twg->tg->flushed;
 	//WndMain_CheckMenuItem(hMenu, ID_CONTEXT_FLUSHUNUSED, flushed);
@@ -55,14 +62,14 @@ void WndTexture::DoPopupMenu(int x, int y)
 
 	switch (retval)
 	{
-	case ID_CONTEXT_RELOAD:
+	case ID_TEXTURES_RELOADWAD:
 		Textures::MenuReloadGroup(tg);
 		break;
-	case ID_CONTEXT_FLUSHUNUSED:
-		Textures::FlushUnused(tg);
+	case ID_TEXTURES_SELECTMATCHINGCTX:
+		Selection::MatchingTextures(tx);
 		break;
-	case ID_CONTEXT_LOADCOMPLETELY:
-		Textures::MenuLoadWad(tg->name);
+	case ID_TEXTURES_REPLACEMATCHINGCTX:
+		g_texTool->FindTextureDialog(tx);
 		break;
 	default:
 		PostMessage(g_hwndMain, WM_COMMAND, retval, 0);
