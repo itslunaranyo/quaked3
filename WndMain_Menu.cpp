@@ -519,13 +519,13 @@ LONG WINAPI WndMain_Command(
 		break;
 
 	case ID_SELECTION_FLIPX:
-		Transform_FlipAxis(0);
+		Transform_FlipAxis(vec3(1, 0, 0));
 		break;
 	case ID_SELECTION_FLIPY:
-		Transform_FlipAxis(1);
+		Transform_FlipAxis(vec3(0, 1, 0));
 		break;
 	case ID_SELECTION_FLIPZ:
-		Transform_FlipAxis(2);
+		Transform_FlipAxis(vec3(0, 0, 1));
 		break;
 
 	case ID_SELECTION_ROTATEX:

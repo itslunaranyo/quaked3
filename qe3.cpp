@@ -408,9 +408,6 @@ bool QE_KeyDown (int key)
 	case 'E':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_DRAGEDGES, 0);
 		break;
-	case 'F':
-		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_DRAGFACES, 0);
-		break;
 	case 'V':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_DRAGVERTICES, 0);
 		break;
@@ -424,6 +421,12 @@ bool QE_KeyDown (int key)
 			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDEUNSELECTED, 0);
 		else
 			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDESELECTED, 0);
+		break;
+	case 'F':
+		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_FLIPVIEW, 0);
+		break;
+	case 'R':
+		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_ROTATEVIEW, 0);
 		break;
 	case 'I':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_INVERT, 0);
@@ -451,9 +454,6 @@ bool QE_KeyDown (int key)
 #endif
 	case 'Q':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_SHOWSIZEINFO, 0);
-		break;
-	case 'R':	// sikk - added shortcut key
-		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_ARBITRARYROTATION, 0);
 		break;
 	case 'S':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_TEXTURES_INSPECTOR, 0);

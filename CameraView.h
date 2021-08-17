@@ -43,6 +43,7 @@ public:
 	inline vec3 GetPlanarUp() { return mpUp; }
 	inline vec3 GetPlanarRight() { return mpRight; }
 	inline glm::mat4 GetProjection() { return matProj; }
+	eViewType_t	 GetForwardAxis();
 
 private:
 	void InitCull();

@@ -400,6 +400,16 @@ void CameraView::GetAimPoint(vec3 &pt)
 	pt = pointOnGrid(pt);
 }
 
+eViewType_t CameraView::GetForwardAxis()
+{
+	vec3 f = glm::abs(vpn);
+	if (f.x > f.y && f.x > f.z)
+		return GRID_YZ;
+	if (f.y > f.z)
+		return GRID_XZ;
+	return GRID_XY;
+}
+
 
 /*
 ============

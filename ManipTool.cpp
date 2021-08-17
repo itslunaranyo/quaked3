@@ -28,6 +28,7 @@
 #include "CmdPlaneShift.h"
 #include "CmdTranslate.h"
 #include "CmdAddRemove.h"
+#include "Transform.h"
 
 ManipTool::ManipTool() :
 	state(MT_OFF), cloneReady(false),
@@ -246,10 +247,38 @@ bool ManipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_COMMAND)
 	{
+		if (hot) return false;
 		int what = LOWORD(wParam);
-		if (LOWORD(wParam) == ID_SELECTION_CLONE && !hot)
+		if (what == ID_SELECTION_CLONE)
 		{
 			Modify::Clone();
+			return true;
+		}
+		if (what == ID_SELECTION_FLIPVIEW || what == ID_SELECTION_ROTATEVIEW)
+		{
+			POINT pt;
+			GetCursorPos(&pt);
+			HWND wnd = WndMain_WindowForPoint(pt);
+			if (wnd == g_hwndCamera)
+			{
+				if (what == ID_SELECTION_FLIPVIEW)
+					Flip3D(g_vCamera);
+				else
+					Rotate3D(g_vCamera);
+				g_wndCamera->Focus();
+			}
+			else for (int i = 0; i < 4; i++)
+			{
+				if (wnd == g_hwndGrid[i])
+				{
+					if (what == ID_SELECTION_FLIPVIEW)
+						Flip2D(g_vGrid[i]);
+					else
+						Rotate2D(g_vGrid[i]);
+					g_wndGrid[i]->Focus();
+					break;
+				}
+			}
 			return true;
 		}
 		return false;
@@ -295,6 +324,35 @@ void ManipTool::SelectionChanged()
 {
 	lastNudge = nullptr;
 	lastNudgeTime = 0;
+}
+
+// ----------------------------------------------------------------
+
+void ManipTool::Flip3D(CameraView& v)
+{
+	if (CtrlDown())	// forward/back
+		Transform_FlipAxis(CrossProduct(v.GetPlanarUp(), v.GetPlanarRight()));
+	else if (ShiftDown())	// up/down
+		Transform_FlipAxis(v.GetPlanarUp());
+	else	// left/right
+		Transform_FlipAxis(v.GetPlanarRight());
+}
+
+void ManipTool::Flip2D(GridView& v)
+{
+	if (CtrlDown()) Transform_FlipAxis(v.GetAxis());	// forward/back
+	else if (ShiftDown()) Transform_FlipAxis(v.DimV());	// up/down
+	else Transform_FlipAxis(v.DimU());	// left/right
+}
+
+void ManipTool::Rotate3D(CameraView &v)
+{
+	Transform_RotateAxis(v.GetForwardAxis(), WndMain_RotForModifiers(), false);
+}
+
+void ManipTool::Rotate2D(GridView& v)
+{
+	Transform_RotateAxis(v.GetAxis(), WndMain_RotForModifiers(), false);
 }
 
 // ----------------------------------------------------------------

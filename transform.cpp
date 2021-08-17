@@ -39,11 +39,17 @@ Transform_FlipAxis
 */
 void Transform_FlipAxis(int axis)
 {
-	vec3 scx;
-	CmdCompound *cmdCmpd;
+	vec3 scx(0);
+	scx[axis] = 1;
+	Transform_FlipAxis(scx);
+}
 
-	scx = vec3(1);
-	scx[axis] = -1;
+void Transform_FlipAxis(vec3 axis)
+{
+	CmdCompound *cmdCmpd;
+	vec3 scx(1);
+	scx -= glm::abs(axis) * 2.0f;
+	scx = glm::round(scx);
 
 	if (g_cfgEditor.CloneStyle == CLONE_DRAG && GetKeyState(VK_SPACE) < 0)
 	{

@@ -29,6 +29,11 @@ public:
 
 	void SelectionChanged();
 
+    void Flip3D(CameraView& v);
+    void Flip2D(GridView& v);
+	void Rotate3D(CameraView& v);
+	void Rotate2D(GridView& v);
+
 	bool Draw3D(CameraRenderer &rc);
 	bool Draw2D(GridViewRenderer &gv);
 	bool Draw1D(ZViewRenderer &zv);
