@@ -128,7 +128,7 @@ std::string DoubleToStringNice(const double f, const int dec, const bool noTrunc
 		{
 			if (noTrunc)
 				p += dec;
-			//--p;
+			--p;
 			break;
 		}
 		break;
