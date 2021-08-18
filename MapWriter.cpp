@@ -12,6 +12,7 @@
 #include "select.h"
 
 #include <fstream>
+#include <algorithm>
 
 // TODO: something better than ostringstream
 
@@ -25,37 +26,98 @@ MapWriter::~MapWriter()
 
 void MapWriter::WriteMap(Map& map, std::ostream& out, const int subset)
 {
-	WriteEntity(*map.world, map, out, subset);
-
-	for (Entity* e = map.entities.Next(); e != &map.entities; e = e->Next())
-		WriteEntity(*e, map, out, subset);
-}
-
-void MapWriter::WriteEntity(Entity& e, Map& map, std::ostream& out, const int subset)
-{
-	if (subset != WRITE_ALL)	// ignore the test and write everything
+	int count = 0;
+	if (subset == WRITE_ALL)	// ignore the test and write everything
 	{
-		// do the currently expensive list test
-		if (!ShouldWrite(e, map, subset))
-			return;
+		WriteCompleteEntity(*map.world, map, out);
+		for (Entity* e = map.entities.Next(); e != &map.entities; e = e->Next())
+			WriteCompleteEntity(*e, map, out);
+		return;
 	}
 
+	std::vector<Brush*> brToWrite;
+	brToWrite.reserve(128);
+	if (subset & (int)BrushListFlag::SELECTED)
+	{
+		for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
+			brToWrite.push_back(b);
+	}
+	if (subset & (int)BrushListFlag::ACTIVE)
+	{
+		for (Brush* b = g_map.brActive.Next(); b != &g_map.brActive; b = b->Next())
+			brToWrite.push_back(b);
+	}
+	/*
+	// brushes hidden by regioning currently only need to be written during a WRITE_ALL
+	if (subset & (int)BrushListFlag::REGIONED)
+	{
+		for (Brush* b = g_map.brRegioned.Next(); b != &g_map.brRegioned; b = b->Next())
+			brToWrite.push_back(b);
+	}*/
+
+	// a brush ent can't be assumed to be contiguous because brushes are in the selected 
+	// list in order of selection, so put everything in order
+	std::sort(brToWrite.begin(), brToWrite.end(), 
+		[](const Brush* a, const Brush* b) -> bool {return a->owner < b->owner; });
+	// (stability/retaining the map brush/entity order aren't really important except
+	// for the full-document save/load)
+
+	auto brWrIt = brToWrite.begin();
+	while (brWrIt != brToWrite.end())
+	{
+		count = 0;
+		Brush* b = *brWrIt;
+		Entity* e = b->owner;
+		while (brWrIt != brToWrite.end() && (*brWrIt)->owner == e)
+		{
+			++brWrIt;
+			++count;
+		}
+		WritePartialEntity(*e, map, out, b, count);
+	}
+}
+
+void MapWriter::WriteCompleteEntity(Entity& e, Map& map, std::ostream& out)
+{
+	OpenEntity(e, out);
+
+	if (e.IsBrush())
+	{
+		writtenEntBrushes = 0;
+		for (Brush* b = e.brushes.ENext(); b != &e.brushes; b = b->ENext())
+			WriteBrush(*b, out);
+	}
+
+	CloseEntity(out);
+}
+
+void MapWriter::WritePartialEntity(Entity& e, Map& map, std::ostream& out, Brush* br, int count)
+{
+	OpenEntity(e, out);
+	if (e.IsBrush())
+	{
+		writtenEntBrushes = 0;
+		for (int i = 0; i < count; i++)
+		{
+			Brush& b = br[i];
+			WriteBrush(b, out);
+		}
+	}
+	CloseEntity(out);
+}
+
+void MapWriter::OpenEntity(Entity& e, std::ostream& out)
+{
 	if (writtenEnts > 0)
 		out << "// entity " << writtenEnts << "\n{\n";
 	else
 		out << "{\n";
 	for (EPair* ep = e.epairs; ep; ep = ep->next)
 		WriteEPair(*ep, out);
+}
 
-	if (e.IsBrush())
-	{
-		writtenEntBrushes = 0;
-		for (Brush* b = e.brushes.ENext(); b != &e.brushes; b = b->ENext())
-		{
-			if (subset == WRITE_ALL || ShouldWrite(*b, map, subset))	// NOT ideal
-				WriteBrush(*b, out);
-		}
-	}
+void MapWriter::CloseEntity(std::ostream& out)
+{
 	out << "}\n";
 	++writtenEnts;
 }
@@ -101,37 +163,3 @@ void MapWriter::WriteFace(Face& f, std::ostream& out)
 
 	out << "\n";
 }
-
-bool MapWriter::ShouldWrite(Entity& e, Map& map, const int subset)
-{
-	for (Brush* b = e.brushes.Next(); b != &e.brushes; b = b->Next())
-	{
-		if (ShouldWrite(*b, map, subset))
-			return true;
-	}
-	return false;
-}
-
-bool MapWriter::ShouldWrite(Brush& b, Map& map, const int subset)
-{
-	// TODO: this is the worst
-	if (subset & (int)BrushListFlag::SELECTED)
-	{
-		if (b.IsOnList(g_brSelectedBrushes))
-			return true;
-	}
-	if (subset & (int)BrushListFlag::ACTIVE)
-	{
-		if (b.IsOnList(map.brActive))
-			return true;
-	}
-	if (subset & (int)BrushListFlag::REGIONED)
-	{
-		if (b.IsOnList(map.brRegioned))
-			return true;
-	}
-
-	return false;
-}
-
-

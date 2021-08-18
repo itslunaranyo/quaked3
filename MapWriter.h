@@ -24,15 +24,16 @@ public:
 
 	void WriteMap(Map& map, std::ostream& dest, const int subset = WRITE_ALL );
 
+
 private:
 	int writtenEnts, writtenBrushes, writtenEntBrushes;
 
-	void WriteEntity(Entity& e, Map& map, std::ostream& out, const int subset);
+	void WriteCompleteEntity(Entity& e, Map& map, std::ostream& out);
+	void WritePartialEntity(Entity& e, Map& map, std::ostream& out, Brush* br, int count);
+	void OpenEntity(Entity& e, std::ostream& out);
+	void CloseEntity(std::ostream& out);
 	void WriteEPair(EPair& ep, std::ostream& out);
 	void WriteBrush(Brush& b, std::ostream& out);
 	void WriteFace(Face& f, std::ostream& out);
-
-	bool ShouldWrite(Entity& e, Map& map, const int subset);
-	bool ShouldWrite(Brush& b, Map& map, const int subset);
 };
 
