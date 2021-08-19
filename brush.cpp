@@ -155,13 +155,14 @@ void Brush::Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef)
 	// with no wads loaded, a brush created has to summon a broken texture
 	// from somewhere - putting it here prevents a pink garbage texture added 
 	// to the list until actually needed
+	/*
 	if (inTexDef->tex == nullptr)
 	{
 		if (inTexDef->name[0])
 			inTexDef->Set(inTexDef->name);
 		else
 			inTexDef->Set("none");
-	}
+	}*/
 
 	// reuse old faces - chances are they're already contiguous in memory, and
 	// deleting/reallocating them might get us fragments all over instead.
@@ -295,7 +296,7 @@ void Brush::RefreshFlags()
 {
 	showFlags = showFlags & BFL_HIDDEN;	// preserve this one, as it's a brush-level flag
 	for (Face *f = faces; f; f = f->fnext)
-		showFlags |= f->texdef.tex->showflags;
+		showFlags |= f->texdef.Tex()->showflags;
 }
 
 /*
@@ -717,12 +718,12 @@ void Brush::Draw ()
 		if (!w)
 			continue;	// freed face
 
-		assert(face->texdef.tex);
-		if (face->texdef.tex != tprev && g_cfgUI.DrawMode == CD_TEXTURED)
+		//assert(face->texdef.tex);
+		if (face->texdef.Tex() != tprev && g_cfgUI.DrawMode == CD_TEXTURED)
 		{
 			// set the texture for this face
-			tprev = face->texdef.tex;
-			face->texdef.tex->glTex.Bind();
+			tprev = face->texdef.Tex();
+			tprev->glTex.Bind();
 		}
 
 //		glColor3fv(face->d_color);
@@ -1042,127 +1043,3 @@ void Brush::DrawLight()
 	}
 	glEnd();
 }
-
-//==========================================================================
-
-/*
-=================
-Brush::Parse
-
-The brush is NOT linked to any list
-=================
-*/
-Brush *Brush::Parse ()
-{
-	int		i, j;
-	Brush	*b;
-	Face	*f;
-
-//	g_qeglobals.d_nParsedBrushes++;
-	b = new Brush();
-		
-	do
-	{
-		if (!GetToken(true))
-			break;
-		if (!strcmp(g_szToken, "}"))
-			break;
-		
-		f = new Face();
-		// add the brush to the end of the chain, so loading and saving a map doesn't reverse the order
-		if (!b->faces)
-			b->faces = f;
-		else
-		{
-			Face *scan;
-
-			for (scan = b->faces; scan->fnext; scan = scan->fnext)
-				;
-			scan->fnext = f;
-		}
-
-		// read the three point plane definition
-		for (i = 0; i < 3; i++)
-		{
-			if (i != 0)
-				GetToken(true);
-
-			if (strcmp(g_szToken, "("))
-				Error("Brush_Parse: Incorrect token.");
-			
-			for (j = 0; j < 3; j++)
-			{
-				GetToken(false);
-				f->plane.pts[i][j] = atof(g_szToken);	// sikk - changed to atof for BrushPrecision option
-			}
-			
-			GetToken(false);
-			if (strcmp(g_szToken, ")"))
-				Error("Brush_Parse: Incorrect token.");
-		}
-		f->plane.Make();
-
-		// read the texturedef
-		GetToken(false);
-		StringTolower(g_szToken);
-		f->texdef.name = g_szToken;
-		f->texdef.name.resize(MAX_TEXNAME);
-		GetToken(false);
-		f->texdef.shift[0] = atof(g_szToken);
-		GetToken(false);
-		f->texdef.shift[1] = atof(g_szToken);
-		GetToken(false);
-		f->texdef.rotate = atof(g_szToken);	
-		GetToken(false);
-		f->texdef.scale[0] = atof(g_szToken);
-		GetToken(false);
-		f->texdef.scale[1] = atof(g_szToken);
-	} while (1);
-
-	return b;
-}
-
-
-/*
-=================
-Brush::Write
-=================
-*/
-void Brush::Write(std::ostream& out)
-{
-	int		i;
-	char	ftxt[16];
-	Face	*fa;
-
-	out << "{\n";
-	for (fa = faces; fa; fa = fa->fnext)
-	{
-		for (i = 0; i < 3; i++)
-			if (g_cfgEditor.BrushPrecision)	// sikk - Brush Precision
-				out << "( " << fa->plane.pts[i][0] << " " << fa->plane.pts[i][1] << " " << fa->plane.pts[i][2] << " ) ";
-			else
-				out << "( " << (int)fa->plane.pts[i][0] << " " << (int)fa->plane.pts[i][1] << " " << (int)fa->plane.pts[i][2] << " ) ";
-
-		// lunaran: moving to float shifts and rotations
-		FloatToString(fa->texdef.shift[0], ftxt);
-		out << (fa->texdef.name.empty() ? "unnamed" : fa->texdef.name) << " " << ftxt;
-		FloatToString(fa->texdef.shift[1], ftxt);
-		out << " " << ftxt << " ";
-		FloatToString(fa->texdef.rotate, ftxt);
-		out << ftxt << " ";
-
-		if (fa->texdef.scale[0] == (int)fa->texdef.scale[0])
-			out << (int)fa->texdef.scale[0] << " ";
-		else
-			out << fa->texdef.scale[0] << " ";
-
-		if (fa->texdef.scale[1] == (int)fa->texdef.scale[1])
-			out << (int)fa->texdef.scale[1] << " ";
-		else
-			out << fa->texdef.scale[1] << " ";
-
-		out << "\n";
-	}
-	out << "}\n";
-}
-

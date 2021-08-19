@@ -76,9 +76,6 @@ public:
 	vec3	Center() { return (maxs + mins) * 0.5f; }
 
 
-	static Brush *Parse();
-	void	Write(std::ostream &out);
-
 	void	Draw ();
 	void	DrawXY (int nViewType);
 	void	DrawFacingAngle ();
