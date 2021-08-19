@@ -40,7 +40,7 @@ double GetDialogFloat(HWND hDlg, int dlgItem)
 	return atof(buf);
 }
 
-BOOL SetDialogText(HWND hDlg, int dlgItem, std::string& str)
+BOOL SetDialogText(HWND hDlg, int dlgItem, const std::string& str)
 {
 	return SetDlgItemText(hDlg, dlgItem, str.data());
 }
