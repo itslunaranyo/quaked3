@@ -317,13 +317,13 @@ void Face::FitTexture(const float fHeight, const float fWidth)
 		// for fits smaller than the texture, snap to any existing shift in the
 		// alignment that's close to the period of the fit (so we don't always
 		// reset to the bottom left corner and lose existing alignment on trims/etc)
-		baseline = ((min + texdef.shift[0]) / texdef.tex->width) / texdef.scale[0];
+		baseline = ((min + texdef.shift[0]) / texdef.Tex()->width) / texdef.scale[0];
 		baseline = roundf(baseline / fWidth) * fWidth;
-		offset = roundf(baseline * texdef.tex->width);
+		offset = roundf(baseline * texdef.Tex()->width);
 
 		len = max - min;
-		scale = (len / texdef.tex->width) / fWidth * uSign;
-		texdef.shift[0] = -fmod((min / scale - offset), texdef.tex->width) * vSign;
+		scale = (len / texdef.Tex()->width) / fWidth * uSign;
+		texdef.shift[0] = -fmod((min / scale - offset), texdef.Tex()->width) * vSign;
 		texdef.scale[0] = scale;
 	}
 
@@ -331,13 +331,13 @@ void Face::FitTexture(const float fHeight, const float fWidth)
 	{
 		BoundsOnAxis(v, &min, &max);
 
-		baseline = ((min + texdef.shift[1]) / texdef.tex->height) / texdef.scale[1];
+		baseline = ((min + texdef.shift[1]) / texdef.Tex()->height) / texdef.scale[1];
 		baseline = roundf(baseline / fHeight) * fHeight;
-		offset = roundf(baseline * texdef.tex->height);
+		offset = roundf(baseline * texdef.Tex()->height);
 
 		len = max - min;
-		scale = (len / texdef.tex->height) / fHeight * vSign;
-		texdef.shift[1] = -fmod((min / scale - offset), texdef.tex->height) * vSign;
+		scale = (len / texdef.Tex()->height) / fHeight * vSign;
+		texdef.shift[1] = -fmod((min / scale - offset), texdef.Tex()->height) * vSign;
 		texdef.scale[1] = scale;
 	}
 }
@@ -408,16 +408,8 @@ Face::ColorAndTexture
 */
 void Face::ColorAndTexture()
 {
-	if (!texdef.tex)
-	{
-		if (texdef.name.empty())
-			texdef.name = "none";
-
-		texdef.tex = Textures::ForName(texdef.name);
-	}
-
 	SetColor();
-	Winding::TextureCoordinates(winding, texdef.tex, this);
+	Winding::TextureCoordinates(winding, texdef.Tex(), this);
 }
 
 /*
@@ -442,7 +434,7 @@ void Face::SetColor()
 	float shade;
 	Texture *q;
 
-	q = texdef.tex;
+	q = texdef.Tex();
 	shade = ShadeForPlane();
 
 	// lunaran TODO: get rid of this branch

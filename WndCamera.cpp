@@ -199,7 +199,7 @@ void WndCamera::MouseMoved(const int x, const int y, const int buttons)
 			if (t.brush->owner->IsPoint())
 				camstring = (_S("%s (%0)") << t.brush->owner->eclass->name << size).Emit();
 			else
-				camstring = (_S("%s (%0) %s") << t.brush->owner->eclass->name << size << t.face->texdef.name).Emit();
+				camstring = (_S("%s (%0) %s") << t.brush->owner->eclass->name << size << t.face->texdef.Name()).Emit();
 		}
 		else
 			camstring = "";

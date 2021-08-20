@@ -147,7 +147,7 @@ void MapWriter::WriteFace(Face& f, std::ostream& out)
 		else
 			out << "( " << (int)f.plane.pts[i][0] << " " << (int)f.plane.pts[i][1] << " " << (int)f.plane.pts[i][2] << " ) ";
 
-	out << (f.texdef.name[0] ? f.texdef.name : "unnamed");
+	out << (f.texdef.Name().empty() ? "unnamed" : f.texdef.Name());
 
 	out << " " << f.texdef.shift[0] << " " << f.texdef.shift[1] << " " << f.texdef.rotate << " ";
 

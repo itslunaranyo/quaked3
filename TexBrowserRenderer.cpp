@@ -106,7 +106,7 @@ void TexBrowserRenderer::Draw()
 			glEnd();
 
 			// draw the selection border
-			if (g_qeglobals.d_workTexDef.tex == thumb->tex)
+			if (g_qeglobals.d_workTexDef.Tex() == thumb->tex)
 			{
 				glLineWidth(3);
 				glColor3fv(&g_colors.selection.r);

@@ -14,6 +14,7 @@
 #include "CmdSetKeyvalue.h"
 #include "CameraView.h"
 #include "TextureView.h"
+#include "texdef.h"
 #include "surface.h"
 #include "map.h"
 #include "WndCamera.h"
@@ -54,9 +55,9 @@ bool TextureTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v
 				return false;
 
 			if (sampleState == TTSS_FIND)
-				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name.data());
+				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXFIND, WM_SETTEXT, 0, (LPARAM)t.face->texdef.Name().data());
 			else if (sampleState == TTSS_REPLACE)
-				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)t.face->texdef.name.data());
+				SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, WM_SETTEXT, 0, (LPARAM)t.face->texdef.Name().data());
 
 			//Crosshair(false);
 			hot = false;
@@ -340,7 +341,7 @@ bool TextureTool::InputReplaceDlg(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 			SendDlgItemMessage(hwndReplaceDlg, IDC_COMBO_TEXREPLACE, CB_ADDSTRING, 0, (LPARAM)rhIt->data());
 
 		SetFocus(GetDlgItem(hwndReplaceDlg, IDC_COMBO_TEXFIND));
-		SetDialogText(hwndReplaceDlg, IDC_COMBO_TEXFIND, texdef->name);
+		SetDialogText(hwndReplaceDlg, IDC_COMBO_TEXFIND, texdef->Name());
 		bSelected = SendDlgItemMessage(hwndReplaceDlg, IDC_CHECK_SELECTED, BM_GETCHECK, 0, 0) > 0;
 
 		SendDlgItemMessage(hwndReplaceDlg, IDC_TEXFIND_SAMPLE, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hb);

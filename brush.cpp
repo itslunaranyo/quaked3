@@ -309,7 +309,7 @@ for map load/import operations
 */
 bool Brush::FullBuild()
 {
-	RefreshTexdefs();
+	//RefreshTexdefs();
 	return Build();
 }
 
@@ -453,8 +453,8 @@ Brush::RefreshTexdefs
 */
 void Brush::RefreshTexdefs()
 {
-	for (Face *face = faces; face; face = face->fnext)
-		face->texdef.tex = Textures::ForName(face->texdef.name);
+	//for (Face *face = faces; face; face = face->fnext)
+	//	face->texdef.tex = Textures::ForName(face->texdef.name);
 	RefreshFlags();
 }
 

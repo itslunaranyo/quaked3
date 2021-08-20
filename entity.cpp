@@ -590,7 +590,7 @@ void Entity::ChangeClass(EntClass* ec)
 void Entity::ChangeClassname(const std::string& classname)
 {
 	// lunaran TODO: jesus christ there has to be a better way
-	bool hasbrushes = (brushes.ENext()->faces->texdef.tex->name[0] != '#');
+	bool hasbrushes = (brushes.ENext()->faces->texdef.Name()[0] != '#');
 
 	EntClass* ec = EntClass::ForName(classname, hasbrushes, false);
 	ChangeClass(ec);

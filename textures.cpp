@@ -26,7 +26,6 @@ bool	g_bTexturesChanged = false;
 
 //=====================================================
 
-Texture						*Textures::nulltexture;
 std::vector<TextureGroup*>	Textures::groups;
 std::map<std::string, Texture*>	Textures::texMap;
 TextureGroup				Textures::group_solid;
@@ -44,9 +43,7 @@ void Textures::Init()
 	LoadPalette();
 
 	// prepare null texture
-	MakeNullTexture();
-	if (!g_qeglobals.d_workTexDef.tex)
-		g_qeglobals.d_workTexDef.Set(nulltexture);
+	g_qeglobals.d_workTexDef.SetTemp("none");
 
 	// create solid color group
 	group_solid.name = "*solid";
@@ -141,19 +138,9 @@ TODO: interfaces exist to solve this problem
 */
 void Textures::FixWorkTexDef()
 {
-	if (g_qeglobals.d_workTexDef.tex == nullptr && texMap[g_qeglobals.d_workTexDef.name] != nullptr)
-	{
-		// desired workdef texture was bad but is now in the name map, select it
-		g_qeglobals.d_workTexDef.Set(g_qeglobals.d_workTexDef.name);
-		g_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
-	}
-	else if (g_qeglobals.d_workTexDef.name[0] == 0 || !texMap[g_qeglobals.d_workTexDef.name])
-	{
-		// no texture is named or selected, default to the first one in the list
-		g_qeglobals.d_workTexDef.tex = nullptr;
-		g_vTexture.ChooseFirstTexture();
-		g_vTexture.ResetScroll();
-	}
+	const Texture* tex = g_qeglobals.d_workTexDef.Tex();	// ensure name/ptr sync
+	g_vTexture.ChooseTexture(&g_qeglobals.d_workTexDef);
+	g_vTexture.ResetScroll();
 }
 
 
@@ -175,8 +162,7 @@ void Textures::FlushAll()
 		delete *tgIt;
 	groups.clear();
 	group_unknown.Flush();
-	g_qeglobals.d_workTexDef.name = "";
-	g_qeglobals.d_workTexDef.tex = nullptr;
+	g_qeglobals.d_workTexDef.SetTemp("none");
 	Textures::texMap.clear();
 	LibraryChanged();
 }
@@ -250,12 +236,12 @@ Texture *Textures::CreateSolid(const std::string& name)
 
 /*
 ==================
-Textures::MakeNullTexture
+Textures::CreateBroken
 
-one texture map that is universally pointed to by all broken texture entries
+universal stand in for all broken texture entries
 ==================
 */
-Texture *Textures::MakeNullTexture()
+Texture* Textures::CreateBroken(const std::string& name)
 {
 	int			gltex = 0;
 	WadReader	wl;
@@ -280,8 +266,7 @@ Texture *Textures::MakeNullTexture()
 	color[0] = color[2] = 128;
 	color[1] = 0;
 
-	nulltexture = new Texture(64, 64, "nulltexture", color, (char*)data);
-	return nulltexture;
+	return new Texture(64, 64, name, color, (char*)data);
 }
 
 /*
@@ -323,9 +308,8 @@ Texture *Textures::ForName(const std::string& name)
 		return tx;
 	}
 
-	// still not found, make wrapper for nulltexture and put it in the unknown wad
-	tx = new Texture(*nulltexture);
-	tx->name = namelc;
+	// still not found, make nulltexture and put it in the unknown wad
+	tx = CreateBroken(namelc);
 	tx->next = nullptr;
 
 	group_unknown.Add(tx);
@@ -387,13 +371,7 @@ void Textures::SelectFirstTexture()
 	if (!groups.front()->numTextures)
 		return;
 
-	Texture* tex;
-	for (tex = groups.front()->first; tex; tex = tex->next)
-	{
-		if (tex->glTex.TexNum() != nulltexture->glTex.TexNum())
-			break;
-	}
-
+	Texture* tex = groups.front()->first;
 	if (!tex) return;
 
 	g_qeglobals.d_workTexDef.Set(tex);

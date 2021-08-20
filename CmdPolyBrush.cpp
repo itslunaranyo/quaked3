@@ -29,8 +29,8 @@ CmdPolyBrush::CmdPolyBrush() : Command("CmdPolyBrush"),
 	lowBound(g_qeglobals.d_v3WorkMin[axis]),
 	highBound(g_qeglobals.d_v3WorkMax[axis])
 {
-	if (!texdef.tex)
-		texdef.Set(Textures::nulltexture);
+	//if (!texdef.tex)
+	//	texdef.Set(Textures::nulltexture);
 	// state = LIVE;
 }
 

@@ -124,7 +124,7 @@ void MapParser::ParseFace(Brush& b)
 	f->plane.Make();
 
 	// current token should be a texture name
-	f->texdef.name = tokr.Current();	// apply directly without setting because no wads are loaded yet
+	f->texdef.SetTemp(tokr.Current());	// apply directly without setting because no wads are loaded yet
 
 	ftk = tokr.Next();
 

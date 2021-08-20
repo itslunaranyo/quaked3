@@ -13,7 +13,6 @@ namespace Textures
 {
 	extern std::vector<TextureGroup*> groups;
 	extern std::map<std::string, Texture*> texMap;
-	extern Texture *nulltexture;
 
 	extern TextureGroup group_unknown;	// bucket for bad textures
 	extern TextureGroup group_solid;	// bucket for silly solid color entity textures
@@ -26,7 +25,7 @@ namespace Textures
 	void FlushAll();
 
 	Texture* CreateSolid(const std::string& name);
-	Texture* MakeNullTexture();
+	Texture* CreateBroken(const std::string& name);
 	Texture* ForName(const std::string& name);
 
 	void MergeWadStrings(const std::string& wad1, const std::string& wad2, std::string& out);

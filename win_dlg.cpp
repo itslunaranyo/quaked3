@@ -1216,11 +1216,12 @@ INT_PTR CALLBACK MapInfoDlgProc (
 			else
 				nTotalBrushEnts++;
 
-			if (pBrush->faces->texdef.name._Starts_with("sky"))
+			std::string texname = pBrush->faces->texdef.Name();
+			if (texname._Starts_with("sky"))
 				nSkyBrushes++;
-			if (pBrush->faces->texdef.name._Starts_with("*"))
+			if (texname._Starts_with("*"))
 				nWaterBrushes++;
-			if (pBrush->faces->texdef.name._Starts_with("clip"))
+			if (texname._Starts_with("clip"))
 				nClipBrushes++;
 		}
 
@@ -1239,22 +1240,14 @@ INT_PTR CALLBACK MapInfoDlgProc (
 			}
 		}	
 	
-		sprintf(sz, "%d", nTotalBrushes);
-		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALBRUSHES, sz);
-		sprintf(sz, "%d", nTotalBrushEnts);
-		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALBRUSHENTS, sz);
-		sprintf(sz, "%d", nTotalPointEnts);
-		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALPOINTENTS, sz);
-		sprintf(sz, "%d", nTotalFaces);
-		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALFACES, sz);
-		sprintf(sz, "%d", g_map.numTextures);
-		SetDlgItemText(hwndDlg, IDC_EDIT_TOTALTEXTURES, sz);
-		sprintf(sz, "%d", nSkyBrushes);
-		SetDlgItemText(hwndDlg, IDC_EDIT_SKYBRUSHES, sz);
-		sprintf(sz, "%d", nWaterBrushes);
-		SetDlgItemText(hwndDlg, IDC_EDIT_WATERBRUSHES, sz);
-		sprintf(sz, "%d", nClipBrushes);
-		SetDlgItemText(hwndDlg, IDC_EDIT_CLIPBRUSHES, sz);
+		SetDialogInt(hwndDlg, IDC_EDIT_TOTALBRUSHES, nTotalBrushes);
+		SetDialogInt(hwndDlg, IDC_EDIT_TOTALBRUSHENTS, nTotalBrushEnts);
+		SetDialogInt(hwndDlg, IDC_EDIT_TOTALPOINTENTS, nTotalPointEnts);
+		SetDialogInt(hwndDlg, IDC_EDIT_TOTALFACES, nTotalFaces);
+		SetDialogInt(hwndDlg, IDC_EDIT_TOTALTEXTURES, g_map.numTextures);
+		SetDialogInt(hwndDlg, IDC_EDIT_SKYBRUSHES, nSkyBrushes);
+		SetDialogInt(hwndDlg, IDC_EDIT_WATERBRUSHES, nWaterBrushes);
+		SetDialogInt(hwndDlg, IDC_EDIT_CLIPBRUSHES, nClipBrushes);
 		return TRUE;
 
 	case WM_CLOSE:

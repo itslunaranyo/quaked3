@@ -178,8 +178,8 @@ void Surface::AbsoluteToLocal(const Plane pl, TexDef &td, dvec3 &p1, dvec3 &p2, 
 	// change it if necessary
 	td.rotate = -td.rotate;
 
-	Clamp(&td.shift[0], td.tex->width);
-	Clamp(&td.shift[1], td.tex->height);
+	Clamp(&td.shift[0], td.Tex()->width);
+	Clamp(&td.shift[1], td.Tex()->height);
 	Clamp(&td.rotate, 360);
 
 	// lunaran fix: prefer small rotation and fewer negative scales
@@ -265,7 +265,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 			{
 				for (f = br->faces; f; f = f->fnext)
 				{
-					if (f->texdef.tex == txFind)
+					if (f->texdef.Tex() == txFind)
 						cmdTA->UseFace(f);
 				}
 			}
@@ -277,7 +277,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 			{
 				for (auto fIt = Selection::faces.begin(); fIt != Selection::faces.end(); ++fIt)
 				{
-					if ((*fIt)->texdef.tex == txFind)
+					if ((*fIt)->texdef.Tex() == txFind)
 						cmdTA->UseFace((*fIt));
 				}
 			}
@@ -296,7 +296,7 @@ void Surface::FindReplace(char *pFind, char *pReplace, bool bSelected)//, bool b
 				{
 					for (f = br->faces; f; f = f->fnext)
 					{
-						if (f->texdef.tex == txFind)
+						if (f->texdef.Tex() == txFind)
 							cmdTA->UseFace(f);
 					}
 				}
@@ -320,10 +320,10 @@ void Surface::ApplyTexdef(TexDef &dst, TexDef &src, unsigned flags)
 	{
 		if (!(flags & SFI_NAME))
 		{
-			dst.Set(src.tex);
+			dst.Set(src.Tex());
 			if (&dst != &g_qeglobals.d_workTexDef)
 			{
-				dst.tex->Use();
+				dst.Tex()->Use();
 			}
 		}
 		if (!(flags & SFI_SHIFTX))

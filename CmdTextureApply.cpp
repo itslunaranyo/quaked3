@@ -63,8 +63,8 @@ void CmdTextureApply::Apply(TexDef &td, unsigned skipFlags)
 		{
 			if (!(skipFlags & SFI_NAME))
 			{
-				(*fIt)->texdef.Set(td.tex);
-				td.tex->Use();
+				(*fIt)->texdef.Set(td.Tex());
+				td.Tex()->Use();
 			}
 			if (!(skipFlags & SFI_SHIFTX))
 				(*fIt)->texdef.shift[0] = td.shift[0];

@@ -17,6 +17,7 @@
 
 #include "CameraView.h"
 #include "GridView.h"
+#include "TextureView.h"
 #include "CmdImportMap.h"
 #include "CmdPaste.h"
 #include "win_dlg.h"
@@ -53,6 +54,7 @@ void Map::New()
 
 	g_vCamera.Reset();
 	g_vGrid[0].Center(vec3(0));
+	g_vTexture.ChooseFirstTexture();
 
 	if (LoadBetween(between))
 		BuildBrushData(g_brSelectedBrushes);
@@ -240,6 +242,7 @@ void Map::Load(const std::string& filename)
 
 	g_vCamera.Reset();
 	g_vGrid[0].Center(vec3(0));
+	g_vTexture.ChooseFirstTexture();
 
 	if (ent)
 	{
@@ -699,7 +702,7 @@ void Map::RegionAdd()
 		return;
 
 	texdef.Reset();
-	texdef.name = "REGION";
+	texdef.SetTemp("REGION");
 
 	mins[0] = regionMins[0] - 16;
 	maxs[0] = regionMins[0] + 1;

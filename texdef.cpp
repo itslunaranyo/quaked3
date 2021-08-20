@@ -35,15 +35,32 @@ void TexDef::Set(const std::string& txn)
 	tex = Textures::ForName(name);
 	tex->Use();
 }
+void TexDef::SetTemp(const std::string_view txn)
+{
+	name = txn;
+	tex = nullptr;
+}
 
-void TexDef::Clamp()
+Texture* const TexDef::Tex()
 {
 	if (!tex)
 	{
-		name[0] = 0;
-		return;
+		if (name.empty())
+			name = "none";
+		tex = Textures::ForName(name);
 	}
+	return tex;
+}
 
+const std::string& TexDef::Name()
+{
+	if (name.empty())
+		name = "none";
+	return name;
+}
+
+void TexDef::Clamp()
+{
 	int i;
 
 	// lunaran: don't bound a value by repeatedly summing floats

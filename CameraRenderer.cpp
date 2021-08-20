@@ -196,8 +196,8 @@ void CameraRenderer::DrawActive()
 			continue;
 		if (cv.CullBrush(brush))
 			continue;
+		//assert(brush->faces->texdef.tex);
 		// TODO: Make toggle via Preferences Option. 
-		assert(brush->faces->texdef.tex);
 		if (brush->showFlags & BFL_TRANS)
 			transBrushes.push_back(brush);
 		else

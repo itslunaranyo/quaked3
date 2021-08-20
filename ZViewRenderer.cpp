@@ -223,7 +223,7 @@ ZViewRenderer::zbr_t::zbr_t(Brush & br)
 	brush = &br;
 	top = br.maxs[2];
 	bottom = br.mins[2];
-	tex = Textures::ForName(br.faces->texdef.name);
+	tex = br.faces->texdef.Tex();
 }
 
 

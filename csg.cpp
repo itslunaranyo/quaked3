@@ -125,7 +125,7 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 		{
 			if ((*fIt)->plane.EqualTo(&f2->plane, false))
 			{
-				if ((*fIt)->texdef.tex != f2->texdef.tex)
+				if ((*fIt)->texdef.Tex() != f2->texdef.Tex())
 					return nullptr;	// never merge together two planes with different textures
 				match = true;
 				break;
@@ -315,14 +315,14 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 		{
 			if ((*fIt)->plane.EqualTo(&f->plane, false))
 			{
-				if (match && ftx != (*fIt)->texdef.tex)
+				if (match && ftx != (*fIt)->texdef.Tex())
 				{
 					// clashing textures on this plane when notexmerge was specified, abort merge
 					delete result;
 					return nullptr;
 				}
 				f->texdef = (*fIt)->texdef;
-				ftx = f->texdef.tex = (*fIt)->texdef.tex;
+				ftx = (*fIt)->texdef.Tex();
 				match = true;
 				if (!notexmerge)
 					break;

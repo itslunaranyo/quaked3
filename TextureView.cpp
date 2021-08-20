@@ -78,7 +78,11 @@ void TextureView::ArrangeGroup(TextureGroup &txGrp)
 
 	for (q = txGrp.first; q; q = q->next)
 	{
+		// skip stomped textures
 		if (Textures::texMap[q->name] != q)
+			continue;
+		// don't bother with the blank broken texture
+		if (q->name == "none")
 			continue;
 
 		if (g_cfgUI.HideUnusedTextures && !q->used)
@@ -103,6 +107,13 @@ void TextureView::ArrangeGroup(TextureGroup &txGrp)
 		// never go less than 64, or the names get all crunched up
 		curX += q->width * scale < 64 ? 64 : q->width * scale;	// sikk - Mouse Zoom Texture Window
 		curX += MARGIN_X;
+	}
+
+	if (twGrp.layout.empty())
+	{
+		// nothing displayed in this wad, hide it
+		layoutGroups.pop_back();
+		return;
 	}
 
 	// new row
@@ -386,9 +397,7 @@ TextureView::UpdateStatus
 */
 void TextureView::UpdateStatus(TexDef* texdef)
 {
-	char		sz[256];
-	sprintf(sz, "Selected texture: %s (%dx%d)\n", texdef->name.c_str(), texdef->tex->width, texdef->tex->height);
-	WndMain_Status(sz, 3);
+	WndMain_Status(_S("Selected texture: %s (%dx%d)") << texdef->Name()<<texdef->Tex()->width <<texdef->Tex()->height, 3);
 }
 
 
@@ -436,7 +445,7 @@ TextureView::ChooseTexture
 */
 void TextureView::ChooseTexture(TexDef *texdef)
 {
-	if (texdef->name[0] == '#')
+	if (texdef->Name()[0] == '#')
 	{
 		Log::Warning("Cannot select an entity texture.");
 		return;
@@ -445,7 +454,7 @@ void TextureView::ChooseTexture(TexDef *texdef)
 	WndMain_UpdateWindows(W_TEXTURE | W_SURF);
 
 	// scroll origin so the texture is completely on screen
-	Texture* tx = Textures::ForName(texdef->name);
+	Texture* tx = texdef->Tex();
 	Arrange();
 	texWndItem_t* twi;
 	

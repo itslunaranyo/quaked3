@@ -43,7 +43,7 @@ WndSurf_AddToEditTexdef
 void WndSurf_AddToEditTexdef(Face* f)
 {
 	// it either matches the value we already have, or it's a mixed field and thus blank
-	if (!(g_nEditSurfMixed & SFI_NAME) && (f->texdef.name != g_texdefEdit.name))
+	if (!(g_nEditSurfMixed & SFI_NAME) && (f->texdef.Name() != g_texdefEdit.Name()))
 		g_nEditSurfMixed |= SFI_NAME;
 
 	if (!(g_nEditSurfMixed & SFI_SHIFTX) && f->texdef.shift[0] != g_texdefEdit.shift[0])
@@ -129,7 +129,7 @@ void WndSurf_FromEditTexdef()
 	if (g_nEditSurfMixed & SFI_NAME)
 		SetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, "");
 	else
-		SetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->name);
+		SetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE, texdef->Name());
 
 	// lunaran: trunc safety
 	//shiftxp = texdef->shift[0] + ((texdef->shift[0] < 0) ? -0.01f : 0.01f);
@@ -180,16 +180,14 @@ void WndSurf_Apply()
 	TexDef		texdef;
 	unsigned	mixed = 0;
 
-	texdef.name = GetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE);
-	if (texdef.name[0] <= ' ')
+	name = GetDialogText(g_hwndSurfaceDlg, IDC_EDIT_TEXTURE);
+	if (name[0] <= ' ')
 	{
-		texdef.tex = nullptr;
+		texdef.Set("");
 		mixed |= SFI_NAME;
 	}
 	else
-	{
-		texdef.tex = Textures::ForName(texdef.name);
-	}
+		texdef.Set(name);
 
 	GetDlgItemText(g_hwndSurfaceDlg, IDC_EDIT_HSHIFT, sz, 64);
 	if (sz[0] <= ' ')

@@ -1034,7 +1034,7 @@ void Selection::MatchingTextures(Texture *txfind)
 			texdef = &(*faces.begin())->texdef;
 		else
 			texdef = &g_qeglobals.d_workTexDef;
-		txfind = texdef->tex;
+		txfind = texdef->Tex();
 	}
 
 	DeselectAll();
@@ -1045,7 +1045,7 @@ void Selection::MatchingTextures(Texture *txfind)
 		if (b->IsFiltered()) continue;
 		for (f = b->faces; f; f = f->fnext)
 		{
-			if (f->texdef.tex == txfind)
+			if (f->texdef.Tex() == txfind)
 			{
 				SelectFace(f);
 				selected++;
