@@ -236,7 +236,6 @@ void QE_Init ()
 	WndMain_UpdateGridStatusBar();
 
 	// other stuff
-	Textures::Init();
 	g_map.RegionOff();	// sikk - For initiating Map Size change
 
 	// sikk - Update User Interface
