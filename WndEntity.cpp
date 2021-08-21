@@ -886,8 +886,10 @@ void WndEntity::CreateEntity()
 	}
 	else if (Selection::OnlyPointEntities() && ec->IsPointClass())
 	{
-		auto cmdSKV = CmdSetKeyvalue("classname", ec->name.data());
-
+		auto cmdSKV = new CmdSetKeyvalue("classname", ec->name.data());
+		for (Brush* br = g_brSelectedBrushes.Next(); br != &g_brSelectedBrushes; br = br->Next())
+			cmdSKV->AddEntity(br->owner);
+		g_cmdQueue.Complete(cmdSKV);
 	}
 	else
 	{
