@@ -25,9 +25,9 @@ class EPair
 {
 public:
 	EPair() : next(nullptr) {};
-	EPair(const std::string& k, const std::string& v) : key(k), value(v), next(nullptr) {};
-	EPair(const std::string_view k, const std::string_view v) : key(k), value(v), next(nullptr) {};
-	EPair(const EPair& other) : next(other.next), key(other.key), value(other.value) {};
+	EPair(const std::string& k, const std::string& v) : key(k), value(v), next(nullptr) { UpdateFlags(); };
+	EPair(const std::string_view k, const std::string_view v) : key(k), value(v), next(nullptr) { UpdateFlags(); };
+	EPair(const EPair& other) : next(other.next), key(other.key), value(other.value) { UpdateFlags(); };
 	~EPair() {};
 
 	EPair*		next;
