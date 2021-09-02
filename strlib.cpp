@@ -31,6 +31,8 @@ bool Contains(const std::string_view& str, const std::string_view& pattern)
 {
 	if (str.length() < pattern.length())
 		return false;
+	if (str.length() == pattern.length())
+		return (str == pattern);
 	for (int i = 0; i < str.length() - pattern.length(); ++i)
 	{
 		if (std::strncmp(&str[i], &pattern[0], pattern.length()) == 0)
