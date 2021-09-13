@@ -97,7 +97,7 @@ int WndTexture::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
-		return QE_KeyDown(wParam);
+		return QE_KeyDown(wParam, lParam);
 	//case WM_KEYUP:
 	//	return QE_KeyUp(wParam);
 

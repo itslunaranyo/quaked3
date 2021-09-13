@@ -272,12 +272,13 @@ any key combos which are shift+ can't be and have to go here, or else capital le
 	into non-modal dialogs are intercepted early ...
 ===========
 */
-bool QE_KeyDown (int key)
+bool QE_KeyDown(int key, int parms)
 {
-	bool shift, ctrl;
+	bool shift, ctrl, repeat;
 	shift = (GetKeyState(VK_SHIFT) < 0);
 	ctrl = (GetKeyState(VK_CONTROL) < 0);
 
+	// commands which we allow to repeat if the user holds the button down
 	switch (key)
 	{
 	case VK_UP:
@@ -371,7 +372,32 @@ bool QE_KeyDown (int key)
 		g_vCamera.Step(0, SPEED_MOVE, 0);
 		WndMain_UpdateWindows(W_CAMERA | W_XY);
 		break;
-	case '0':	// sikk - fixed and added shortcut key
+	case VK_INSERT:	// FIXME: ins/del with mouse over a grid view zooms to point
+		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ZOOMIN, 0);
+		break;
+	case VK_DELETE:
+		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ZOOMOUT, 0);
+		break;
+	case VK_NEXT:
+		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_DOWNFLOOR, 0);
+		break;
+	case VK_PRIOR:
+		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_UPFLOOR, 0);
+		break;
+	}
+
+	if ((HIWORD(parms) & KF_REPEAT) == KF_REPEAT)
+		return true;
+
+	// commands which we do not allow to repeat if the user holds the button down
+	switch (key) {
+	case VK_TAB:
+		if (shift)
+			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_SWAPGRIDCAM, 0);
+		else
+			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_NEXTVIEW, 0);
+		break;
+	case '0':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_TOGGLE, 0);
 		break;
 	case '1':
@@ -410,11 +436,6 @@ bool QE_KeyDown (int key)
 	case 'V':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_DRAGVERTICES, 0);
 		break;
-		/*
-	case 'G':	// sikk - added shortcut key
-		// lunaran - removed it again because turning off snap to grid should require two submarine commanders to turn their keys simultaneously
-		PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_SNAPTOGRID, 0);
-		break;*/
 	case 'H':
 		if (shift)
 			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_HIDESHOW_HIDEUNSELECTED, 0);
@@ -433,12 +454,11 @@ bool QE_KeyDown (int key)
 	case 'K':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_SELECTENTITYCOLOR, 0);
 		break;
-	case 'L':	// sikk - added shortcut key
+	case 'L':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_TEXTURES_LOCK, 0);
 		break;
 	case 'M':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CSGMERGE, 0);
-		//PostMessage(g_hwndMain, WM_COMMAND, ID_FILE_IMPORTMAP, 0);
 		break;
 	case 'N':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ENTITY, 0);
@@ -446,11 +466,6 @@ bool QE_KeyDown (int key)
 	case 'O':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_CONSOLE, 0);
 		break;
-#ifdef _DEBUG
-	case 'P':
-		QE_TestSomething();
-		break;
-#endif
 	case 'Q':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_SHOWSIZEINFO, 0);
 		break;
@@ -466,14 +481,6 @@ bool QE_KeyDown (int key)
 	case 'X':
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
 		break;
-		/*
-	case ' ':
-		if (g_cfgEditor.CloneStyle == CLONE_DRAG)
-			WndMain_UpdateWindows(W_SCENE);
-		else
-			PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
-		break;
-		*/
 	case VK_BACK:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_DELETE, 0);
 		break;
@@ -483,101 +490,83 @@ bool QE_KeyDown (int key)
 	case VK_RETURN:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPSELECTED, 0);
 		break;
-	case VK_TAB:
-		if (shift)
-			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_SWAPGRIDCAM, 0);
-		else
-			PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_NEXTVIEW, 0);
-		break;
 	case VK_END:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_CENTER, 0);
 		break;
-	case VK_HOME:	// sikk - added shortcut key
+	case VK_HOME:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_100, 0);
 		break;
-	case VK_INSERT:	// lunaran FIXME: ins/del with mouse over a grid view zooms to point
-		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ZOOMIN, 0);
-		break;
-	case VK_DELETE:
-		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_ZOOMOUT, 0);
-		break;
-	case VK_NEXT:
-		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_DOWNFLOOR, 0);
-		break;
-	case VK_PRIOR:
-		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_UPFLOOR, 0);
-		break;
-	case VK_BACKSLASH:	// This may not function on foreign keyboards (non English)
+	case VK_BACKSLASH:	// this may not function on non English keyboards
 		PostMessage(g_hwndMain, WM_COMMAND, ID_VIEW_CENTERONSELECTION, 0);
 		break;
-	case VK_MINUS:	// sikk - GridSize Decrease: This may not function on foreign keyboards (non English)
+	case VK_MINUS:	// this may not function on non English keyboards
+	{
+		int i = g_qeglobals.d_nGridSize / 2;
+		switch (i)
 		{
-			int i = g_qeglobals.d_nGridSize / 2;
-			switch (i)
-			{
-			case 1:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_1, 0);
-				break;
-			case 2:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_2, 0);
-				break;
-			case 4:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_4, 0);
-				break;
-			case 8:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_8, 0);
-				break;
-			case 16:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_16, 0);
-				break;
-			case 32:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_32, 0);
-				break;
-			case 64:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_64, 0);
-				break;
-			case 128:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_128, 0);
-				break;
-			default:
-				break;
-			}
+		case 1:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_1, 0);
+			break;
+		case 2:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_2, 0);
+			break;
+		case 4:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_4, 0);
+			break;
+		case 8:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_8, 0);
+			break;
+		case 16:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_16, 0);
+			break;
+		case 32:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_32, 0);
+			break;
+		case 64:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_64, 0);
+			break;
+		case 128:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_128, 0);
+			break;
+		default:
+			break;
 		}
-		break;	
+	}
+	break;
 	case VK_PLUS:	// sikk - GridSize Increase: This may not function on foreign keyboards (non English)
+	{
+		int i = g_qeglobals.d_nGridSize * 2;
+		switch (i)
 		{
-			int i = g_qeglobals.d_nGridSize * 2;
-			switch (i)
-			{
-			case 2:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_2, 0);
-				break;
-			case 4:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_4, 0);
-				break;
-			case 8:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_8, 0);
-				break;
-			case 16:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_16, 0);
-				break;
-			case 32:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_32, 0);
-				break;
-			case 64:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_64, 0);
-				break;
-			case 128:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_128, 0);
-				break;
-			case 256:
-				PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_256, 0);
-				break;
-			default:
-				break;
-			}
+		case 2:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_2, 0);
+			break;
+		case 4:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_4, 0);
+			break;
+		case 8:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_8, 0);
+			break;
+		case 16:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_16, 0);
+			break;
+		case 32:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_32, 0);
+			break;
+		case 64:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_64, 0);
+			break;
+		case 128:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_128, 0);
+			break;
+		case 256:
+			PostMessage(g_hwndMain, WM_COMMAND, ID_GRID_256, 0);
+			break;
+		default:
+			break;
 		}
-		break;
+	}
+	break;
 	case VK_F1:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_HELP_HELP, 0);
 		break;
@@ -593,6 +582,20 @@ bool QE_KeyDown (int key)
 	case VK_F12:
 		PostMessage(g_hwndMain, WM_COMMAND, ID_MISC_TESTMAP, 0);
 		break;
+
+#ifdef _DEBUG
+	case 'P':
+		QE_TestSomething();
+		break;
+#endif
+		/*
+	case ' ':
+		if (g_cfgEditor.CloneStyle == CLONE_DRAG)
+			WndMain_UpdateWindows(W_SCENE);
+		else
+			PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLONE, 0);
+		break;
+		*/
 	default:
 		return false;
 	}

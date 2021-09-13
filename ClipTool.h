@@ -57,9 +57,9 @@ private:
 	clippoint_t* StartNextPoint();
 
 	void CamStartQuickClip(int x, int y);
-	void CamEndQuickClip();
+	void CamEndQuickClip(bool split);
 	void StartQuickClip(GridView* xyz, int x, int y);
-	void EndQuickClip();
+	void EndQuickClip(bool split);
 
 	bool CamPointOnSelection(int x, int y, vec3 & out);
 	void CamDropPoint(int x, int y);

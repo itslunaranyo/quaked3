@@ -390,7 +390,7 @@ int WndEntity::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 int WndEntity::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_KEYDOWN)
-		return QE_KeyDown(wParam);
+		return QE_KeyDown(wParam, lParam);
 	/*if (uMsg == WM_KEYUP)
 		return QE_KeyUp(wParam);*/
 

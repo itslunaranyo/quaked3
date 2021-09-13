@@ -60,7 +60,7 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 		hot = true;
 
 		// lunaran - alt quick clip
-		if (AltDown())
+		if (AltDown() || GetKeyState('X') < 0)
 			CamStartQuickClip(x, y);
 		else
 			CamDropPoint(x, y);
@@ -72,8 +72,8 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
-		if (AltDown())
-			CamEndQuickClip();
+		if (AltDown() || GetKeyState('X') < 0)
+			CamEndQuickClip(ShiftDown());
 		else
 			CamEndPoint();
 		WndMain_UpdateWindows(W_XY | W_CAMERA);
@@ -120,7 +120,7 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wnd
 		hot = true;
 
 		// lunaran - alt quick clip
-		if (AltDown())
+		if (AltDown() || GetKeyState('X') < 0)
 			StartQuickClip(&v, x, y);
 		else
 			DropPoint(&v, x, y);
@@ -132,8 +132,8 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wnd
 		hot = false;
 		vWnd.GetMsgXY(lParam, x, y);
 		// lunaran - alt quick clip
-		if (AltDown())
-			EndQuickClip();
+		if (AltDown() || GetKeyState('X') < 0)
+			EndQuickClip(ShiftDown());
 		else
 			EndPoint();
 		WndMain_UpdateWindows(W_XY | W_CAMERA);
@@ -469,10 +469,10 @@ void ClipTool::CamStartQuickClip(int x, int y)
 ClipTool::CamEndQuickClip
 ==================
 */
-void ClipTool::CamEndQuickClip()
+void ClipTool::CamEndQuickClip(bool split)
 {
 	CamEndPoint();
-	Clip();
+	split ? Split() : Clip();
 }
 
 /*
@@ -661,10 +661,10 @@ ClipTool::EndQuickClip
 lunaran: stop dragging the current point and immediately clip with it
 ==============
 */
-void ClipTool::EndQuickClip()
+void ClipTool::EndQuickClip(bool split)
 {
 	EndPoint();
-	Clip();
+	split ? Split() : Clip();
 }
 
 /*

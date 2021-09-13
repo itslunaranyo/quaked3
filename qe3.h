@@ -82,7 +82,7 @@ void	QE_CheckAutoSave();
 void	QE_CheckOpenGLForErrors(void);
 void	QE_OpenGLError(int errornum, const char *errorstr);
 void	QE_Init();
-bool	QE_KeyDown(int key);
+bool	QE_KeyDown(int key, int parms);
 bool	QE_KeyUp(int key);
 void	QE_SaveMap();
 bool	QE_InitProject();

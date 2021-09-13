@@ -41,7 +41,7 @@ bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 				v.SetOrbit();	// TODO: what
 			return true;
 		}
-		if (QE_KeyDown(wParam))
+		if (QE_KeyDown(wParam, lParam))
 			return true;
 		return false;
 
@@ -105,7 +105,7 @@ bool NavTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, WndG
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
-		return (QE_KeyDown(wParam) || hot);
+		return (QE_KeyDown(wParam, lParam) || hot);
 	//case WM_KEYUP:
 	//	return QE_KeyUp(wParam);
 
@@ -161,7 +161,7 @@ bool NavTool::Input1D(UINT uMsg, WPARAM wParam, LPARAM lParam, ZView &v, WndZChe
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
-		return (QE_KeyDown(wParam) || hot);
+		return (QE_KeyDown(wParam, lParam) || hot);
 	/*case WM_KEYUP:
 		return QE_KeyUp(wParam);*/
 
@@ -226,7 +226,7 @@ bool NavTool::InputTex(UINT uMsg, WPARAM wParam, LPARAM lParam, TextureView &v, 
 	switch (uMsg)
 	{
 	case WM_KEYDOWN:
-		return (QE_KeyDown(wParam) || hot);
+		return (QE_KeyDown(wParam, lParam) || hot);
 	//case WM_KEYUP:
 	//	return QE_KeyUp(wParam);
 

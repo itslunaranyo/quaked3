@@ -642,7 +642,7 @@ LONG WINAPI WMain_WndProc(
 	case WM_KEYDOWN:
 		if (Tool::HandleInput(uMsg, wParam, lParam))
 			return 0;
-		return QE_KeyDown(wParam);
+		return QE_KeyDown(wParam, lParam);
 		/*case WM_KEYUP:
 			if (Tool::HandleInput(uMsg, wParam, lParam))
 				return 0;
@@ -667,7 +667,7 @@ LONG WINAPI WMain_WndProc(
 			return FALSE;
 
 		if (uMsg == WM_KEYDOWN)
-			return QE_KeyDown(wParam);
+			return QE_KeyDown(wParam, lParam);
 		//else if (uMsg == WM_KEYUP)
 		//	return QE_KeyUp(wParam);
 		else if (uMsg == WM_COMMAND)
