@@ -21,10 +21,12 @@
 ClipTool::ClipTool() : 
 	ptMoving(nullptr),
 	g_pcmdBC(nullptr),
+	backside(true),
 	Tool("Clipper", true)	// clip tool is modal
 {
 	Selection::DeselectAllFaces();
 	Reset();
+	toggleTime = clock() + CMD_COMBINE_TIME;
 }
 
 ClipTool::~ClipTool()
@@ -47,10 +49,12 @@ bool ClipTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, W
 	{
 	case WM_COMMAND:
 		return InputCommand(wParam);
-
-//	case WM_KEYDOWN:
-//		return false;
-
+	case WM_KEYUP:
+		if (wParam != 'X')
+			return false;
+		if (clock() > toggleTime)
+			PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
+		return true;
 	case WM_LBUTTONDOWN:
 		if (wParam & MK_SHIFT)
 			return !!(wParam & MK_CONTROL);	// prevent face selection
@@ -111,7 +115,12 @@ bool ClipTool::Input2D(UINT uMsg, WPARAM wParam, LPARAM lParam, GridView &v, Wnd
 	{
 	case WM_COMMAND:
 		return InputCommand(wParam);
-
+	case WM_KEYUP:
+		if (wParam != 'X')
+			return false;
+		if (clock() > toggleTime)
+			PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
+		return true;
 	case WM_LBUTTONDOWN:
 		if (wParam & MK_SHIFT || wParam & MK_CONTROL)
 			return false;
@@ -161,6 +170,13 @@ ClipTool::Input
 */
 bool ClipTool::Input(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (uMsg == WM_KEYUP) {
+		if (wParam != 'X')
+			return false;
+		if (clock() > toggleTime)
+			PostMessage(g_hwndMain, WM_COMMAND, ID_SELECTION_CLIPPER, 0);
+		return true;
+	}
 	if (uMsg != WM_COMMAND)
 		return false;
 

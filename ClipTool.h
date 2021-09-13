@@ -43,6 +43,7 @@ private:
 	CmdBrushClip *g_pcmdBC;
 	int axis;
 	bool backside;
+	double toggleTime;
 
 	bool InputCommand(WPARAM w);
 
