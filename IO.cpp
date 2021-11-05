@@ -30,9 +30,15 @@ bool IO::FileWithExtensionExists(const std::string& path)
 
 bool IO::FileWithExtensionExists(const std::string& dir, const std::string& ext)
 {
+	std::string dext;
+	if (ext[0] != '.')
+		dext = "." + ext;
+	else
+		dext = ext;
+
 	for (auto f : std::filesystem::directory_iterator(dir))
 	{
-		if (f.path().extension() == ext)
+		if (f.path().extension().string() == dext)
 			return true;
 	}
 	return false;
