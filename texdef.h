@@ -25,14 +25,15 @@ public:
 	float	scale[2];
 	float	rotate;
 
-	vec3	sv, tv;
-	//	int		contents;
-	//	int		flags;
-	//	int		value;
 private:
+	dvec3	s, t;
+	double	sTrans, sScale, tTrans, tScale;
 	std::string	name;		// must be limited to match the WAD2 spec (16)
 	Texture	*tex;
 		
+	//	int		contents;
+	//	int		flags;
+	//	int		value;
 };
 
 #endif
