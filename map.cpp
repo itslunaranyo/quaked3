@@ -490,7 +490,7 @@ bool Map::LoadBetween(const std::string& buf)
 	// TODO: generalized CmdMergeMapText or something
 
 	MapParser parser(buf);
-	Entity elist;
+	Entity elist, *ne;
 	Brush blist;
 	try { parser.Read(blist, elist); }
 	catch (qe3_exception)
@@ -502,6 +502,38 @@ bool Map::LoadBetween(const std::string& buf)
 
 	elist.MergeListIntoList(&entities);
 	blist.MergeListIntoList(g_brSelectedBrushes);	// select copied stuff	
+
+	for (Brush* b = g_brSelectedBrushes.Next(); b != &g_brSelectedBrushes; b = b->Next())
+		numBrushes++;
+	for (Entity* e = entities.Next(); e != &entities; e = ne)
+	{
+		ne = e->Next();
+		// create fixed/non-fixed entclasses on the fly for point entities with brushes or brush 
+		//	entities without any, so that all the downstream code Just Works
+		bool has_brushes = (e->brushes.ENext() != &e->brushes);
+		e->eclass = EntClass::ForName(e->GetKeyValue("classname"), has_brushes, false);
+
+		if (e->eclass->IsPointClass())
+		{	// create a custom brush
+			e->MakeBrush()->AddToList(g_brSelectedBrushes);
+		}
+		else if (e->eclass == EntClass::Worldspawn())
+		{
+			assert(world);
+			for (Brush* b = e->brushes.EPrev(); b != &e->brushes; b = e->brushes.EPrev())
+			{
+				Entity::UnlinkBrush(b);
+				world->LinkBrush(b);
+			}
+			assert(e->brushes.ENext() == &e->brushes);
+			delete e;
+		}
+
+		numEntities++;
+	}
+
+	Log::Print(_S("%i brushes, %i entities\n") << numBrushes << numEntities);
+
 	Selection::Changed();
 
 	return true;
