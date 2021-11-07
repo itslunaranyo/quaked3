@@ -29,7 +29,7 @@ private:
 	int writtenEnts, writtenBrushes, writtenEntBrushes;
 
 	void WriteCompleteEntity(Entity& e, Map& map, std::ostream& out);
-	void WritePartialEntity(Entity& e, Map& map, std::ostream& out, Brush* br, int count);
+	void WritePartialEntity(Entity& e, Map& map, std::ostream& out, std::vector<Brush*>::iterator brIt, int count);
 	void OpenEntity(Entity& e, std::ostream& out);
 	void CloseEntity(std::ostream& out);
 	void WriteEPair(EPair& ep, std::ostream& out);

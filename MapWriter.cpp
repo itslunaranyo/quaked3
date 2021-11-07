@@ -66,8 +66,8 @@ void MapWriter::WriteMap(Map& map, std::ostream& out, const int subset)
 	while (brWrIt != brToWrite.end())
 	{
 		count = 0;
-		Brush* b = *brWrIt;
-		Entity* e = b->owner;
+		auto b = brWrIt;
+		Entity* e = (*b)->owner;
 		while (brWrIt != brToWrite.end() && (*brWrIt)->owner == e)
 		{
 			++brWrIt;
@@ -91,7 +91,7 @@ void MapWriter::WriteCompleteEntity(Entity& e, Map& map, std::ostream& out)
 	CloseEntity(out);
 }
 
-void MapWriter::WritePartialEntity(Entity& e, Map& map, std::ostream& out, Brush* br, int count)
+void MapWriter::WritePartialEntity(Entity& e, Map& map, std::ostream& out, std::vector<Brush*>::iterator brIt, int count)
 {
 	OpenEntity(e, out);
 	if (e.IsBrush())
@@ -99,7 +99,7 @@ void MapWriter::WritePartialEntity(Entity& e, Map& map, std::ostream& out, Brush
 		writtenEntBrushes = 0;
 		for (int i = 0; i < count; i++)
 		{
-			Brush& b = br[i];
+			Brush& b = **(brIt++);
 			WriteBrush(b, out);
 		}
 	}
