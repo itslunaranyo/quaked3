@@ -7,7 +7,12 @@
 bool PaletteReader::Load(const std::string& f)
 {
 	BinaryFileReader fr;
-	if (!fr.Open(f))
+
+	try
+	{
+		fr.Open(f);
+	}
+	catch (qe3_exception)
 	{
 		Log::Warning("Couldn't load palette!\n");
 		return false;

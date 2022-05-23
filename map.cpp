@@ -129,7 +129,14 @@ bool Map::LoadFromFile(const std::string& filename, Entity& elist, Brush& blist)
 {
 	// turn all this into something that returns new pools, not new data in the existing ones
 	TextFileReader reader;
-	reader.Open(filename);
+	try
+	{
+		reader.Open(filename);
+	}
+	catch (qe3_exception)
+	{
+		return false;
+	}
 
 	std::string buf;
 	reader.ReadAll(buf);

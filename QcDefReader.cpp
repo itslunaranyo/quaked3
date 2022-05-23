@@ -31,7 +31,14 @@ void QcDefReader::ReadFromPath(const std::string& path)
 		std::string &qc = contents.emplace_back("");
 		size_t mark;
 
-		qcReader.Open(file);
+		try
+		{
+			qcReader.Open(file);
+		}
+		catch (qe3_exception)
+		{
+			return;
+		}		
 		qcReader.ReadAll(qc);
 
 		mark = 0;

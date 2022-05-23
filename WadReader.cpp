@@ -56,7 +56,11 @@ TextureGroup* WadReader::Read(const std::string& filename)
 	std::vector<unsigned int> texbuf;
 	char* bufp;
 
-	if (!fr.Open(filename))
+	try
+	{
+		fr.Open(filename);
+	}
+	catch (qe3_exception) 
 	{
 		Log::Warning("Couldn't load wad!\n");
 		return nullptr;
