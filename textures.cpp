@@ -401,11 +401,22 @@ void Textures::ReloadGroup(std::vector<TextureGroup*>::iterator tgIt)
 	TextureGroup *oldwad, *newwad;
 	Texture* temp;
 	WadReader wl;
+	std::string wadpath;
 
 	oldwad = *tgIt;
-	newwad = wl.Read(oldwad->name);
-	if (!newwad)
+	if (!IO::IsPathAbsolute(oldwad->name))	// relative, append wad path
+		wadpath = g_project.wadPath;
+	wadpath.append(oldwad->name);
+	try
+	{
+		newwad = wl.Read(wadpath);
+	}
+	catch (qe3_exception)
+	{
 		return;	// errors will already be in the console
+	}
+
+	newwad->id = oldwad->id;
 
 	// copy used status so we don't have to rebuild the whole map to restore it
 	for (Texture* tex = newwad->first; tex; tex = tex->next)
@@ -477,7 +488,7 @@ void Textures::MergeWadStrings(const std::string& wad1, const std::string& wad2,
 
 	out.clear();
 	out.reserve(wads.size() * 16);
-	for (int i = 0; i < wads.size(); out.append("; "))
+	for (int i = 0; i < wads.size(); out.append(";"))
 	{
 		out.append(wads[i++]);
 		if (i == wads.size())
