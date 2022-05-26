@@ -221,12 +221,12 @@ void CmdGeoMod::FinalizeBrushList()
 	{
 		for (f = (*brIt)->faces; f; f = f->fnext)
 		{
-			auto w = f->GetWinding();
-			if (!w)
+			if (!f->HasWinding())
 				continue;
-			for (int i = 0; i < w->numpoints; i++)
+			Winding& w = f->GetWinding();
+			for (int i = 0; i < w.Count(); i++)
 			{
-				allverts.push_back(glm::round(w->points[i].point));
+				allverts.push_back(glm::round(w[i]->point));
 			}
 		}
 	}
@@ -465,7 +465,7 @@ CmdGeoMod::Mesh::Mesh(CmdGeoMod &gm, Brush *br) : bOrig(br)
 {
 	for (Face* f = br->faces; f; f = f->fnext)
 	{
-		if (f->GetWinding())
+		if (f->HasWinding())
 			polies.emplace_back(gm, f, this);
 	}
 
@@ -740,22 +740,22 @@ CmdGeoMod::Polygon *CmdGeoMod::Polygon::FindNeighborForMerge(const std::vector<P
 CmdGeoMod::Polygon::Polygon(CmdGeoMod &gm, Face *f, Mesh *m) : 
 	dynamic(false), solved(false), tdOrig(f->texdef), mesh(m)
 {
-	auto w = f->GetWinding();
-	assert(w);
+	assert(f->HasWinding());
+	Winding& w = f->GetWinding();
 	vec3 pt;
 
 	// make new plane from original winding, since we don't know where the hell
 	// the original plane points might be and we need them within the face bounds
 	// for proper convexity testing later
-	pOrig.FromPoints(w->points[0].point,
-					w->points[1].point,
-					w->points[2].point);
+	pOrig.FromPoints(w[0]->point,
+					 w[1]->point,
+					 w[2]->point);
 
 	// build a list of pointers into our vertex arrays that correspond to the winding pts
 	// so that all adjacent polygons have shared pointers to their shared vertices
-	for (int i = 0; i < w->numpoints; i++)
+	for (int i = 0; i < w.Count(); i++)
 	{
-		pt = glm::round(w->points[i].point);
+		pt = glm::round(w[i]->point);
 		auto vert = std::find(gm.vertMaster.begin(), gm.vertMaster.end(), pt);
 		assert(vert != gm.vertMaster.end());
 		vertices.push_back(&(*vert));

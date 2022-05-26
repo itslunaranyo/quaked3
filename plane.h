@@ -5,7 +5,7 @@
 //	plane.h
 //==============================
 
-struct winding_t;
+//struct winding_t;
 
 extern const vec3 g_v3BaseAxis[18];
 
@@ -16,6 +16,8 @@ public:
 	vec3	pts[3];
 	dvec3	normal;
 	double	dist;
+
+	enum side { FRONT = 0, BACK, ON	};
 
 	bool		PointOn(const vec3 &pt) const;
 	bool		EqualTo(const Plane *b, const int flip) const;	// returns true if the planes are equal-ish
@@ -29,7 +31,7 @@ public:
 	void		Flip();
 	void		Translate(const vec3 move);
 	void		Snap(int increment = 1);
-	winding_t	*BasePoly();
+	//winding_t	*BasePoly();
 	vec3		GetTextureAxis(vec3 &xv, vec3 &yv) const;
 	dvec3		GetTextureAxis(dvec3 &xv, dvec3 &yv) const;
 	vec3		ProjectPointAxial(const vec3 &in, const vec3 &axis) const;

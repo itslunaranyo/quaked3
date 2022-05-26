@@ -244,7 +244,7 @@ void Plane::Snap(int increment)
 	}
 	Make();
 }
-
+#ifdef OLDWINDING
 /*
 =================
 Plane::BasePoly
@@ -316,7 +316,7 @@ winding_t *Plane::BasePoly()
 
 	return w;
 }
-
+#endif
 /*
 ==================
 Plane::GetTextureAxis

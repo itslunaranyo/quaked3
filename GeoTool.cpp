@@ -562,9 +562,9 @@ void GeoTool::GenerateHandles()
 			continue;
 		for (Face* f = b->faces; f; f = f->fnext)
 		{
-			if (f->GetWinding())
+			if (f->HasWinding())
 			{
-				wPoints += f->GetWinding()->numpoints + 1;
+				wPoints += f->GetWinding().Count() + 1;
 				wFaces++;
 			}
 		}
@@ -584,15 +584,15 @@ void GeoTool::GenerateHandles()
 			continue;
 		for (Face* f = b->faces; f; f = f->fnext)
 		{
-			auto w = f->GetWinding();
-			if (!w)
+			if (!f->HasWinding())
 				continue;
 
-			end = w->points[0].point;
-			handles.push_back(handle(w->points[0].point, &pointBuf[pIdx], w->numpoints, b));
-			for (i = 0; i < w->numpoints; i++)
+			Winding& w = f->GetWinding();
+			end = w[0]->point;
+			handles.push_back(handle(w[0]->point, &pointBuf[pIdx], w.Count(), b));
+			for (i = 0; i < w.Count(); i++)
 			{
-				pointBuf[pIdx] = w->points[i].point;
+				pointBuf[pIdx] = w[i]->point;
 				handles.push_back(handle(pointBuf[pIdx], &pointBuf[pIdx], 1, b));
 				handles.push_back(handle(pointBuf[pIdx], &pointBuf[pIdx], 2, b));
 				pIdx++;

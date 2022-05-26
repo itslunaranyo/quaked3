@@ -15,20 +15,16 @@
 //====================================================================
 
 typedef unsigned char byte;
+class Face;
 
-struct windingpoint_t
-{
-	vec3 point;
-	float s, t;
-};
-
-class NuWinding
+class Winding
 {
 public:
-	NuWinding() {};
-	~NuWinding();
+	Winding();
+	~Winding();
 	void Grow(const int vMinPoints = 0, const bool noFrags = false);
 	void Free();
+	void Swap(Winding& other);
 
 	struct vertex_t
 	{
@@ -37,42 +33,70 @@ public:
 		float shade;
 	};
 
-	//inline vertex_t* GetPoints() const { return (vertex_t*)(_pool + vsIndex); }
-	vertex_t* operator[](const int i);
+	vertex_t* const Vertex(const int i);
+	inline vertex_t* operator[](const int i) { return Vertex(i); }
 
+	inline int	const Count() { return vCount; }
+	void		const AddBounds(vec3& mins, vec3& maxs);
+	vec3		const Centroid();
+	bool		const Equal(Winding& w2, bool flip);
+	Plane::side	const PlaneSides(Plane& split);	// returns FRONT if entirely positive to, BACK if negative, ON if straddling
+
+	void Base(Plane& p);
+	bool Clip(Plane& split, bool keepon);	// returns false if winding was clipped away
+	void TextureCoordinates(Texture& q, Face& f);	// compute s/t coords for textured face winding
+	void RemovePoint(int point);	// remove a point from the winding
+
+	//inline vertex_t* GetPoints() const { return (vertex_t*)(_pool + vsIndex); }
 	enum realloc_status {
 		OK,			// no need to reallocate at present
 		PRUDENT,	// reallocate after next save
 		URGENT,		// reallocate after next save or cmdQueue op
-		EMERGENCY	// reallocate immediately
+		IMMEDIATE	// reallocate immediately
 	};
 
-	inline realloc_status GetStatus() const { return _status; }
+	static realloc_status const GetStatus();
+
+	static void OnMapFree();
+	static void OnMapSave();
+	static void OnBeforeMapRebuild();
+	static void OnCommandComplete();
+
+protected:
 
 private:
 	byte vCount = 0, vMaxPts = 0;	// measured in singular vertices
 	uint32_t vsIndex = -1;	// SEG offset
 	// 8 MSBs guaranteed to never be used (24 bits is enough for ~2mil brushes)
 
+	inline vertex_t* _vertex_safe(const int i) { return (vertex_t*)(_pool + vsIndex) + i; }
+
 	static constexpr int segSize = 4;
 	struct vertex_seg_t { vertex_t v[segSize]; };
 	struct free_vseg_t {
-		uint32_t vsLoc = 0;
 		byte vsSize = 0;
-		free_vseg_t* next = nullptr;
+		uint32_t vsNext = -1;
 	};
 	static vertex_seg_t* _pool;
 	static uint32_t _vsCapacity;
-	// pool retains a high water mark with all empty space above and a fragmented free list below
-	static uint32_t _vsMargin;
-	static free_vseg_t* _freeList;
-	static realloc_status _status;
+
+	static uint32_t _vsMargin;	// high water mark, empty space above and fragmented free list below
+	static uint32_t _vsFreeHead;	// index of first freed seg
+	static uint32_t _vsFreeSegs;	// total freed seg count for fragmentation guess
+	//static realloc_status _status;
 
 	static inline uint32_t v2vs(int x) { return (x + segSize - 1) / segSize; }
 	static inline uint32_t vs2v(int x) { return x * segSize; }
-	static void Allocate(const int vMinPoints = 0);
-	static void SetStatus();
+	static void Allocate(const int vMinPoints = 0, bool flush = false);
+	static void Clear();
 	inline bool IsHighmost() const { return (vsIndex + v2vs(vMaxPts) == _vsMargin); }
+};
+
+#ifdef OLDWINDING
+struct windingpoint_t
+{
+	vec3 point;
+	float s, t;
 };
 
 struct winding_t
@@ -112,4 +136,5 @@ namespace Winding
 
 	vec3		Centroid(winding_t *w);
 }
+#endif
 #endif

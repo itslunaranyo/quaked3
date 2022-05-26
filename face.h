@@ -8,6 +8,7 @@
 #include "SlabAllocator.h"
 #include "Plane.h"
 #include "TexDef.h"
+#include "Winding.h"
 
 // the normals on planes point OUT of the brush
 #define	MAXPOINTS	16
@@ -18,7 +19,10 @@
 //========================================================================
 
 class Brush;
+
+#ifdef OLDWINDING
 struct winding_t;
+#endif
 
 //========================================================================
 
@@ -33,21 +37,18 @@ public:
 	~Face();
 
 	Face		*fnext;
-	//Face		*original;	// sikk - Vertex Editing Splits Face: used for vertex movement
-	Brush		*owner;		// sikk - brush of selected face
+	Brush		*owner;
 	Plane		plane;
 	TexDef		texdef;
 	vec3		d_color;
 
 	Face	*Clone();
 	static void	ClearChain(Face **f);
-	//Face	*FullClone(Brush *own);	// sikk - Undo/Redo
-	int		MemorySize();	// sikk - Undo/Redo
-	winding_t *MakeWinding();
 	void	BoundsOnAxis(const vec3 a, float* min, float* max);
 	void	AddBounds(vec3 &mins, vec3 &maxs);
 	bool	TestSideSelect(const vec3 origin, const vec3 dir);
 	bool	TestSideSelectAxis(const vec3 origin, const int axis);
+	bool	ConcaveTo(Face& f2);
 
 	inline bool ClipLine(vec3 &p1, vec3 &p2) { return plane.ClipLine(p1, p2); }
 	inline void MakePlane() { plane.Make(); }
@@ -61,16 +62,16 @@ public:
 	void	Draw();
 	void	DrawWire();
 
-	inline winding_t* GetWinding() const  { return winding; }
-	void SetWinding(winding_t* w);
-	inline void SwapWinding(Face* other) {
-		winding_t* w = winding;
-		winding = other->winding;
-		other->winding = w;
+	bool MakeWinding();
+	inline bool const HasWinding() { return winding.Count() > 0; }
+	inline Winding& GetWinding() { return winding; }
+	inline void SwapWinding(Face& other) {
+		winding.Swap(other.GetWinding());
 	}
 
 private:
-	winding_t	*winding;
+	//winding_t	*winding;
+	Winding winding;
 	void	SetColor();
 	float	ShadeForPlane();
 };

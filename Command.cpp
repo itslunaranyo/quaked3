@@ -6,6 +6,7 @@
 #include "qe3.h"
 #include "Command.h"
 #include "map.h"
+#include "winding.h"
 #include "select.h"
 
 /*
@@ -231,6 +232,8 @@ bool CommandQueue::Complete(Command *cmd)
 
 	if (cmd->modifiesSelection)
 		Selection::Changed();
+
+	Winding::OnCommandComplete();
 
 	WndMain_UpdateBrushStatusBar();
 	WndMain_UpdateWindows(W_ALL);

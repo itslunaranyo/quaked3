@@ -51,27 +51,9 @@ int Brush::NumFaces() const
 	int sum = 0;
 	Face* f;
 	for (f = faces; f; f = f->fnext)
-		if (f->GetWinding())
+		if (f->HasWinding())
 			sum++;
 	return sum;
-}
-
-/*
-=============
-Brush::MemorySize
-=============
-*/
-int Brush::MemorySize() const
-{
-	int		size = 0;
-	Face *f;
-
-	for (f = faces; f; f = f->fnext)
-		size += f->MemorySize();
-
-	size += sizeof(*this);
-
-	return size;
 }
 
 /*
@@ -85,17 +67,16 @@ bool Brush::IsConvex() const
 
 	for (face1 = faces; face1; face1 = face1->fnext)
 	{
-		if (!face1->GetWinding())
+		if (!face1->HasWinding())
 			continue;
 		for (face2 = faces; face2; face2 = face2->fnext)
 		{
 			if (face1 == face2)
 				continue;
-			if (!face2->GetWinding())
+			if (!face2->HasWinding())
 				continue;
-			if (Winding::PlanesConcave(face1->GetWinding(), face2->GetWinding(),
-				face1->plane.normal, face2->plane.normal,
-				face1->plane.dist, face2->plane.dist))
+
+			if (face1->ConcaveTo(*face2))
 				return false;
 		}
 	}
@@ -322,9 +303,7 @@ Builds a brush rendering data and also sets the min/max bounds
 */
 bool Brush::Build()
 {
-	//float		v;
 	Face		*face;
-	winding_t	*w;
 	int			i;
 
 	ClearBounds(mins, maxs);
@@ -335,19 +314,12 @@ bool Brush::Build()
 	{
 		face->owner = this;
 		
-		//w = face->face_winding = MakeFaceWinding(face);
-		w = face->MakeWinding();
-		if (!w)
+		if (!face->MakeWinding())
 			continue;
 
-		face->SetWinding(w);
+		// add to bounding box
+		face->AddBounds(mins, maxs);
 
-		for (i = 0; i < w->numpoints; i++)
-		{
-			// add to bounding box
-			mins = glm::min(mins, w->points[i].point);
-			maxs = glm::max(maxs, w->points[i].point);
-		}
 		// setup s and t vectors, and set color
 		face->ColorAndTexture();
 	}
@@ -410,7 +382,7 @@ void Brush::RemoveEmptyFaces()
 	{
 		fnext = f->fnext;
 
-		if (!f->GetWinding())
+		if (!f->HasWinding())
 			delete f;
 		else
 		{
@@ -690,7 +662,7 @@ void Brush::Draw ()
 	int			i, order;
 	Face	   *face;
     Texture *tprev = 0;
-	winding_t  *w;
+	//winding_t  *w;
 
 //	if (owner->IsPoint() && g_cfgUI.DrawMode == CD_TEXTURED)
 //		glDisable (GL_TEXTURE_2D);
@@ -714,8 +686,8 @@ void Brush::Draw ()
 	tprev = NULL;
 	for (face = faces, order = 0; face; face = face->fnext, order++)
 	{
-		w = face->GetWinding();
-		if (!w)
+		Winding& w = face->GetWinding();
+		if (!w.Count())
 			continue;	// freed face
 
 		//assert(face->texdef.tex);
@@ -732,11 +704,11 @@ void Brush::Draw ()
 		// draw the polygon
 		glBegin(GL_POLYGON);
 
-	    for (i = 0; i < w->numpoints; i++)
+	    for (i = 0; i < w.Count(); i++)
 		{
 			if (g_cfgUI.DrawMode == CD_TEXTURED)
-				glTexCoord2fv(&w->points[i].s);
-			glVertex3fv(&w->points[i].point[0]);
+				glTexCoord2fv(&w[i]->s);
+			glVertex3fv(&w[i]->point[0]);
 		}
 		glEnd();
 	}
@@ -757,7 +729,6 @@ void Brush::DrawXY (int nViewType)
 	int			i;
 	int			order;
 	Face		*face;
-	winding_t	*w;
 
 	if (owner->IsPoint())
 	{
@@ -823,14 +794,14 @@ void Brush::DrawXY (int nViewType)
 		if (face->plane.normal[nViewType] <= 0)
 			continue;
 
-		w = face->GetWinding();
-		if (!w)
+		if (!face->HasWinding())
 			continue;
 
 		// draw the polygon
+		Winding& w = face->GetWinding();
 		glBegin(GL_LINE_LOOP);
-	    for (i = 0; i < w->numpoints; i++)
-			glVertex3fv(&w->points[i].point.x);
+	    for (i = 0; i < w.Count(); i++)
+			glVertex3fv(&w[i]->point.x);
 		glEnd();
 	}
 

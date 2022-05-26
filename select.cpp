@@ -285,7 +285,7 @@ Selection::SelectFace
 void Selection::SelectFace(Face* f)
 {
 	assert(!IsFaceSelected(f));
-	if (!f->GetWinding())
+	if (!f->HasWinding())
 		return;
 	//g_vfSelectedFaces[g_nSelFaceCount++] = f;
 	//g_vfSelectedFaces[g_nSelFaceCount] = NULL;	// maintain list null-terminated
@@ -879,11 +879,7 @@ bool Selection::CalcBounds()
 	{
 		for (auto fIt = faces.begin(); fIt != faces.end(); ++fIt)
 		{
-			for (int i = 0; i < (*fIt)->GetWinding()->numpoints; i++)
-			{
-				g_vMins = glm::min(g_vMins, (*fIt)->GetWinding()->points[i].point);
-				g_vMaxs = glm::max(g_vMaxs, (*fIt)->GetWinding()->points[i].point);
-			}
+			(*fIt)->AddBounds(g_vMins, g_vMaxs);
 		}
 	}
 	return true;

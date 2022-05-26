@@ -6,12 +6,15 @@
 #include "mathlib.h"
 #include "qe3.h"
 #include "winding.h"
+#include "map.h"
 #include <list>
 
 #define WINDINGS_CHUNK 512
 
+#ifdef OLDWINDING
 free_winding_t *first;
 std::list<free_winding_t*> windingChunks;
+#endif
 
 //===============================================================================
 
@@ -34,11 +37,7 @@ THE NEW WINDING SHIT
 	- triggered after a save under 128k free, after cmdqueue op under 32k free
 	- rather than copy data, just call map->rebuild to heal all fragmentation as well
 	- whole map rebuild is complete in a few hundred ms so this is acceptable
-- signaling
-	- need a semaphore to denote if prior allocations should be ignored (because the 
-		block was freed or is about to be) 
-	- windingalloc doesn't know when it's safe to turn that signal off again (like
-		when the map is done rebuilding) - who gets to control it?
+	- if the map is saved while a tool or command is live, defer (or upgrade to URGENT)
 - etc
 	- all brushes are loaded from a map before being built, so it allows an initial
 		pool size guess (32*brushcount verts leaves room to grow)
@@ -49,18 +48,25 @@ THE NEW WINDING SHIT
 */
 
 constexpr uint32_t vsWINDING_BLOCK_SIZE = 8192;	// measured in 4-vert segs
+constexpr uint32_t vsNULL_INDEX = -1;
 
-NuWinding::realloc_status NuWinding::_status = NuWinding::EMERGENCY;
-NuWinding::vertex_seg_t* NuWinding::_pool = nullptr;
-NuWinding::free_vseg_t* NuWinding::_freeList = nullptr;
-uint32_t NuWinding::_vsMargin = 0;
-uint32_t NuWinding::_vsCapacity = 0;
+//Winding::realloc_status Winding::_status = Winding::IMMEDIATE;
+Winding::vertex_seg_t* Winding::_pool = nullptr;
+uint32_t Winding::_vsMargin = 0;
+uint32_t Winding::_vsFreeHead = vsNULL_INDEX;
+uint32_t Winding::_vsFreeSegs = 0;
+uint32_t Winding::_vsCapacity = 0;
 
-NuWinding::~NuWinding()
+
+Winding::Winding()
+{
+	if (!_pool)
+		Allocate(0, true);
+}
+
+Winding::~Winding()
 {
 	Free();
-//	count = maxPts = 0;
-//	w = -1;
 }
 
 /*
@@ -79,31 +85,30 @@ noFrags: always alloc at the high margin (skip the free list) - used if
 	be nice if they were contiguous.
 ==================
 */
-void NuWinding::Grow(const int vMinPoints, const bool noFrags)
+void Winding::Grow(const int vMinPoints, const bool noFrags)
 {
 	if (vMaxPts >= vMinPoints) return;	// we're already big enough
 
-	// qe3 already exploited lack of array overrun protection to treat winding_t
-	//	as variably sized. we always alloc in groups of 4: 95% of brushes have
-	//	only quads for all faces, and stay that way forever, and a double alloc
-	//	of 8 verts covers 95% of the rest.
+	if (GetStatus() == IMMEDIATE)
+		Allocate();
+										
+	// we always alloc in groups of 4 ("segments"): 95% of brushes have only
+	//	quads for all faces, and stay that way forever, and a double alloc of
+	//	8 verts covers 95% of the rest
 	uint32_t vsNewSize = v2vs(vMinPoints);
 
 	// if we're the last winding below the high water mark, just get bigger
 	if (IsHighmost())
 	{
 		_vsMargin = vsIndex + vsNewSize;
-		vMaxPts = vs2v(vsNewSize);
-
-		SetStatus();
+		vMaxPts = vs2v(vsNewSize);	// don't use vMinPoints, not guaranteed to be on seg boundary
 		return;
 	}
 
 	Free();
-	vCount = 0;
 
 	// check free list for something of suitable size
-	if (!noFrags)// && vsNewSize <= 8)
+	if (!noFrags && _vsFreeHead != vsNULL_INDEX)// && vsNewSize <= 8)
 	{
 		// for now: leave windings sized as they are - if we're dragging the clip
 		// points across a 12-sided cylinder (for example) we don't want to 
@@ -113,22 +118,26 @@ void NuWinding::Grow(const int vMinPoints, const bool noFrags)
 		// for later: solve this problem by not using this (permanent) allocator
 		//	for (temporary) tool windings
 
-		free_vseg_t *freew;
-		free_vseg_t *lastfreew = nullptr;
-		for (freew = _freeList; freew; freew = freew->next)
+		uint32_t vsFree;
+		uint32_t vsLastFree = vsNULL_INDEX;
+		free_vseg_t* freew = nullptr;
+		free_vseg_t* lastfreew = nullptr;
+		for (vsFree = _vsFreeHead; vsFree != vsNULL_INDEX; vsFree = freew->vsNext)
 		{
+			freew = (free_vseg_t*)&_pool[vsFree];
 			if (freew->vsSize == vsNewSize)
 			{
-				if (lastfreew)
-					lastfreew->next = freew->next;
+				if (vsLastFree != vsNULL_INDEX)
+					lastfreew->vsNext = freew->vsNext;
 				else
-					_freeList = freew->next;
+					_vsFreeHead = freew->vsNext;
 
-				vsIndex = freew->vsLoc;
+				vsIndex = vsFree;
 				vMaxPts = vs2v(vsNewSize);
-				SetStatus();
+				_vsFreeSegs -= vsNewSize;
 				return;
 			}
+			vsLastFree = vsFree;
 			lastfreew = freew;
 		}
 	}
@@ -137,80 +146,410 @@ void NuWinding::Grow(const int vMinPoints, const bool noFrags)
 	vsIndex = _vsMargin;
 	vMaxPts = vs2v(vsNewSize);
 	_vsMargin += vsNewSize;
-
-	SetStatus();
 }
 
-void NuWinding::Free()
+void Winding::Free()
 {
 	if (vMaxPts)
 	{
 		if (IsHighmost())
 		{
 			_vsMargin -= v2vs(vMaxPts);
-			return;
 		}
-		free_vseg_t* freew = (free_vseg_t*)&_pool[vsIndex];
+		else
+		{
+			free_vseg_t* freew = (free_vseg_t*)&_pool[vsIndex];
 
-		freew->vsSize = v2vs(vMaxPts);
-		freew->vsLoc = vsIndex;
-		freew->next = _freeList;
-		_freeList = freew;
-		//count = maxPts = 0;
-		//w = -1;
+			freew->vsSize = v2vs(vMaxPts);
+			_vsFreeSegs += freew->vsSize;
+			freew->vsNext = _vsFreeHead;
+			_vsFreeHead = vsIndex;
+		}
 	}
+	vCount = 0;
+	vMaxPts = 0;
+	vsIndex = vsNULL_INDEX;
 }
 
-NuWinding::vertex_t* NuWinding::operator[](const int i)
+void Winding::Swap(Winding& other)
+{
+	byte vCountTemp = other.vCount;
+	byte vMaxPtsTemp = other.vMaxPts;
+	uint32_t vsIndexTemp = other.vsIndex;
+
+	other.vCount = vCount;
+	other.vMaxPts = vMaxPts;
+	other.vsIndex = vsIndex;
+
+	vCount = vCountTemp;
+	vMaxPts = vMaxPtsTemp;
+	vsIndex = vsIndexTemp;
+}
+
+Winding::vertex_t* const Winding::Vertex(const int i)
 {
 	if (i < 0 && i >= vCount)
 		throw new std::exception("Index out of range on winding[]\n");
-	return (vertex_t*)(_pool + vsIndex) + i;
+	return _vertex_safe(i);
 }
 
-void NuWinding::Allocate(const int vMinPoints)
-{
-	_vsCapacity = max(v2vs(vMinPoints), (_vsCapacity + vsWINDING_BLOCK_SIZE));
 
-	// copy old pool:
-	vertex_seg_t* oldpool = _pool;
-	_pool = (vertex_seg_t*)malloc(_vsCapacity * sizeof(vertex_seg_t));
-	if (!_pool)
-		throw new std::exception("Winding::Allocate failed! that's p. bad\n");
-	if (oldpool)
+void const Winding::AddBounds(vec3& mins, vec3& maxs)
+{
+	for (int i = 0; i < vCount; ++i)
 	{
-		memcpy(_pool, oldpool, _vsMargin * sizeof(vertex_seg_t));
-		free(_pool);
+		// add to bounding box
+		mins = glm::min(mins, _vertex_safe(i)->point);
+		maxs = glm::max(maxs, _vertex_safe(i)->point);
+	}
+}
+
+vec3 const Winding::Centroid()
+{
+	vec3 a, b, c;
+	c = vec3(0);
+	for (int i = 0; i < vCount; i++)
+	{
+		a = _vertex_safe(i)->point;
+		b = _vertex_safe((i + 1) % vCount)->point;
+		c += (a + b) * 0.5f;
+	}
+	return c / (float)vCount;
+}
+
+// currently only called by ugly old merge used by ugly old csg carve
+bool const Winding::Equal(Winding& w2, bool flip)
+{
+	int offset, i, io;
+
+	if (vCount != w2.vCount)
+		return false;
+
+	offset = -1;
+
+	for (i = 0; i < w2.vCount; i++)
+	{
+		if (_vertex_safe(i)->point == w2._vertex_safe(i)->point)
+		{
+			offset = i;
+			break;
+		}
+	}
+	if (offset == -1)
+		return false;	// no points in common
+
+	// w1 point 0 == w2 point 'offset'
+	for (i = 0; i < vCount; i++)
+	{
+		io = ((flip ? offset - i : offset + i) + vCount) % vCount;
+		if (_vertex_safe(i)->point != w2._vertex_safe(i)->point)
+			return false;
+	}
+	return true;
+}
+
+// FIXME returns Plane::ON if winding is empty
+Plane::side const Winding::PlaneSides(Plane& split)
+{
+	double dot;
+	int counts[3];
+	counts[Plane::FRONT] = counts[Plane::BACK] = counts[Plane::ON] = 0;
+
+	// determine sides for each point
+	for (int i = 0; i < vCount; i++)
+	{
+		dot = DotProduct(dvec3(_vertex_safe(i)->point), split.normal);
+		dot -= split.dist;
+
+		if (dot > ON_EPSILON)
+			counts[Plane::FRONT]++;
+		else if (dot < -ON_EPSILON)
+			counts[Plane::BACK]++;
+		else
+			counts[Plane::ON]++;
 	}
 
-	// better: trash all data, require map to rebuild all, as a defragmentation strategy
-	//	(needs a semaphore to make all windings ignore their allocations, which have been freed)
-	//	(same semaphore should affect both grow and free)
-	/*
-	if (_pool) free(_pool);
-	_pool = (vertex_seg_t*)malloc(_vsCapacity * sizeof(vertex_seg_t));
-	if (!_pool)
-		throw new std::exception("Winding::Allocate failed! that's p. bad\n");
-	_vsMargin = 0;
-	_freeList = nullptr;
-	*/
-
-	_status = OK;
+	if (!counts[Plane::BACK] && counts[Plane::FRONT])
+		return Plane::FRONT;
+	if (counts[Plane::BACK] && !counts[Plane::FRONT])
+		return Plane::BACK;
+	return Plane::ON;
 }
 
-void NuWinding::SetStatus()
+
+// project a really big	axis aligned box onto a plane
+void Winding::Base(Plane& p)
 {
-	int remaining = _vsCapacity - _vsMargin;
-	if (remaining < 320)
-		_status = EMERGENCY;
-	else if (remaining < 1280)
-		_status = URGENT;
-	else if (remaining < 5120)
-		_status = PRUDENT;
+	dvec3		org, vright, vup;
+
+	org = p.normal * p.dist;
+	vup = VectorPerpendicular(p.normal);
+	vright = CrossProduct(vup, p.normal);
+
+	vup = vup * (double)g_cfgEditor.MapSize;
+	vright = vright * (double)g_cfgEditor.MapSize;
+
+	Grow(4);
+
+	_vertex_safe(0)->point = org - vright + vup;
+	_vertex_safe(1)->point = org + vright + vup;
+	_vertex_safe(2)->point = org + vright - vup;
+	_vertex_safe(3)->point = org - vright - vup;
+
+	vCount = 4;
+}
+
+/*
+==================
+Winding::Clip
+
+Clips the winding to the plane, leaving the remainder on the positive side
+If keepon is true, an exactly on-plane winding will be saved, otherwise
+it will be clipped away.
+Returns false if winding was clipped away.
+==================
+*/
+bool Winding::Clip(Plane& split, bool keepon)
+{
+	int		i, j;
+	int		counts[3];
+	int		sides[MAX_POINTS_ON_WINDING];
+	double	dists[MAX_POINTS_ON_WINDING];
+	double	dot;
+	dvec3	p1, p2;
+	dvec3	mid;
+
+	// scratch max-size winding for working in place
+	struct {
+		int		numpoints;
+		vertex_t	points[MAX_POINTS_ON_WINDING];
+	} neww;
+	neww.numpoints = 0;
+	
+	counts[Plane::FRONT] = counts[Plane::BACK] = counts[Plane::ON] = 0;
+
+	// determine sides for each point
+	for (i = 0; i < vCount; i++)
+	{
+		dot = DotProduct(dvec3(_vertex_safe(i)->point), split.normal);
+		dot -= split.dist;
+		dists[i] = dot;
+
+		if (dot > ON_EPSILON)
+			sides[i] = Plane::FRONT;
+		else if (dot < -ON_EPSILON)
+			sides[i] = Plane::BACK;
+		else
+			sides[i] = Plane::ON;
+
+		counts[sides[i]]++;
+	}
+
+	sides[i] = sides[0];
+	dists[i] = dists[0];
+	
+	if (keepon && !counts[Plane::FRONT] && !counts[Plane::BACK])
+		return true;	// coplanar to splitting plane
+
+	if (!counts[Plane::FRONT])
+	{
+		Free();
+		return false;	// no positive points, winding clipped away
+	}
+
+	if (!counts[Plane::BACK])
+		return true;	// splitting plane didn't touch us
+
+	for (i = 0; i < vCount; i++)
+	{
+		p1 = _vertex_safe(i)->point;
+		
+		if (sides[i] == Plane::ON)
+		{
+			neww.points[neww.numpoints].point = p1;
+			neww.numpoints++;
+			continue;
+		}
+	
+		if (sides[i] == Plane::FRONT)
+		{
+			neww.points[neww.numpoints].point = p1;
+			neww.numpoints++;
+		}
+		
+		if (sides[i + 1] == Plane::ON || sides[i + 1] == sides[i])
+			continue;
+			
+		// generate a split point
+		p2 = _vertex_safe((i + 1) % vCount)->point;
+		
+		dot = dists[i] / (dists[i] - dists[i + 1]);
+
+		for (j = 0; j < 3; j++)
+			mid[j] = p1[j] + dot * (p2[j] - p1[j]);
+			
+		neww.points[neww.numpoints].point = mid;
+		neww.numpoints++;
+	}
+	
+	if (neww.numpoints > vMaxPts)
+		Grow(neww.numpoints);	// we need a bigger boat
+		
+	for (i = 0; i < neww.numpoints; ++i)
+		*_vertex_safe(i) = neww.points[i];
+	vCount = neww.numpoints;
+
+	return true;
+}
+
+void Winding::TextureCoordinates(Texture& q, Face& f)
+{
+	float		s, t, ns, nt;
+	float		ang, sinv, cosv;
+	vec3		vecs[2];
+	TexDef*		texdef;
+	vertex_t*	xyzst;
+
+	for (int i = 0; i < vCount; i++)
+	{
+		xyzst = _vertex_safe(i);
+
+		// get natural texture axis
+		f.plane.GetTextureAxis(vecs[0], vecs[1]);
+
+		texdef = &f.texdef;
+
+		ang = texdef->rotate / 180 * Q_PI;
+		sinv = sin(ang);
+		cosv = cos(ang);
+
+		if (!texdef->scale[0])
+			texdef->scale[0] = 1;
+		if (!texdef->scale[1])
+			texdef->scale[1] = 1;
+
+		s = DotProduct(xyzst->point, vecs[0]);
+		t = DotProduct(xyzst->point, vecs[1]);
+
+		ns = cosv * s - sinv * t;
+		nt = sinv * s + cosv * t;
+
+		s = ns / texdef->scale[0] + texdef->shift[0];
+		t = nt / texdef->scale[1] + texdef->shift[1];
+
+		// gl scales everything from 0 to 1
+		s /= q.width;
+		t /= q.height;
+
+		xyzst->s = s;
+		xyzst->t = t;
+	}
+}
+
+void Winding::RemovePoint(int point)
+{
+	if (point < 0 || point >= vCount)
+		Error("Winding::RemovePoint: Point out of range.");
+
+	if (point < vCount - 1)
+		for (int i = point; i < vCount - 1; ++i)
+		{
+			*_vertex_safe(i) = *_vertex_safe(i + 1);
+		}
+
+	vCount--;
+}
+
+void Winding::OnMapFree() {
+	Clear();
+}
+
+void Winding::OnMapSave()
+{
+	if (GetStatus() != OK)
+	{
+		Allocate(0, true);
+		g_map.BuildBrushData();
+	}
+}
+
+void Winding::OnBeforeMapRebuild()
+{
+	realloc_status stat = GetStatus();
+	if (stat == URGENT || stat == IMMEDIATE)
+		Allocate(0, true);
+}
+
+void Winding::OnCommandComplete()
+{
+	realloc_status stat = GetStatus();
+	if (stat != OK && stat != PRUDENT)
+	{
+		Allocate(0, true);
+		g_map.BuildBrushData();
+	}
 }
 
 //===============================================================================
 
+void Winding::Allocate(const int vMinPoints, bool flush)
+{
+	uint32_t min = max(vMinPoints, g_map.numBrushes * 32);
+	uint32_t newCapacity = max( ((v2vs(min) / vsWINDING_BLOCK_SIZE)) * vsWINDING_BLOCK_SIZE, _vsCapacity) + vsWINDING_BLOCK_SIZE;
+
+	if (flush)
+	{
+		// don't copy data, require map to rebuild all instead as a defragmentation strategy
+		//	this must only be done in the context of a full rebuild or lots of windings will 
+		//	be very stale
+		Clear();
+
+		_pool = (vertex_seg_t*)malloc(newCapacity * sizeof(vertex_seg_t));
+		if (!_pool)
+			throw new std::exception("Winding::Allocate failed! that's p. bad\n");
+	}
+	else
+	{
+		// copy old pool
+		// free list is stored as indices and not pointers so this is safe anytime
+		vertex_seg_t* oldpool = _pool;
+		_pool = (vertex_seg_t*)malloc(newCapacity * sizeof(vertex_seg_t));
+		if (!_pool)
+			throw new std::exception("Winding::Allocate failed! that's p. bad\n");
+		if (oldpool)
+		{
+			memcpy(_pool, oldpool, _vsMargin * sizeof(vertex_seg_t));
+			free(oldpool);
+		}
+	}
+	_vsCapacity = newCapacity;
+}
+
+void Winding::Clear()
+{
+	if (_pool) free(_pool);
+	_pool = nullptr;
+	_vsFreeHead = vsNULL_INDEX;
+	_vsFreeSegs = 0;
+	_vsMargin = 0;
+	_vsCapacity = 0;
+}
+
+Winding::realloc_status const Winding::GetStatus()
+{
+	int remaining = _vsCapacity - _vsMargin;
+	if (remaining < 80)
+		return IMMEDIATE;
+	else if (remaining < 320)
+		return URGENT;
+	else if (remaining < 1280)
+		return PRUDENT;
+	return OK;
+}
+
+
+//===============================================================================
+#ifdef OLDWINDING
 /*
 ==================
 Winding::Clear
@@ -837,3 +1176,4 @@ vec3 Winding::Centroid(winding_t * w)
 	return c / (float)w->numpoints;
 }
 
+#endif

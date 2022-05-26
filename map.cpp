@@ -184,7 +184,7 @@ void Map::Load(const std::string& filename)
 
 	// FIXME: parsing the whole map into brushes and entities, then freeing the old map,
 	// keeps loads/pastes/etc isolated until the parse is complete for exception guarantee
-	// but leaves a ton of freed space in several pools, and never at the end
+	// but leaves a ton of freed space in brush/face pools, and never at the end
 	Entity elist;
 	Brush blist;
 	if (!LoadFromFile(filename, elist, blist))
@@ -200,6 +200,7 @@ void Map::Load(const std::string& filename)
 
 	for (Brush* b = brActive.Next(); b != &brActive; b = b->Next())
 		numBrushes++;
+
 	for (Entity* e = entities.Next(); e != &entities; e = e->Next())
 	{
 		// create fixed/non-fixed entclasses on the fly for point entities with brushes or brush 
@@ -318,9 +319,9 @@ void Map::Free()
 	g_cmdQueue.Clear();
 	autosaveTime = 0;
 
-	// winding clear must come last, as it resets the winding allocator, so that all
-	// brush geometry that might point into the winding pages is already destroyed
-	Winding::Clear();
+	// winding allocator reset must come last, after all
+	// brush geometry that might point into the winding pages is destroyed
+	Winding::OnMapFree();
 
 	WndMain_UpdateWindows(W_ALL);
 }
@@ -379,6 +380,8 @@ void Map::BuildBrushData()
 
 	Sys_BeginWait();	// this could take a while
 	time = Sys_DoubleTime();
+
+	Winding::OnBeforeMapRebuild();
 
 	BuildBrushData(brActive);
 	BuildBrushData(g_brSelectedBrushes);

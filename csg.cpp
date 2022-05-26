@@ -97,7 +97,7 @@ Brush* CSG_DoSimpleMerge(Brush *a, Brush *b)
 			if (!f1->plane.EqualTo(&f2->plane, true))
 				continue;	// windings can't be equal if planes aren't
 
-			if (Winding::WindingsEqual(f1->GetWinding(), f2->GetWinding(), true))
+			if (f1->GetWinding().Equal(f2->GetWinding(), true))
 			{
 				// face to face, ignore both
 				skipfaces.push_back(f1);
@@ -156,7 +156,7 @@ Brush* CSG::DoMerge(std::vector<Brush*> &brList, bool notexmerge)
 		b = *brIt;
 		for (bf = b->faces; bf; bf = bf->fnext)
 		{
-			if (!bf->GetWinding())
+			if (!bf->HasWinding())
 				continue;
 			fList.push_back(bf);
 		}
@@ -197,15 +197,16 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 	pointBufSize = 0;
 	for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 	{
-		pointBufSize += (*fIt)->GetWinding()->numpoints;	// buffer size is very greedy
+		pointBufSize += (*fIt)->GetWinding().Count();	// buffer size is very greedy
 	}
 	pointBuf.reserve(pointBufSize);
 
 	for (auto fIt = fList.begin(); fIt != fList.end(); ++fIt)
 	{
-		for (int i = 0; i < (*fIt)->GetWinding()->numpoints; i++)
+		Winding& w = (*fIt)->GetWinding();
+		for (int i = 0; i < w.Count(); i++)
 		{
-			dvec3 dpt = (*fIt)->GetWinding()->points[i].point;
+			dvec3 dpt = w[i]->point;
 			// avoid duplicates in point buffer
 			for (curPoint = pointBuf.begin(); curPoint != pointBuf.end(); ++curPoint)
 			{
@@ -347,7 +348,7 @@ Brush* CSG::DoMerge(std::vector<Face*> &fList, bool notexmerge)
 	//result->RemoveEmptyFaces();
 	for (Face *ft = result->faces; ft; ft = ft->fnext)
 	{
-		if (!ft->GetWinding())
+		if (!ft->HasWinding())
 		{
 			delete result;
 			return nullptr;

@@ -13,10 +13,10 @@
 Face::Face
 ================
 */
-Face::Face() : owner(nullptr), fnext(nullptr), winding(nullptr) {}
+Face::Face() : owner(nullptr), fnext(nullptr) {}
 
 Face::Face(Brush *b) : 
-	owner(b), fnext(b->faces), winding(nullptr)
+	owner(b), fnext(b->faces)
 {
 	assert(b);
 
@@ -25,13 +25,13 @@ Face::Face(Brush *b) :
 
 Face::Face(Face *f) : 
 	owner(nullptr), fnext(nullptr),
-	plane(f->plane), texdef(f->texdef), winding(nullptr)
+	plane(f->plane), texdef(f->texdef)
 {
 	assert(f);
 }
 
 Face::Face(Brush *b, Face *f) : 
-	owner(b), winding(nullptr), 
+	owner(b), 
 	plane(f->plane), texdef(f->texdef)
 {
 	assert(b);
@@ -42,7 +42,7 @@ Face::Face(Brush *b, Face *f) :
 }
 
 Face::Face(Plane &p, TexDef &td) : 
-	owner(nullptr), fnext(nullptr), winding(nullptr),
+	owner(nullptr), fnext(nullptr), 
 	plane(p), texdef(td)
 {}
 
@@ -53,8 +53,7 @@ Face::~Face
 */
 Face::~Face()
 {
-	if (winding)
-		Winding::Free(winding);
+	winding.Free();
 }
 
 
@@ -93,25 +92,6 @@ void Face::ClearChain(Face **f)
 	}
 }
 
-/*
-=============
-Face::MemorySize
-
-sikk - Undo/Redo
-=============
-*/
-int Face::MemorySize()
-{
-	int size = 0;
-
-	if (winding)
-		size += Winding::MemorySize(winding);
-
-	size += sizeof(Face);
-
-	return size;
-}
-
 
 /*
 =================
@@ -120,19 +100,18 @@ Face::MakeWinding
 returns the visible polygon on the face
 =================
 */
-winding_t *Face::MakeWinding()
+bool Face::MakeWinding()
 {
 	bool		past;
 	Face		*clip;
 	Plane		p;
-	winding_t	*w;
 
 	// get a poly that covers an effectively infinite area
-	w = plane.BasePoly();
+	winding.Base(plane);
 
 	// chop the poly by all of the other faces
 	past = false;
-	for (clip = owner->faces; clip && w; clip = clip->fnext)
+	for (clip = owner->faces; clip && winding.Count(); clip = clip->fnext)
 	{
 		if (clip == this)
 		{
@@ -145,8 +124,8 @@ winding_t *Face::MakeWinding()
 		{	// identical plane, use the later one
 			if (past)
 			{
-				Winding::Free(w);
-				return NULL;
+				winding.Free();
+				return false;
 			}
 			continue;
 		}
@@ -155,21 +134,17 @@ winding_t *Face::MakeWinding()
 		p.normal = dvec3(0) - clip->plane.normal;
 		p.dist = -clip->plane.dist;
 
-		w = Winding::Clip(w, &p, false);
-		if (!w)
-			return w;
+		if (!winding.Clip(p, false))
+			return false;
 	}
 
-	if (w->numpoints < 3)
+	if (winding.Count() < 3)
 	{
-		Winding::Free(w);
-		w = nullptr;
+		winding.Free();
+		return false;
 	}
 
-	//if (!w)
-	//	printf("unused plane\n");
-
-	return w;
+	return true;
 }
 
 /*
@@ -185,7 +160,7 @@ void Face::BoundsOnAxis(const vec3 a, float* min, float* max)
 	float p;
 	vec3 an;
 
-	if (!winding)
+	if (!winding.Count())
 		return;
 
 	*max = -99999;
@@ -194,9 +169,9 @@ void Face::BoundsOnAxis(const vec3 a, float* min, float* max)
 	an = a;
 	VectorNormalize(an);
 
-	for (i = 0; i < winding->numpoints; i++)
+	for (i = 0; i < winding.Count(); i++)
 	{
-		p = DotProduct(an, winding->points[i].point);
+		p = DotProduct(an, winding[i]->point);
 		if (p > *max) *max = p;
 		if (p < *min) *min = p;
 	}
@@ -209,11 +184,7 @@ Face::AddBounds
 */
 void Face::AddBounds(vec3 & mins, vec3 & maxs)
 {
-	for (int i = 0; i < winding->numpoints; i++)
-	{
-		mins = glm::min(mins, winding->points[i].point);
-		maxs = glm::max(maxs, winding->points[i].point);
-	}
+	winding.AddBounds(mins, maxs);
 }
 
 
@@ -269,6 +240,25 @@ bool Face::TestSideSelectAxis(const vec3 origin, const int axis)
 
 /*
 =================
+Face::ConcaveTo
+=================
+*/
+bool Face::ConcaveTo(Face& f2)
+{
+	// check if one of the points of face 1 is at the back of the plane of face 2
+	if (winding.PlaneSides(f2.plane) != Plane::FRONT)
+		return true;
+
+	// check if one of the points of face 2 is at the back of the plane of face 1
+	if (f2.winding.PlaneSides(plane) != Plane::FRONT)
+		return true;
+
+	return false;
+}
+
+
+/*
+=================
 Face::FitTexture
 
 lunaran: rewrote all this so it works with decimal fit increments
@@ -280,10 +270,8 @@ void Face::FitTexture(const float fHeight, const float fWidth)
 	vec3		u, v, n;
 	int			uSign, vSign, offset;
 	float		min, max, len;
-	winding_t	*w;
 
-	w = winding;
-	if (!w)
+	if (!winding.Count())
 		return;
 
 	uSign = vSign = 1;
@@ -409,7 +397,7 @@ Face::ColorAndTexture
 void Face::ColorAndTexture()
 {
 	SetColor();
-	Winding::TextureCoordinates(winding, texdef.Tex(), this);
+	winding.TextureCoordinates(*texdef.Tex(), *this);
 }
 
 /*
@@ -478,29 +466,22 @@ Face::Draw
 */
 void Face::Draw()
 {
-	if (!winding)
+	if (!winding.Count())
 		return;
 
 	glBegin(GL_POLYGON);
-	for (int i = 0; i < winding->numpoints; i++)
-		glVertex3fv(&winding->points[i].point[0]);
+	for (int i = 0; i < winding.Count(); i++)
+		glVertex3fv(&(winding[i]->point[0]));
 	glEnd();
 }
 
 void Face::DrawWire()
 {
-	if (!winding)
+	if (!winding.Count())
 		return;
 
 	glBegin(GL_LINE_LOOP);
-	for (int i = 0; i < winding->numpoints; i++)
-		glVertex3fv(&winding->points[i].point[0]);
+	for (int i = 0; i < winding.Count(); i++)
+		glVertex3fv(&(winding[i]->point[0]));
 	glEnd();
-}
-
-void Face::SetWinding(winding_t* w)
-{
-	if (winding && winding != w)
-		Winding::Free(winding);
-	winding = w;
 }
