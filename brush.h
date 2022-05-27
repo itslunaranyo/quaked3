@@ -46,7 +46,6 @@ public:
 	//====================================
 
 	int		NumFaces() const;
-	int		MemorySize() const;	// sikk - Undo/Redo
 	bool	IsConvex() const;	// sikk - Vertex Editing Splits Face
 	bool	IsFiltered() const;
 	bool	IsHidden() const { return !!(showFlags & BFL_HIDDEN); }
@@ -54,12 +53,11 @@ public:
 	static Brush *Create (const vec3 inMins, const vec3 inMaxs, TexDef *texdef);
 	void	Recreate(const vec3 inMins, const vec3 inMaxs, TexDef *inTexDef);
 	Brush	*Clone() const;
-	//Brush	*FullClone() const;	// sikk - Undo/Redo
 	void	ClearFaces();
-	//void	Move(const vec3 move, const bool texturelock);
 	void	Transform(const mat4 mat, const bool textureLock);
 	void	RefreshFlags();
 
+	void	FreeWindings();
 	bool	FullBuild();	// lunaran: full refreshes texture pointers/flags, regular is just windings
 	bool	Build();		// lunaran: now returns false if brush disappeared when built
 

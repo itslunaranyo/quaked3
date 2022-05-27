@@ -63,6 +63,7 @@ public:
 	void	DrawWire();
 
 	bool MakeWinding();
+	void FreeWinding();	// call when moving into undo limbo
 	inline bool const HasWinding() { return winding.Count() > 0; }
 	inline Winding& GetWinding() { return winding; }
 	inline void SwapWinding(Face& other) {

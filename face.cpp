@@ -147,6 +147,11 @@ bool Face::MakeWinding()
 	return true;
 }
 
+void Face::FreeWinding()
+{
+	winding.Free();
+}
+
 /*
 =================
 Face::BoundsOnAxis

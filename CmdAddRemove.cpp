@@ -150,6 +150,7 @@ void CmdAddRemove::Sequester(std::vector<Brush*>& brList)
 	{
 		br = *brIt;
 		br->RemoveFromList();	// unlink from scene
+		br->FreeWindings();		// ditch geometry
 
 		// unlink brush from owner but don't lose the pointer, we'll need it on restore
 		Entity::UnlinkBrush(br, true);
@@ -164,7 +165,10 @@ void CmdAddRemove::Sequester(std::vector<Entity*> &entList)
 		ent = *entIt;
 		ent->RemoveFromList();
 		if (ent->IsPoint())
+		{
+			ent->brushes.ENext()->FreeWindings();		// ditch geometry
 			ent->brushes.ENext()->RemoveFromList();
+		}
 	}
 }
 
@@ -193,7 +197,10 @@ void CmdAddRemove::Restore(std::vector<Entity*> &entList)
 		ent = *entIt;
 		ent->AddToList(&g_map.entities);
 		if (ent->IsPoint())
+		{
 			ent->brushes.ENext()->AddToList(g_map.brActive);
+			ent->brushes.ENext()->Build();
+		}
 	}
 }
 

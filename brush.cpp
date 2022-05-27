@@ -282,6 +282,17 @@ void Brush::RefreshFlags()
 
 /*
 ==================
+Brush::FreeWindings
+==================
+*/
+void Brush::FreeWindings()
+{
+	for (Face* f = faces; f; f = f->fnext)
+		f->FreeWinding();
+}
+
+/*
+==================
 Brush::FullBuild
 
 Certifies the texture pointer for the texture name on every face before Build()ing
