@@ -83,7 +83,8 @@ LONG WINAPI WndMain_Command(
 		QE_SaveMap();
 		break;
 	case ID_FILE_SAVEAS:
-		SaveAsDialog();
+		if (SaveAsDialog())
+			QE_SaveMap();
 		break;
 	case ID_FILE_IMPORTMAP:	// sikk - Import Map Dialog
 		ImportDialog();
