@@ -41,7 +41,8 @@ CmdPolyBrush::~CmdPolyBrush()
 void CmdPolyBrush::SetPoints(std::vector<vec3> &points)
 {
 	if (points.size() < 3)
-		CmdError("not enough points!");
+		//CmdError("not enough points!");
+		return;
 
 	state = LIVE;
 	pointList = points;
@@ -81,7 +82,7 @@ void CmdPolyBrush::Do_Impl()
 {
 	assert(!work);
 	if (pointList.size() < 3)
-		CmdError("not enough points!");
+		CmdError("too few points (need 3+, provided %i)", pointList.size());
 
 	Face *f;
 	vec3 mins, maxs;

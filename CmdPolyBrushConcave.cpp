@@ -40,7 +40,8 @@ void CmdPolyBrushConcave::SetPoints(std::vector<vec3> &points)
 	std::vector<vec3> pointsOut;
 
 	if (points.size() < 3)
-		CmdError("too few points (need 3+, provided %i)", points.size());
+		//CmdError("too few points (need 3+, provided %i)", points.size());
+		return;
 
 	int upAxis, rightAxis;
 
@@ -55,7 +56,8 @@ void CmdPolyBrushConcave::SetPoints(std::vector<vec3> &points)
 	RemoveDuplicates(pointsOut);
 	RemoveCollinear(pointsOut);
 	if (pointsOut.size() < 3)
-		CmdError("too few points after pruning collinear/duplicates");
+		//CmdError("too few points after pruning collinear/duplicates");
+		return;
 
 	VerifyPoints(pointsOut);
 	MakeClockwise(pointsOut);
@@ -231,7 +233,7 @@ void CmdPolyBrushConcave::VerifyPoints(const std::vector<vec3>& points)
 				continue;
 			if (LineSegmentIntersect2D(points[i], points[(i + 1) % len], points[j], points[(j + 1) % len], sect))
 			{
-				CmdError("edge list intersects itself at %f %f %f", sect[0], sect[1], sect[2]);
+				CmdError("edge list intersects itself at %f %f %f!\n", sect[0], sect[1], sect[2]);
 			}
 		}
 	}
@@ -744,6 +746,8 @@ void CmdPolyBrushConcave::Decompose()
 
 void CmdPolyBrushConcave::Do_Impl()
 {
+	if (pointList.size() < 3)
+		CmdError("too few points (need 3+, provided %i)", pointList.size());
 	Decompose();
 
 	CmdPolyBrush* cmdPB;
