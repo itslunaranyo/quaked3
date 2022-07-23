@@ -337,8 +337,8 @@ int Window::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
 		lpmmi->ptMinTrackSize.x = minWidth;
 		lpmmi->ptMinTrackSize.y = minHeight;
+		return 0;
 	}
-	return 0;
 
 	case WM_KILLFOCUS:
 	case WM_SETFOCUS:

@@ -49,7 +49,7 @@ static void _print(const std::string& str, const char* prefix = nullptr)
 	OutputDebugStringA(str.c_str());
 #endif
 
-	WndConsole::AddText(str.c_str());
+	WndConsole::Print(str.c_str());
 }
 
 void Log::Print(const char* msg)

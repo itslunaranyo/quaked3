@@ -7,6 +7,7 @@
 #include "WndConsole.h"
 
 HWND g_hwndConsole;
+std::string WndConsole::buf;
 
 WndConsole::WndConsole()
 {
@@ -55,11 +56,30 @@ void WndConsole::ScrollToEnd()
 	SendMessage(g_hwndConsole, EM_SCROLLCARET, 0, 0);
 }
 
-void WndConsole::AddText(const char *txt)
+void WndConsole::Print(const char* txt)
+{
+	std::string temp;
+	temp.reserve(strlen(txt) + 8);
+
+	for (const char* c = txt; *c; c++)
+	{
+		if (*c == '\n')
+			temp.push_back('\r');
+		temp.push_back(*c);
+	}
+
+	buf.append(temp);
+	WndMain_UpdateWindows(W_CONSOLE);
+}
+
+void WndConsole::AddText()
 {
 	LRESULT		result;				// PGM
 	DWORD		oldPosS, oldPosE;	// PGM
 	HWND cons = g_hwndConsole;
+
+	if (buf.length() == 0)
+		return;
 
 	result = SendMessage(cons, EM_GETLINECOUNT, 0, 0);
 	// sikk - place the caret at the end of Console before text is inserted. 
@@ -83,10 +103,24 @@ void WndConsole::AddText(const char *txt)
 	}
 	// <---PGM
 
-	SendMessage(cons, EM_REPLACESEL, 0, (LPARAM)txt);
+	SendMessage(cons, EM_REPLACESEL, 0, (LPARAM)buf.c_str());
 	SendMessage(cons, EM_SCROLLCARET, 0, 0); // eerie // sikk - removed comment
 
 	g_wndConsole->ScrollToEnd();
+	buf.clear();
+}
+
+int WndConsole::OnPaint()
+{
+	AddText();
+	return 1;
+}
+
+int WndConsole::OnResized()
+{
+	GetClientRect(wHwnd, &clientRect);
+	MoveWindow(w_hwndCons, clientRect.left, clientRect.top, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, false);
+	return 1;
 }
 
 bool WndConsole::TryCopy()
@@ -96,10 +130,11 @@ bool WndConsole::TryCopy()
 	return true;
 }
 
-int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
+int WndConsole::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch (uMsg)
-	{
+	switch (uMsg) {
+	case WM_KEYDOWN:
+		return QE_KeyDown(wParam, lParam);
 	case WM_MOUSEWHEEL:
 		Focus();
 		if (wParam & MK_SHIFT)
@@ -112,59 +147,7 @@ int WndConsole::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		return 0;
-
-	case WM_SIZE:
-		GetClientRect(wHwnd, &clientRect);
-		MoveWindow(w_hwndCons, clientRect.left, clientRect.top, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, false);
-		return 0;
-
-	case WM_SIZING:
-		if (TryDocking(wParam, (LPRECT)lParam))
-			return 1;
-		break;
-
-	case WM_MOVING:
-		if (TryDocking(0, (LPRECT)lParam))
-			return 1;
-		break;
-
-	case WM_GETMINMAXINFO:
-	{
-		LPMINMAXINFO lpmmi = (LPMINMAXINFO)lParam;
-		lpmmi->ptMinTrackSize.x = minWidth;
-		lpmmi->ptMinTrackSize.y = minHeight;
 	}
-	return 0;
-
-	// lunaran FIXME: this keeps the title bar activated when child ctrls are focused, but prevents 
-	// it being darkened again when they're unfocused for another window, because no message goes through
-	// this hwnd in that case
-	case WM_KILLFOCUS:
-	//	if ((HWND)wParam != w_hwndCons)
-	//		SendMessage(w_hwnd, WM_NCACTIVATE, FALSE, 0);
-	//	return 0;
-	case WM_SETFOCUS:
-		SendMessage(wHwnd, WM_NCACTIVATE, (uMsg==WM_SETFOCUS), 0);
-		break;
-
-	case WM_NCLBUTTONDOWN:
-	case WM_NCRBUTTONDOWN:
-		Focus();
-		break;
-	}
-
-	if (!OnMessage(uMsg, wParam, lParam))
-		return 0;
-
-	return DefWindowProc(wHwnd, uMsg, wParam, lParam);
-}
-
-int WndConsole::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (uMsg == WM_KEYDOWN)
-		return QE_KeyDown(wParam, lParam);
-	/*if (uMsg == WM_KEYUP)
-		return QE_KeyUp(wParam);*/
 
 	return 1;
 }

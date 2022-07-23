@@ -16,12 +16,15 @@ public:
 	~WndConsole();
 
 	void Initialize();
-	int WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void ScrollToEnd();
-	static void AddText(const char* txt);	// static so Log::Prints can happen before the window exists
+    int OnPaint();
+    int OnResized();
+	static void Print(const char* txt);	// static so Log::Prints can happen before the window exists
 	bool TryCopy();
 private:
 	HWND w_hwndCons;
+	static std::string buf;
+	void AddText();
 	int OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
