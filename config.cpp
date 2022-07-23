@@ -540,8 +540,9 @@ bool Config::Load()
 		{
 			for (int i = 1; i < g_nArgC; i++)
 			{
-				if (projIt->name == g_pszArgV[i])
+				if (!_stricmp(projIt->name.c_str(), g_pszArgV[i]))
 				{
+					Log::Print(_S("Selecting project %s from command line\n") << projIt->name);
 					std::rotate(projectPresets.begin(), projIt, projIt + 1);
 					break;
 				}

@@ -196,7 +196,7 @@ ParseCommandLine
 void ParseCommandLine (char *lpCmdLine)
 {
 	g_nArgC = 1;
-	g_pszArgV[0] = "programname";
+	g_pszArgV[0] = "qe3.exe";
 
 	while (*lpCmdLine && (g_nArgC < MAX_NUM_ARGVS))
 	{

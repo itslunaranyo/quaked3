@@ -222,9 +222,8 @@ int WINAPI WinMain (
 
 	if (lpCmdLine && strlen(lpCmdLine))
 	{
+		Log::Print(_S("Command line: %s\n")<< lpCmdLine);
 		ParseCommandLine(lpCmdLine);
-		if (g_pszArgV[1])
-			Log::Print(_S("Command line: %s\n")<< lpCmdLine);
 	}
 
 	// lunaran: can't mix win32 exceptions with c++ exceptions in the same function without
