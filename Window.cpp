@@ -308,7 +308,9 @@ int Window::WindowProcedure(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
 		if (!IsWindowVisible(wHwnd)) return 0;
-		return OnPaint();
+		if (OnPaint())
+			return DefWindowProc(wHwnd, uMsg, wParam, lParam);
+		return 1;
 
 	case WM_SIZE:
 		GetClientRect(wHwnd, &clientRect);
