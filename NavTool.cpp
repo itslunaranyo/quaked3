@@ -36,9 +36,9 @@ bool NavTool::Input3D(UINT uMsg, WPARAM wParam, LPARAM lParam, CameraView &v, Wn
 		{
 			if (wParam == VK_NEXT || wParam == VK_PRIOR)
 				return false;
-			MsgToXY(lParam, vWnd, xPos, yPos);
-			if (wParam == VK_SHIFT)
-				v.SetOrbit();	// TODO: what
+			//MsgToXY(lParam, vWnd, xPos, yPos);
+			//if (wParam == VK_SHIFT)
+			//	v.SetOrbit();	// TODO: what
 			return true;
 		}
 		if (QE_KeyDown(wParam, lParam))
