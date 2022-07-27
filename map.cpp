@@ -290,7 +290,7 @@ void Map::Free()
 	Pointfile_Clear();
 	targetGraph.Clear();
 
-	name[0] = 0;
+	name.clear();
 	hasFilename = false;
 	//Sys_SetTitle(name);
 	//g_qeglobals.d_nNumEntities = 0;
