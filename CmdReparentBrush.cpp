@@ -64,7 +64,7 @@ void CmdReparentBrush::Do_Impl()
 		{
 			Entity* own = rpIt->br->owner;
 			entRemoved.push_back(own);
-			Log::Warning(_S("%s lost all its brushes and will be deleted") << own->eclass->name);
+			Log::Print(_S("%s lost all its brushes and will be deleted\n") << own->eclass->name);
 		}
 
 		Entity::UnlinkBrush(rpIt->br);
