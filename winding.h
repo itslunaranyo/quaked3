@@ -56,6 +56,7 @@ public:
 	};
 
 	static realloc_status const GetStatus();
+	static void LogStatus();
 
 	static void OnMapFree();
 	static void OnMapSave();
@@ -83,7 +84,7 @@ private:
 	static uint32_t _vsMargin;	// high water mark, empty space above and fragmented free list below
 	static uint32_t _vsFreeHead;	// index of first freed seg
 	static uint32_t _vsFreeSegs;	// total freed seg count for fragmentation guess
-	//static realloc_status _status;
+	static bool flushed;	// signal that previous winding buffer is trash
 
 	static inline uint32_t v2vs(int x) { return (x + segSize - 1) / segSize; }
 	static inline uint32_t vs2v(int x) { return x * segSize; }

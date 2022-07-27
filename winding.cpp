@@ -56,12 +56,12 @@ uint32_t Winding::_vsMargin = 0;
 uint32_t Winding::_vsFreeHead = vsNULL_INDEX;
 uint32_t Winding::_vsFreeSegs = 0;
 uint32_t Winding::_vsCapacity = 0;
-
+bool Winding::flushed = false;
 
 Winding::Winding()
 {
 	if (!_pool)
-		Allocate(0, true);
+		Allocate(0, false);
 }
 
 Winding::~Winding()
@@ -289,6 +289,12 @@ void Winding::Base(Plane& p)
 	vup = vup * (double)g_cfgEditor.MapSize;
 	vright = vright * (double)g_cfgEditor.MapSize;
 
+	if (flushed)
+	{
+		vsIndex = vsNULL_INDEX;
+		vMaxPts = vCount = 0;
+	}
+
 	Grow(4);
 
 	_vertex_safe(0)->point = org - vright + vup;
@@ -468,8 +474,12 @@ void Winding::OnMapSave()
 {
 	if (GetStatus() != OK)
 	{
+		//Log::Print("OnSave reallocating windings\n");
 		Allocate(0, true);
+		//Log::Print("  Windings rebuilding map\n");
 		g_map.BuildBrushData();
+		flushed = false;
+		LogStatus();
 	}
 }
 
@@ -477,16 +487,24 @@ void Winding::OnBeforeMapRebuild()
 {
 	realloc_status stat = GetStatus();
 	if (stat == URGENT || stat == IMMEDIATE)
-		Allocate(0, true);
+	{
+		//Log::Print("BeforeMapRebuild reallocating windings\n");
+		Allocate(0, false);
+		LogStatus();
+	}
 }
 
 void Winding::OnCommandComplete()
 {
 	realloc_status stat = GetStatus();
-	if (stat != OK && stat != PRUDENT)
+	if (stat == URGENT || stat == IMMEDIATE)
 	{
-		Allocate(0, true);
+		//Log::Print("OnCmdComplete reallocating windings\n");
+		Allocate(0, (_vsFreeSegs / (float)_vsCapacity) > 0.2f);	// trigger rebuild if fragmentation is at 20%
+		//Log::Print("  Windings rebuilding map\n");
 		g_map.BuildBrushData();
+		flushed = false;
+		LogStatus();
 	}
 }
 
@@ -499,6 +517,8 @@ void Winding::Allocate(const int vMinPoints, bool flush)
 
 	if (flush)
 	{
+		flushed = true;	// so windings know their sizes are invalid now
+
 		// don't copy data, require map to rebuild all instead as a defragmentation strategy
 		//	this must only be done in the context of a full rebuild or lots of windings will 
 		//	be very stale
@@ -523,6 +543,7 @@ void Winding::Allocate(const int vMinPoints, bool flush)
 		}
 	}
 	_vsCapacity = newCapacity;
+	Log::Print(_S("Winding pool reallocated to %d %s\n") << (int)_vsCapacity << (flush ? "and flushed" : ""));
 }
 
 void Winding::Clear()
@@ -545,6 +566,11 @@ Winding::realloc_status const Winding::GetStatus()
 	else if (remaining < 1280)
 		return PRUDENT;
 	return OK;
+}
+
+void Winding::LogStatus()
+{
+	Log::Print(_S("Windings: %d/%d, %d frags\n") << (int)_vsMargin << (int)_vsCapacity << (int)_vsFreeSegs );
 }
 
 
