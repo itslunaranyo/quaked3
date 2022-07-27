@@ -110,12 +110,6 @@ void WndConsole::AddText()
 	buf.clear();
 }
 
-int WndConsole::OnPaint()
-{
-	AddText();
-	return 1;
-}
-
 int WndConsole::OnResized()
 {
 	GetClientRect(wHwnd, &clientRect);
@@ -128,6 +122,11 @@ bool WndConsole::TryCopy()
 	if (GetFocus() != w_hwndCons) return false;
 	SendMessage(w_hwndCons, WM_COPY, 0, 0);
 	return true;
+}
+
+void WndConsole::ForceUpdate()
+{
+	AddText();
 }
 
 int WndConsole::OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)

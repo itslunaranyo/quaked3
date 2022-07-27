@@ -17,10 +17,11 @@ public:
 
 	void Initialize();
 	void ScrollToEnd();
-    int OnPaint();
+    //int OnPaint();
     int OnResized();
 	static void Print(const char* txt);	// static so Log::Prints can happen before the window exists
 	bool TryCopy();
+	void ForceUpdate();
 private:
 	HWND w_hwndCons;
 	static std::string buf;
