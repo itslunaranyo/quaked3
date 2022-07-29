@@ -518,6 +518,26 @@ bool IsPathDirectory(char* path)
 DefaultExtension
 ==============
 */
+void DefaultExtension(std::string& path, const char* extension)
+{
+	char* src;
+
+	// if path doesn't have a .EXT, append extension
+	// (extension should include the .)
+	src = path.data() + path.length() - 1;
+
+	while (*src != PATHSEPERATOR && src != path)
+	{
+		if (*src == '.')
+			return;                 // it has an extension
+		src--;
+	}
+
+	if (extension[0] != '.')
+		path.append(".");
+	path.append(extension);
+}
+
 void DefaultExtension (char *path, char *extension)
 {
 	char *src;

@@ -69,6 +69,7 @@ void	IO_SaveFile (char *filename, void *buffer, int count);
 
 bool	IsPathAbsolute(const char* path);
 bool	IsPathDirectory(char* path);
+void	DefaultExtension(std::string& path, const char* extension);
 void 	DefaultExtension (char *path, char *extension);
 void 	DefaultPath (char *path, char *basepath);
 void 	StripFilename (char *path);
