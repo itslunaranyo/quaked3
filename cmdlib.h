@@ -95,10 +95,8 @@ int		LittleLong (int l);
 float	BigFloat (float l);
 float	LittleFloat (float l);
 
-// sikk---> Project Settings Dialog 
+// mostly unused
 int		SetStr (char *dest, ...);
-int		SetDirStr (char *dest, ...);
-int		SetDirStr2 (char *dest, ...);
-// <---sikk
+int		Path_Convert(char* dest, const char sep, const char* src1, const char* src2 = nullptr, const char* src3 = nullptr, const char* src4 = nullptr);
 
 #endif

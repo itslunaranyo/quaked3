@@ -821,7 +821,6 @@ void FloatToString(const float f, char *string, int dec)
 //	}
 }
 
-// sikk---> Project Settings Dialog
 /*
 ==================================================================
 
@@ -830,32 +829,6 @@ void FloatToString(const float f, char *string, int dec)
 	*ripped from QE5
 ==================================================================
 */
-
-#if 0
-
-/*
-==============
-SetStr
-==============
-*/
-int SetStr (char *dest, char *s1, char *s2, char *s3, char *s4)
-{
-	int		i, i2, len;
-	char   *s, *sa[5] = {s1, s2, s3, s4, NULL};
-
-	for (i = len = 0; (s = sa[i]); i++)
-	{
-		for (i2 = 0; *s; i2++)
-		{
-			*dest++ = *s++;
-			len++;
-		}
-	}
-	*dest = 0;
-	return len + 1;
-}
-
-#else
 
 /*
 ==============
@@ -884,35 +857,33 @@ int SetStr (char *dest, ...)
 	return len + 1;
 }
 
-#endif
-
 /*
 ==============
-SetDirStr
+Path_Convert
 
 copy up to 4 strings into one while stripping 
 out multiple consecutive path separators.
-also convert "/" to "\\"
+also convert slashes
 ==============
 */
-int SetDirStr (char *dest, ...)
+int Path_Convert(char* dest, const char sep, const char *src1, const char *src2, const char *src3, const char *src4)
 {
-	int		len = 0;
-	char   *s, last = 0;
-	va_list	list;
+	int len = 0;
+	const char* s;
+	char last = 0;
+	int arg = 0;
 
-	va_start(list, dest);
-	s = va_arg(list, char *);
+	s = src1;
 	while (s)
 	{
 		while (*s)
 		{
 			if (*s == '/' || *s == '\\')
 			{
-				if (last != '\\')
+				if (last != sep)
 				{
 					len++;
-					last = *dest++ = '\\';
+					last = *dest++ = sep;
 				}
 
 				while (*s == '/' || *s == '\\') // skip consecutive path separators
@@ -924,51 +895,13 @@ int SetDirStr (char *dest, ...)
 				last = *dest++ = *s++;
 			}
 		}
-		s = va_arg(list, char *);
-	}
-	*dest = 0;
-	va_end(list);
-	return len + 1;
-}
-
-/*
-==============
-SetDirStr2
-==============
-*/
-int SetDirStr2 (char *dest, ...)
-{
-	int		len = 0;
-	char   *s, last = 0;
-	va_list	list;
-
-	va_start(list, dest);
-	s = va_arg(list, char *);
-	while (s)
-	{
-		while (*s)
-		{
-			if (*s == '/' || *s == '\\')
-			{
-				if (last != '/')
-				{
-					len++;
-					last = *dest++ = '/';
-				}
-
-				while (*s == '/' || *s == '\\') // skip consecutive path separators
-					s++;
-			}
-			else
-			{
-				len++;
-				last = *dest++ = *s++;
-			}
+		switch (arg++) {
+			case 0: s = src2; break;
+			case 1: s = src3; break;
+			case 2: s = src4; break;
+			default: s = nullptr;
 		}
-		s = va_arg(list, char *);
 	}
 	*dest = 0;
-	va_end(list);
 	return len + 1;
 }
-// <---sikk
