@@ -8,11 +8,25 @@ FILE DIALOGS
 
 #include "pre.h"
 #include "qe3.h"
+#include "strlib.h"
 #include "WndFiles.h"
 
 #include "map.h"
 #include "Command.h"
 
+/*
+==================
+the secret rules for making windows open the file dialog where you want:
+
+- lpstrInitialDir is used by windows to track when the user navigated away from
+	that dir in a previous file dialog, so the dialog initializes there first
+- lpstrFile receives the filename chosen in the dialog but can start with a
+	filename already in it, so the dialog initializes there next
+- lspstrInitialDir itself is used if the first two yield nothing
+- ending a dir path with a trailing slash is bad and counts as no input!
+- using unix style slashes is bad and counts as no input!
+==================
+*/
 
 /*
 ==================
@@ -41,113 +55,157 @@ bool ConfirmModified()
 }
 
 
-static char	szDirName[_MAX_PATH];   // directory string
-static char szFile[_MAX_PATH];		// filename string
-static char szFileTitle[_MAX_FNAME];// file title string
-static char szMapFilter[260] = "QuakeEd Map (*.map)\0*.map\0\0";	// filter string for map files
+static const char szMapFilter[32] = "QuakeEd Map (*.map)\0*.map\0\0";	// filter string for map files
 
-// TODO: fix this not going to the same folder no matter what
-OPENFILENAME CommonOFN(DWORD flags)
+bool Dlg_FileCommon(std::string& sel, const char* _dir, const char* _filter, const char* _title, DWORD flags, bool save)
 {
 	OPENFILENAME ofn;			// common dialog box structure
 	memset(&ofn, 0, sizeof(OPENFILENAME));
-
-	strcpy(szDirName, g_project.mapPath.data());
-	if (strlen(szDirName) == 0)
-	{
-		strcpy(szDirName, g_project.basePath.data());
-		strcat(szDirName, "/maps");
-	}
-	szFile[0] = '\0';
+	sel.reserve(MAX_PATH);
 
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = g_hwndMain;
-	ofn.lpstrFilter = szMapFilter;
+	ofn.lpstrFilter = _filter;
 	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFileTitle = szFileTitle;
-	ofn.nMaxFileTitle = sizeof(szFileTitle);
-	ofn.lpstrInitialDir = szDirName;
+	ofn.lpstrFile = sel.data();
+	ofn.nMaxFile = sel.capacity();
+	ofn.lpstrTitle = (LPSTR)_title;
+	ofn.lpstrInitialDir = _dir;
 	ofn.Flags = flags;
 
-	return ofn;
+	if (save)
+	{
+		if (!GetSaveFileName(&ofn))
+			return false;	// canceled
+	}
+	else
+	{
+		if (!GetOpenFileName(&ofn))
+			return false;	// canceled
+	}
+	sel = ofn.lpstrFile;
+	return true;
+}
+
+bool Dlg_FileOpen(std::string& sel, const char* _dir, const char* _filter, const char* _title, DWORD flags)
+{
+	return Dlg_FileCommon(sel, _dir, _filter, _title, flags, false);
+}
+bool Dlg_FileSave(std::string& sel, const char* _dir, const char* _filter, const char* _title, DWORD flags)
+{
+	return Dlg_FileCommon(sel, _dir, _filter, _title, flags, true);
 }
 
 /*
 ==================
-OpenDialog
+Dlg_MapOpen
 ==================
 */
-void OpenDialog()
+void Dlg_MapOpen()
 {
-	OPENFILENAME ofn = CommonOFN( OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST );
+	std::string mapfile, mappath;
 
-	// Display the Open dialog box.
-	if (!GetOpenFileName(&ofn))
-		return;	// canceled
+	if (g_map.hasFilename)
+		mapfile = g_map.name;
+
+	// windows requires this path to not end with a trailing slash
+	mappath = g_project.mapPath.substr(0, g_project.mapPath.length() - 1);
+
+	if (!Dlg_FileOpen(mapfile,
+		mappath.data(),
+		szMapFilter,
+		"Open Map",
+		OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST))
+		return;
 
 	// Add the file to MRU
-	WndMain_AddMRUItem(ofn.lpstrFile);
+	WndMain_AddMRUItem(mapfile.data());
 
 	// Open the file
-	g_map.Load(ofn.lpstrFile);
+	g_map.Load(mapfile);
 }
 
 /*
 ==================
-ImportDialog
+Dlg_MapImport
 ==================
 */
-void ImportDialog()
+void Dlg_MapImport()
 {
-	OPENFILENAME ofn = CommonOFN(OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST);
+	std::string mapfile, mappath;
 
-	// Display the Open dialog box.
-	if (!GetOpenFileName(&ofn))
-		return;	// canceled
+	if (g_map.hasFilename)
+		mapfile = g_map.name;
+
+	// windows requires this path to not end with a trailing slash
+	mappath = g_project.mapPath.substr(0, g_project.mapPath.length() - 1);
+
+	if (!Dlg_FileOpen(mapfile,
+		mappath.data(),
+		szMapFilter,
+		"Import Map",
+		OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST))
+		return;
 
 	// Open the file.
-	g_map.ImportFromFile(ofn.lpstrFile);
+	g_map.ImportFromFile(mapfile);
 }
 
 /*
 ==================
-SaveAsDialog
+Dlg_MapSaveAs
 ==================
 */
-bool SaveAsDialog()
+bool Dlg_MapSaveAs()
 {
-	OPENFILENAME ofn = CommonOFN(OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT);
+	std::string mapfile, mappath;
 
-	// Display the Open dialog box. 
-	if (!GetSaveFileName(&ofn))
+	if (g_map.hasFilename)
+		mapfile = g_map.name;
+
+	// windows requires this path to not end with a trailing slash
+	mappath = g_project.mapPath.substr(0, g_project.mapPath.length() - 1);
+
+	if (!Dlg_FileSave(mapfile,
+		mappath.data(),
+		szMapFilter,
+		"Save Map As",
+		OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT))
 		return false;
 
-	DefaultExtension(ofn.lpstrFile, ".map");
-	g_map.name = ofn.lpstrFile;
+	DefaultExtension(mapfile, ".map");
+	g_map.name = mapfile;
 	g_map.hasFilename = true;
 
 	// Add the file to MRU
-	WndMain_AddMRUItem(ofn.lpstrFile);
+	WndMain_AddMRUItem(mapfile.data());
 
 	return true;
 }
 
 /*
 ==================
-ExportDialog
+Dlg_MapExport
 ==================
 */
-void ExportDialog()
+void Dlg_MapExport()
 {
-	OPENFILENAME ofn = CommonOFN(OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT);
+	std::string mapfile, mappath;
 
-	// Display the Open dialog box. 
-	if (!GetSaveFileName(&ofn))
-		return;	// canceled
+	if (g_map.hasFilename)
+		mapfile = g_map.name;
 
-	DefaultExtension(ofn.lpstrFile, ".map");
+	// windows requires this path to not end with a trailing slash
+	mappath = g_project.mapPath.substr(0, g_project.mapPath.length() - 1);
 
-	g_map.SaveSelection(ofn.lpstrFile);	// ignore region
+	if (!Dlg_FileSave(mapfile,
+		mappath.data(),
+		szMapFilter,
+		"Export Map",
+		OFN_SHOWHELP | OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT))
+		return;
+
+	DefaultExtension(mapfile, ".map");
+
+	g_map.SaveSelection(mapfile);	// ignore region
 }

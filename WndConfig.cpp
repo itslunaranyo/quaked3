@@ -54,11 +54,11 @@ void WndCfg_FormatPath(char* dst, char* src)
 	assert(src != dst);
 	char szTemp[512];
 
-	Sys_ConvertDOSToUnixName(szTemp, src);
+	Path_Convert(szTemp, '\\', src);
 
 	//if (!_strnicmp(szTemp, g_cfgEditor.QuakePath, strlen(g_cfgEditor.QuakePath)))
 	if (strlib::StartsWith(szTemp, g_cfgEditor.QuakePath))
-		sprintf(dst, "$QUAKE/%s", &szTemp[g_cfgEditor.QuakePath.length()]);
+		sprintf(dst, "$QUAKE\\%s", &szTemp[g_cfgEditor.QuakePath.length()]);
 	else
 		strcpy(dst, szTemp);
 }
@@ -87,7 +87,7 @@ bool SelectDir(HWND h, bool format, char* title)
 			if (format)
 				WndCfg_FormatPath(DirName, szDirName);
 			else
-				Sys_ConvertDOSToUnixName(DirName, szDirName);
+				Path_Convert(DirName, '\\', szDirName);
 			SetWindowText(h, DirName);
 		}
 

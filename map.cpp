@@ -437,7 +437,8 @@ void Map::ImportFromFile(const std::string& filename)
 
 	WndMain_SetInspectorMode(W_CONSOLE);
 
-	//Sys_ConvertDOSToUnixName(temp, filename);
+	Path_Convert(temp, '\\', filename.c_str());
+
 	Log::Print(_S("Map::ImportFromFile: %s\n") << temp);
 
 	CmdImportMap* cmdIM = new CmdImportMap();

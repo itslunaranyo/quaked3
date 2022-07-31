@@ -128,24 +128,6 @@ void Sys_Beep ()
 
 /*
 ==================
-Sys_ConvertDOSToUnixName
-==================
-*/
-void Sys_ConvertDOSToUnixName(char *dst, const char *src)
-{
-	while (*src)
-	{
-		if (*src == '\\')
-			*dst = '/';
-		else
-			*dst = *src;
-		dst++; src++;
-	}
-	*dst = 0;
-}
-
-/*
-==================
 Sys_TranslateString
 ==================
 */

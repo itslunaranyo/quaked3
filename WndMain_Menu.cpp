@@ -77,17 +77,17 @@ LONG WINAPI WndMain_Command(
 	case ID_FILE_OPEN:
 		if (!ConfirmModified())
 			return TRUE;
-		OpenDialog();
+		Dlg_MapOpen();
 		break;
 	case ID_FILE_SAVE:
 		QE_SaveMap();
 		break;
 	case ID_FILE_SAVEAS:
-		if (SaveAsDialog())
+		if (Dlg_MapSaveAs())
 			QE_SaveMap();
 		break;
 	case ID_FILE_IMPORTMAP:	// sikk - Import Map Dialog
-		ImportDialog();
+		Dlg_MapImport();
 		break;
 
 	case ID_FILE_POINTFILE:
@@ -98,7 +98,7 @@ LONG WINAPI WndMain_Command(
 		break;
 
 	case ID_SELECTION_EXPORTMAP:	// sikk - Export Selection Dialog
-		ExportDialog();
+		Dlg_MapExport();
 		break;
 
 	case IDMRU + 1:

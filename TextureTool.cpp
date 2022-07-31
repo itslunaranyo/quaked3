@@ -19,6 +19,7 @@
 #include "map.h"
 #include "WndCamera.h"
 #include "win_dlg.h"
+#include "WndFiles.h"
 
 TextureTool* g_texTool;
 
@@ -484,66 +485,58 @@ void TextureTool::GetTexModCommand(texModType_t tm)
 
 bool TextureTool::SelectWadDlg(std::string& outstr)
 {
-	OPENFILENAME ofn;			// common dialog box structure
-	char szFile[_MAX_PATH];		// filename string
-	char outFile[_MAX_PATH];
-	char szFileTitle[_MAX_FNAME];// file title string
+	std::string wadfile, wadspath;
 
-	szFile[0] = 0;
-	ofn = { 0 };
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = g_hwndMain;
-	ofn.lpstrFilter = "QuakeEd Wad File (*.wad)\0*.wad\0\0";
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFileTitle = szFileTitle;
-	ofn.nMaxFileTitle = sizeof(szFileTitle);
-	ofn.lpstrInitialDir = g_project.wadPath.data();
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER;
-	ofn.lpstrTitle = "Select Wad File(s)";
+	// windows requires this path to not end with a trailing slash
+	wadspath = g_project.wadPath.substr(0, g_project.wadPath.length() - 1);
 
-	if (GetOpenFileName(&ofn))
+	if (!Dlg_FileOpen(wadfile,
+		wadspath.data(),
+		"Quake Texture Wad (*.wad)\0*.wad\0\0",
+		"Select Wad File(s)",
+		OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_LONGNAMES | OFN_EXPLORER))
+		return false;
+
+	if (wadfile.empty())
+		return false;
+
+	char *rel, *lastSlash;
+	rel = wadfile.data();
+	lastSlash = wadfile.data();
+	for (unsigned i = 0; i < g_project.wadPath.length(); i++)
 	{
-		if (strlen(ofn.lpstrFile))
-		{
-			char* rel, * lastSlash;
-			rel = szFile;
-			lastSlash = szFile;
-			for (unsigned i = 0; i < g_project.wadPath.length(); i++)
-			{
-				if (*rel == '\\') while (*(rel + 1) == '\\')
-					rel++;
-				if (*rel == '\\')
-				{
-					*rel = '/';
-					lastSlash = rel;
-				}
-				if (*rel != g_project.wadPath[i])
-					break;
+		if (*rel == '\\')
+			while (*(rel + 1) == '\\')
 				rel++;
-			}
-			lastSlash++;
-			char* outc = outFile;
-			char* srcc = lastSlash;
-			while (*srcc)
-			{
-				if (*srcc == '\\' || * srcc == '/')
-				{
-					*outc = '/';
-					while (*srcc == '\\' || *srcc == '/')
-						srcc++;
-					outc++;
-					continue;
-				}
-				*outc++ = *srcc++;
-			}
-			*outc = 0;
-			outstr = outFile;
-			return true;
-		}
+		if (*rel == '\\')
+		//{
+		//	*rel = '/';
+			lastSlash = rel;
+		//}
+		if (*rel != g_project.wadPath[i])
+			break;
+		rel++;
 	}
-	return false;
+	lastSlash++;
+
+	char outFile[1024];
+	char* outc = outFile;
+	char* srcc = lastSlash;
+	while (*srcc)
+	{
+		if (*srcc == '\\' || *srcc == '/')
+		{
+			*outc = '/';
+			while (*srcc == '\\' || *srcc == '/')
+				srcc++;
+			outc++;
+			continue;
+		}
+		*outc++ = *srcc++;
+	}
+	*outc = 0;
+	outstr = outFile;
+	return true;
 }
 
 void TextureTool::DoAddWad()

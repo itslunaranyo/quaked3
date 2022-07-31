@@ -18,7 +18,6 @@ void    Sys_BeginWait();
 void    Sys_EndWait();
 void    Sys_Beep();
 
-void	Sys_ConvertDOSToUnixName(char *dst, const char *src);
 char   *Sys_TranslateString(char *buf);
 void	Sys_TranslateString(std::string& str);
 

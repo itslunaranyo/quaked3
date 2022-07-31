@@ -686,7 +686,7 @@ QE_SaveMap
 void QE_SaveMap()
 {
 	if (!g_map.hasFilename)
-		if (!SaveAsDialog())
+		if (!Dlg_MapSaveAs())
 			return;
 	
 	g_map.Save();	// ignore region
@@ -816,25 +816,6 @@ void QE_UpdateWorkzone(Brush* b)
 	// will update the workzone to the given brush
 	g_qeglobals.d_v3WorkMin = b->mins;
 	g_qeglobals.d_v3WorkMax = b->maxs;
-}
-
-
-/*
-==================
-QE_ExpandProjectPath
-==================
-*/
-char *QE_ExpandProjectPath (char *p)
-{
-	static char	temp[1024];
-
-	if (!p || !p[0])
-		return NULL;
-	if (p[0] == '/' || p[0] == '\\')
-		return p;
-
-	sprintf(temp, "%s/%s", g_project.basePath.data(), p);
-	return temp;
 }
 
 

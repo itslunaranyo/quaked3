@@ -155,6 +155,8 @@ bool Config::ParseEditor(ConfigReader& cfgFile)
 	{
 		cfgEditorVars[i]->Read(cfgFile);
 	}
+	std::string temp = g_cfgEditor.QuakePath;
+	ExpandProjectPath(temp, g_cfgEditor.QuakePath, "", true);
 	return false;
 }
 
@@ -207,8 +209,8 @@ void Config::ExpandProjectPath(const std::string& src, std::string& dest, const 
 		dest.append(&src[last], ofs - last);
 		if (src[ofs] == '\\' || src[ofs] == '/')
 		{
-			if (!strlib::EndsWith(dest,"/"))
-				dest.append("/");
+			if (!strlib::EndsWith(dest,"\\"))
+				dest.append("\\");
 			while (src[ofs] == '\\' || src[ofs] == '/')
 			{
 				++ofs;
@@ -236,15 +238,8 @@ void Config::ExpandProjectPath(const std::string& src, std::string& dest, const 
 	}
 	dest.append(&src[last], ofs - last);
 
-	if (dir && dest[dest.size() - 1] != '/')
-		dest.append("/");
-
-	// path.replace("$QUAKE", g_cfgEditor.QuakePath);
-	// path.replace("$QE3", QDir::currentPath());
-	// path.replace('\\','/');
-	// path.replace("//","/");
-	
-	//dest = path;
+	if (dir && dest[dest.size() - 1] != '\\')
+		dest.append("\\");
 }
 
 bool Config::ParseProject(ConfigReader& cfgFile)
@@ -474,9 +469,9 @@ bool Config::Load()
 	bool	haveProject, haveColors, haveColorPresets;
 
 #ifdef _DEBUG
-	cfgPath = g_qePath + "/qe3d.cfg";
+	cfgPath = g_qePath + "\\qe3d.cfg";
 #else
-	cfgPath = g_qePath + "/qe3.cfg";
+	cfgPath = g_qePath + "\\qe3.cfg";
 #endif
 
 	ConfigReader cfgFile;

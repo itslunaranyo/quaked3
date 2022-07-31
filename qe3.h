@@ -89,7 +89,6 @@ bool	QE_InitProject();
 int		QE_BestViewAxis();
 bool	QE_SingleBrush();
 void	QE_UpdateWorkzone(Brush *b);
-char   *QE_ExpandProjectPath (char *p);
 
 vec3	pointOnGrid(const vec3 point);
 vec3	AxisForVector(const vec3 &v);		// TODO: mathlib
