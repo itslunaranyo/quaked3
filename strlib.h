@@ -22,7 +22,8 @@ namespace strlib {
 
 	void RemoveDuplicates(StringViewList& svl);
 
-	bool HexToRGB(const std::string& hex, vec3& vrgb);
 	std::string RGBToHex(const vec3 vrgb);
+	bool HexToRGB(const std::string& hex, vec3& vrgb);
+    int Replace(std::string& target, const char* find, const char* repl);
 }
 

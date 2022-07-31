@@ -243,5 +243,21 @@ bool HexToRGB(const std::string& hex, vec3& vrgb)
 	return true;
 }
 
+int Replace(std::string& target, const char* find, const char* repl)
+{
+	size_t offset = 0;
+	size_t len = strlen(find);
+	int found = 0;
+	while (1)
+	{
+		offset = target.find(find, offset);
+		if (offset == std::string::npos)
+			break;
+		++found;
+		target.replace(offset, len, repl);
+	}
+	return found;
+}
+
 }
 
