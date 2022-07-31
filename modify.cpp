@@ -229,7 +229,7 @@ lunaran TODO: confirmation box if target & targetname already clash before overw
 void Modify::ConnectEntities()
 {
 	Entity	*e1, *e2, *e;
-	std::string_view target, tn;
+	std::string target, tn;
 	std::string newtarg;
 	Brush		*b;
 
